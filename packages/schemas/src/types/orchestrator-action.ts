@@ -119,6 +119,7 @@ export interface ConversationSnapshot {
   readonly state: string;
   readonly unit_id?: string | null;
   readonly issues?: readonly Record<string, unknown>[];
+  readonly classification_results?: readonly Record<string, unknown>[];
   readonly pinned_versions: PinnedVersions;
   readonly created_at?: string;
   readonly last_activity_at?: string;
