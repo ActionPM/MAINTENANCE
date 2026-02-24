@@ -54,3 +54,26 @@ export type {
   CreateSessionInput,
   ExpirationConfig,
 } from './session/index.js';
+
+// --- Events (Phase 3) ---
+export { InMemoryEventStore } from './events/index.js';
+export type {
+  ConversationEvent,
+  EventType,
+  EventQuery,
+  EventRepository,
+} from './events/index.js';
+
+// --- Orchestrator (Phase 3) ---
+export { createDispatcher, buildResponse, getActionHandler } from './orchestrator/index.js';
+export type {
+  OrchestratorDependencies,
+  SessionStore,
+  DispatchResult,
+  ActionHandlerContext,
+  ActionHandlerResult,
+  UIMessageInput,
+  QuickReplyInput,
+  SideEffectInput,
+  ErrorInput,
+} from './orchestrator/index.js';
