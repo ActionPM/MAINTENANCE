@@ -37,6 +37,13 @@ function makeContext(state: string, actionType: string, tenantInput: Record<stri
       idGenerator: () => `id-${++counter}`,
       clock: () => '2026-01-15T12:00:00Z',
       issueSplitter: async () => ({ issues: [], issue_count: 0 }),
+      issueClassifier: async () => ({
+        issue_id: 'issue-1',
+        classification: { Category: 'maintenance' },
+        model_confidence: { Category: 0.9 },
+        missing_fields: [],
+        needs_human_triage: false,
+      }),
     },
   };
 }

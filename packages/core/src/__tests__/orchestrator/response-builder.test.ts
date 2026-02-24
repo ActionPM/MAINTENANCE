@@ -12,6 +12,7 @@ const mockSession: ConversationSession = {
   state: ConversationState.UNIT_SELECTED,
   unit_id: 'u1',
   split_issues: null,
+  classification_results: null,
   authorized_unit_ids: ['u1'],
   pinned_versions: {
     taxonomy_version: '1.0.0',

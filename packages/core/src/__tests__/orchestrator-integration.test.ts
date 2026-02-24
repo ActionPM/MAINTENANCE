@@ -30,6 +30,13 @@ function makeDeps() {
       ],
       issue_count: 1,
     }),
+    issueClassifier: async () => ({
+      issue_id: 'issue-1',
+      classification: { Category: 'maintenance' },
+      model_confidence: { Category: 0.9 },
+      missing_fields: [],
+      needs_human_triage: false,
+    }),
   };
 }
 

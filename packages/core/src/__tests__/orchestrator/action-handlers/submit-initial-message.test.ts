@@ -51,6 +51,13 @@ function makeContext(
       idGenerator: () => `id-${++counter}`,
       clock: () => '2026-01-15T12:00:00Z',
       issueSplitter,
+      issueClassifier: vi.fn().mockResolvedValue({
+        issue_id: 'issue-1',
+        classification: { Category: 'maintenance' },
+        model_confidence: { Category: 0.9 },
+        missing_fields: [],
+        needs_human_triage: false,
+      }),
     },
   };
 }
