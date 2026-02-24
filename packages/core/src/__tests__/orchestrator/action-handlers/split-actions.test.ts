@@ -137,6 +137,18 @@ describe('EDIT_ISSUE', () => {
     expect(result.errors).toBeDefined();
     expect(result.errors![0].code).toBe('INVALID_ISSUE_TEXT');
   });
+
+  it('allows editing when at 10 issues (count cap does not apply to edits)', async () => {
+    const tenIssues = Array.from({ length: 10 }, (_, i) => ({
+      issue_id: `i${i}`, summary: `Issue ${i}`, raw_excerpt: `excerpt ${i}`,
+    }));
+    const ctx = makeContext(ActionType.EDIT_ISSUE, { issue_id: 'i0', summary: 'Updated issue' }, tenIssues);
+    const result = await handleSplitAction(ctx);
+    expect(result.errors).toBeUndefined();
+    expect(result.newState).toBe(ConversationState.SPLIT_PROPOSED);
+    const edited = result.session.split_issues!.find(i => i.issue_id === 'i0');
+    expect(edited!.summary).toBe('Updated issue');
+  });
 });
 
 describe('ADD_ISSUE', () => {

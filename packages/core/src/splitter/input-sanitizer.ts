@@ -41,11 +41,12 @@ export interface IssueConstraintResult {
  * Validate issue text and count constraints (spec §13, §8):
  * - Text must not be empty after sanitization
  * - Text must not exceed 500 chars
- * - Total issues must not exceed 10
+ * - Total issues must not exceed 10 (only when adding, not editing)
  */
 export function validateIssueConstraints(
   text: string,
   currentIssueCount: number,
+  options?: { checkCount?: boolean },
 ): IssueConstraintResult {
   if (text.trim().length === 0) {
     return { valid: false, error: 'Issue text must not be empty' };
@@ -53,7 +54,7 @@ export function validateIssueConstraints(
   if (text.length > MAX_ISSUE_TEXT_CHARS) {
     return { valid: false, error: `Issue text must not exceed ${MAX_ISSUE_TEXT_CHARS} characters` };
   }
-  if (currentIssueCount >= MAX_ISSUES_PER_CONVERSATION) {
+  if ((options?.checkCount ?? true) && currentIssueCount >= MAX_ISSUES_PER_CONVERSATION) {
     return { valid: false, error: `Cannot exceed ${MAX_ISSUES_PER_CONVERSATION} issues per conversation` };
   }
   return { valid: true };

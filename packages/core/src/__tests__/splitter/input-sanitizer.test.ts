@@ -68,4 +68,15 @@ describe('validateIssueConstraints', () => {
     const result = validateIssueConstraints('Valid text', 9);
     expect(result.valid).toBe(true);
   });
+
+  it('skips count check when checkCount is false', () => {
+    const result = validateIssueConstraints('Valid text', 10, { checkCount: false });
+    expect(result.valid).toBe(true);
+  });
+
+  it('still validates text when checkCount is false', () => {
+    const result = validateIssueConstraints('a'.repeat(501), 10, { checkCount: false });
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('500');
+  });
 });

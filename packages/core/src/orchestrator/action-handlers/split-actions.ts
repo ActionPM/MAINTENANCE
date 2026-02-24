@@ -154,7 +154,8 @@ function handleEditIssue(
   }
 
   // Validate raw length before sanitization (spec §13: reject, don't truncate)
-  const validation = validateIssueConstraints(input.summary, issues.length);
+  // Skip count check — editing doesn't increase issue count
+  const validation = validateIssueConstraints(input.summary, issues.length, { checkCount: false });
   if (!validation.valid) {
     return {
       newState: ctx.session.state,
