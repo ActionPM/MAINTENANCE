@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { ConversationState, ActionType, ActorType } from '@wo-agent/schemas';
 import { createDispatcher } from '../orchestrator/dispatcher.js';
 import { InMemoryEventStore } from '../events/in-memory-event-store.js';
+import { SystemEvent } from '../state-machine/system-events.js';
 import type { OrchestratorDependencies, SessionStore } from '../orchestrator/types.js';
 import type { ConversationSession } from '../session/types.js';
 
@@ -73,9 +74,21 @@ describe('Orchestrator integration: happy path', () => {
     });
     expect(r3.response.conversation_snapshot.state).toBe('split_proposed');
 
-    // Verify events were written
+    // Verify events: CREATE, SELECT_UNIT, SUBMIT→split_in_progress, LLM_SPLIT_SUCCESS→split_proposed
     const events = await deps.eventRepo.query({ conversation_id: convId });
-    expect(events.length).toBe(3);
+    expect(events.length).toBe(4);
+
+    // Verify intermediate event is matrix-compliant
+    const submitEvent = events[2];
+    expect(submitEvent.action_type).toBe(ActionType.SUBMIT_INITIAL_MESSAGE);
+    expect(submitEvent.prior_state).toBe('unit_selected');
+    expect(submitEvent.new_state).toBe('split_in_progress');
+
+    // Verify final system event
+    const splitSuccessEvent = events[3];
+    expect(splitSuccessEvent.action_type).toBe(SystemEvent.LLM_SPLIT_SUCCESS);
+    expect(splitSuccessEvent.prior_state).toBe('split_in_progress');
+    expect(splitSuccessEvent.new_state).toBe('split_proposed');
   });
 
   it('rejects invalid transition and leaves state unchanged', async () => {
@@ -210,7 +223,7 @@ describe('Orchestrator integration: split confirmation flow', () => {
     expect(r.response.conversation_snapshot.issues!.length).toBe(1);
   });
 
-  it('handles splitter failure gracefully', async () => {
+  it('handles splitter failure gracefully with matrix-compliant events', async () => {
     // Override splitter to fail
     (deps as any).issueSplitter = async () => { throw new Error('LLM down'); };
     dispatch = createDispatcher(deps as any);
@@ -241,5 +254,18 @@ describe('Orchestrator integration: split confirmation flow', () => {
     });
     expect(r3.response.conversation_snapshot.state).toBe('llm_error_retryable');
     expect(r3.response.errors.length).toBeGreaterThan(0);
+
+    // Verify events: CREATE, SELECT_UNIT, SUBMIT→split_in_progress, LLM_FAIL→llm_error_retryable
+    const events = await deps.eventRepo.query({ conversation_id: convId });
+    expect(events.length).toBe(4);
+
+    const submitEvent = events[2];
+    expect(submitEvent.action_type).toBe(ActionType.SUBMIT_INITIAL_MESSAGE);
+    expect(submitEvent.new_state).toBe('split_in_progress');
+
+    const failEvent = events[3];
+    expect(failEvent.action_type).toBe(SystemEvent.LLM_FAIL);
+    expect(failEvent.prior_state).toBe('split_in_progress');
+    expect(failEvent.new_state).toBe('llm_error_retryable');
   });
 });

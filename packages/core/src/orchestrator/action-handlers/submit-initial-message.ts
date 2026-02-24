@@ -1,5 +1,6 @@
 import { ConversationState } from '@wo-agent/schemas';
 import type { TenantInputSubmitInitialMessage, IssueSplitterInput } from '@wo-agent/schemas';
+import { SystemEvent } from '../../state-machine/system-events.js';
 import { resolveSubmitInitialMessage } from '../../state-machine/guards.js';
 import { setSplitIssues } from '../../session/session.js';
 import { callIssueSplitter, SplitterError } from '../../splitter/issue-splitter.js';
@@ -8,11 +9,12 @@ import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
 /**
  * Handle SUBMIT_INITIAL_MESSAGE (spec §11.2, §13).
  *
- * Flow:
- * 1. Validate unit is resolved
- * 2. Call IssueSplitter via deps (schema-validated with one retry)
- * 3. On success: store issues on session, return SPLIT_PROPOSED
- * 4. On failure: return LLM_ERROR_RETRYABLE with error details
+ * Matrix-compliant flow:
+ * 1. Validate unit is resolved (guard)
+ * 2. Enter split_in_progress (intermediate — recorded as event)
+ * 3. Call IssueSplitter via deps (schema-validated with one retry)
+ * 4. On success: LLM_SPLIT_SUCCESS → split_proposed (final event)
+ * 5. On failure: LLM_FAIL → llm_error_retryable (final event)
  */
 export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Promise<ActionHandlerResult> {
   const { session, deps } = ctx;
@@ -27,6 +29,13 @@ export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Pro
       errors: [{ code: 'UNIT_NOT_RESOLVED', message: 'A unit must be selected before submitting a message' }],
     };
   }
+
+  // The intermediate step: SUBMIT_INITIAL_MESSAGE enters split_in_progress per matrix
+  const intermediateStep = {
+    state: ConversationState.SPLIT_IN_PROGRESS,
+    eventType: 'message_received' as const,
+    eventPayload: { message: input.message },
+  };
 
   // Build splitter input from session's pinned versions
   const splitterInput: IssueSplitterInput = {
@@ -48,6 +57,8 @@ export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Pro
     return {
       newState: ConversationState.SPLIT_PROPOSED,
       session: updatedSession,
+      intermediateSteps: [intermediateStep],
+      finalSystemAction: SystemEvent.LLM_SPLIT_SUCCESS,
       uiMessages: [
         {
           role: 'agent',
@@ -60,18 +71,20 @@ export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Pro
         { label: 'Confirm', value: 'confirm', action_type: 'CONFIRM_SPLIT' },
         { label: 'Reject (single issue)', value: 'reject', action_type: 'REJECT_SPLIT' },
       ],
-      eventPayload: { message: input.message, split_result: splitResult },
-      eventType: 'message_received',
+      eventPayload: { split_result: splitResult },
+      eventType: 'state_transition',
     };
   } catch (err) {
     const errorMessage = err instanceof SplitterError ? err.message : 'Unexpected error analyzing your request';
     return {
       newState: ConversationState.LLM_ERROR_RETRYABLE,
       session,
+      intermediateSteps: [intermediateStep],
+      finalSystemAction: SystemEvent.LLM_FAIL,
       uiMessages: [{ role: 'agent', content: 'I had trouble analyzing your request. Please try again.' }],
       errors: [{ code: 'SPLITTER_FAILED', message: errorMessage }],
-      transitionContext: { prior_state: session.state },
-      eventPayload: { message: input.message, error: errorMessage },
+      transitionContext: { prior_state: ConversationState.SPLIT_IN_PROGRESS },
+      eventPayload: { error: errorMessage },
       eventType: 'error_occurred',
     };
   }

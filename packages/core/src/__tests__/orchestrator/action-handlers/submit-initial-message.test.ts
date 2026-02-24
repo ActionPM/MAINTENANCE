@@ -4,6 +4,7 @@ import type { IssueSplitterOutput } from '@wo-agent/schemas';
 import { handleSubmitInitialMessage } from '../../../orchestrator/action-handlers/submit-initial-message.js';
 import { createSession, updateSessionState, setSessionUnit } from '../../../session/session.js';
 import { InMemoryEventStore } from '../../../events/in-memory-event-store.js';
+import { SystemEvent } from '../../../state-machine/system-events.js';
 import type { ActionHandlerContext } from '../../../orchestrator/types.js';
 
 const VALID_SPLIT: IssueSplitterOutput = {
@@ -64,6 +65,18 @@ describe('handleSubmitInitialMessage', () => {
     expect(result.quickReplies!.length).toBeGreaterThan(0);
   });
 
+  it('declares intermediate split_in_progress step on success', async () => {
+    const ctx = makeContext(true);
+    const result = await handleSubmitInitialMessage(ctx);
+    expect(result.intermediateSteps).toHaveLength(1);
+    expect(result.intermediateSteps![0].state).toBe(ConversationState.SPLIT_IN_PROGRESS);
+    expect(result.intermediateSteps![0].eventType).toBe('message_received');
+    expect(result.intermediateSteps![0].eventPayload).toEqual({
+      message: 'My toilet is leaking and kitchen light is broken',
+    });
+    expect(result.finalSystemAction).toBe(SystemEvent.LLM_SPLIT_SUCCESS);
+  });
+
   it('passes correct input to splitter', async () => {
     const ctx = makeContext(true);
     await handleSubmitInitialMessage(ctx);
@@ -84,11 +97,19 @@ describe('handleSubmitInitialMessage', () => {
     expect(result.errors![0].code).toBe('SPLITTER_FAILED');
   });
 
-  it('stores prior state for error recovery', async () => {
+  it('declares intermediate split_in_progress step on failure', async () => {
     const ctx = makeContext(true, new Error('LLM timeout'));
     const result = await handleSubmitInitialMessage(ctx);
-    // The session should have prior_state set for RESUME/RETRY recovery
-    expect(result.transitionContext?.prior_state).toBe(ConversationState.UNIT_SELECTED);
+    expect(result.intermediateSteps).toHaveLength(1);
+    expect(result.intermediateSteps![0].state).toBe(ConversationState.SPLIT_IN_PROGRESS);
+    expect(result.finalSystemAction).toBe(SystemEvent.LLM_FAIL);
+  });
+
+  it('stores prior state as split_in_progress for error recovery', async () => {
+    const ctx = makeContext(true, new Error('LLM timeout'));
+    const result = await handleSubmitInitialMessage(ctx);
+    // prior_state should be split_in_progress (the state we were in when LLM failed)
+    expect(result.transitionContext?.prior_state).toBe(ConversationState.SPLIT_IN_PROGRESS);
   });
 
   it('rejects when unit is not resolved', async () => {
@@ -96,6 +117,7 @@ describe('handleSubmitInitialMessage', () => {
     const result = await handleSubmitInitialMessage(ctx);
     expect(result.errors).toBeDefined();
     expect(result.errors![0].code).toBe('UNIT_NOT_RESOLVED');
+    expect(result.intermediateSteps).toBeUndefined();
     expect(ctx.deps.issueSplitter).not.toHaveBeenCalled();
   });
 
@@ -108,11 +130,10 @@ describe('handleSubmitInitialMessage', () => {
     expect(content).toContain('2'); // issue count
   });
 
-  it('includes event payload with split result', async () => {
+  it('includes split result in final event payload', async () => {
     const ctx = makeContext(true);
     const result = await handleSubmitInitialMessage(ctx);
     expect(result.eventPayload).toBeDefined();
-    expect(result.eventPayload!.message).toBe('My toilet is leaking and kitchen light is broken');
     expect(result.eventPayload!.split_result).toEqual(VALID_SPLIT);
   });
 });

@@ -43,6 +43,17 @@ export interface ActionHandlerContext {
 }
 
 /**
+ * An intermediate state the handler passed through before reaching newState.
+ * The dispatcher writes a separate event for each intermediate step,
+ * keeping the event log matrix-compliant (spec §11.2).
+ */
+export interface IntermediateStep {
+  readonly state: ConversationState;
+  readonly eventType?: string;
+  readonly eventPayload?: Record<string, unknown>;
+}
+
+/**
  * Return type from an action handler.
  */
 export interface ActionHandlerResult {
@@ -55,6 +66,18 @@ export interface ActionHandlerResult {
   readonly errors?: readonly ErrorInput[];
   readonly eventPayload?: Record<string, unknown>;
   readonly eventType?: string;
+  /**
+   * Intermediate state transitions the handler passed through.
+   * Example: SUBMIT_INITIAL_MESSAGE enters split_in_progress (intermediate),
+   * then LLM result moves to split_proposed (final).
+   * The dispatcher writes events for each step in sequence.
+   */
+  readonly intermediateSteps?: readonly IntermediateStep[];
+  /**
+   * System action that triggered the final transition (e.g., LLM_SPLIT_SUCCESS).
+   * Used as action_type on the final event when intermediateSteps are present.
+   */
+  readonly finalSystemAction?: string;
 }
 
 export interface UIMessageInput {
