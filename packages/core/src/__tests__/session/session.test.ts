@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { ConversationState } from '@wo-agent/schemas';
-import { createSession, updateSessionState, touchActivity, markAbandoned, markExpired, isExpired, type ExpirationConfig } from '../../session/session.js';
+import type { SplitIssue } from '@wo-agent/schemas';
+import { createSession, updateSessionState, touchActivity, setSessionUnit, markAbandoned, markExpired, isExpired, setSplitIssues, type ExpirationConfig } from '../../session/session.js';
 import type { ConversationSession } from '../../session/types.js';
 
 afterEach(() => {
@@ -234,5 +235,44 @@ describe('isExpired', () => {
     });
     const abandoned = markAbandoned(session);
     expect(isExpired(abandoned, config)).toBe(false);
+  });
+});
+
+describe('setSplitIssues', () => {
+  it('stores split issues on session', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-01-01T00:00:00Z'));
+
+    const session = createSession({
+      conversation_id: 'conv-1',
+      tenant_user_id: 'user-1',
+      tenant_account_id: 'acct-1',
+      authorized_unit_ids: ['u1'],
+      pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'gpt-4', prompt_version: '1.0.0' },
+    });
+    expect(session.split_issues).toBeNull();
+
+    vi.advanceTimersByTime(1000);
+    const issues: SplitIssue[] = [
+      { issue_id: 'i1', summary: 'Toilet leaking', raw_excerpt: 'My toilet is leaking' },
+      { issue_id: 'i2', summary: 'Light broken', raw_excerpt: 'kitchen light is broken' },
+    ];
+    const updated = setSplitIssues(session, issues);
+    expect(updated.split_issues).toEqual(issues);
+    expect(updated.split_issues).not.toBe(issues); // defensive copy
+    expect(updated.last_activity_at).not.toBe(session.last_activity_at);
+  });
+
+  it('allows clearing split issues with null', () => {
+    let session = createSession({
+      conversation_id: 'conv-1',
+      tenant_user_id: 'user-1',
+      tenant_account_id: 'acct-1',
+      authorized_unit_ids: ['u1'],
+      pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'gpt-4', prompt_version: '1.0.0' },
+    });
+    session = setSplitIssues(session, [{ issue_id: 'i1', summary: 'Test', raw_excerpt: 'test' }]);
+    const cleared = setSplitIssues(session, null);
+    expect(cleared.split_issues).toBeNull();
   });
 });
