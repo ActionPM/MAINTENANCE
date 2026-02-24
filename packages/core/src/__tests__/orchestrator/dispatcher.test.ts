@@ -26,6 +26,7 @@ function makeDeps(): OrchestratorDependencies & { sessionStore: InMemorySessionS
     sessionStore: new InMemorySessionStore(),
     idGenerator: () => `id-${++counter}`,
     clock: () => '2026-01-15T12:00:00Z',
+    issueSplitter: async () => ({ issues: [], issue_count: 0 }),
   };
 }
 

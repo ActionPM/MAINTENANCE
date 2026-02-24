@@ -44,6 +44,7 @@ export {
   updateSessionState,
   touchActivity,
   setSessionUnit,
+  setSplitIssues,
   markAbandoned,
   markExpired,
   isExpired,
@@ -63,6 +64,10 @@ export type {
   EventQuery,
   EventRepository,
 } from './events/index.js';
+
+// --- Splitter (Phase 4) ---
+export { sanitizeIssueText, validateIssueConstraints, callIssueSplitter, SplitterError, SplitterErrorCode } from './splitter/index.js';
+export type { IssueConstraintResult } from './splitter/index.js';
 
 // --- Orchestrator (Phase 3) ---
 export { createDispatcher, buildResponse, getActionHandler } from './orchestrator/index.js';

@@ -23,6 +23,10 @@ export function getOrchestrator() {
       sessionStore: new InMemorySessionStore(),
       idGenerator: () => randomUUID(),
       clock: () => new Date().toISOString(),
+      issueSplitter: async (input) => ({
+        issues: [{ issue_id: randomUUID(), summary: input.raw_text.slice(0, 200), raw_excerpt: input.raw_text }],
+        issue_count: 1,
+      }),
     };
     dispatcher = createDispatcher(deps);
   }
