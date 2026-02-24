@@ -23,10 +23,10 @@ function makeSession(overrides: Partial<ConversationSession>): ConversationSessi
 describe('filterResumableDrafts', () => {
   it('returns only sessions in resumable states', () => {
     const sessions = [
-      makeSession({ conversation_id: 'c1', state: ConversationState.NEEDS_TENANT_INPUT }),
-      makeSession({ conversation_id: 'c2', state: ConversationState.SUBMITTED }),
-      makeSession({ conversation_id: 'c3', state: ConversationState.SPLIT_PROPOSED }),
-      makeSession({ conversation_id: 'c4', state: ConversationState.INTAKE_EXPIRED }),
+      makeSession({ conversation_id: 'c1', state: ConversationState.NEEDS_TENANT_INPUT, last_activity_at: '2026-01-04T00:00:00Z' }),
+      makeSession({ conversation_id: 'c2', state: ConversationState.SUBMITTED, last_activity_at: '2026-01-03T00:00:00Z' }),
+      makeSession({ conversation_id: 'c3', state: ConversationState.SPLIT_PROPOSED, last_activity_at: '2026-01-02T00:00:00Z' }),
+      makeSession({ conversation_id: 'c4', state: ConversationState.INTAKE_EXPIRED, last_activity_at: '2026-01-01T00:00:00Z' }),
     ];
     const result = filterResumableDrafts(sessions, 'user-1');
     expect(result.map((s) => s.conversation_id)).toEqual(['c1', 'c3']);
