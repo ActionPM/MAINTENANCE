@@ -1,6 +1,6 @@
 import { ConversationState } from '@wo-agent/schemas';
 import type { SplitIssue } from '@wo-agent/schemas';
-import type { ConversationSession, CreateSessionInput } from './types.js';
+import type { ConversationSession, CreateSessionInput, IssueClassificationResult } from './types.js';
 
 const ERROR_STATES: ReadonlySet<ConversationState> = new Set([
   ConversationState.LLM_ERROR_RETRYABLE,
@@ -20,6 +20,7 @@ export function createSession(input: CreateSessionInput): ConversationSession {
     state: ConversationState.INTAKE_STARTED,
     unit_id: null,
     split_issues: null,
+    classification_results: null,
     authorized_unit_ids: input.authorized_unit_ids,
     pinned_versions: input.pinned_versions,
     prior_state_before_error: null,
@@ -117,4 +118,19 @@ export function isExpired(
   if (session.state !== ConversationState.INTAKE_ABANDONED) return false;
   const elapsed = Date.now() - new Date(session.last_activity_at).getTime();
   return elapsed > config.abandonedExpiryMs;
+}
+
+/**
+ * Store classification results on the session.
+ * Results are defensively copied to prevent external mutation.
+ */
+export function setClassificationResults(
+  session: ConversationSession,
+  results: readonly IssueClassificationResult[] | null,
+): ConversationSession {
+  return {
+    ...session,
+    classification_results: results ? [...results] : null,
+    last_activity_at: new Date().toISOString(),
+  };
 }

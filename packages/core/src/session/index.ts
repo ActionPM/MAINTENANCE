@@ -1,10 +1,11 @@
-export type { ConversationSession, CreateSessionInput } from './types.js';
+export type { ConversationSession, CreateSessionInput, IssueClassificationResult } from './types.js';
 export {
   createSession,
   updateSessionState,
   touchActivity,
   setSessionUnit,
   setSplitIssues,
+  setClassificationResults,
   markAbandoned,
   markExpired,
   isExpired,
