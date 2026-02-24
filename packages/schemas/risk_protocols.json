@@ -1,0 +1,122 @@
+{
+  "version": "1.0.0",
+  "triggers": [
+    {
+      "trigger_id": "fire-001",
+      "name": "Fire",
+      "grammar": {
+        "keyword_any": ["fire", "smoke", "burning", "flames"],
+        "regex_any": ["\\b(fire|flames|burning)\\b"],
+        "taxonomy_path_any": []
+      },
+      "requires_confirmation": true,
+      "severity": "emergency",
+      "mitigation_template_id": "mit-fire"
+    },
+    {
+      "trigger_id": "flood-001",
+      "name": "Major Water / Flood",
+      "grammar": {
+        "keyword_any": ["flood", "flooding", "burst pipe", "water everywhere"],
+        "regex_any": ["\\b(flood(ing|ed)?|burst\\s+pipe)\\b"],
+        "taxonomy_path_any": ["maintenance.plumbing.flood"]
+      },
+      "requires_confirmation": true,
+      "severity": "emergency",
+      "mitigation_template_id": "mit-flood"
+    },
+    {
+      "trigger_id": "gas-001",
+      "name": "Gas Leak",
+      "grammar": {
+        "keyword_any": ["gas leak", "smell gas", "natural gas", "gas smell"],
+        "regex_any": ["\\b(gas\\s*(leak|smell))\\b", "\\bsmell(s|ing)?\\s+gas\\b"],
+        "taxonomy_path_any": []
+      },
+      "requires_confirmation": true,
+      "severity": "emergency",
+      "mitigation_template_id": "mit-gas"
+    },
+    {
+      "trigger_id": "no-heat-001",
+      "name": "No Heat (Winter)",
+      "grammar": {
+        "keyword_any": ["no heat", "no heating", "freezing", "heater broken"],
+        "regex_any": ["\\b(no\\s+heat(ing)?)\\b"],
+        "taxonomy_path_any": ["maintenance.hvac.no_heat"]
+      },
+      "requires_confirmation": true,
+      "severity": "high",
+      "mitigation_template_id": "mit-no-heat"
+    },
+    {
+      "trigger_id": "safety-001",
+      "name": "Electrical Safety Risk",
+      "grammar": {
+        "keyword_any": ["sparks", "sparking", "electrical fire", "exposed wires", "shock"],
+        "regex_any": ["\\b(spark(s|ing)?|exposed\\s+wires?|electric(al)?\\s+(shock|fire))\\b"],
+        "taxonomy_path_any": ["maintenance.electrical.safety_risk"]
+      },
+      "requires_confirmation": true,
+      "severity": "high",
+      "mitigation_template_id": "mit-electrical"
+    }
+  ],
+  "mitigation_templates": [
+    {
+      "template_id": "mit-fire",
+      "name": "Fire Safety",
+      "message_template": "If there is an active fire or you see smoke, please call 911 immediately and evacuate the building. Do not use elevators.",
+      "safety_instructions": [
+        "Call 911 immediately",
+        "Evacuate via stairwell",
+        "Do not use elevators",
+        "Close doors behind you",
+        "Meet at designated assembly point"
+      ]
+    },
+    {
+      "template_id": "mit-flood",
+      "name": "Flood / Water Emergency",
+      "message_template": "If water is actively flooding, try to turn off the water supply valve if safe to do so. Move valuables to higher ground. We are contacting building management now.",
+      "safety_instructions": [
+        "Turn off water supply valve if accessible and safe",
+        "Move electronics and valuables away from water",
+        "Do not touch electrical outlets near water",
+        "Place towels to contain spread if possible"
+      ]
+    },
+    {
+      "template_id": "mit-gas",
+      "name": "Gas Leak Safety",
+      "message_template": "If you smell gas, do NOT use any electrical switches, lighters, or open flames. Open windows if safe and evacuate immediately. Call 911 or your gas utility emergency line.",
+      "safety_instructions": [
+        "Do not operate electrical switches or appliances",
+        "Do not light matches or lighters",
+        "Open windows for ventilation if safe",
+        "Evacuate the unit immediately",
+        "Call 911 from outside the building"
+      ]
+    },
+    {
+      "template_id": "mit-no-heat",
+      "name": "No Heat Advisory",
+      "message_template": "We understand you have no heat. We are treating this as urgent. In the meantime, use extra blankets and consider using a safe portable heater if available. We are contacting building management.",
+      "safety_instructions": [
+        "Use extra blankets and warm clothing",
+        "Close curtains to insulate windows",
+        "Never use a stove or oven for heating"
+      ]
+    },
+    {
+      "template_id": "mit-electrical",
+      "name": "Electrical Safety",
+      "message_template": "Please stay away from any sparking outlets, exposed wires, or damaged electrical components. Do not touch them. We are routing this to emergency maintenance.",
+      "safety_instructions": [
+        "Do not touch exposed wires or sparking outlets",
+        "Turn off the breaker for the affected area if safe",
+        "Keep children and pets away from the area"
+      ]
+    }
+  ]
+}

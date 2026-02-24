@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "followups.schema.json",
+  "definitions": {
+    "FollowUpQuestion": {
+      "type": "object",
+      "properties": {
+        "question_id": { "type": "string" },
+        "field_target": { "type": "string" },
+        "prompt": { "type": "string" },
+        "options": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "answer_type": {
+          "type": "string",
+          "enum": ["enum", "yes_no", "text"]
+        }
+      },
+      "required": ["question_id", "field_target", "prompt", "options", "answer_type"],
+      "additionalProperties": false
+    },
+    "FollowUpGeneratorOutput": {
+      "type": "object",
+      "properties": {
+        "questions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/FollowUpQuestion" },
+          "minItems": 1,
+          "maxItems": 3
+        }
+      },
+      "required": ["questions"],
+      "additionalProperties": false
+    },
+    "AnswerReceived": {
+      "type": "object",
+      "properties": {
+        "question_id": { "type": "string" },
+        "answer": {},
+        "received_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["question_id", "answer", "received_at"],
+      "additionalProperties": false
+    },
+    "FollowUpEvent": {
+      "type": "object",
+      "properties": {
+        "event_id": { "type": "string" },
+        "conversation_id": { "type": "string" },
+        "issue_id": { "type": "string" },
+        "turn_number": { "type": "integer", "minimum": 1 },
+        "questions_asked": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/FollowUpQuestion" }
+        },
+        "answers_received": {
+          "type": ["array", "null"],
+          "items": { "$ref": "#/definitions/AnswerReceived" }
+        },
+        "created_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["event_id", "conversation_id", "issue_id", "turn_number", "questions_asked", "created_at"],
+      "additionalProperties": false
+    }
+  }
+}

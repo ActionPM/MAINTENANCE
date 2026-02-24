@@ -1,0 +1,288 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "orchestrator_action.schema.json",
+  "definitions": {
+    "AuthContext": {
+      "type": "object",
+      "properties": {
+        "tenant_user_id": { "type": "string", "format": "uuid" },
+        "tenant_account_id": { "type": "string", "format": "uuid" },
+        "authorized_unit_ids": {
+          "type": "array",
+          "items": { "type": "string", "format": "uuid" }
+        }
+      },
+      "required": ["tenant_user_id", "tenant_account_id", "authorized_unit_ids"],
+      "additionalProperties": false
+    },
+    "ActionType": {
+      "type": "string",
+      "enum": [
+        "CREATE_CONVERSATION",
+        "SELECT_UNIT",
+        "SUBMIT_INITIAL_MESSAGE",
+        "SUBMIT_ADDITIONAL_MESSAGE",
+        "CONFIRM_SPLIT",
+        "MERGE_ISSUES",
+        "EDIT_ISSUE",
+        "ADD_ISSUE",
+        "REJECT_SPLIT",
+        "ANSWER_FOLLOWUPS",
+        "CONFIRM_SUBMISSION",
+        "UPLOAD_PHOTO_INIT",
+        "UPLOAD_PHOTO_COMPLETE",
+        "RESUME",
+        "ABANDON"
+      ]
+    },
+    "ActorType": {
+      "type": "string",
+      "enum": ["tenant", "system", "agent", "pm_user"]
+    },
+    "TenantInputCreateConversation": {
+      "type": "object",
+      "additionalProperties": false
+    },
+    "TenantInputSelectUnit": {
+      "type": "object",
+      "properties": {
+        "unit_id": { "type": "string", "format": "uuid" }
+      },
+      "required": ["unit_id"],
+      "additionalProperties": false
+    },
+    "TenantInputSubmitInitialMessage": {
+      "type": "object",
+      "properties": {
+        "message": { "type": "string", "minLength": 1, "maxLength": 8000 }
+      },
+      "required": ["message"],
+      "additionalProperties": false
+    },
+    "TenantInputSubmitAdditionalMessage": {
+      "type": "object",
+      "properties": {
+        "message": { "type": "string", "minLength": 1, "maxLength": 8000 }
+      },
+      "required": ["message"],
+      "additionalProperties": false
+    },
+    "TenantInputConfirmSplit": {
+      "type": "object",
+      "additionalProperties": false
+    },
+    "TenantInputMergeIssues": {
+      "type": "object",
+      "properties": {
+        "issue_ids": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 2
+        }
+      },
+      "required": ["issue_ids"],
+      "additionalProperties": false
+    },
+    "TenantInputEditIssue": {
+      "type": "object",
+      "properties": {
+        "issue_id": { "type": "string" },
+        "summary": { "type": "string", "minLength": 1, "maxLength": 500 }
+      },
+      "required": ["issue_id", "summary"],
+      "additionalProperties": false
+    },
+    "TenantInputAddIssue": {
+      "type": "object",
+      "properties": {
+        "summary": { "type": "string", "minLength": 1, "maxLength": 500 }
+      },
+      "required": ["summary"],
+      "additionalProperties": false
+    },
+    "TenantInputRejectSplit": {
+      "type": "object",
+      "additionalProperties": false
+    },
+    "TenantInputAnswerFollowups": {
+      "type": "object",
+      "properties": {
+        "answers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "question_id": { "type": "string" },
+              "answer": {}
+            },
+            "required": ["question_id", "answer"],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        }
+      },
+      "required": ["answers"],
+      "additionalProperties": false
+    },
+    "TenantInputConfirmSubmission": {
+      "type": "object",
+      "additionalProperties": false
+    },
+    "TenantInputUploadPhotoInit": {
+      "type": "object",
+      "properties": {
+        "filename": { "type": "string", "minLength": 1 },
+        "content_type": {
+          "type": "string",
+          "enum": ["image/jpeg", "image/png", "image/heic", "image/webp"]
+        },
+        "size_bytes": { "type": "integer", "minimum": 1, "maximum": 10485760 }
+      },
+      "required": ["filename", "content_type", "size_bytes"],
+      "additionalProperties": false
+    },
+    "TenantInputUploadPhotoComplete": {
+      "type": "object",
+      "properties": {
+        "photo_id": { "type": "string", "format": "uuid" },
+        "storage_key": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      },
+      "required": ["photo_id", "storage_key", "sha256"],
+      "additionalProperties": false
+    },
+    "TenantInputResume": {
+      "type": "object",
+      "additionalProperties": false
+    },
+    "TenantInputAbandon": {
+      "type": "object",
+      "additionalProperties": false
+    },
+    "OrchestratorActionRequest": {
+      "type": "object",
+      "properties": {
+        "conversation_id": { "type": ["string", "null"] },
+        "action_type": { "$ref": "#/definitions/ActionType" },
+        "actor": { "$ref": "#/definitions/ActorType" },
+        "tenant_input": { "type": "object" },
+        "idempotency_key": { "type": "string" },
+        "auth_context": { "$ref": "#/definitions/AuthContext" }
+      },
+      "required": ["action_type", "actor", "tenant_input", "auth_context"],
+      "additionalProperties": false
+    },
+    "UIMessage": {
+      "type": "object",
+      "properties": {
+        "role": { "type": "string", "enum": ["system", "agent", "tenant"] },
+        "content": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["role", "content", "timestamp"],
+      "additionalProperties": false
+    },
+    "QuickReply": {
+      "type": "object",
+      "properties": {
+        "label": { "type": "string" },
+        "value": { "type": "string" },
+        "action_type": { "$ref": "#/definitions/ActionType" }
+      },
+      "required": ["label", "value"],
+      "additionalProperties": false
+    },
+    "UIDirective": {
+      "type": "object",
+      "properties": {
+        "messages": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/UIMessage" }
+        },
+        "quick_replies": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/QuickReply" }
+        },
+        "forms": { "type": "array", "items": { "type": "object" } },
+        "upload_prompts": { "type": "array", "items": { "type": "object" } }
+      },
+      "additionalProperties": false
+    },
+    "ConversationSnapshot": {
+      "type": "object",
+      "properties": {
+        "conversation_id": { "type": "string" },
+        "state": { "type": "string" },
+        "unit_id": { "type": ["string", "null"] },
+        "issues": { "type": "array", "items": { "type": "object" } },
+        "pinned_versions": {
+          "type": "object",
+          "properties": {
+            "taxonomy_version": { "type": "string" },
+            "schema_version": { "type": "string" },
+            "model_id": { "type": "string" },
+            "prompt_version": { "type": "string" }
+          },
+          "required": ["taxonomy_version", "schema_version", "model_id", "prompt_version"]
+        },
+        "created_at": { "type": "string", "format": "date-time" },
+        "last_activity_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["conversation_id", "state", "pinned_versions"],
+      "additionalProperties": false
+    },
+    "Artifact": {
+      "type": "object",
+      "properties": {
+        "artifact_id": { "type": "string" },
+        "artifact_type": { "type": "string" },
+        "hash": { "type": "string" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "presented_to_tenant": { "type": "boolean" }
+      },
+      "required": ["artifact_id", "artifact_type", "hash", "created_at", "presented_to_tenant"],
+      "additionalProperties": false
+    },
+    "SideEffect": {
+      "type": "object",
+      "properties": {
+        "effect_type": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "completed", "failed"] },
+        "idempotency_key": { "type": "string" }
+      },
+      "required": ["effect_type", "status"],
+      "additionalProperties": false
+    },
+    "ActionError": {
+      "type": "object",
+      "properties": {
+        "code": { "type": "string" },
+        "message": { "type": "string" },
+        "field": { "type": "string" }
+      },
+      "required": ["code", "message"],
+      "additionalProperties": false
+    },
+    "OrchestratorActionResponse": {
+      "type": "object",
+      "properties": {
+        "conversation_snapshot": { "$ref": "#/definitions/ConversationSnapshot" },
+        "ui_directive": { "$ref": "#/definitions/UIDirective" },
+        "artifacts": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/Artifact" }
+        },
+        "pending_side_effects": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/SideEffect" }
+        },
+        "errors": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/ActionError" }
+        }
+      },
+      "required": ["conversation_snapshot", "ui_directive", "artifacts", "pending_side_effects", "errors"],
+      "additionalProperties": false
+    }
+  }
+}

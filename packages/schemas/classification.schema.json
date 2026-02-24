@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "classification.schema.json",
+  "definitions": {
+    "FollowupAnswer": {
+      "type": "object",
+      "properties": {
+        "field_target": { "type": "string" },
+        "answer": { "type": ["string", "boolean"] }
+      },
+      "required": ["field_target", "answer"],
+      "additionalProperties": false
+    },
+    "IssueClassifierInput": {
+      "type": "object",
+      "properties": {
+        "issue_id": { "type": "string" },
+        "issue_summary": { "type": "string" },
+        "raw_excerpt": { "type": "string" },
+        "followup_answers": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/FollowupAnswer" }
+        },
+        "taxonomy_version": { "type": "string" },
+        "model_id": { "type": "string" },
+        "prompt_version": { "type": "string" },
+        "cue_scores": {
+          "type": "object",
+          "additionalProperties": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      },
+      "required": ["issue_id", "issue_summary", "raw_excerpt", "taxonomy_version", "model_id", "prompt_version"],
+      "additionalProperties": false
+    },
+    "IssueClassifierOutput": {
+      "type": "object",
+      "properties": {
+        "issue_id": { "type": "string" },
+        "classification": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "model_confidence": {
+          "type": "object",
+          "additionalProperties": { "type": "number", "minimum": 0, "maximum": 1 }
+        },
+        "missing_fields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "needs_human_triage": { "type": "boolean", "default": false }
+      },
+      "required": ["issue_id", "classification", "model_confidence", "missing_fields", "needs_human_triage"],
+      "additionalProperties": false
+    }
+  }
+}

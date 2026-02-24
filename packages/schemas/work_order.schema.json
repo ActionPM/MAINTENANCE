@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "work_order.schema.json",
+  "definitions": {
+    "WorkOrderStatus": {
+      "type": "string",
+      "enum": ["created", "action_required", "scheduled", "resolved", "cancelled"]
+    },
+    "StatusHistoryEntry": {
+      "type": "object",
+      "properties": {
+        "status": { "$ref": "#/definitions/WorkOrderStatus" },
+        "changed_at": { "type": "string", "format": "date-time" },
+        "actor": { "type": "string", "enum": ["tenant", "system", "agent", "pm_user"] }
+      },
+      "required": ["status", "changed_at", "actor"],
+      "additionalProperties": false
+    },
+    "PhotoReference": {
+      "type": "object",
+      "properties": {
+        "photo_id": { "type": "string", "format": "uuid" },
+        "storage_key": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "scanned_status": { "type": "string", "enum": ["pending", "clean", "infected", "error"] }
+      },
+      "required": ["photo_id", "storage_key", "sha256", "scanned_status"],
+      "additionalProperties": false
+    },
+    "PinnedVersions": {
+      "type": "object",
+      "properties": {
+        "taxonomy_version": { "type": "string" },
+        "schema_version": { "type": "string" },
+        "model_id": { "type": "string" },
+        "prompt_version": { "type": "string" }
+      },
+      "required": ["taxonomy_version", "schema_version", "model_id", "prompt_version"],
+      "additionalProperties": false
+    },
+    "WorkOrder": {
+      "type": "object",
+      "properties": {
+        "work_order_id": { "type": "string", "format": "uuid" },
+        "issue_group_id": { "type": "string", "format": "uuid" },
+        "issue_id": { "type": "string", "format": "uuid" },
+        "client_id": { "type": "string", "format": "uuid" },
+        "property_id": { "type": "string", "format": "uuid" },
+        "unit_id": { "type": "string", "format": "uuid" },
+        "tenant_user_id": { "type": "string", "format": "uuid" },
+        "tenant_account_id": { "type": "string", "format": "uuid" },
+        "status": { "$ref": "#/definitions/WorkOrderStatus" },
+        "status_history": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/StatusHistoryEntry" }
+        },
+        "raw_text": { "type": "string" },
+        "summary_confirmed": { "type": "string" },
+        "photos": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/PhotoReference" }
+        },
+        "classification": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "confidence_by_field": {
+          "type": "object",
+          "additionalProperties": { "type": "number", "minimum": 0, "maximum": 1 }
+        },
+        "missing_fields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "pets_present": {
+          "type": "string",
+          "enum": ["yes", "no", "unknown"]
+        },
+        "risk_flags": { "type": "object" },
+        "needs_human_triage": { "type": "boolean", "default": false },
+        "pinned_versions": { "$ref": "#/definitions/PinnedVersions" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "updated_at": { "type": "string", "format": "date-time" },
+        "row_version": { "type": "integer", "minimum": 1, "default": 1 }
+      },
+      "required": [
+        "work_order_id",
+        "issue_group_id",
+        "issue_id",
+        "client_id",
+        "property_id",
+        "unit_id",
+        "tenant_user_id",
+        "tenant_account_id",
+        "status",
+        "status_history",
+        "raw_text",
+        "summary_confirmed",
+        "photos",
+        "classification",
+        "confidence_by_field",
+        "missing_fields",
+        "pets_present",
+        "needs_human_triage",
+        "pinned_versions",
+        "created_at",
+        "updated_at",
+        "row_version"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

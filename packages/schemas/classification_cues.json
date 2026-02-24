@@ -1,0 +1,73 @@
+{
+  "version": "1.0.0",
+  "fields": {
+    "Maintenance_Category": {
+      "plumbing": { "keywords": ["leak", "toilet", "sink", "drain", "pipe", "water", "faucet", "shower", "clog", "plumbing"], "regex": [] },
+      "electrical": { "keywords": ["breaker", "outlet", "switch", "sparks", "power", "light", "fuse", "electrical", "wiring"], "regex": [] },
+      "hvac": { "keywords": ["heat", "ac", "furnace", "thermostat", "vent", "air conditioning", "heating", "hvac", "radiator"], "regex": [] },
+      "carpentry": { "keywords": ["door", "cabinet", "shelf", "baseboard", "wood", "frame", "hinge", "carpentry"], "regex": [] },
+      "flooring": { "keywords": ["floor", "tile", "carpet", "wood", "laminate", "flooring", "cracked floor"], "regex": [] },
+      "drywall_plaster": { "keywords": ["wall", "drywall", "plaster", "hole in wall", "crack in wall", "ceiling damage"], "regex": [] },
+      "paint": { "keywords": ["paint", "peeling", "chipping", "discolored", "stain", "mold"], "regex": [] },
+      "pest_control": { "keywords": ["pest", "cockroach", "ant", "bedbug", "rodent", "mouse", "rat", "bugs", "infestation"], "regex": [] },
+      "general_maintenance": { "keywords": ["maintenance", "repair", "fix", "broken", "damaged", "not working"], "regex": [] },
+      "locksmith": { "keywords": ["lock", "key", "locked out", "deadbolt", "latch", "locksmith"], "regex": [] },
+      "appliance": { "keywords": ["fridge", "dishwasher", "oven", "microwave", "stove", "washer", "dryer", "range hood", "appliance"], "regex": [] },
+      "roofing": { "keywords": ["roof", "roofing", "shingle", "leak from ceiling", "rain coming in"], "regex": [] },
+      "tile": { "keywords": ["tile", "grout", "cracked tile", "loose tile", "bathroom tile"], "regex": [] }
+    },
+    "Maintenance_Object": {
+      "toilet": { "keywords": ["toilet", "wc", "commode", "bowl"], "regex": [] },
+      "sink": { "keywords": ["sink", "basin", "kitchen sink", "bathroom sink"], "regex": [] },
+      "faucet": { "keywords": ["faucet", "tap", "spigot", "handle"], "regex": [] },
+      "drain": { "keywords": ["drain", "drainage", "clogged drain", "slow drain"], "regex": [] },
+      "pipe": { "keywords": ["pipe", "piping", "plumbing pipe", "water pipe"], "regex": [] },
+      "shower": { "keywords": ["shower", "shower head", "shower door", "bathtub"], "regex": [] },
+      "breaker": { "keywords": ["breaker", "circuit breaker", "electrical panel", "panel"], "regex": [] },
+      "outlet": { "keywords": ["outlet", "plug", "socket", "electrical outlet", "power outlet"], "regex": [] },
+      "light": { "keywords": ["light", "bulb", "fixture", "lamp", "lighting", "light fixture"], "regex": [] },
+      "thermostat": { "keywords": ["thermostat", "temperature control", "temp control"], "regex": [] },
+      "door": { "keywords": ["door", "front door", "closet door", "bedroom door", "entrance"], "regex": [] },
+      "lock": { "keywords": ["lock", "deadbolt", "latch", "door lock"], "regex": [] },
+      "key": { "keywords": ["key", "keys", "fob", "key card"], "regex": [] },
+      "fridge": { "keywords": ["fridge", "refrigerator", "freezer"], "regex": [] },
+      "dishwasher": { "keywords": ["dishwasher", "dish washer"], "regex": [] },
+      "oven": { "keywords": ["oven", "bake"], "regex": [] },
+      "stove": { "keywords": ["stove", "burner", "cooktop", "range"], "regex": [] },
+      "washer": { "keywords": ["washer", "washing machine", "laundry machine"], "regex": [] },
+      "dryer": { "keywords": ["dryer", "clothes dryer", "tumble dryer"], "regex": [] },
+      "radiator": { "keywords": ["radiator", "baseboard heater", "heating unit"], "regex": [] }
+    },
+    "Maintenance_Problem": {
+      "leak": { "keywords": ["leak", "leaking", "drip", "dripping", "water coming from"], "regex": [] },
+      "drain": { "keywords": ["drain", "slow drain", "won't drain", "drainage"], "regex": [] },
+      "clog": { "keywords": ["clog", "clogged", "blocked", "backup", "backed up"], "regex": [] },
+      "not_working": { "keywords": ["not working", "doesn't work", "stopped working", "won't turn on", "broken"], "regex": [] },
+      "no_water": { "keywords": ["no water", "no hot water", "no cold water", "water stopped"], "regex": [] },
+      "no_heat": { "keywords": ["no heat", "no heating", "cold", "freezing", "heater not working"], "regex": [] },
+      "flood": { "keywords": ["flood", "flooding", "flooded", "water everywhere", "burst"], "regex": [] },
+      "infestation": { "keywords": ["infestation", "infested", "bugs everywhere", "roach", "mice", "rats"], "regex": [] },
+      "broken_damaged": { "keywords": ["broken", "damaged", "cracked", "shattered", "bent", "dented"], "regex": [] },
+      "safety_risk": { "keywords": ["unsafe", "dangerous", "hazard", "risk", "sparks", "exposed wire"], "regex": [] },
+      "smell": { "keywords": ["smell", "odor", "stink", "stench", "foul", "musty", "mold"], "regex": [] },
+      "low_pressure": { "keywords": ["low pressure", "weak flow", "trickle", "barely any water"], "regex": [] }
+    },
+    "Management_Category": {
+      "accounting": { "keywords": ["rent", "payment", "charge", "bill", "receipt", "banking", "money", "fee"], "regex": [] },
+      "lease": { "keywords": ["lease", "move out", "move in", "sublet", "assign", "tenant", "contract"], "regex": [] },
+      "general": { "keywords": ["complaint", "question", "feedback", "booking", "schedule", "parking", "intercom"], "regex": [] }
+    },
+    "Management_Object": {
+      "rent_increases": { "keywords": ["rent increase", "rent hike", "raised rent"], "regex": [] },
+      "rent_charges": { "keywords": ["rent charge", "extra charge", "fee", "rent bill"], "regex": [] },
+      "banking": { "keywords": ["banking", "bank", "direct deposit", "payment method"], "regex": [] },
+      "rent_receipt": { "keywords": ["receipt", "rent receipt", "proof of payment"], "regex": [] },
+      "move_out": { "keywords": ["move out", "moving out", "vacate", "leaving"], "regex": [] },
+      "move_in": { "keywords": ["move in", "moving in", "new unit"], "regex": [] },
+      "lease_inquiry": { "keywords": ["lease", "lease question", "lease terms", "renewal"], "regex": [] },
+      "complaint": { "keywords": ["complaint", "complain", "noise", "neighbor", "nuisance"], "regex": [] },
+      "parking": { "keywords": ["parking", "parking spot", "parking pass", "garage"], "regex": [] },
+      "intercom": { "keywords": ["intercom", "buzzer", "door entry", "visitor access"], "regex": [] }
+    }
+  }
+}

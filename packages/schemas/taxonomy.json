@@ -1,0 +1,74 @@
+{
+  "Category": [
+    "maintenance",
+    "management",
+    "other_category"
+  ],
+
+  "Location": [
+    "suite",
+    "building_interior",
+    "building_exterior"
+  ],
+
+  "Sub_Location": [
+    "kitchen", "bathroom", "common_living_dining", "bedroom", "closets",
+    "keys_locks", "windows", "balcony", "ceiling", "general",
+    "entrance_lobby", "hallways_stairwells", "elevator", "laundry",
+    "locker_room", "gym", "pool", "party_room", "other_amenity",
+    "mechanical_room", "cable_room", "bike_locker", "parking_garage",
+    "landscape", "hardscape", "facade", "roof", "mechanical",
+    "garbage", "amenity", "surface_parking",
+    "other_sub_location"
+  ],
+
+  "Maintenance_Category": [
+    "plumbing", "electrical", "hvac", "carpentry", "flooring",
+    "drywall_plaster", "paint", "pest_control", "general_maintenance",
+    "locksmith", "appliance", "roofing", "tile",
+    "other_issue",
+    "other_maintenance_category"
+  ],
+
+  "Maintenance_Object": [
+    "toilet", "sink", "faucet", "drain", "pipe", "shower",
+    "breaker", "fuse", "switch", "outlet", "light", "radiator",
+    "thermostat", "door", "cabinet", "shelf", "baseboard",
+    "floor", "tile", "carpet", "wood", "laminate",
+    "wall", "ceiling", "paint", "pests", "cockroaches", "ants",
+    "bedbugs", "rodents", "lock", "key", "fridge", "dishwasher",
+    "oven", "microwave", "stove", "washer", "dryer", "range_hood",
+    "roof", "grout",
+    "other_object", "no_object", "needs_object",
+    "other_maintenance_object"
+  ],
+
+  "Maintenance_Problem": [
+    "leak", "drain", "clog", "not_working", "no_water",
+    "no_heat", "flood", "infestation", "broken_damaged",
+    "safety_risk", "smell", "low_pressure",
+    "other_problem"
+],
+  
+  "Management_Category": [
+    "accounting", "lease", "general",
+    "other_mgmt_cat",
+    "other_management_category"
+  ],
+
+  "Management_Object": [
+    "rent_increases", "rent_charges", "banking", "rent_receipt",
+    "move_out", "sublet_assign", "rentable_item", "add_remove_tenant",
+    "move_in", "lease_inquiry",
+    "complaint", "booking_scheduling", "legal_matters",
+    "technical_issues", "accommodations", "chargebacks",
+    "general_feedback", "questions", "parking", "intercom",
+    "other_mgmt_obj", "no_object", "needs_object",
+    "other_management_object"
+  ],
+
+  "Priority": [
+    "low", "normal", "high", "emergency",
+    "other_priority"
+  ]
+}

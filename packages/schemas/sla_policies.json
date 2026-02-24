@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "client_defaults": {
+    "emergency": { "response_hours": 1, "resolution_hours": 24 },
+    "high": { "response_hours": 4, "resolution_hours": 48 },
+    "normal": { "response_hours": 24, "resolution_hours": 168 },
+    "low": { "response_hours": 48, "resolution_hours": 336 }
+  },
+  "overrides": [
+    {
+      "taxonomy_path": "maintenance.plumbing.flood",
+      "response_hours": 1,
+      "resolution_hours": 12
+    }
+  ]
+}

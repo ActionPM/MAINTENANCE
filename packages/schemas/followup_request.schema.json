@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "followup_request.schema.json",
+  "definitions": {
+    "PreviousQuestion": {
+      "type": "object",
+      "properties": {
+        "field_target": { "type": "string" },
+        "times_asked": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["field_target", "times_asked"],
+      "additionalProperties": false
+    },
+    "FollowUpGeneratorInput": {
+      "type": "object",
+      "properties": {
+        "issue_id": { "type": "string" },
+        "classification": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "confidence_by_field": {
+          "type": "object",
+          "additionalProperties": { "type": "number", "minimum": 0, "maximum": 1 }
+        },
+        "missing_fields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "fields_needing_input": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "previous_questions": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/PreviousQuestion" }
+        },
+        "turn_number": { "type": "integer", "minimum": 1 },
+        "total_questions_asked": { "type": "integer", "minimum": 0 },
+        "taxonomy_version": { "type": "string" },
+        "prompt_version": { "type": "string" }
+      },
+      "required": [
+        "issue_id",
+        "classification",
+        "confidence_by_field",
+        "missing_fields",
+        "fields_needing_input",
+        "previous_questions",
+        "turn_number",
+        "total_questions_asked",
+        "taxonomy_version",
+        "prompt_version"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

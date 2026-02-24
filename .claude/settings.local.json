@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:api.github.com)",
+      "Read(//c/Users/Owner/.claude/**)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\Owner\\Documents\\01_ActionPM\\03_Agents\\03_Work Order Triage\\Work Order Agent\\.claude\\skills"
+    ]
+  }
+}
