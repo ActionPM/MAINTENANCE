@@ -23,6 +23,7 @@ function makeDeps() {
     sessionStore: new InMemorySessionStore(),
     idGenerator: () => `id-${++counter}`,
     clock: () => new Date().toISOString(),
+    issueSplitter: async () => ({ issues: [], issue_count: 0 }),
   };
 }
 

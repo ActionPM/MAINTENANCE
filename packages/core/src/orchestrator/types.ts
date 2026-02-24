@@ -1,4 +1,4 @@
-import type { ConversationState, OrchestratorActionRequest, OrchestratorActionResponse } from '@wo-agent/schemas';
+import type { ConversationState, IssueSplitterInput, IssueSplitterOutput, OrchestratorActionRequest, OrchestratorActionResponse } from '@wo-agent/schemas';
 import type { EventRepository } from '../events/event-repository.js';
 import type { ConversationSession } from '../session/types.js';
 import type { TransitionContext } from '../state-machine/guards.js';
@@ -12,6 +12,7 @@ export interface OrchestratorDependencies {
   readonly sessionStore: SessionStore;
   readonly idGenerator: () => string;
   readonly clock: () => string; // ISO 8601
+  readonly issueSplitter: (input: IssueSplitterInput) => Promise<IssueSplitterOutput>;
 }
 
 /**
