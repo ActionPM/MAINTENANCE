@@ -158,14 +158,38 @@ export function createDispatcher(deps: OrchestratorDependencies) {
       ? updateSessionState(handlerResult.session, handlerResult.newState)
       : touchActivity(handlerResult.session);
 
-    // Write event
+    // Write events — handlers may declare intermediate steps for matrix compliance.
+    // Example: SUBMIT_INITIAL_MESSAGE enters split_in_progress (intermediate),
+    // then LLM_SPLIT_SUCCESS moves to split_proposed (final).
+    let priorState = session.state;
+
+    if (handlerResult.intermediateSteps?.length) {
+      for (const step of handlerResult.intermediateSteps) {
+        const intermediateEvent: ConversationEvent = {
+          event_id: deps.idGenerator(),
+          conversation_id: session.conversation_id,
+          event_type: (step.eventType as any) ?? 'state_transition',
+          prior_state: priorState,
+          new_state: step.state,
+          action_type,
+          actor: request.actor,
+          payload: step.eventPayload ?? null,
+          pinned_versions: null,
+          created_at: deps.clock(),
+        };
+        await deps.eventRepo.insert(intermediateEvent);
+        priorState = step.state;
+      }
+    }
+
+    // Write final event (uses finalSystemAction as action_type when present)
     const event: ConversationEvent = {
       event_id: deps.idGenerator(),
       conversation_id: session.conversation_id,
       event_type: (handlerResult.eventType as any) ?? 'state_transition',
-      prior_state: session.state,
+      prior_state: priorState,
       new_state: handlerResult.newState,
-      action_type,
+      action_type: handlerResult.finalSystemAction ?? action_type,
       actor: request.actor,
       payload: handlerResult.eventPayload ?? null,
       pinned_versions: null,

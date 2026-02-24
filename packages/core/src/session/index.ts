@@ -4,6 +4,7 @@ export {
   updateSessionState,
   touchActivity,
   setSessionUnit,
+  setSplitIssues,
   markAbandoned,
   markExpired,
   isExpired,

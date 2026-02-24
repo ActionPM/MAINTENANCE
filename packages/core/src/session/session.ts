@@ -1,4 +1,5 @@
 import { ConversationState } from '@wo-agent/schemas';
+import type { SplitIssue } from '@wo-agent/schemas';
 import type { ConversationSession, CreateSessionInput } from './types.js';
 
 const ERROR_STATES: ReadonlySet<ConversationState> = new Set([
@@ -18,6 +19,7 @@ export function createSession(input: CreateSessionInput): ConversationSession {
     tenant_account_id: input.tenant_account_id,
     state: ConversationState.INTAKE_STARTED,
     unit_id: null,
+    split_issues: null,
     authorized_unit_ids: input.authorized_unit_ids,
     pinned_versions: input.pinned_versions,
     prior_state_before_error: null,
@@ -64,6 +66,21 @@ export function setSessionUnit(
   return {
     ...session,
     unit_id: unitId,
+    last_activity_at: new Date().toISOString(),
+  };
+}
+
+/**
+ * Store split issues on the session (spec §13).
+ * Issues are defensively copied to prevent external mutation.
+ */
+export function setSplitIssues(
+  session: ConversationSession,
+  issues: readonly SplitIssue[] | null,
+): ConversationSession {
+  return {
+    ...session,
+    split_issues: issues ? [...issues] : null,
     last_activity_at: new Date().toISOString(),
   };
 }

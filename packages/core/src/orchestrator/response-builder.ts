@@ -9,6 +9,7 @@ export function buildResponse(result: ActionHandlerResult): OrchestratorActionRe
     conversation_id: result.session.conversation_id,
     state: result.session.state,
     unit_id: result.session.unit_id,
+    ...(result.session.split_issues ? { issues: result.session.split_issues as any } : {}),
     pinned_versions: result.session.pinned_versions,
     created_at: result.session.created_at,
     last_activity_at: result.session.last_activity_at,

@@ -1,4 +1,4 @@
-import type { ConversationState, PinnedVersions } from '@wo-agent/schemas';
+import type { ConversationState, PinnedVersions, SplitIssue } from '@wo-agent/schemas';
 
 /**
  * Server-side conversation session (spec §11, §12).
@@ -13,6 +13,7 @@ export interface ConversationSession {
   readonly unit_id: string | null;
   readonly authorized_unit_ids: readonly string[];
   readonly pinned_versions: PinnedVersions;
+  readonly split_issues: readonly SplitIssue[] | null;
   readonly prior_state_before_error: ConversationState | null;
   readonly draft_photo_ids: readonly string[];
   readonly created_at: string;
