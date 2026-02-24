@@ -67,3 +67,37 @@ export function setSessionUnit(
     last_activity_at: new Date().toISOString(),
   };
 }
+
+export interface ExpirationConfig {
+  readonly abandonedExpiryMs: number;
+}
+
+/**
+ * Mark a session as abandoned, storing the prior state for possible RESUME.
+ */
+export function markAbandoned(session: ConversationSession): ConversationSession {
+  return updateSessionState(session, ConversationState.INTAKE_ABANDONED);
+}
+
+/**
+ * Mark an abandoned session as expired (system event).
+ */
+export function markExpired(session: ConversationSession): ConversationSession {
+  return {
+    ...session,
+    state: ConversationState.INTAKE_EXPIRED,
+    last_activity_at: new Date().toISOString(),
+  };
+}
+
+/**
+ * Check if an abandoned session has exceeded the expiry window.
+ */
+export function isExpired(
+  session: ConversationSession,
+  config: ExpirationConfig,
+): boolean {
+  if (session.state !== ConversationState.INTAKE_ABANDONED) return false;
+  const elapsed = Date.now() - new Date(session.last_activity_at).getTime();
+  return elapsed > config.abandonedExpiryMs;
+}

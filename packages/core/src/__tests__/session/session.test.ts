@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { ConversationState } from '@wo-agent/schemas';
-import { createSession, updateSessionState, touchActivity } from '../../session/session.js';
+import { createSession, updateSessionState, touchActivity, markAbandoned, markExpired, isExpired, type ExpirationConfig } from '../../session/session.js';
 import type { ConversationSession } from '../../session/types.js';
 
 afterEach(() => {
@@ -135,5 +135,104 @@ describe('touchActivity', () => {
     const touched = touchActivity(session);
     expect(touched.state).toBe(session.state);
     expect(touched.last_activity_at).not.toBe(session.last_activity_at);
+  });
+});
+
+describe('markAbandoned', () => {
+  it('transitions to intake_abandoned and stores prior state', () => {
+    const session = createSession({
+      conversation_id: 'conv-1',
+      tenant_user_id: 'user-1',
+      tenant_account_id: 'acct-1',
+      authorized_unit_ids: ['u1'],
+      pinned_versions: {
+        taxonomy_version: '1.0.0',
+        schema_version: '1.0.0',
+        model_id: 'gpt-4',
+        prompt_version: '1.0.0',
+      },
+    });
+    const withUnit = updateSessionState(session, ConversationState.UNIT_SELECTED);
+    const abandoned = markAbandoned(withUnit);
+    expect(abandoned.state).toBe(ConversationState.INTAKE_ABANDONED);
+    expect(abandoned.prior_state_before_error).toBe(ConversationState.UNIT_SELECTED);
+  });
+});
+
+describe('markExpired', () => {
+  it('transitions to intake_expired', () => {
+    const session = createSession({
+      conversation_id: 'conv-1',
+      tenant_user_id: 'user-1',
+      tenant_account_id: 'acct-1',
+      authorized_unit_ids: ['u1'],
+      pinned_versions: {
+        taxonomy_version: '1.0.0',
+        schema_version: '1.0.0',
+        model_id: 'gpt-4',
+        prompt_version: '1.0.0',
+      },
+    });
+    const abandoned = markAbandoned(session);
+    const expired = markExpired(abandoned);
+    expect(expired.state).toBe(ConversationState.INTAKE_EXPIRED);
+  });
+});
+
+describe('isExpired', () => {
+  const config: ExpirationConfig = { abandonedExpiryMs: 60 * 60 * 1000 }; // 1 hour
+
+  it('returns false for non-abandoned sessions', () => {
+    const session = createSession({
+      conversation_id: 'conv-1',
+      tenant_user_id: 'user-1',
+      tenant_account_id: 'acct-1',
+      authorized_unit_ids: ['u1'],
+      pinned_versions: {
+        taxonomy_version: '1.0.0',
+        schema_version: '1.0.0',
+        model_id: 'gpt-4',
+        prompt_version: '1.0.0',
+      },
+    });
+    expect(isExpired(session, config)).toBe(false);
+  });
+
+  it('returns true when abandoned session exceeds expiry time', () => {
+    const session = createSession({
+      conversation_id: 'conv-1',
+      tenant_user_id: 'user-1',
+      tenant_account_id: 'acct-1',
+      authorized_unit_ids: ['u1'],
+      pinned_versions: {
+        taxonomy_version: '1.0.0',
+        schema_version: '1.0.0',
+        model_id: 'gpt-4',
+        prompt_version: '1.0.0',
+      },
+    });
+    const abandoned = markAbandoned(session);
+    const oldAbandoned = {
+      ...abandoned,
+      last_activity_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+    };
+    expect(isExpired(oldAbandoned, config)).toBe(true);
+  });
+
+  it('returns false when abandoned session is within expiry window', () => {
+    const session = createSession({
+      conversation_id: 'conv-1',
+      tenant_user_id: 'user-1',
+      tenant_account_id: 'acct-1',
+      authorized_unit_ids: ['u1'],
+      pinned_versions: {
+        taxonomy_version: '1.0.0',
+        schema_version: '1.0.0',
+        model_id: 'gpt-4',
+        prompt_version: '1.0.0',
+      },
+    });
+    const abandoned = markAbandoned(session);
+    expect(isExpired(abandoned, config)).toBe(false);
   });
 });
