@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import type { ConversationEvent, EventType } from '../../events/types.js';
+import type { ConversationEvent, EventType, EventQuery } from '../../events/types.js';
+import type { EventRepository } from '../../events/event-repository.js';
 
 describe('ConversationEvent type', () => {
   it('can construct a valid state_transition event', () => {
@@ -38,5 +39,20 @@ describe('ConversationEvent type', () => {
       created_at: new Date().toISOString(),
     };
     expect(event.event_type).toBe('message_received');
+  });
+});
+
+describe('EventRepository interface', () => {
+  it('defines insert and query methods only (no update, no delete)', () => {
+    // Type-level test: if this compiles, the interface is correct
+    const repo: EventRepository = {
+      insert: async (_event: ConversationEvent) => {},
+      query: async (_filters: EventQuery) => [] as ConversationEvent[],
+    };
+    expect(typeof repo.insert).toBe('function');
+    expect(typeof repo.query).toBe('function');
+    // Verify no update/delete exists at type level
+    expect((repo as Record<string, unknown>)['update']).toBeUndefined();
+    expect((repo as Record<string, unknown>)['delete']).toBeUndefined();
   });
 });
