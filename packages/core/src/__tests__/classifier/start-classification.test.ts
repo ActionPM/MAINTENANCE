@@ -161,7 +161,7 @@ describe('handleStartClassification', () => {
 
   it('returns error when split_issues is null', async () => {
     const ctx = makeContext();
-    ctx.session = setSplitIssues(ctx.session, null) as any;
+    (ctx as any).session = setSplitIssues(ctx.session, null);
     const result = await handleStartClassification(ctx);
     expect(result.errors).toBeDefined();
     expect(result.errors!.length).toBeGreaterThan(0);

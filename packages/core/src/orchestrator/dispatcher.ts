@@ -1,4 +1,4 @@
-import { ActionType, ConversationState } from '@wo-agent/schemas';
+import { ActionType, ActorType, ConversationState } from '@wo-agent/schemas';
 import type { OrchestratorActionRequest } from '@wo-agent/schemas';
 import { isValidTransition, isPhotoAction, ALL_SYSTEM_EVENTS } from '../state-machine/index.js';
 import { SystemEvent } from '../state-machine/system-events.js';
@@ -216,7 +216,7 @@ export function createDispatcher(deps: OrchestratorDependencies) {
     handlerResult: ActionHandlerResult,
     priorSession: { conversation_id: string; state: ConversationState },
     actionType: string,
-    actor: string,
+    actor: ActorType,
   ) {
     let priorState = priorSession.state;
     const conversationId = priorSession.conversation_id;

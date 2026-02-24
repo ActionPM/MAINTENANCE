@@ -172,7 +172,7 @@ describe('Classification integration', () => {
     expect(result.response.conversation_snapshot.classification_results).toBeDefined();
     expect(result.response.conversation_snapshot.classification_results!.length).toBe(1);
 
-    const cr = result.response.conversation_snapshot.classification_results![0];
+    const cr = result.response.conversation_snapshot.classification_results![0] as any;
     expect(cr.issue_id).toBe('i1');
     expect(cr.classifierOutput.classification.Category).toBe('maintenance');
     expect(cr.fieldsNeedingInput).toEqual([]);
@@ -235,7 +235,7 @@ describe('Classification integration', () => {
       ConversationState.NEEDS_TENANT_INPUT,
     );
 
-    const classResults = result.response.conversation_snapshot.classification_results!;
+    const classResults = result.response.conversation_snapshot.classification_results! as any[];
     expect(classResults.length).toBe(1);
     // Priority and Location should appear as fields needing input due to low model_confidence
     expect(classResults[0].fieldsNeedingInput.length).toBeGreaterThan(0);
