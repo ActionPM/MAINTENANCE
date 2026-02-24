@@ -193,7 +193,7 @@ describe('Orchestrator integration: split confirmation flow', () => {
     return convId;
   }
 
-  it('walks split_proposed → CONFIRM_SPLIT → split_finalized', async () => {
+  it('walks split_proposed → CONFIRM_SPLIT → auto-classification', async () => {
     const convId = await reachSplitProposed();
 
     const r = await dispatch({
@@ -203,10 +203,14 @@ describe('Orchestrator integration: split confirmation flow', () => {
       tenant_input: {},
       auth_context: AUTH,
     });
-    expect(r.response.conversation_snapshot.state).toBe('split_finalized');
+    // Auto-chaining: CONFIRM_SPLIT -> split_finalized -> START_CLASSIFICATION -> classification result
+    expect([
+      ConversationState.TENANT_CONFIRMATION_PENDING,
+      ConversationState.NEEDS_TENANT_INPUT,
+    ]).toContain(r.response.conversation_snapshot.state);
   });
 
-  it('walks split_proposed → ADD_ISSUE → CONFIRM_SPLIT', async () => {
+  it('walks split_proposed → ADD_ISSUE → CONFIRM_SPLIT → auto-classification', async () => {
     const convId = await reachSplitProposed();
 
     const r1 = await dispatch({
@@ -226,10 +230,14 @@ describe('Orchestrator integration: split confirmation flow', () => {
       tenant_input: {},
       auth_context: AUTH,
     });
-    expect(r2.response.conversation_snapshot.state).toBe('split_finalized');
+    // Auto-chaining: CONFIRM_SPLIT -> split_finalized -> START_CLASSIFICATION -> classification result
+    expect([
+      ConversationState.TENANT_CONFIRMATION_PENDING,
+      ConversationState.NEEDS_TENANT_INPUT,
+    ]).toContain(r2.response.conversation_snapshot.state);
   });
 
-  it('walks split_proposed → REJECT_SPLIT → split_finalized (single issue)', async () => {
+  it('walks split_proposed → REJECT_SPLIT → auto-classification (single issue)', async () => {
     const convId = await reachSplitProposed();
 
     const r = await dispatch({
@@ -239,7 +247,11 @@ describe('Orchestrator integration: split confirmation flow', () => {
       tenant_input: {},
       auth_context: AUTH,
     });
-    expect(r.response.conversation_snapshot.state).toBe('split_finalized');
+    // Auto-chaining: REJECT_SPLIT -> split_finalized -> START_CLASSIFICATION -> classification result
+    expect([
+      ConversationState.TENANT_CONFIRMATION_PENDING,
+      ConversationState.NEEDS_TENANT_INPUT,
+    ]).toContain(r.response.conversation_snapshot.state);
     expect(r.response.conversation_snapshot.issues!.length).toBe(1);
   });
 
