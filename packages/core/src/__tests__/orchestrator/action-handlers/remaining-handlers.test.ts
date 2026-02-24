@@ -1,13 +1,13 @@
-import { describe, it, expect } from 'vitest';
-import { ConversationState, ActionType, ActorType, loadTaxonomy } from '@wo-agent/schemas';
-import type { CueDictionary } from '@wo-agent/schemas';
+import { describe, it, expect, vi } from 'vitest';
+import { ConversationState, ActionType, ActorType, DEFAULT_CONFIDENCE_CONFIG, loadTaxonomy } from '@wo-agent/schemas';
+import type { CueDictionary, ConfidenceConfig } from '@wo-agent/schemas';
 import { handleSubmitAdditionalMessage } from '../../../orchestrator/action-handlers/submit-additional-message.js';
 import { handleAnswerFollowups } from '../../../orchestrator/action-handlers/answer-followups.js';
 import { handleConfirmSubmission } from '../../../orchestrator/action-handlers/confirm-submission.js';
 import { handlePhotoUpload } from '../../../orchestrator/action-handlers/photo-upload.js';
 import { handleResume } from '../../../orchestrator/action-handlers/resume.js';
 import { handleAbandon } from '../../../orchestrator/action-handlers/abandon.js';
-import { createSession, updateSessionState } from '../../../session/session.js';
+import { createSession, updateSessionState, setSplitIssues, setClassificationResults } from '../../../session/session.js';
 import { InMemoryEventStore } from '../../../events/in-memory-event-store.js';
 import type { ActionHandlerContext } from '../../../orchestrator/types.js';
 
@@ -76,12 +76,46 @@ describe('handleSubmitAdditionalMessage', () => {
 });
 
 describe('handleAnswerFollowups', () => {
-  it('transitions to classification_in_progress', async () => {
+  it('returns error when session has no split_issues', async () => {
     const ctx = makeContext(ConversationState.NEEDS_TENANT_INPUT, ActionType.ANSWER_FOLLOWUPS, {
       answers: [{ question_id: 'q1', answer: 'yes' }],
     });
     const result = await handleAnswerFollowups(ctx);
-    expect(result.newState).toBe(ConversationState.CLASSIFICATION_IN_PROGRESS);
+    expect(result.errors).toBeDefined();
+    expect(result.errors![0].code).toBe('NO_ISSUES');
+  });
+
+  it('re-classifies and reaches tenant_confirmation_pending with split_issues', async () => {
+    const ctx = makeContext(ConversationState.NEEDS_TENANT_INPUT, ActionType.ANSWER_FOLLOWUPS, {
+      answers: [{ question_id: 'Priority', answer: 'normal' }],
+    });
+    // Set up split_issues and classification_results on the session
+    let session = setSplitIssues(ctx.session, [
+      { issue_id: 'i1', summary: 'Toilet leaking', raw_excerpt: 'My toilet is leaking' },
+    ]);
+    session = setClassificationResults(session, [{
+      issue_id: 'i1',
+      classifierOutput: {
+        issue_id: 'i1',
+        classification: { Category: 'maintenance' },
+        model_confidence: { Category: 0.9 },
+        missing_fields: [],
+        needs_human_triage: false,
+      },
+      computedConfidence: { Category: 0.9 },
+      fieldsNeedingInput: ['Priority'],
+    }]);
+    (ctx as any).session = session;
+    // Override confidence config with test-friendly thresholds
+    (ctx.deps as any).confidenceConfig = {
+      ...DEFAULT_CONFIDENCE_CONFIG,
+      high_threshold: 0.40,
+      medium_threshold: 0.25,
+    };
+    const result = await handleAnswerFollowups(ctx);
+    expect(result.intermediateSteps).toBeDefined();
+    expect(result.intermediateSteps![0].state).toBe(ConversationState.CLASSIFICATION_IN_PROGRESS);
+    expect(result.newState).toBe(ConversationState.TENANT_CONFIRMATION_PENDING);
   });
 });
 
