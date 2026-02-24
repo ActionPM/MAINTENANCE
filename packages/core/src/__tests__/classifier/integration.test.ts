@@ -1,0 +1,439 @@
+import { describe, it, expect, vi } from 'vitest';
+import { createDispatcher } from '../../orchestrator/dispatcher.js';
+import { ActionType, ActorType, ConversationState, loadTaxonomy, DEFAULT_CONFIDENCE_CONFIG } from '@wo-agent/schemas';
+import type { IssueClassifierOutput, CueDictionary, ConfidenceConfig } from '@wo-agent/schemas';
+import { InMemoryEventStore } from '../../events/in-memory-event-store.js';
+import { SystemEvent } from '../../state-machine/system-events.js';
+import type { SessionStore } from '../../orchestrator/types.js';
+import type { ConversationSession } from '../../session/types.js';
+
+const taxonomy = loadTaxonomy();
+
+/**
+ * Lower thresholds so the confidence formula can actually reach "high".
+ * The default high_threshold (0.85) exceeds the theoretical maximum because
+ * model_hint is clamped to [0.2, 0.95] and the weighted formula caps out lower.
+ */
+const TEST_CONFIDENCE_CONFIG: ConfidenceConfig = {
+  ...DEFAULT_CONFIDENCE_CONFIG,
+  high_threshold: 0.40,
+  medium_threshold: 0.25,
+};
+
+const VALID_CLASSIFICATION: IssueClassifierOutput = {
+  issue_id: 'i1',
+  classification: {
+    Category: 'maintenance',
+    Location: 'suite',
+    Sub_Location: 'bathroom',
+    Maintenance_Category: 'plumbing',
+    Maintenance_Object: 'toilet',
+    Maintenance_Problem: 'leak',
+    Management_Category: 'other_mgmt_cat',
+    Management_Object: 'other_mgmt_obj',
+    Priority: 'normal',
+  },
+  model_confidence: {
+    Category: 0.95,
+    Location: 0.9,
+    Sub_Location: 0.85,
+    Maintenance_Category: 0.92,
+    Maintenance_Object: 0.95,
+    Maintenance_Problem: 0.88,
+    Management_Category: 0.95,
+    Management_Object: 0.95,
+    Priority: 0.9,
+  },
+  missing_fields: [],
+  needs_human_triage: false,
+};
+
+/**
+ * Classification where Priority and Location have very low model_confidence.
+ * With the confidence formula: 0.40*cue + 0.25*completeness + 0.20*model_hint
+ * A model_hint of 0.05 gets clamped to model_hint_min (0.2), giving:
+ *   0 + 0.25 + 0.20*0.2 = 0.29 for fields without cue matches.
+ * This falls into "medium" band (>=0.25, <0.40) with TEST_CONFIDENCE_CONFIG,
+ * which triggers needs_tenant_input.
+ */
+const LOW_CONFIDENCE_CLASSIFICATION: IssueClassifierOutput = {
+  ...VALID_CLASSIFICATION,
+  model_confidence: {
+    ...VALID_CLASSIFICATION.model_confidence,
+    Priority: 0.05,
+    Location: 0.05,
+  },
+};
+
+const MINI_CUES: CueDictionary = {
+  version: '1.0.0',
+  fields: {
+    Maintenance_Category: {
+      plumbing: { keywords: ['leak', 'toilet'], regex: [] },
+    },
+  },
+};
+
+const AUTH = {
+  tenant_user_id: 'user-1',
+  tenant_account_id: 'acct-1',
+  authorized_unit_ids: ['u1'],
+};
+
+class InMemorySessionStore implements SessionStore {
+  private sessions = new Map<string, ConversationSession>();
+  async get(id: string) { return this.sessions.get(id) ?? null; }
+  async getByTenantUser(userId: string) {
+    return [...this.sessions.values()].filter((s) => s.tenant_user_id === userId);
+  }
+  async save(session: ConversationSession) { this.sessions.set(session.conversation_id, session); }
+}
+
+function makeDeps(overrides?: {
+  classifierFn?: (...args: unknown[]) => Promise<unknown>;
+  splitterFn?: (...args: unknown[]) => Promise<unknown>;
+  confidenceConfig?: ConfidenceConfig;
+}) {
+  let counter = 0;
+  return {
+    eventRepo: new InMemoryEventStore(),
+    sessionStore: new InMemorySessionStore(),
+    idGenerator: () => `id-${++counter}`,
+    clock: () => '2026-02-24T12:00:00Z',
+    issueSplitter: overrides?.splitterFn ?? vi.fn().mockResolvedValue({
+      issues: [{ issue_id: 'i1', summary: 'Toilet leaking', raw_excerpt: 'My toilet is leaking' }],
+      issue_count: 1,
+    }),
+    issueClassifier: overrides?.classifierFn ?? vi.fn().mockResolvedValue(VALID_CLASSIFICATION),
+    cueDict: MINI_CUES,
+    taxonomy,
+    confidenceConfig: overrides?.confidenceConfig ?? TEST_CONFIDENCE_CONFIG,
+  };
+}
+
+/**
+ * Walk the conversation from creation through to split confirmed (which auto-chains
+ * to classification via the dispatcher's AUTO_FIRE_MAP).
+ */
+async function walkToClassified(
+  dispatch: ReturnType<typeof createDispatcher>,
+  auth = AUTH,
+) {
+  const r1 = await dispatch({
+    conversation_id: null,
+    action_type: ActionType.CREATE_CONVERSATION,
+    actor: ActorType.TENANT,
+    tenant_input: {},
+    auth_context: auth,
+  });
+  const convId = r1.response.conversation_snapshot.conversation_id;
+
+  await dispatch({
+    conversation_id: convId,
+    action_type: ActionType.SELECT_UNIT,
+    actor: ActorType.TENANT,
+    tenant_input: { unit_id: 'u1' },
+    auth_context: auth,
+  });
+
+  await dispatch({
+    conversation_id: convId,
+    action_type: ActionType.SUBMIT_INITIAL_MESSAGE,
+    actor: ActorType.TENANT,
+    tenant_input: { message: 'My toilet is leaking' },
+    auth_context: auth,
+  });
+
+  const r4 = await dispatch({
+    conversation_id: convId,
+    action_type: ActionType.CONFIRM_SPLIT,
+    actor: ActorType.TENANT,
+    tenant_input: {},
+    auth_context: auth,
+  });
+
+  return { convId, result: r4 };
+}
+
+describe('Classification integration', () => {
+
+  // ---------------------------------------------------------------
+  // 1. Happy path: single issue, high confidence -> tenant_confirmation_pending
+  // ---------------------------------------------------------------
+  it('happy path: single issue with high confidence reaches tenant_confirmation_pending', async () => {
+    const deps = makeDeps();
+    const dispatch = createDispatcher(deps as any);
+
+    const { result } = await walkToClassified(dispatch);
+
+    expect(result.response.conversation_snapshot.state).toBe(
+      ConversationState.TENANT_CONFIRMATION_PENDING,
+    );
+    expect(result.response.conversation_snapshot.classification_results).toBeDefined();
+    expect(result.response.conversation_snapshot.classification_results!.length).toBe(1);
+
+    const cr = result.response.conversation_snapshot.classification_results![0];
+    expect(cr.issue_id).toBe('i1');
+    expect(cr.classifierOutput.classification.Category).toBe('maintenance');
+    expect(cr.fieldsNeedingInput).toEqual([]);
+  });
+
+  // ---------------------------------------------------------------
+  // 2. Multi-issue: two issues classified independently, both stored
+  // ---------------------------------------------------------------
+  it('multi-issue: two issues are classified independently and both stored', async () => {
+    let classifyCallCount = 0;
+    const multiIssueSplitter = vi.fn().mockResolvedValue({
+      issues: [
+        { issue_id: 'i1', summary: 'Toilet leaking', raw_excerpt: 'My toilet is leaking' },
+        { issue_id: 'i2', summary: 'Light broken', raw_excerpt: 'Kitchen light is broken' },
+      ],
+      issue_count: 2,
+    });
+
+    const multiIssueClassifier = vi.fn().mockImplementation(async () => {
+      classifyCallCount++;
+      return {
+        ...VALID_CLASSIFICATION,
+        issue_id: `i${classifyCallCount}`,
+      };
+    });
+
+    const deps = makeDeps({
+      splitterFn: multiIssueSplitter,
+      classifierFn: multiIssueClassifier,
+    });
+    const dispatch = createDispatcher(deps as any);
+
+    const { result } = await walkToClassified(dispatch);
+
+    expect(result.response.conversation_snapshot.state).toBe(
+      ConversationState.TENANT_CONFIRMATION_PENDING,
+    );
+
+    const classResults = result.response.conversation_snapshot.classification_results!;
+    expect(classResults.length).toBe(2);
+    expect(classResults[0].issue_id).toBe('i1');
+    expect(classResults[1].issue_id).toBe('i2');
+
+    // Classifier should have been called once per issue
+    expect(multiIssueClassifier).toHaveBeenCalledTimes(2);
+  });
+
+  // ---------------------------------------------------------------
+  // 3. Low confidence fields trigger needs_tenant_input
+  // ---------------------------------------------------------------
+  it('low confidence fields trigger needs_tenant_input', async () => {
+    const deps = makeDeps({
+      classifierFn: vi.fn().mockResolvedValue(LOW_CONFIDENCE_CLASSIFICATION),
+    });
+    const dispatch = createDispatcher(deps as any);
+
+    const { result } = await walkToClassified(dispatch);
+
+    expect(result.response.conversation_snapshot.state).toBe(
+      ConversationState.NEEDS_TENANT_INPUT,
+    );
+
+    const classResults = result.response.conversation_snapshot.classification_results!;
+    expect(classResults.length).toBe(1);
+    // Priority and Location should appear as fields needing input due to low model_confidence
+    expect(classResults[0].fieldsNeedingInput.length).toBeGreaterThan(0);
+  });
+
+  // ---------------------------------------------------------------
+  // 4. Category gating retry resolves contradiction
+  // ---------------------------------------------------------------
+  it('category gating retry resolves contradiction on second call', async () => {
+    // First call returns a contradictory classification: maintenance category
+    // with populated management fields (accounting, rent_charges) that are valid
+    // taxonomy values but violate category gating (spec §5.3).
+    // The callIssueClassifier pipeline passes schema + taxonomy value validation
+    // in Phase 1, then detects the cross-domain contradiction in Phase 2
+    // and retries with a domain_constraint hint. The second call returns clean output.
+    const contradictoryOutput: IssueClassifierOutput = {
+      ...VALID_CLASSIFICATION,
+      classification: {
+        ...VALID_CLASSIFICATION.classification,
+        Category: 'maintenance',
+        Management_Category: 'accounting',     // valid value but contradicts maintenance category
+        Management_Object: 'rent_charges',     // valid value but contradicts maintenance category
+      },
+    };
+
+    const cleanOutput: IssueClassifierOutput = {
+      ...VALID_CLASSIFICATION,
+    };
+
+    let callCount = 0;
+    const classifierFn = vi.fn().mockImplementation(async (_input: unknown, _retryCtx?: unknown) => {
+      callCount++;
+      // First call: contradictory; gating retry: clean
+      if (callCount === 1) return contradictoryOutput;
+      return cleanOutput;
+    });
+
+    const deps = makeDeps({ classifierFn });
+    const dispatch = createDispatcher(deps as any);
+
+    const { result } = await walkToClassified(dispatch);
+
+    expect(result.response.conversation_snapshot.state).toBe(
+      ConversationState.TENANT_CONFIRMATION_PENDING,
+    );
+
+    // The classifier should have been called twice: original + gating retry
+    expect(classifierFn).toHaveBeenCalledTimes(2);
+
+    // Verify the retry was called with the domain_constraint context
+    const secondCall = classifierFn.mock.calls[1];
+    expect(secondCall[1]).toBeDefined();
+    expect(secondCall[1].retryHint).toBe('domain_constraint');
+  });
+
+  // ---------------------------------------------------------------
+  // 5. LLM failure transitions to llm_error_retryable
+  // ---------------------------------------------------------------
+  it('LLM failure transitions to llm_error_retryable', async () => {
+    const deps = makeDeps({
+      classifierFn: vi.fn().mockRejectedValue(new Error('LLM service unavailable')),
+    });
+    const dispatch = createDispatcher(deps as any);
+
+    const { result } = await walkToClassified(dispatch);
+
+    expect(result.response.conversation_snapshot.state).toBe(
+      ConversationState.LLM_ERROR_RETRYABLE,
+    );
+    expect(result.response.errors.length).toBeGreaterThan(0);
+    expect(result.response.errors[0].code).toBe('CLASSIFIER_FAILED');
+  });
+
+  // ---------------------------------------------------------------
+  // 6. Re-classification after ANSWER_FOLLOWUPS
+  // ---------------------------------------------------------------
+  it('re-classification after ANSWER_FOLLOWUPS walks from needs_tenant_input to tenant_confirmation_pending', async () => {
+    // Step 1: Initial classification returns low-confidence fields -> needs_tenant_input
+    let callCount = 0;
+    const classifierFn = vi.fn().mockImplementation(async () => {
+      callCount++;
+      if (callCount <= 1) {
+        // First classification: low confidence on Priority
+        return LOW_CONFIDENCE_CLASSIFICATION;
+      }
+      // Re-classification after followup: all high confidence
+      return VALID_CLASSIFICATION;
+    });
+
+    const deps = makeDeps({ classifierFn });
+    const dispatch = createDispatcher(deps as any);
+
+    // Walk to classified (should land in needs_tenant_input)
+    const { convId, result: classResult } = await walkToClassified(dispatch);
+
+    expect(classResult.response.conversation_snapshot.state).toBe(
+      ConversationState.NEEDS_TENANT_INPUT,
+    );
+
+    // Step 2: Dispatch ANSWER_FOLLOWUPS with tenant answers
+    const followupResult = await dispatch({
+      conversation_id: convId,
+      action_type: ActionType.ANSWER_FOLLOWUPS,
+      actor: ActorType.TENANT,
+      tenant_input: {
+        answers: [
+          { question_id: 'Priority', answer: 'normal' },
+          { question_id: 'Location', answer: 'suite' },
+        ],
+      },
+      auth_context: AUTH,
+    });
+
+    // Should now be in tenant_confirmation_pending
+    expect(followupResult.response.conversation_snapshot.state).toBe(
+      ConversationState.TENANT_CONFIRMATION_PENDING,
+    );
+
+    // Classification results should be updated
+    const newResults = followupResult.response.conversation_snapshot.classification_results!;
+    expect(newResults.length).toBe(1);
+    expect(newResults[0].fieldsNeedingInput).toEqual([]);
+  });
+
+  // ---------------------------------------------------------------
+  // 7. Event recording verification
+  // ---------------------------------------------------------------
+  it('records classification events with proper data through the full flow', async () => {
+    const deps = makeDeps();
+    const dispatch = createDispatcher(deps as any);
+
+    const { convId } = await walkToClassified(dispatch);
+
+    const events = await deps.eventRepo.query({ conversation_id: convId });
+
+    // Expected event sequence:
+    // 0. CREATE_CONVERSATION -> intake_started
+    // 1. SELECT_UNIT -> unit_selected
+    // 2. SUBMIT_INITIAL_MESSAGE -> split_in_progress (intermediate)
+    // 3. LLM_SPLIT_SUCCESS -> split_proposed
+    // 4. CONFIRM_SPLIT -> split_finalized
+    // 5. START_CLASSIFICATION -> classification_in_progress (intermediate)
+    // 6. LLM_CLASSIFY_SUCCESS -> tenant_confirmation_pending
+    expect(events.length).toBe(7);
+
+    // Verify CREATE_CONVERSATION event
+    expect(events[0].action_type).toBe(ActionType.CREATE_CONVERSATION);
+    expect(events[0].prior_state).toBeNull();
+    expect(events[0].new_state).toBe(ConversationState.INTAKE_STARTED);
+
+    // Verify SELECT_UNIT event
+    expect(events[1].action_type).toBe(ActionType.SELECT_UNIT);
+    expect(events[1].prior_state).toBe(ConversationState.INTAKE_STARTED);
+    expect(events[1].new_state).toBe(ConversationState.UNIT_SELECTED);
+
+    // Verify SUBMIT_INITIAL_MESSAGE -> split_in_progress (intermediate)
+    expect(events[2].action_type).toBe(ActionType.SUBMIT_INITIAL_MESSAGE);
+    expect(events[2].prior_state).toBe(ConversationState.UNIT_SELECTED);
+    expect(events[2].new_state).toBe(ConversationState.SPLIT_IN_PROGRESS);
+
+    // Verify LLM_SPLIT_SUCCESS -> split_proposed
+    expect(events[3].action_type).toBe(SystemEvent.LLM_SPLIT_SUCCESS);
+    expect(events[3].prior_state).toBe(ConversationState.SPLIT_IN_PROGRESS);
+    expect(events[3].new_state).toBe(ConversationState.SPLIT_PROPOSED);
+
+    // Verify CONFIRM_SPLIT -> split_finalized
+    expect(events[4].action_type).toBe(ActionType.CONFIRM_SPLIT);
+    expect(events[4].prior_state).toBe(ConversationState.SPLIT_PROPOSED);
+    expect(events[4].new_state).toBe(ConversationState.SPLIT_FINALIZED);
+
+    // Verify START_CLASSIFICATION -> classification_in_progress (intermediate)
+    expect(events[5].action_type).toBe(SystemEvent.START_CLASSIFICATION);
+    expect(events[5].prior_state).toBe(ConversationState.SPLIT_FINALIZED);
+    expect(events[5].new_state).toBe(ConversationState.CLASSIFICATION_IN_PROGRESS);
+    expect(events[5].payload).toBeDefined();
+    expect((events[5].payload as any).issue_count).toBe(1);
+
+    // Verify LLM_CLASSIFY_SUCCESS -> tenant_confirmation_pending
+    expect(events[6].action_type).toBe(SystemEvent.LLM_CLASSIFY_SUCCESS);
+    expect(events[6].prior_state).toBe(ConversationState.CLASSIFICATION_IN_PROGRESS);
+    expect(events[6].new_state).toBe(ConversationState.TENANT_CONFIRMATION_PENDING);
+    expect(events[6].payload).toBeDefined();
+
+    // Verify the classification results payload contains expected data
+    const classPayload = events[6].payload as any;
+    expect(classPayload.classification_results).toBeDefined();
+    expect(classPayload.classification_results.length).toBe(1);
+    expect(classPayload.classification_results[0].issue_id).toBe('i1');
+    expect(classPayload.classification_results[0].classification.Category).toBe('maintenance');
+    expect(classPayload.classification_results[0].computed_confidence).toBeDefined();
+
+    // All events should have the same conversation_id
+    for (const event of events) {
+      expect(event.conversation_id).toBe(convId);
+    }
+
+    // All events should have unique event_ids
+    const eventIds = events.map((e) => e.event_id);
+    expect(new Set(eventIds).size).toBe(eventIds.length);
+  });
+});
