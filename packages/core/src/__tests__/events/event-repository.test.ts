@@ -52,7 +52,7 @@ describe('EventRepository interface', () => {
     expect(typeof repo.insert).toBe('function');
     expect(typeof repo.query).toBe('function');
     // Verify no update/delete exists at type level
-    expect((repo as Record<string, unknown>)['update']).toBeUndefined();
-    expect((repo as Record<string, unknown>)['delete']).toBeUndefined();
+    expect((repo as unknown as Record<string, unknown>)['update']).toBeUndefined();
+    expect((repo as unknown as Record<string, unknown>)['delete']).toBeUndefined();
   });
 });

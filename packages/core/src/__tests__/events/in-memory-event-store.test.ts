@@ -78,7 +78,7 @@ describe('InMemoryEventStore', () => {
   });
 
   it('has no update or delete methods', () => {
-    expect((store as Record<string, unknown>)['update']).toBeUndefined();
-    expect((store as Record<string, unknown>)['delete']).toBeUndefined();
+    expect((store as unknown as Record<string, unknown>)['update']).toBeUndefined();
+    expect((store as unknown as Record<string, unknown>)['delete']).toBeUndefined();
   });
 });
