@@ -99,6 +99,19 @@ describe('MERGE_ISSUES', () => {
     expect(result.errors).toBeDefined();
     expect(result.errors![0].code).toBe('ISSUE_NOT_FOUND');
   });
+
+  it('rejects merge when combined summary exceeds 500 chars', async () => {
+    const longIssues = [
+      { issue_id: 'a', summary: 'x'.repeat(300), raw_excerpt: 'a' },
+      { issue_id: 'b', summary: 'y'.repeat(300), raw_excerpt: 'b' },
+    ];
+    const ctx = makeContext(ActionType.MERGE_ISSUES, { issue_ids: ['a', 'b'] }, longIssues);
+    const result = await handleSplitAction(ctx);
+    expect(result.errors).toBeDefined();
+    expect(result.errors![0].code).toBe('MERGED_SUMMARY_TOO_LONG');
+    // Session should be unchanged
+    expect(result.session.split_issues!.length).toBe(2);
+  });
 });
 
 describe('EDIT_ISSUE', () => {

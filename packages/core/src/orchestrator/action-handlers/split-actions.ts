@@ -119,9 +119,22 @@ function handleMergeIssues(
   const toMerge = issues.filter(i => mergeSet.has(i.issue_id));
   const remaining = issues.filter(i => !mergeSet.has(i.issue_id));
 
+  const mergedSummary = toMerge.map(i => i.summary).join('; ');
+
+  // Validate merged summary against text constraints (no count check — merge reduces count)
+  const validation = validateIssueConstraints(mergedSummary, 0, { checkCount: false });
+  if (!validation.valid) {
+    return {
+      newState: ctx.session.state,
+      session: ctx.session,
+      uiMessages: [{ role: 'agent', content: `Merged summary too long. ${validation.error}` }],
+      errors: [{ code: 'MERGED_SUMMARY_TOO_LONG', message: validation.error! }],
+    };
+  }
+
   const merged: SplitIssue = {
     issue_id: toMerge[0].issue_id,
-    summary: toMerge.map(i => i.summary).join('; '),
+    summary: mergedSummary,
     raw_excerpt: toMerge.map(i => i.raw_excerpt).join(' '),
   };
 
