@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { ConversationState } from '@wo-agent/schemas';
 import { buildResponse } from '../../orchestrator/response-builder.js';
+import { createSession, setSplitIssues } from '../../session/session.js';
 import type { ConversationSession } from '../../session/types.js';
 import type { ActionHandlerResult } from '../../orchestrator/types.js';
 
@@ -10,6 +11,7 @@ const mockSession: ConversationSession = {
   tenant_account_id: 'acct-1',
   state: ConversationState.UNIT_SELECTED,
   unit_id: 'u1',
+  split_issues: null,
   authorized_unit_ids: ['u1'],
   pinned_versions: {
     taxonomy_version: '1.0.0',
@@ -62,5 +64,45 @@ describe('buildResponse', () => {
     const response = buildResponse(result);
     expect(response.errors).toHaveLength(1);
     expect(response.errors[0].code).toBe('INVALID_UNIT');
+  });
+
+  it('includes split_issues in snapshot when present', () => {
+    const issues = [
+      { issue_id: 'i1', summary: 'Toilet leaking', raw_excerpt: 'toilet is leaking' },
+    ];
+    let session = createSession({
+      conversation_id: 'conv-1',
+      tenant_user_id: 'user-1',
+      tenant_account_id: 'acct-1',
+      authorized_unit_ids: ['u1'],
+      pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'gpt-4', prompt_version: '1.0.0' },
+    });
+    session = setSplitIssues(session, issues);
+
+    const response = buildResponse({
+      newState: ConversationState.SPLIT_PROPOSED,
+      session,
+      uiMessages: [{ role: 'agent', content: 'Issues found' }],
+    });
+
+    expect(response.conversation_snapshot.issues).toEqual(issues);
+  });
+
+  it('omits issues from snapshot when null', () => {
+    const session = createSession({
+      conversation_id: 'conv-1',
+      tenant_user_id: 'user-1',
+      tenant_account_id: 'acct-1',
+      authorized_unit_ids: ['u1'],
+      pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'gpt-4', prompt_version: '1.0.0' },
+    });
+
+    const response = buildResponse({
+      newState: ConversationState.INTAKE_STARTED,
+      session,
+      uiMessages: [],
+    });
+
+    expect(response.conversation_snapshot.issues).toBeUndefined();
   });
 });
