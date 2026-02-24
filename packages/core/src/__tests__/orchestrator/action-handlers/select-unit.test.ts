@@ -1,9 +1,20 @@
 import { describe, it, expect } from 'vitest';
-import { ConversationState, ActionType, ActorType } from '@wo-agent/schemas';
+import { ConversationState, ActionType, ActorType, loadTaxonomy } from '@wo-agent/schemas';
+import type { CueDictionary } from '@wo-agent/schemas';
 import { handleSelectUnit } from '../../../orchestrator/action-handlers/select-unit.js';
 import { createSession } from '../../../session/session.js';
 import { InMemoryEventStore } from '../../../events/in-memory-event-store.js';
 import type { ActionHandlerContext } from '../../../orchestrator/types.js';
+
+const taxonomy = loadTaxonomy();
+const MINI_CUES: CueDictionary = {
+  version: '1.0.0',
+  fields: {
+    Maintenance_Category: {
+      plumbing: { keywords: ['leak', 'toilet'], regex: [] },
+    },
+  },
+};
 
 function makeContext(
   unitIds: string[],
@@ -40,6 +51,8 @@ function makeContext(
         missing_fields: [],
         needs_human_triage: false,
       }),
+      cueDict: MINI_CUES,
+      taxonomy,
     },
   };
 }

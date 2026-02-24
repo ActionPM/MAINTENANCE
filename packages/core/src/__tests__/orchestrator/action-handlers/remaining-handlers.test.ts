@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { ConversationState, ActionType, ActorType } from '@wo-agent/schemas';
+import { ConversationState, ActionType, ActorType, loadTaxonomy } from '@wo-agent/schemas';
+import type { CueDictionary } from '@wo-agent/schemas';
 import { handleSubmitAdditionalMessage } from '../../../orchestrator/action-handlers/submit-additional-message.js';
 import { handleAnswerFollowups } from '../../../orchestrator/action-handlers/answer-followups.js';
 import { handleConfirmSubmission } from '../../../orchestrator/action-handlers/confirm-submission.js';
@@ -9,6 +10,16 @@ import { handleAbandon } from '../../../orchestrator/action-handlers/abandon.js'
 import { createSession, updateSessionState } from '../../../session/session.js';
 import { InMemoryEventStore } from '../../../events/in-memory-event-store.js';
 import type { ActionHandlerContext } from '../../../orchestrator/types.js';
+
+const taxonomy = loadTaxonomy();
+const MINI_CUES: CueDictionary = {
+  version: '1.0.0',
+  fields: {
+    Maintenance_Category: {
+      plumbing: { keywords: ['leak', 'toilet'], regex: [] },
+    },
+  },
+};
 
 function makeContext(state: string, actionType: string, tenantInput: Record<string, unknown> = {}): ActionHandlerContext {
   let counter = 0;
@@ -44,6 +55,8 @@ function makeContext(state: string, actionType: string, tenantInput: Record<stri
         missing_fields: [],
         needs_human_triage: false,
       }),
+      cueDict: MINI_CUES,
+      taxonomy,
     },
   };
 }
