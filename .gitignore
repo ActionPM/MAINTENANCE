@@ -27,6 +27,9 @@ pnpm-debug.log*
 # Coverage
 coverage/
 
+# Worktrees
+.worktrees/
+
 # Next.js
 .next/
 out/
