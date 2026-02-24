@@ -66,7 +66,7 @@ export type {
 } from './events/index.js';
 
 // --- Splitter (Phase 4) ---
-export { sanitizeIssueText, validateIssueConstraints } from './splitter/index.js';
+export { sanitizeIssueText, validateIssueConstraints, callIssueSplitter, SplitterError, SplitterErrorCode } from './splitter/index.js';
 export type { IssueConstraintResult } from './splitter/index.js';
 
 // --- Orchestrator (Phase 3) ---
