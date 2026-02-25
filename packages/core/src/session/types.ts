@@ -1,4 +1,4 @@
-import type { ConversationState, IssueClassifierOutput, PinnedVersions, SplitIssue } from '@wo-agent/schemas';
+import type { ConversationState, IssueClassifierOutput, PinnedVersions, SplitIssue, PreviousQuestion, FollowUpQuestion } from '@wo-agent/schemas';
 
 /**
  * Per-issue classification result stored on the session.
@@ -27,6 +27,10 @@ export interface ConversationSession {
   readonly split_issues: readonly SplitIssue[] | null;
   readonly classification_results: readonly IssueClassificationResult[] | null;
   readonly prior_state_before_error: ConversationState | null;
+  readonly followup_turn_number: number;
+  readonly total_questions_asked: number;
+  readonly previous_questions: readonly PreviousQuestion[];
+  readonly pending_followup_questions: readonly FollowUpQuestion[] | null;
   readonly draft_photo_ids: readonly string[];
   readonly created_at: string;
   readonly last_activity_at: string;

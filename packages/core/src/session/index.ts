@@ -6,6 +6,8 @@ export {
   setSessionUnit,
   setSplitIssues,
   setClassificationResults,
+  updateFollowUpTracking,
+  setPendingFollowUpQuestions,
   markAbandoned,
   markExpired,
   isExpired,
