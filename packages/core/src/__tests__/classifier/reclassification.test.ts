@@ -117,6 +117,7 @@ function makeFollowupContext(overrides?: {
       clock: () => '2026-02-24T12:00:00Z',
       issueSplitter: vi.fn(),
       issueClassifier: overrides?.classifierFn ?? vi.fn().mockResolvedValue(HIGH_CONFIDENCE_OUTPUT),
+      followUpGenerator: vi.fn().mockResolvedValue({ questions: [] }),
       cueDict: overrides?.cueDict ?? FULL_CUES,
       taxonomy,
     } as any,

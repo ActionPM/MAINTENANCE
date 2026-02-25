@@ -97,7 +97,7 @@ function makeContext(overrides?: {
       },
     },
     deps: {
-      eventRepo: { append: vi.fn(), query: vi.fn().mockResolvedValue([]) },
+      eventRepo: { insert: vi.fn(), query: vi.fn().mockResolvedValue([]) },
       sessionStore: {
         get: vi.fn().mockResolvedValue(null),
         getByTenantUser: vi.fn().mockResolvedValue([]),
@@ -107,6 +107,9 @@ function makeContext(overrides?: {
       clock: () => '2026-02-24T12:00:00Z',
       issueSplitter: vi.fn(),
       issueClassifier: overrides?.classifierFn ?? vi.fn().mockResolvedValue(VALID_CLASSIFICATION),
+      followUpGenerator: vi.fn().mockResolvedValue({
+        questions: [{ question_id: 'q1', field_target: 'Priority', prompt: 'How urgent?', options: ['low', 'high'], answer_type: 'enum' }],
+      }),
       cueDict: overrides?.cueDict ?? FULL_CUES,
       taxonomy,
     } as any,

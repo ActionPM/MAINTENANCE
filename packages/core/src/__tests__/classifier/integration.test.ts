@@ -88,6 +88,9 @@ function makeDeps(overrides?: {
       issue_count: 1,
     }),
     issueClassifier: overrides?.classifierFn ?? vi.fn().mockResolvedValue(VALID_CLASSIFICATION),
+    followUpGenerator: vi.fn().mockResolvedValue({
+      questions: [{ question_id: 'q1', field_target: 'Priority', prompt: 'How urgent?', options: ['low', 'high'], answer_type: 'enum' }],
+    }),
     cueDict: overrides?.cueDict ?? FULL_CUES,
     taxonomy,
   };

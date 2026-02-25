@@ -67,6 +67,7 @@ function makeDeps() {
       issue_count: 1,
     }),
     issueClassifier: vi.fn().mockResolvedValue(VALID_CLASSIFICATION),
+    followUpGenerator: vi.fn().mockResolvedValue({ questions: [] }),
     cueDict: MINI_CUES,
     taxonomy,
   };
