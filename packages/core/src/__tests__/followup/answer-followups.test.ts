@@ -218,10 +218,10 @@ describe('handleAnswerFollowups', () => {
       classifierFn: vi.fn().mockResolvedValue(stillLowConf),
       cueDict: MINI_CUES,
     });
-    // Simulate Priority already asked 2 times
+    // Simulate Priority already asked 3 times (initial + 2 re-asks = max_reasks exhausted)
     ctx.session = {
       ...ctx.session,
-      previous_questions: [{ field_target: 'Priority', times_asked: 2 }],
+      previous_questions: [{ field_target: 'Priority', times_asked: 3 }],
     } as any;
 
     const result = await handleAnswerFollowups(ctx);

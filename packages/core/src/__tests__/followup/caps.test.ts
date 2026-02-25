@@ -72,11 +72,12 @@ describe('checkFollowUpCaps', () => {
   });
 
   it('returns escapeHatch when no eligible fields remain', () => {
+    // times_asked: 3 = initial ask + 2 re-asks = max_reasks_per_field exhausted
     const result = checkFollowUpCaps({
       turnNumber: 2,
-      totalQuestionsAsked: 2,
+      totalQuestionsAsked: 3,
       previousQuestions: [
-        { field_target: 'Priority', times_asked: 2 }, // maxed out
+        { field_target: 'Priority', times_asked: 3 }, // maxed out (initial + 2 re-asks)
       ],
       fieldsNeedingInput: ['Priority'], // only field, but maxed
       caps,
@@ -89,10 +90,12 @@ describe('checkFollowUpCaps', () => {
 
 describe('filterEligibleFields', () => {
   it('excludes fields at max re-ask limit', () => {
+    // times_asked: 3 = initial + 2 re-asks = max_reasks exhausted for Priority
+    // times_asked: 1 = initial ask only, still eligible
     const result = filterEligibleFields(
       ['Priority', 'Location', 'Category'],
       [
-        { field_target: 'Priority', times_asked: 2 },
+        { field_target: 'Priority', times_asked: 3 },
         { field_target: 'Location', times_asked: 1 },
       ],
       caps,
@@ -110,9 +113,10 @@ describe('filterEligibleFields', () => {
   });
 
   it('excludes all fields when all maxed', () => {
+    // times_asked: 3 = initial + 2 re-asks = max_reasks exhausted
     const result = filterEligibleFields(
       ['Priority'],
-      [{ field_target: 'Priority', times_asked: 2 }],
+      [{ field_target: 'Priority', times_asked: 3 }],
       caps,
     );
     expect(result).toEqual([]);

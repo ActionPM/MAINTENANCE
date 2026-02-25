@@ -202,6 +202,11 @@ describe('handleStartClassification', () => {
     const ctx = makeContext({
       classifierFn: vi.fn().mockResolvedValue(outputWithMissing),
     });
+    // Override followUpGenerator to target the actual missing field (Location)
+    // so the question isn't filtered out by callFollowUpGenerator's eligible-fields filter.
+    (ctx.deps as any).followUpGenerator = vi.fn().mockResolvedValue({
+      questions: [{ question_id: 'q1', field_target: 'Location', prompt: 'Where is the issue?', options: ['kitchen', 'bathroom'], answer_type: 'enum' }],
+    });
     const result = await handleStartClassification(ctx);
     expect(result.newState).toBe(ConversationState.NEEDS_TENANT_INPUT);
     expect(result.session.classification_results![0].fieldsNeedingInput).toContain('Location');

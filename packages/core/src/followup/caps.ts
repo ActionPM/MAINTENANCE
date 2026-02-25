@@ -90,8 +90,11 @@ export function filterEligibleFields(
     askCounts.set(pq.field_target, pq.times_asked);
   }
 
+  // times_asked includes the initial ask (not a re-ask), so a field with
+  // times_asked=1 has been asked once (0 re-asks).  With max_reasks=2 we
+  // allow up to times_asked <= 2 (i.e. initial + 1 re-ask consumed, 1 left).
   return fieldsNeedingInput.filter(
-    (field) => (askCounts.get(field) ?? 0) < caps.max_reasks_per_field,
+    (field) => (askCounts.get(field) ?? 0) <= caps.max_reasks_per_field,
   );
 }
 

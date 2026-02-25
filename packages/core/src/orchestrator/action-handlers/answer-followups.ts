@@ -67,15 +67,30 @@ export async function handleAnswerFollowups(
     r => r.fieldsNeedingInput.length > 0,
   )?.issue_id ?? issues[0].issue_id;
 
-  const answersEvent = buildFollowUpAnswersEvent({
-    eventId: deps.idGenerator(),
-    conversationId: session.conversation_id,
-    issueId: targetIssueId,
-    turnNumber: session.followup_turn_number,
-    questions: pendingQuestions,
-    answers: answersReceived,
-    createdAt: deps.clock(),
-  });
+  let answersEvent;
+  try {
+    answersEvent = buildFollowUpAnswersEvent({
+      eventId: deps.idGenerator(),
+      conversationId: session.conversation_id,
+      issueId: targetIssueId,
+      turnNumber: session.followup_turn_number,
+      questions: pendingQuestions,
+      answers: answersReceived,
+      createdAt: deps.clock(),
+    });
+  } catch (err) {
+    // Stale or mismatched question_ids in the client payload — return
+    // a deterministic validation error instead of bubbling an exception.
+    return {
+      newState: session.state,
+      session,
+      uiMessages: [],
+      errors: [{
+        code: 'INVALID_ANSWER_QUESTION_ID',
+        message: err instanceof Error ? err.message : 'Answer references unknown question_id',
+      }],
+    };
+  }
   await deps.eventRepo.insert(answersEvent);
 
   // Step 2: Clear pending questions

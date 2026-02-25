@@ -230,6 +230,31 @@ export async function handleStartClassification(
       }
 
       followUpQuestions = followUpResult.output!.questions;
+
+      // Bug fix: if questions are filtered/truncated to empty, route to escape hatch
+      // instead of transitioning to needs_tenant_input with an empty pending list
+      // (which would deadlock because ANSWER_FOLLOWUPS rejects NO_PENDING_QUESTIONS).
+      if (followUpQuestions.length === 0) {
+        const triageResults = classificationResults.map(r => ({
+          ...r,
+          classifierOutput: { ...r.classifierOutput, needs_human_triage: true },
+          fieldsNeedingInput: [] as string[],
+        }));
+        updatedSession = setClassificationResults(updatedSession, triageResults);
+
+        return {
+          newState: ConversationState.TENANT_CONFIRMATION_PENDING,
+          session: updatedSession,
+          intermediateSteps: [intermediateStep],
+          finalSystemAction: SystemEvent.LLM_CLASSIFY_SUCCESS,
+          uiMessages: [{
+            role: 'agent',
+            content: 'I\'ve classified your issue(s) but couldn\'t generate follow-up questions. A human will review.',
+          }],
+          eventPayload: { escape_hatch: true, reason: 'followup_generator_returned_empty_questions' },
+          eventType: 'state_transition',
+        };
+      }
     } catch {
       // LLM exception — escape hatch
       const triageResults = classificationResults.map(r => ({
