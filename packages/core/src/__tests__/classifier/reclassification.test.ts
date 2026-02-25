@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { handleAnswerFollowups } from '../../orchestrator/action-handlers/answer-followups.js';
-import { createSession, updateSessionState, setSplitIssues, setClassificationResults } from '../../session/session.js';
+import { createSession, updateSessionState, setSplitIssues, setClassificationResults, setPendingFollowUpQuestions } from '../../session/session.js';
 import { ConversationState, ActorType, loadTaxonomy } from '@wo-agent/schemas';
 import type { IssueClassifierOutput, CueDictionary } from '@wo-agent/schemas';
 import type { IssueClassificationResult } from '../../session/types.js';
@@ -94,6 +94,9 @@ function makeFollowupContext(overrides?: {
     { issue_id: 'i1', summary: 'Toilet leaking', raw_excerpt: 'My toilet is leaking' },
   ]);
   session = setClassificationResults(session, priorResults);
+  session = setPendingFollowUpQuestions(session, [
+    { question_id: 'Priority', field_target: 'Priority', prompt: 'How urgent is this?', options: ['low', 'normal', 'high'], answer_type: 'enum' },
+  ]);
 
   return {
     session,
@@ -177,6 +180,11 @@ describe('handleAnswerFollowups (re-classification)', () => {
     const ctx = makeFollowupContext({
       classifierFn: vi.fn().mockResolvedValue(HIGH_CONFIDENCE_OUTPUT),
       cueDict: emptyCues,
+    });
+    // FollowUpGenerator must return valid questions so handler goes to needs_tenant_input
+    // (empty questions triggers escape hatch → tenant_confirmation_pending)
+    (ctx.deps as any).followUpGenerator = vi.fn().mockResolvedValue({
+      questions: [{ question_id: 'q1', field_target: 'Priority', prompt: 'How urgent?', options: ['low', 'normal', 'high'], answer_type: 'enum' }],
     });
     const result = await handleAnswerFollowups(ctx);
     expect(result.newState).toBe(ConversationState.NEEDS_TENANT_INPUT);
