@@ -56,6 +56,7 @@ function makeContext(unitIds: string[]): ActionHandlerContext {
         missing_fields: [],
         needs_human_triage: false,
       }),
+      followUpGenerator: async () => ({ questions: [] }),
       cueDict: MINI_CUES,
       taxonomy,
     },

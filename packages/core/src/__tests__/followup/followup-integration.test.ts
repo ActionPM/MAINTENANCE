@@ -209,7 +209,7 @@ describe('Follow-up loop integration', () => {
     expect(classResult.response.conversation_snapshot.state).toBe(ConversationState.NEEDS_TENANT_INPUT);
 
     // Keep answering follow-ups until escape hatch triggers
-    let state = ConversationState.NEEDS_TENANT_INPUT;
+    let state: string = ConversationState.NEEDS_TENANT_INPUT;
     let rounds = 0;
     const maxRounds = 15; // Safety: should escape well before this
 
@@ -252,9 +252,9 @@ describe('Follow-up loop integration', () => {
 
     // The event store should contain followup_events
     // (questions-asked event from initial classification + answers event from ANSWER_FOLLOWUPS)
-    const allEvents = await deps.eventRepo.query({ conversation_id: convId });
+    const allEvents = await deps.eventRepo.queryAll(convId);
     const followupEvents = allEvents.filter(
-      (e: any) => e.questions_asked !== undefined,
+      (e) => 'questions_asked' in e,
     );
     expect(followupEvents.length).toBeGreaterThanOrEqual(1);
   });

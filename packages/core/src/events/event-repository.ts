@@ -1,3 +1,4 @@
+import type { FollowUpEvent } from '@wo-agent/schemas';
 import type { ConversationEvent, EventQuery } from './types.js';
 
 /**
@@ -9,8 +10,8 @@ import type { ConversationEvent, EventQuery } from './types.js';
  * - PostgresEventStore (production, Phase 8+)
  */
 export interface EventRepository {
-  /** Append a single event. */
-  insert(event: ConversationEvent): Promise<void>;
-  /** Query events by filters. Returns in order specified. */
+  /** Append a single event (conversation or follow-up). */
+  insert(event: ConversationEvent | FollowUpEvent): Promise<void>;
+  /** Query conversation events by filters. Returns in order specified. */
   query(filters: EventQuery): Promise<readonly ConversationEvent[]>;
 }

@@ -1,15 +1,18 @@
+import type { FollowUpEvent } from '@wo-agent/schemas';
 import type { EventRepository } from './event-repository.js';
 import type { ConversationEvent, EventQuery } from './types.js';
+
+type AnyEvent = ConversationEvent | FollowUpEvent;
 
 /**
  * In-memory event store for testing (append-only-events skill).
  * INSERT + SELECT only. No UPDATE. No DELETE.
  */
 export class InMemoryEventStore implements EventRepository {
-  private readonly events: ConversationEvent[] = [];
+  private readonly events: AnyEvent[] = [];
   private readonly ids = new Set<string>();
 
-  async insert(event: ConversationEvent): Promise<void> {
+  async insert(event: AnyEvent): Promise<void> {
     if (this.ids.has(event.event_id)) {
       throw new Error(`Duplicate event_id: ${event.event_id}`);
     }
@@ -19,7 +22,7 @@ export class InMemoryEventStore implements EventRepository {
 
   async query(filters: EventQuery): Promise<readonly ConversationEvent[]> {
     let results = this.events.filter(
-      (e) => e.conversation_id === filters.conversation_id,
+      (e): e is ConversationEvent => e.conversation_id === filters.conversation_id && 'event_type' in e,
     );
 
     if (filters.event_type) {
@@ -36,5 +39,12 @@ export class InMemoryEventStore implements EventRepository {
     }
 
     return results;
+  }
+
+  /** Query all events (conversation + follow-up). For testing only. */
+  async queryAll(conversationId: string): Promise<readonly AnyEvent[]> {
+    return this.events
+      .filter((e) => e.conversation_id === conversationId)
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   }
 }

@@ -56,6 +56,7 @@ function makeContext(state: string, actionType: string, tenantInput: Record<stri
         missing_fields: [],
         needs_human_triage: false,
       }),
+      followUpGenerator: async () => ({ questions: [] }),
       cueDict: FULL_CUES,
       taxonomy,
     },

@@ -57,6 +57,7 @@ export function getOrchestrator() {
         missing_fields: [],
         needs_human_triage: false,
       }),
+      followUpGenerator: async () => ({ questions: [] }),
       cueDict: classificationCues as CueDictionary,
       taxonomy: loadTaxonomy(),
     };
