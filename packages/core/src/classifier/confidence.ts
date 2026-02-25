@@ -94,21 +94,37 @@ export function computeAllFieldConfidences(input: ComputeAllInput): Record<strin
 }
 
 /**
- * Determine which fields need tenant input based on confidence bands.
- * Low-confidence fields always need input.
- * Medium-confidence fields need input (asked if required/risk-relevant -- MVP asks all).
- * High-confidence fields are accepted.
+ * Determine which fields need tenant input based on confidence bands
+ * and any fields the classifier reported as missing.
+ *
+ * - Low-confidence fields always need input.
+ * - Medium-confidence fields are accepted (the formula's theoretical max
+ *   with default weights is ~0.84, below high_threshold 0.85, so treating
+ *   medium as needing input would create an unwinnable loop).
+ * - High-confidence fields are accepted.
+ * - Fields in missingFields are always included regardless of confidence.
  */
 export function determineFieldsNeedingInput(
   confidences: Record<string, number>,
   config: ConfidenceConfig,
+  missingFields?: readonly string[],
 ): string[] {
   const fields: string[] = [];
 
   for (const [field, confidence] of Object.entries(confidences)) {
     const band = classifyConfidenceBand(confidence, config);
-    if (band === 'low' || band === 'medium') {
+    if (band === 'low') {
       fields.push(field);
+    }
+  }
+
+  // Merge in any fields the classifier reported as missing (not classified at all).
+  // These won't appear in the confidences map since the LLM omitted them.
+  if (missingFields) {
+    for (const field of missingFields) {
+      if (!fields.includes(field)) {
+        fields.push(field);
+      }
     }
   }
 

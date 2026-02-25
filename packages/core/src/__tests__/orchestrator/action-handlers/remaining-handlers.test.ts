@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { ConversationState, ActionType, ActorType, DEFAULT_CONFIDENCE_CONFIG, loadTaxonomy } from '@wo-agent/schemas';
-import type { CueDictionary, ConfidenceConfig } from '@wo-agent/schemas';
+import { ConversationState, ActionType, ActorType, loadTaxonomy } from '@wo-agent/schemas';
+import type { CueDictionary } from '@wo-agent/schemas';
 import { handleSubmitAdditionalMessage } from '../../../orchestrator/action-handlers/submit-additional-message.js';
 import { handleAnswerFollowups } from '../../../orchestrator/action-handlers/answer-followups.js';
 import { handleConfirmSubmission } from '../../../orchestrator/action-handlers/confirm-submission.js';
@@ -12,9 +12,10 @@ import { InMemoryEventStore } from '../../../events/in-memory-event-store.js';
 import type { ActionHandlerContext } from '../../../orchestrator/types.js';
 
 const taxonomy = loadTaxonomy();
-const MINI_CUES: CueDictionary = {
+const FULL_CUES: CueDictionary = {
   version: '1.0.0',
   fields: {
+    Category: { maintenance: { keywords: ['leak'], regex: [] } },
     Maintenance_Category: {
       plumbing: { keywords: ['leak', 'toilet'], regex: [] },
     },
@@ -55,7 +56,7 @@ function makeContext(state: string, actionType: string, tenantInput: Record<stri
         missing_fields: [],
         needs_human_triage: false,
       }),
-      cueDict: MINI_CUES,
+      cueDict: FULL_CUES,
       taxonomy,
     },
   };
@@ -106,12 +107,6 @@ describe('handleAnswerFollowups', () => {
       fieldsNeedingInput: ['Priority'],
     }]);
     (ctx as any).session = session;
-    // Override confidence config with test-friendly thresholds
-    (ctx.deps as any).confidenceConfig = {
-      ...DEFAULT_CONFIDENCE_CONFIG,
-      high_threshold: 0.40,
-      medium_threshold: 0.25,
-    };
     const result = await handleAnswerFollowups(ctx);
     expect(result.intermediateSteps).toBeDefined();
     expect(result.intermediateSteps![0].state).toBe(ConversationState.CLASSIFICATION_IN_PROGRESS);

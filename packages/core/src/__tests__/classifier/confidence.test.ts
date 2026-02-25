@@ -147,11 +147,35 @@ describe('determineFieldsNeedingInput', () => {
     expect(result).toEqual([]);
   });
 
-  it('includes medium-confidence fields', () => {
-    // Medium fields are asked if required or risk-relevant (always ask in MVP)
+  it('accepts medium-confidence fields without follow-up', () => {
+    // Medium fields (>= 0.65, < 0.85) are accepted — treating them as needing
+    // input would create an unwinnable loop because the formula's theoretical
+    // max with default weights is ~0.84, below high_threshold 0.85.
     const confidences = { Category: 0.9, Maintenance_Category: 0.7 };
     const result = determineFieldsNeedingInput(confidences, DEFAULT_CONFIDENCE_CONFIG);
-    expect(result).toContain('Maintenance_Category');
+    expect(result).not.toContain('Maintenance_Category');
+  });
+
+  it('includes missing_fields regardless of confidence scores', () => {
+    const confidences = { Category: 0.9 };
+    const result = determineFieldsNeedingInput(
+      confidences,
+      DEFAULT_CONFIDENCE_CONFIG,
+      ['Location', 'Sub_Location'],
+    );
+    expect(result).toContain('Location');
+    expect(result).toContain('Sub_Location');
+    expect(result).not.toContain('Category');
+  });
+
+  it('deduplicates fields present in both low confidence and missing_fields', () => {
+    const confidences = { Priority: 0.3 }; // low
+    const result = determineFieldsNeedingInput(
+      confidences,
+      DEFAULT_CONFIDENCE_CONFIG,
+      ['Priority'],
+    );
+    expect(result).toEqual(['Priority']);
   });
 });
 

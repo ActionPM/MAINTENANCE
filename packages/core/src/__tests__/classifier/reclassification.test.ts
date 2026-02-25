@@ -1,23 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
 import { handleAnswerFollowups } from '../../orchestrator/action-handlers/answer-followups.js';
 import { createSession, updateSessionState, setSplitIssues, setClassificationResults } from '../../session/session.js';
-import { ConversationState, ActorType, DEFAULT_CONFIDENCE_CONFIG, loadTaxonomy } from '@wo-agent/schemas';
-import type { IssueClassifierOutput, CueDictionary, ConfidenceConfig } from '@wo-agent/schemas';
+import { ConversationState, ActorType, loadTaxonomy } from '@wo-agent/schemas';
+import type { IssueClassifierOutput, CueDictionary } from '@wo-agent/schemas';
 import type { IssueClassificationResult } from '../../session/types.js';
 import type { ActionHandlerContext } from '../../orchestrator/types.js';
 
 const taxonomy = loadTaxonomy();
-
-/**
- * Lower thresholds for test scenarios — same rationale as start-classification tests:
- * the default high_threshold (0.85) exceeds the theoretical max of the confidence
- * formula because model_hint is clamped, so we lower thresholds for test clarity.
- */
-const TEST_CONFIDENCE_CONFIG: ConfidenceConfig = {
-  ...DEFAULT_CONFIDENCE_CONFIG,
-  high_threshold: 0.40,
-  medium_threshold: 0.25,
-};
 
 const VERSIONS = {
   taxonomy_version: '1.0.0',
@@ -54,12 +43,23 @@ const HIGH_CONFIDENCE_OUTPUT: IssueClassifierOutput = {
   needs_human_triage: false,
 };
 
-const MINI_CUES: CueDictionary = {
+/**
+ * Cue dictionary covering all fields in HIGH_CONFIDENCE_OUTPUT so that
+ * cue_strength > 0 for every field, pushing confidence into the medium band
+ * (>= 0.65) which is accepted without follow-up.
+ */
+const FULL_CUES: CueDictionary = {
   version: '1.0.0',
   fields: {
-    Maintenance_Category: {
-      plumbing: { keywords: ['leak', 'toilet'], regex: [] },
-    },
+    Category: { maintenance: { keywords: ['leak'], regex: [] } },
+    Location: { suite: { keywords: ['toilet'], regex: [] } },
+    Sub_Location: { bathroom: { keywords: ['toilet'], regex: [] } },
+    Maintenance_Category: { plumbing: { keywords: ['leak', 'toilet'], regex: [] } },
+    Maintenance_Object: { toilet: { keywords: ['toilet'], regex: [] } },
+    Maintenance_Problem: { leak: { keywords: ['leak'], regex: [] } },
+    Management_Category: { other_mgmt_cat: { keywords: ['toilet'], regex: [] } },
+    Management_Object: { other_mgmt_obj: { keywords: ['toilet'], regex: [] } },
+    Priority: { normal: { keywords: ['leak'], regex: [] } },
   },
 };
 
@@ -69,7 +69,7 @@ const MINI_CUES: CueDictionary = {
  */
 function makeFollowupContext(overrides?: {
   classifierFn?: (...args: unknown[]) => Promise<unknown>;
-  confidenceConfig?: ConfidenceConfig;
+  cueDict?: CueDictionary;
 }): ActionHandlerContext {
   let counter = 0;
   const priorResults: IssueClassificationResult[] = [{
@@ -117,9 +117,8 @@ function makeFollowupContext(overrides?: {
       clock: () => '2026-02-24T12:00:00Z',
       issueSplitter: vi.fn(),
       issueClassifier: overrides?.classifierFn ?? vi.fn().mockResolvedValue(HIGH_CONFIDENCE_OUTPUT),
-      cueDict: MINI_CUES,
+      cueDict: overrides?.cueDict ?? FULL_CUES,
       taxonomy,
-      confidenceConfig: overrides?.confidenceConfig ?? TEST_CONFIDENCE_CONFIG,
     } as any,
   };
 }
@@ -169,16 +168,14 @@ describe('handleAnswerFollowups (re-classification)', () => {
     expect(result.finalSystemAction).toBe('LLM_CLASSIFY_SUCCESS');
   });
 
-  it('transitions to needs_tenant_input when re-classified fields still have low confidence', async () => {
-    const stillLowOutput: IssueClassifierOutput = {
-      ...HIGH_CONFIDENCE_OUTPUT,
-      model_confidence: {
-        ...HIGH_CONFIDENCE_OUTPUT.model_confidence,
-        Priority: 0.2,
-      },
-    };
+  it('transitions to needs_tenant_input when re-classified fields still lack cue support', async () => {
+    // Without cue dictionary entries, all fields fall into low confidence
+    // (conf = 0 + 0.25 + 0.19 = 0.44 at best), so the system correctly
+    // requests follow-up input.
+    const emptyCues: CueDictionary = { version: '1.0.0', fields: {} };
     const ctx = makeFollowupContext({
-      classifierFn: vi.fn().mockResolvedValue(stillLowOutput),
+      classifierFn: vi.fn().mockResolvedValue(HIGH_CONFIDENCE_OUTPUT),
+      cueDict: emptyCues,
     });
     const result = await handleAnswerFollowups(ctx);
     expect(result.newState).toBe(ConversationState.NEEDS_TENANT_INPUT);

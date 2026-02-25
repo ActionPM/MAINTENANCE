@@ -1,20 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 import { handleStartClassification } from '../../orchestrator/action-handlers/start-classification.js';
 import { createSession, updateSessionState, setSplitIssues } from '../../session/session.js';
-import { ConversationState, ActorType, loadTaxonomy, DEFAULT_CONFIDENCE_CONFIG } from '@wo-agent/schemas';
-import type { IssueClassifierOutput, CueDictionary, ConfidenceConfig } from '@wo-agent/schemas';
+import { ConversationState, ActorType, loadTaxonomy } from '@wo-agent/schemas';
+import type { IssueClassifierOutput, CueDictionary } from '@wo-agent/schemas';
 import type { ActionHandlerContext } from '../../orchestrator/types.js';
 
 const taxonomy = loadTaxonomy();
-
-/**
- * Test-friendly confidence config (same as start-classification.test.ts).
- */
-const TEST_CONFIDENCE_CONFIG: ConfidenceConfig = {
-  ...DEFAULT_CONFIDENCE_CONFIG,
-  high_threshold: 0.40,
-  medium_threshold: 0.25,
-};
 
 const VERSIONS = {
   taxonomy_version: '1.0.0',
@@ -51,12 +42,18 @@ const VALID_CLASSIFICATION: IssueClassifierOutput = {
   needs_human_triage: false,
 };
 
-const MINI_CUES: CueDictionary = {
+const FULL_CUES: CueDictionary = {
   version: '1.0.0',
   fields: {
-    Maintenance_Category: {
-      plumbing: { keywords: ['leak', 'toilet'], regex: [] },
-    },
+    Category: { maintenance: { keywords: ['leak'], regex: [] } },
+    Location: { suite: { keywords: ['toilet'], regex: [] } },
+    Sub_Location: { bathroom: { keywords: ['toilet'], regex: [] } },
+    Maintenance_Category: { plumbing: { keywords: ['leak', 'toilet'], regex: [] } },
+    Maintenance_Object: { toilet: { keywords: ['toilet'], regex: [] } },
+    Maintenance_Problem: { leak: { keywords: ['leak'], regex: [] } },
+    Management_Category: { other_mgmt_cat: { keywords: ['toilet'], regex: [] } },
+    Management_Object: { other_mgmt_obj: { keywords: ['toilet'], regex: [] } },
+    Priority: { normal: { keywords: ['leak'], regex: [] } },
   },
 };
 
@@ -100,9 +97,8 @@ function makeContext(overrides?: {
       clock: () => '2026-02-24T12:00:00Z',
       issueSplitter: vi.fn(),
       issueClassifier: overrides?.classifierFn ?? vi.fn().mockResolvedValue(VALID_CLASSIFICATION),
-      cueDict: MINI_CUES,
+      cueDict: FULL_CUES,
       taxonomy,
-      confidenceConfig: TEST_CONFIDENCE_CONFIG,
     } as any,
   };
 }
@@ -266,9 +262,8 @@ describe('classification event recording (spec §7)', () => {
           ...VALID_CLASSIFICATION,
           issue_id: `i${++callCount}`,
         })),
-        cueDict: MINI_CUES,
+        cueDict: FULL_CUES,
         taxonomy,
-        confidenceConfig: TEST_CONFIDENCE_CONFIG,
       } as any,
     };
 

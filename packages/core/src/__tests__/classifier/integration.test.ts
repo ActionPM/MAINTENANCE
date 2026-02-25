@@ -1,24 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createDispatcher } from '../../orchestrator/dispatcher.js';
-import { ActionType, ActorType, ConversationState, loadTaxonomy, DEFAULT_CONFIDENCE_CONFIG } from '@wo-agent/schemas';
-import type { IssueClassifierOutput, CueDictionary, ConfidenceConfig } from '@wo-agent/schemas';
+import { ActionType, ActorType, ConversationState, loadTaxonomy } from '@wo-agent/schemas';
+import type { IssueClassifierOutput, CueDictionary } from '@wo-agent/schemas';
 import { InMemoryEventStore } from '../../events/in-memory-event-store.js';
 import { SystemEvent } from '../../state-machine/system-events.js';
 import type { SessionStore } from '../../orchestrator/types.js';
 import type { ConversationSession } from '../../session/types.js';
 
 const taxonomy = loadTaxonomy();
-
-/**
- * Lower thresholds so the confidence formula can actually reach "high".
- * The default high_threshold (0.85) exceeds the theoretical maximum because
- * model_hint is clamped to [0.2, 0.95] and the weighted formula caps out lower.
- */
-const TEST_CONFIDENCE_CONFIG: ConfidenceConfig = {
-  ...DEFAULT_CONFIDENCE_CONFIG,
-  high_threshold: 0.40,
-  medium_threshold: 0.25,
-};
 
 const VALID_CLASSIFICATION: IssueClassifierOutput = {
   issue_id: 'i1',
@@ -49,28 +38,22 @@ const VALID_CLASSIFICATION: IssueClassifierOutput = {
 };
 
 /**
- * Classification where Priority and Location have very low model_confidence.
- * With the confidence formula: 0.40*cue + 0.25*completeness + 0.20*model_hint
- * A model_hint of 0.05 gets clamped to model_hint_min (0.2), giving:
- *   0 + 0.25 + 0.20*0.2 = 0.29 for fields without cue matches.
- * This falls into "medium" band (>=0.25, <0.40) with TEST_CONFIDENCE_CONFIG,
- * which triggers needs_tenant_input.
+ * Cue dictionary covering all fields in VALID_CLASSIFICATION so that
+ * cue_strength > 0 for every field, pushing confidence into the medium band
+ * (>= 0.65) which is accepted without follow-up.
  */
-const LOW_CONFIDENCE_CLASSIFICATION: IssueClassifierOutput = {
-  ...VALID_CLASSIFICATION,
-  model_confidence: {
-    ...VALID_CLASSIFICATION.model_confidence,
-    Priority: 0.05,
-    Location: 0.05,
-  },
-};
-
-const MINI_CUES: CueDictionary = {
+const FULL_CUES: CueDictionary = {
   version: '1.0.0',
   fields: {
-    Maintenance_Category: {
-      plumbing: { keywords: ['leak', 'toilet'], regex: [] },
-    },
+    Category: { maintenance: { keywords: ['leak'], regex: [] } },
+    Location: { suite: { keywords: ['toilet'], regex: [] } },
+    Sub_Location: { bathroom: { keywords: ['toilet'], regex: [] } },
+    Maintenance_Category: { plumbing: { keywords: ['leak', 'toilet'], regex: [] } },
+    Maintenance_Object: { toilet: { keywords: ['toilet'], regex: [] } },
+    Maintenance_Problem: { leak: { keywords: ['leak'], regex: [] } },
+    Management_Category: { other_mgmt_cat: { keywords: ['toilet'], regex: [] } },
+    Management_Object: { other_mgmt_obj: { keywords: ['toilet'], regex: [] } },
+    Priority: { normal: { keywords: ['leak'], regex: [] } },
   },
 };
 
@@ -92,7 +75,7 @@ class InMemorySessionStore implements SessionStore {
 function makeDeps(overrides?: {
   classifierFn?: (...args: unknown[]) => Promise<unknown>;
   splitterFn?: (...args: unknown[]) => Promise<unknown>;
-  confidenceConfig?: ConfidenceConfig;
+  cueDict?: CueDictionary;
 }) {
   let counter = 0;
   return {
@@ -105,9 +88,8 @@ function makeDeps(overrides?: {
       issue_count: 1,
     }),
     issueClassifier: overrides?.classifierFn ?? vi.fn().mockResolvedValue(VALID_CLASSIFICATION),
-    cueDict: MINI_CUES,
+    cueDict: overrides?.cueDict ?? FULL_CUES,
     taxonomy,
-    confidenceConfig: overrides?.confidenceConfig ?? TEST_CONFIDENCE_CONFIG,
   };
 }
 
@@ -186,7 +168,7 @@ describe('Classification integration', () => {
     const multiIssueSplitter = vi.fn().mockResolvedValue({
       issues: [
         { issue_id: 'i1', summary: 'Toilet leaking', raw_excerpt: 'My toilet is leaking' },
-        { issue_id: 'i2', summary: 'Light broken', raw_excerpt: 'Kitchen light is broken' },
+        { issue_id: 'i2', summary: 'Toilet clogged', raw_excerpt: 'My toilet is clogged and leaking' },
       ],
       issue_count: 2,
     });
@@ -223,9 +205,13 @@ describe('Classification integration', () => {
   // ---------------------------------------------------------------
   // 3. Low confidence fields trigger needs_tenant_input
   // ---------------------------------------------------------------
-  it('low confidence fields trigger needs_tenant_input', async () => {
+  it('low confidence fields trigger needs_tenant_input when cue dictionary has no entries', async () => {
+    // Without cue dictionary support, even high model confidence only reaches
+    // conf = 0 + 0.25 + 0.19 = 0.44 (low band), triggering follow-up.
+    const emptyCues: CueDictionary = { version: '1.0.0', fields: {} };
     const deps = makeDeps({
-      classifierFn: vi.fn().mockResolvedValue(LOW_CONFIDENCE_CLASSIFICATION),
+      classifierFn: vi.fn().mockResolvedValue(VALID_CLASSIFICATION),
+      cueDict: emptyCues,
     });
     const dispatch = createDispatcher(deps as any);
 
@@ -237,7 +223,6 @@ describe('Classification integration', () => {
 
     const classResults = result.response.conversation_snapshot.classification_results! as any[];
     expect(classResults.length).toBe(1);
-    // Priority and Location should appear as fields needing input due to low model_confidence
     expect(classResults[0].fieldsNeedingInput.length).toBeGreaterThan(0);
   });
 
@@ -313,22 +298,28 @@ describe('Classification integration', () => {
   // 6. Re-classification after ANSWER_FOLLOWUPS
   // ---------------------------------------------------------------
   it('re-classification after ANSWER_FOLLOWUPS walks from needs_tenant_input to tenant_confirmation_pending', async () => {
-    // Step 1: Initial classification returns low-confidence fields -> needs_tenant_input
+    // Step 1: Initial classification reports missing_fields -> needs_tenant_input
+    // Step 2: Re-classification after followup has no missing_fields -> tenant_confirmation_pending
+    const classificationWithMissing: IssueClassifierOutput = {
+      ...VALID_CLASSIFICATION,
+      missing_fields: ['Priority', 'Location'],
+    };
+
     let callCount = 0;
     const classifierFn = vi.fn().mockImplementation(async () => {
       callCount++;
       if (callCount <= 1) {
-        // First classification: low confidence on Priority
-        return LOW_CONFIDENCE_CLASSIFICATION;
+        // First classification: missing fields trigger needs_tenant_input
+        return classificationWithMissing;
       }
-      // Re-classification after followup: all high confidence
+      // Re-classification after followup: complete, no missing fields
       return VALID_CLASSIFICATION;
     });
 
     const deps = makeDeps({ classifierFn });
     const dispatch = createDispatcher(deps as any);
 
-    // Walk to classified (should land in needs_tenant_input)
+    // Walk to classified (should land in needs_tenant_input due to missing_fields)
     const { convId, result: classResult } = await walkToClassified(dispatch);
 
     expect(classResult.response.conversation_snapshot.state).toBe(

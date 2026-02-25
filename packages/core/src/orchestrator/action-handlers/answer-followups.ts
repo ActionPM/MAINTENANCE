@@ -127,7 +127,7 @@ export async function handleAnswerFollowups(ctx: ActionHandlerContext): Promise<
 
     const fieldsNeedingInput = output.needs_human_triage
       ? []
-      : determineFieldsNeedingInput(computedConfidence, confidenceConfig);
+      : determineFieldsNeedingInput(computedConfidence, confidenceConfig, output.missing_fields);
 
     if (fieldsNeedingInput.length > 0) {
       anyFieldsNeedInput = true;

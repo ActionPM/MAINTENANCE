@@ -1,24 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 import { handleStartClassification } from '../../orchestrator/action-handlers/start-classification.js';
 import { createSession, updateSessionState, setSplitIssues } from '../../session/session.js';
-import { ConversationState, ActorType, loadTaxonomy, DEFAULT_CONFIDENCE_CONFIG } from '@wo-agent/schemas';
-import type { SplitIssue, IssueClassifierOutput, CueDictionary, ConfidenceConfig } from '@wo-agent/schemas';
+import { ConversationState, ActorType, loadTaxonomy } from '@wo-agent/schemas';
+import type { SplitIssue, IssueClassifierOutput, CueDictionary } from '@wo-agent/schemas';
 import type { ActionHandlerContext } from '../../orchestrator/types.js';
 
 const taxonomy = loadTaxonomy();
-
-/**
- * Test-friendly confidence config with thresholds tuned for test scenarios.
- * The default config's high_threshold (0.85) exceeds the theoretical maximum
- * of the confidence formula (0.84) because model_hint is clamped to 0.95
- * and the positive weights sum to 0.85. For testing, we lower the thresholds
- * so that fields with high model confidence + completeness can reach "high" band.
- */
-const TEST_CONFIDENCE_CONFIG: ConfidenceConfig = {
-  ...DEFAULT_CONFIDENCE_CONFIG,
-  high_threshold: 0.40,
-  medium_threshold: 0.25,
-};
 
 const VERSIONS = {
   taxonomy_version: '1.0.0',
@@ -55,12 +42,24 @@ const VALID_CLASSIFICATION: IssueClassifierOutput = {
   needs_human_triage: false,
 };
 
-const MINI_CUES: CueDictionary = {
+/**
+ * Cue dictionary covering all fields in VALID_CLASSIFICATION.
+ * Each entry has keywords matching the test text "Toilet leaking / My toilet is leaking"
+ * so that cue_strength > 0 for every field, pushing confidence into the medium band
+ * (>= 0.65) which is accepted without follow-up.
+ */
+const FULL_CUES: CueDictionary = {
   version: '1.0.0',
   fields: {
-    Maintenance_Category: {
-      plumbing: { keywords: ['leak', 'toilet'], regex: [] },
-    },
+    Category: { maintenance: { keywords: ['leak'], regex: [] } },
+    Location: { suite: { keywords: ['toilet'], regex: [] } },
+    Sub_Location: { bathroom: { keywords: ['toilet'], regex: [] } },
+    Maintenance_Category: { plumbing: { keywords: ['leak', 'toilet'], regex: [] } },
+    Maintenance_Object: { toilet: { keywords: ['toilet'], regex: [] } },
+    Maintenance_Problem: { leak: { keywords: ['leak'], regex: [] } },
+    Management_Category: { other_mgmt_cat: { keywords: ['toilet'], regex: [] } },
+    Management_Object: { other_mgmt_obj: { keywords: ['toilet'], regex: [] } },
+    Priority: { normal: { keywords: ['leak'], regex: [] } },
   },
 };
 
@@ -68,7 +67,6 @@ function makeContext(overrides?: {
   issues?: readonly SplitIssue[];
   classifierFn?: (...args: unknown[]) => Promise<unknown>;
   cueDict?: CueDictionary;
-  confidenceConfig?: ConfidenceConfig;
 }): ActionHandlerContext {
   let counter = 0;
   const issues = overrides?.issues ?? [
@@ -109,9 +107,8 @@ function makeContext(overrides?: {
       clock: () => '2026-02-24T12:00:00Z',
       issueSplitter: vi.fn(),
       issueClassifier: overrides?.classifierFn ?? vi.fn().mockResolvedValue(VALID_CLASSIFICATION),
-      cueDict: overrides?.cueDict ?? MINI_CUES,
+      cueDict: overrides?.cueDict ?? FULL_CUES,
       taxonomy,
-      confidenceConfig: overrides?.confidenceConfig ?? TEST_CONFIDENCE_CONFIG,
     } as any,
   };
 }
@@ -125,17 +122,14 @@ describe('handleStartClassification', () => {
     expect(result.session.classification_results![0].issue_id).toBe('i1');
   });
 
-  it('transitions to needs_tenant_input when some fields have low confidence', async () => {
-    const lowConfOutput: IssueClassifierOutput = {
-      ...VALID_CLASSIFICATION,
-      model_confidence: {
-        ...VALID_CLASSIFICATION.model_confidence,
-        Maintenance_Category: 0.3,
-        Priority: 0.2,
-      },
-    };
+  it('transitions to needs_tenant_input when fields lack cue support and have low model confidence', async () => {
+    // Without cue dictionary entries, even high model confidence only gives
+    // conf = 0 + 0.25 + 0.19 = 0.44 (low band). This test verifies that
+    // fields without cue support are correctly flagged as needing input.
+    const emptyCues: CueDictionary = { version: '1.0.0', fields: {} };
     const ctx = makeContext({
-      classifierFn: vi.fn().mockResolvedValue(lowConfOutput),
+      classifierFn: vi.fn().mockResolvedValue(VALID_CLASSIFICATION),
+      cueDict: emptyCues,
     });
     const result = await handleStartClassification(ctx);
     expect(result.newState).toBe(ConversationState.NEEDS_TENANT_INPUT);
@@ -195,6 +189,19 @@ describe('handleStartClassification', () => {
     const ctx = makeContext();
     const result = await handleStartClassification(ctx);
     expect(result.finalSystemAction).toBe('LLM_CLASSIFY_SUCCESS');
+  });
+
+  it('transitions to needs_tenant_input when classifier reports missing_fields', async () => {
+    const outputWithMissing: IssueClassifierOutput = {
+      ...VALID_CLASSIFICATION,
+      missing_fields: ['Location'],
+    };
+    const ctx = makeContext({
+      classifierFn: vi.fn().mockResolvedValue(outputWithMissing),
+    });
+    const result = await handleStartClassification(ctx);
+    expect(result.newState).toBe(ConversationState.NEEDS_TENANT_INPUT);
+    expect(result.session.classification_results![0].fieldsNeedingInput).toContain('Location');
   });
 
   it('uses intermediateSteps for matrix compliance', async () => {
