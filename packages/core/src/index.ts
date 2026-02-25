@@ -94,6 +94,25 @@ export type {
   ClassifierResult,
 } from './classifier/index.js';
 
+// --- Follow-up (Phase 6) ---
+export {
+  checkFollowUpCaps,
+  filterEligibleFields,
+  truncateQuestions,
+  callFollowUpGenerator,
+  FollowUpGeneratorError,
+  FollowUpGeneratorErrorCode,
+  buildFollowUpQuestionsEvent,
+  buildFollowUpAnswersEvent,
+} from './followup/index.js';
+export type {
+  CapsCheckInput,
+  CapsCheckResult,
+  FollowUpGeneratorResult,
+  QuestionsEventInput,
+  AnswersEventInput,
+} from './followup/index.js';
+
 // --- Orchestrator (Phase 3) ---
 export { createDispatcher, buildResponse, getActionHandler } from './orchestrator/index.js';
 export type {
