@@ -1,8 +1,8 @@
-import type { FollowUpEvent } from '@wo-agent/schemas';
+import type { FollowUpEvent, NotificationEvent } from '@wo-agent/schemas';
 import type { EventRepository } from './event-repository.js';
 import type { ConversationEvent, EventQuery } from './types.js';
 
-type AnyEvent = ConversationEvent | FollowUpEvent;
+type AnyEvent = ConversationEvent | FollowUpEvent | NotificationEvent;
 
 /**
  * In-memory event store for testing (append-only-events skill).
