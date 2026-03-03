@@ -200,6 +200,110 @@ describe('NotificationService', () => {
     expect(stored[0].work_order_ids).toHaveLength(3);
   });
 
+  it('deduplicates SMS-only sends via SMS idempotency key', async () => {
+    // Enable SMS, disable in-app so only SMS events exist
+    const trackingSender: SmsSender = {
+      send: async () => ({ success: true }),
+    };
+    service = new NotificationService({
+      notificationRepo: notifStore,
+      preferenceStore: prefStore,
+      smsSender: trackingSender,
+      idGenerator: () => `id-${++counter}`,
+      clock: () => '2026-03-03T12:00:00Z',
+    });
+
+    await prefStore.save(makePrefs({
+      in_app_enabled: false,
+      sms_enabled: true,
+      sms_consent: {
+        phone_number: '+14165551234',
+        consent_given_at: '2026-01-01T00:00:00Z',
+        consent_revoked_at: null,
+      },
+    }));
+
+    await service.notifyWorkOrdersCreated({
+      conversationId: 'conv-1',
+      tenantUserId: 'user-1',
+      tenantAccountId: 'acct-1',
+      workOrderIds: ['wo-1'],
+      issueGroupId: 'grp-1',
+      idempotencyKey: 'idem-1',
+    });
+
+    // Retry same key — should be deduplicated even though only SMS was sent
+    const result2 = await service.notifyWorkOrdersCreated({
+      conversationId: 'conv-1',
+      tenantUserId: 'user-1',
+      tenantAccountId: 'acct-1',
+      workOrderIds: ['wo-1'],
+      issueGroupId: 'grp-1',
+      idempotencyKey: 'idem-1',
+    });
+
+    expect(result2.deduplicated).toBe(true);
+    const stored = await notifStore.queryByTenantUser('user-1');
+    expect(stored).toHaveLength(1); // not duplicated
+  });
+
+  it('respects notification_type_overrides disabling work_order_created', async () => {
+    await prefStore.save(makePrefs({
+      in_app_enabled: true,
+      notification_type_overrides: { work_order_created: false },
+    }));
+
+    const result = await service.notifyWorkOrdersCreated({
+      conversationId: 'conv-1',
+      tenantUserId: 'user-1',
+      tenantAccountId: 'acct-1',
+      workOrderIds: ['wo-1'],
+      issueGroupId: 'grp-1',
+      idempotencyKey: 'idem-1',
+    });
+
+    expect(result.in_app_sent).toBe(false);
+    expect(result.sms_sent).toBe(false);
+    const stored = await notifStore.queryByTenantUser('user-1');
+    expect(stored).toHaveLength(0);
+  });
+
+  it('notification_type_overrides disables SMS too', async () => {
+    const smsCalls: string[] = [];
+    const trackingSender: SmsSender = {
+      send: async (phone) => { smsCalls.push(phone); return { success: true }; },
+    };
+    service = new NotificationService({
+      notificationRepo: notifStore,
+      preferenceStore: prefStore,
+      smsSender: trackingSender,
+      idGenerator: () => `id-${++counter}`,
+      clock: () => '2026-03-03T12:00:00Z',
+    });
+
+    await prefStore.save(makePrefs({
+      sms_enabled: true,
+      sms_consent: {
+        phone_number: '+14165551234',
+        consent_given_at: '2026-01-01T00:00:00Z',
+        consent_revoked_at: null,
+      },
+      notification_type_overrides: { work_order_created: false },
+    }));
+
+    const result = await service.notifyWorkOrdersCreated({
+      conversationId: 'conv-1',
+      tenantUserId: 'user-1',
+      tenantAccountId: 'acct-1',
+      workOrderIds: ['wo-1'],
+      issueGroupId: 'grp-1',
+      idempotencyKey: 'idem-1',
+    });
+
+    expect(result.sms_sent).toBe(false);
+    expect(smsCalls).toHaveLength(0);
+  });
+
   it('records failed SMS as event with failure_reason', async () => {
     const failingSender: SmsSender = {
       send: async () => ({ success: false, error: 'Network timeout' }),

@@ -45,15 +45,19 @@ export class NotificationService {
     const now = clock();
 
     // 1. Idempotency dedup (spec §18, §20)
-    const existing = await notificationRepo.findByIdempotencyKey(input.idempotencyKey);
-    if (existing) {
+    // Check both the base key (in-app) and the SMS key to cover all channels.
+    const existingInApp = await notificationRepo.findByIdempotencyKey(input.idempotencyKey);
+    const existingSms = await notificationRepo.findByIdempotencyKey(`${input.idempotencyKey}-sms`);
+    if (existingInApp || existingSms) {
       return { in_app_sent: false, sms_sent: false, deduplicated: true };
     }
 
     // 2. Load preferences (defaults: in-app on, sms off)
     const prefs = await preferenceStore.get(input.tenantAccountId);
-    const inAppEnabled = prefs?.in_app_enabled ?? true;
-    const smsEnabled = this.isSmsEnabled(prefs);
+    const typeOverride = prefs?.notification_type_overrides?.['work_order_created'];
+    // Per-type override takes precedence: explicit false disables, explicit true enables
+    const inAppEnabled = typeOverride === false ? false : (prefs?.in_app_enabled ?? true);
+    const smsEnabled = typeOverride === false ? false : this.isSmsEnabled(prefs);
     const cooldownMinutes = prefs?.cooldown_minutes ?? DEFAULT_COOLDOWN_MINUTES;
 
     // 3. Cooldown dedup (spec §20)
