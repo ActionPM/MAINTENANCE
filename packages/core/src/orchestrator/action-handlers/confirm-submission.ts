@@ -7,23 +7,23 @@ import { buildConfirmationEvent, buildStalenessEvent } from '../../confirmation/
 import { classifyConfidenceBand } from '../../classifier/confidence.js';
 import type { ConfidenceBand } from '../../classifier/confidence.js';
 import { SystemEvent } from '../../state-machine/system-events.js';
+import { createWorkOrders } from '../../work-order/wo-creator.js';
 
 const BAND_SEVERITY: Record<ConfidenceBand, number> = { low: 0, medium: 1, high: 2 };
 
 /**
- * Handle CONFIRM_SUBMISSION (spec §16, non-negotiable #4).
+ * Handle CONFIRM_SUBMISSION (spec §16, non-negotiable #4, §18 WO creation).
  *
  * Flow:
- * 1. Guard: session must have split_issues and classification_results
- * 2. Build confirmation payload
- * 3. Run staleness check
- * 4. If stale: record staleness event, re-route to split_finalized (triggers re-classification)
- * 5. If fresh: record confirmation event, transition to submitted
- *
- * WO creation is NOT done here — that's Phase 8.
+ * 1. Idempotency check: if key seen before, return cached result
+ * 2. Guard: session must have split_issues and classification_results
+ * 3. Build confirmation payload
+ * 4. Run staleness check
+ * 5. If stale: record staleness event, re-route to split_finalized (triggers re-classification)
+ * 6. If fresh: record confirmation event, create WOs, store idempotency, transition to submitted
  */
 export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promise<ActionHandlerResult> {
-  const { session, deps } = ctx;
+  const { session, request, deps } = ctx;
 
   // Guard: must have split issues
   if (!session.split_issues || session.split_issues.length === 0) {
@@ -125,6 +125,30 @@ export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promis
     }
   }
 
+  // Idempotency check — if we've seen this key before, return cached result
+  const idempotencyKey = request.idempotency_key;
+  if (idempotencyKey) {
+    const existing = await deps.idempotencyStore.get(idempotencyKey);
+    if (existing) {
+      return {
+        newState: ConversationState.SUBMITTED,
+        session,
+        uiMessages: [{ role: 'agent', content: 'Your request has been submitted. We\'ll be in touch.' }],
+        sideEffects: [{
+          effect_type: 'create_work_orders',
+          status: 'completed',
+          idempotency_key: idempotencyKey,
+        }],
+        eventPayload: {
+          confirmed: true,
+          confirmation_payload: confirmationPayload,
+          work_order_ids: existing.work_order_ids,
+        },
+        eventType: 'confirmation_accepted',
+      };
+    }
+  }
+
   // Fresh — record confirmation event
   const confirmationEvent = buildConfirmationEvent({
     eventId: deps.idGenerator(),
@@ -134,14 +158,37 @@ export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promis
   });
   await deps.eventRepo.insert(confirmationEvent);
 
+  // Create work orders (spec §18 — one WO per split issue, atomic batch)
+  const workOrders = createWorkOrders({
+    session,
+    idGenerator: deps.idGenerator,
+    clock: deps.clock,
+  });
+
+  // Persist atomically
+  await deps.workOrderRepo.insertBatch(workOrders);
+
+  // Store idempotency record
+  const woIds = workOrders.map(wo => wo.work_order_id);
+  if (idempotencyKey) {
+    await deps.idempotencyStore.set(idempotencyKey, {
+      work_order_ids: woIds,
+    });
+  }
+
   return {
     newState: ConversationState.SUBMITTED,
     session,
     uiMessages: [{ role: 'agent', content: 'Your request has been submitted. We\'ll be in touch.' }],
-    sideEffects: [{ effect_type: 'create_work_orders', status: 'pending' }],
+    sideEffects: [{
+      effect_type: 'create_work_orders',
+      status: 'completed',
+      idempotency_key: idempotencyKey,
+    }],
     eventPayload: {
       confirmed: true,
       confirmation_payload: confirmationPayload,
+      work_order_ids: woIds,
     },
     eventType: 'confirmation_accepted',
   };

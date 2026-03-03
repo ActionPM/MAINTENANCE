@@ -9,6 +9,8 @@ import { handleResume } from '../../../orchestrator/action-handlers/resume.js';
 import { handleAbandon } from '../../../orchestrator/action-handlers/abandon.js';
 import { createSession, updateSessionState, setSplitIssues, setClassificationResults, setPendingFollowUpQuestions } from '../../../session/session.js';
 import { InMemoryEventStore } from '../../../events/in-memory-event-store.js';
+import { InMemoryWorkOrderStore } from '../../../work-order/in-memory-wo-store.js';
+import { InMemoryIdempotencyStore } from '../../../idempotency/in-memory-idempotency-store.js';
 import type { ActionHandlerContext } from '../../../orchestrator/types.js';
 
 const taxonomy = loadTaxonomy();
@@ -59,6 +61,15 @@ function makeContext(state: string, actionType: string, tenantInput: Record<stri
       followUpGenerator: async () => ({ questions: [] }),
       cueDict: FULL_CUES,
       taxonomy,
+      unitResolver: {
+        resolve: async (unitId: string) => ({
+          unit_id: unitId,
+          property_id: `prop-for-${unitId}`,
+          client_id: `client-for-${unitId}`,
+        }),
+      },
+      workOrderRepo: new InMemoryWorkOrderStore(),
+      idempotencyStore: new InMemoryIdempotencyStore(),
     },
   };
 }
@@ -182,6 +193,7 @@ describe('handleConfirmSubmission', () => {
       computedConfidence: { Category: 0.9 },
       fieldsNeedingInput: [],
     }]);
+    session = { ...session, unit_id: 'u1', property_id: 'prop-1', client_id: 'client-1' };
     (ctx as any).session = session;
     const result = await handleConfirmSubmission(ctx);
     expect(result.newState).toBe(ConversationState.SUBMITTED);

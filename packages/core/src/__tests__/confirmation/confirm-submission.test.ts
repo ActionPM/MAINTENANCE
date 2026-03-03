@@ -60,6 +60,8 @@ function makeSession(overrides: Partial<ConversationSession> = {}): Conversation
     source_text_hash: MATCHING_SOURCE_HASH,
     split_hash: MATCHING_SPLIT_HASH,
     confirmation_presented: true,
+    property_id: 'prop-1',
+    client_id: 'client-1',
     ...overrides,
   };
 }
@@ -114,7 +116,7 @@ describe('handleConfirmSubmission', () => {
     const result = await handleConfirmSubmission(ctx);
     expect(result.sideEffects).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ effect_type: 'create_work_orders', status: 'pending' }),
+        expect.objectContaining({ effect_type: 'create_work_orders', status: 'completed' }),
       ]),
     );
   });
