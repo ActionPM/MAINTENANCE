@@ -68,6 +68,18 @@ export function createWorkOrders(input: CreateWorkOrdersInput): WorkOrder[] {
       missing_fields: classResult ? [...classResult.classifierOutput.missing_fields] : [],
       pets_present: 'unknown',
       needs_human_triage: classResult?.classifierOutput.needs_human_triage ?? true,
+      ...(session.risk_triggers.length > 0 ? {
+        risk_flags: {
+          trigger_ids: session.risk_triggers.map(t => t.trigger.trigger_id),
+          highest_severity: session.risk_triggers.reduce((worst, t) => {
+            const rank: Record<string, number> = { emergency: 3, high: 2, medium: 1 };
+            const tRank = rank[t.trigger.severity] ?? 0;
+            const wRank = rank[worst] ?? 0;
+            return tRank > wRank ? t.trigger.severity : worst;
+          }, '' as string) || undefined,
+          has_emergency: session.risk_triggers.some(t => t.trigger.severity === 'emergency'),
+        },
+      } : {}),
       pinned_versions: { ...session.pinned_versions },
       created_at: now,
       updated_at: now,
