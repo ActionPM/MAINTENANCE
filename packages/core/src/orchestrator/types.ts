@@ -7,6 +7,7 @@ import type { UnitResolver } from '../unit-resolver/types.js';
 import type { WorkOrderRepository } from '../work-order/types.js';
 import type { IdempotencyStore } from '../idempotency/types.js';
 import type { ContactExecutor } from '../risk/emergency-router.js';
+import type { NotificationService } from '../notifications/notification-service.js';
 
 /**
  * Dependencies injected into the orchestrator.
@@ -36,6 +37,7 @@ export interface OrchestratorDependencies {
   readonly riskProtocols: RiskProtocols;
   readonly escalationPlans: EscalationPlans;
   readonly contactExecutor: ContactExecutor;
+  readonly notificationService?: NotificationService;
 }
 
 /**
