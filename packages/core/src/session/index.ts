@@ -14,6 +14,8 @@ export {
   setConfirmationTracking,
   markConfirmationPresented,
   setSessionScope,
+  setRiskTriggers,
+  setEscalationState,
   type ExpirationConfig,
   type ConfirmationTrackingInput,
   type ScopeInput,
