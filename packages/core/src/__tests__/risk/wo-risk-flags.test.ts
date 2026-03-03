@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createWorkOrders } from '../../work-order/wo-creator.js';
-import { createSession, setRiskTriggers, setClassificationResults, setSplitIssues, setSessionScope } from '../../session/session.js';
+import { createSession, setRiskTriggers, setClassificationResults, setSplitIssues, setSessionScope, setSessionUnit } from '../../session/session.js';
 import type { MatchedTrigger } from '@wo-agent/schemas';
 
 describe('WO creation with risk flags', () => {
@@ -13,7 +13,7 @@ describe('WO creation with risk flags', () => {
   });
 
   function makeSession(withRisk: boolean) {
-    let session = { ...baseSession, unit_id: 'unit-1' };
+    let session = setSessionUnit(baseSession, 'unit-1');
     session = setSessionScope(session, { property_id: 'prop-1', client_id: 'client-1' });
     session = setSplitIssues(session, [
       { issue_id: 'iss-1', summary: 'Fire in kitchen', raw_excerpt: 'There is fire' },
