@@ -1,5 +1,6 @@
 import type { FollowUpEvent } from '@wo-agent/schemas';
 import type { ConversationEvent, EventQuery } from './types.js';
+import type { ConfirmationEvent, StalenessEvent } from '../confirmation/event-builder.js';
 
 /**
  * Append-only event repository (spec §7, append-only-events skill).
@@ -10,8 +11,8 @@ import type { ConversationEvent, EventQuery } from './types.js';
  * - PostgresEventStore (production, Phase 8+)
  */
 export interface EventRepository {
-  /** Append a single event (conversation or follow-up). */
-  insert(event: ConversationEvent | FollowUpEvent): Promise<void>;
+  /** Append a single event (conversation, follow-up, confirmation, or staleness). */
+  insert(event: ConversationEvent | FollowUpEvent | ConfirmationEvent | StalenessEvent): Promise<void>;
   /** Query conversation events by filters. Returns in order specified. */
   query(filters: EventQuery): Promise<readonly ConversationEvent[]>;
 }

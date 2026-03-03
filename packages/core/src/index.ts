@@ -52,12 +52,15 @@ export {
   markExpired,
   isExpired,
   filterResumableDrafts,
+  setConfirmationTracking,
+  markConfirmationPresented,
 } from './session/index.js';
 export type {
   ConversationSession,
   CreateSessionInput,
   ExpirationConfig,
   IssueClassificationResult,
+  ConfirmationTrackingInput,
 } from './session/index.js';
 
 // --- Events (Phase 3) ---
@@ -112,6 +115,26 @@ export type {
   QuestionsEventInput,
   AnswersEventInput,
 } from './followup/index.js';
+
+// --- Confirmation (Phase 7) ---
+export {
+  checkStaleness,
+  buildConfirmationPayload,
+  computeContentHash,
+  buildConfirmationEvent,
+  buildStalenessEvent,
+} from './confirmation/index.js';
+export type {
+  StalenessInput,
+  StalenessResult,
+  StalenessReason,
+  ConfirmationPayload,
+  ConfirmationIssue,
+  ConfirmationEventInput,
+  StalenessEventInput,
+  ConfirmationEvent,
+  StalenessEvent,
+} from './confirmation/index.js';
 
 // --- Orchestrator (Phase 3) ---
 export { createDispatcher, buildResponse, getActionHandler } from './orchestrator/index.js';

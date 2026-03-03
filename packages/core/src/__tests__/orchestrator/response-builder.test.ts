@@ -28,6 +28,10 @@ const mockSession: ConversationSession = {
   pending_followup_questions: null,
   created_at: '2026-01-01T00:00:00Z',
   last_activity_at: '2026-01-01T01:00:00Z',
+  confirmation_entered_at: null,
+  source_text_hash: null,
+  split_hash: null,
+  confirmation_presented: false,
 };
 
 describe('buildResponse', () => {

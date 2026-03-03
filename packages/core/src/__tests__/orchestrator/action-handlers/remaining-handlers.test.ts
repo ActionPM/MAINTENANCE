@@ -164,8 +164,25 @@ describe('handleAnswerFollowups', () => {
 });
 
 describe('handleConfirmSubmission', () => {
-  it('transitions to submitted', async () => {
+  it('transitions to submitted when session has issues and classification', async () => {
     const ctx = makeContext(ConversationState.TENANT_CONFIRMATION_PENDING, ActionType.CONFIRM_SUBMISSION);
+    // Set up required session data for confirmation
+    let session = setSplitIssues(ctx.session, [
+      { issue_id: 'i1', summary: 'Toilet leaking', raw_excerpt: 'My toilet is leaking' },
+    ]);
+    session = setClassificationResults(session, [{
+      issue_id: 'i1',
+      classifierOutput: {
+        issue_id: 'i1',
+        classification: { Category: 'maintenance' },
+        model_confidence: { Category: 0.9 },
+        missing_fields: [],
+        needs_human_triage: false,
+      },
+      computedConfidence: { Category: 0.9 },
+      fieldsNeedingInput: [],
+    }]);
+    (ctx as any).session = session;
     const result = await handleConfirmSubmission(ctx);
     expect(result.newState).toBe(ConversationState.SUBMITTED);
   });
