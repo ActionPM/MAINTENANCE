@@ -22,6 +22,10 @@ const mockSession: ConversationSession = {
   },
   prior_state_before_error: null,
   draft_photo_ids: [],
+  followup_turn_number: 0,
+  total_questions_asked: 0,
+  previous_questions: [],
+  pending_followup_questions: null,
   created_at: '2026-01-01T00:00:00Z',
   last_activity_at: '2026-01-01T01:00:00Z',
 };

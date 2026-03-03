@@ -1,13 +1,16 @@
-import { ConversationState, DEFAULT_CONFIDENCE_CONFIG } from '@wo-agent/schemas';
-import type { IssueClassifierInput, IssueClassifierOutput, ConfidenceConfig } from '@wo-agent/schemas';
+import { ConversationState, DEFAULT_CONFIDENCE_CONFIG, DEFAULT_FOLLOWUP_CAPS } from '@wo-agent/schemas';
+import type { IssueClassifierInput, IssueClassifierOutput, ConfidenceConfig, FollowUpGeneratorInput, FollowUpCaps } from '@wo-agent/schemas';
 import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
 import { callIssueClassifier, ClassifierError } from '../../classifier/issue-classifier.js';
 import { computeCueScores } from '../../classifier/cue-scoring.js';
 import { computeAllFieldConfidences, determineFieldsNeedingInput } from '../../classifier/confidence.js';
-import { setClassificationResults } from '../../session/session.js';
+import { setClassificationResults, updateFollowUpTracking, setPendingFollowUpQuestions } from '../../session/session.js';
 import type { IssueClassificationResult } from '../../session/types.js';
 import { SystemEvent } from '../../state-machine/system-events.js';
 import { resolveLlmClassifySuccess } from '../../state-machine/guards.js';
+import { checkFollowUpCaps } from '../../followup/caps.js';
+import { callFollowUpGenerator } from '../../followup/followup-generator.js';
+import { buildFollowUpQuestionsEvent } from '../../followup/event-builder.js';
 
 /**
  * Handle START_CLASSIFICATION (spec §11.2, §14).
@@ -142,11 +145,178 @@ export async function handleStartClassification(
     };
   }
 
-  const updatedSession = setClassificationResults(session, classificationResults);
+  let updatedSession = setClassificationResults(session, classificationResults);
 
-  const allFieldsNeedingInput = classificationResults.flatMap(r => [...r.fieldsNeedingInput]);
+  // --- Follow-up generation when fields need input ---
+  if (anyFieldsNeedInput) {
+    const followUpCaps: FollowUpCaps = deps.followUpCaps ?? DEFAULT_FOLLOWUP_CAPS;
+    const allFieldsNeedingInput = classificationResults.flatMap(r => [...r.fieldsNeedingInput]);
+
+    const capsCheck = checkFollowUpCaps({
+      turnNumber: updatedSession.followup_turn_number + 1,
+      totalQuestionsAsked: updatedSession.total_questions_asked,
+      previousQuestions: updatedSession.previous_questions,
+      fieldsNeedingInput: allFieldsNeedingInput,
+      caps: followUpCaps,
+    });
+
+    if (capsCheck.escapeHatch) {
+      // Escape hatch: mark all issues as needs_human_triage
+      const triageResults = classificationResults.map(r => ({
+        ...r,
+        classifierOutput: { ...r.classifierOutput, needs_human_triage: true },
+        fieldsNeedingInput: [] as string[],
+      }));
+      updatedSession = setClassificationResults(updatedSession, triageResults);
+
+      return {
+        newState: ConversationState.TENANT_CONFIRMATION_PENDING,
+        session: updatedSession,
+        intermediateSteps: [intermediateStep],
+        finalSystemAction: SystemEvent.LLM_CLASSIFY_SUCCESS,
+        uiMessages: [{
+          role: 'agent',
+          content: 'I\'ve classified your issue(s) but couldn\'t resolve all details. A human will review the remaining items.',
+        }],
+        eventPayload: { escape_hatch: true, reason: capsCheck.reason },
+        eventType: 'state_transition',
+      };
+    }
+
+    // Call FollowUpGenerator for the first issue with fields needing input
+    const targetIssue = classificationResults.find(r => r.fieldsNeedingInput.length > 0)!;
+    const followUpInput: FollowUpGeneratorInput = {
+      issue_id: targetIssue.issue_id,
+      classification: targetIssue.classifierOutput.classification,
+      confidence_by_field: targetIssue.computedConfidence,
+      missing_fields: [...targetIssue.classifierOutput.missing_fields],
+      fields_needing_input: [...capsCheck.eligibleFields],
+      previous_questions: [...updatedSession.previous_questions],
+      turn_number: updatedSession.followup_turn_number + 1,
+      total_questions_asked: updatedSession.total_questions_asked,
+      taxonomy_version: session.pinned_versions.taxonomy_version,
+      prompt_version: session.pinned_versions.prompt_version,
+    };
+
+    let followUpQuestions;
+    try {
+      const followUpResult = await callFollowUpGenerator(
+        followUpInput,
+        deps.followUpGenerator,
+        capsCheck.remainingQuestionBudget,
+      );
+
+      if (followUpResult.status === 'llm_fail') {
+        // FollowUp generation failed — fall through to escape hatch
+        const triageResults = classificationResults.map(r => ({
+          ...r,
+          classifierOutput: { ...r.classifierOutput, needs_human_triage: true },
+          fieldsNeedingInput: [] as string[],
+        }));
+        updatedSession = setClassificationResults(updatedSession, triageResults);
+
+        return {
+          newState: ConversationState.TENANT_CONFIRMATION_PENDING,
+          session: updatedSession,
+          intermediateSteps: [intermediateStep],
+          finalSystemAction: SystemEvent.LLM_CLASSIFY_SUCCESS,
+          uiMessages: [{
+            role: 'agent',
+            content: 'I\'ve classified your issue(s) but had trouble generating follow-up questions. A human will review.',
+          }],
+          eventPayload: { followup_generation_failed: true },
+          eventType: 'state_transition',
+        };
+      }
+
+      followUpQuestions = followUpResult.output!.questions;
+
+      // Bug fix: if questions are filtered/truncated to empty, route to escape hatch
+      // instead of transitioning to needs_tenant_input with an empty pending list
+      // (which would deadlock because ANSWER_FOLLOWUPS rejects NO_PENDING_QUESTIONS).
+      if (followUpQuestions.length === 0) {
+        const triageResults = classificationResults.map(r => ({
+          ...r,
+          classifierOutput: { ...r.classifierOutput, needs_human_triage: true },
+          fieldsNeedingInput: [] as string[],
+        }));
+        updatedSession = setClassificationResults(updatedSession, triageResults);
+
+        return {
+          newState: ConversationState.TENANT_CONFIRMATION_PENDING,
+          session: updatedSession,
+          intermediateSteps: [intermediateStep],
+          finalSystemAction: SystemEvent.LLM_CLASSIFY_SUCCESS,
+          uiMessages: [{
+            role: 'agent',
+            content: 'I\'ve classified your issue(s) but couldn\'t generate follow-up questions. A human will review.',
+          }],
+          eventPayload: { escape_hatch: true, reason: 'followup_generator_returned_empty_questions' },
+          eventType: 'state_transition',
+        };
+      }
+    } catch {
+      // LLM exception — escape hatch
+      const triageResults = classificationResults.map(r => ({
+        ...r,
+        classifierOutput: { ...r.classifierOutput, needs_human_triage: true },
+        fieldsNeedingInput: [] as string[],
+      }));
+      updatedSession = setClassificationResults(updatedSession, triageResults);
+
+      return {
+        newState: ConversationState.TENANT_CONFIRMATION_PENDING,
+        session: updatedSession,
+        intermediateSteps: [intermediateStep],
+        finalSystemAction: SystemEvent.LLM_CLASSIFY_SUCCESS,
+        uiMessages: [{
+          role: 'agent',
+          content: 'I\'ve classified your issue(s) but had trouble generating follow-up questions. A human will review.',
+        }],
+        eventPayload: { followup_generation_error: true },
+        eventType: 'state_transition',
+      };
+    }
+
+    // Record followup_event (questions asked, answers null)
+    const followUpEvent = buildFollowUpQuestionsEvent({
+      eventId: deps.idGenerator(),
+      conversationId: session.conversation_id,
+      issueId: targetIssue.issue_id,
+      turnNumber: updatedSession.followup_turn_number + 1,
+      questions: followUpQuestions,
+      createdAt: deps.clock(),
+    });
+    await deps.eventRepo.insert(followUpEvent);
+
+    // Update session tracking
+    updatedSession = updateFollowUpTracking(updatedSession, followUpQuestions);
+    updatedSession = setPendingFollowUpQuestions(updatedSession, followUpQuestions);
+
+    return {
+      newState: ConversationState.NEEDS_TENANT_INPUT,
+      session: updatedSession,
+      intermediateSteps: [intermediateStep],
+      finalSystemAction: SystemEvent.LLM_CLASSIFY_SUCCESS,
+      uiMessages: [{
+        role: 'agent',
+        content: 'I\'ve classified your issue(s) but need a few more details to complete the work order.',
+      }],
+      eventPayload: {
+        classification_results: classificationResults.map(r => ({
+          issue_id: r.issue_id,
+          classification: r.classifierOutput.classification,
+          computed_confidence: r.computedConfidence,
+          needs_human_triage: r.classifierOutput.needs_human_triage,
+        })),
+      },
+      eventType: 'state_transition',
+    };
+  }
+
+  // All fields resolved — proceed to confirmation
   const targetState = resolveLlmClassifySuccess({
-    fields_needing_input: allFieldsNeedingInput,
+    fields_needing_input: [],
   });
 
   return {
@@ -156,9 +326,7 @@ export async function handleStartClassification(
     finalSystemAction: SystemEvent.LLM_CLASSIFY_SUCCESS,
     uiMessages: [{
       role: 'agent',
-      content: anyFieldsNeedInput
-        ? 'I\'ve classified your issue(s) but need a few more details to complete the work order.'
-        : 'I\'ve classified your issue(s). Please review and confirm.',
+      content: 'I\'ve classified your issue(s). Please review and confirm.',
     }],
     eventPayload: {
       classification_results: classificationResults.map(r => ({

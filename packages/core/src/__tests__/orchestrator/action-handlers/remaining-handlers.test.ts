@@ -7,7 +7,7 @@ import { handleConfirmSubmission } from '../../../orchestrator/action-handlers/c
 import { handlePhotoUpload } from '../../../orchestrator/action-handlers/photo-upload.js';
 import { handleResume } from '../../../orchestrator/action-handlers/resume.js';
 import { handleAbandon } from '../../../orchestrator/action-handlers/abandon.js';
-import { createSession, updateSessionState, setSplitIssues, setClassificationResults } from '../../../session/session.js';
+import { createSession, updateSessionState, setSplitIssues, setClassificationResults, setPendingFollowUpQuestions } from '../../../session/session.js';
 import { InMemoryEventStore } from '../../../events/in-memory-event-store.js';
 import type { ActionHandlerContext } from '../../../orchestrator/types.js';
 
@@ -56,6 +56,7 @@ function makeContext(state: string, actionType: string, tenantInput: Record<stri
         missing_fields: [],
         needs_human_triage: false,
       }),
+      followUpGenerator: async () => ({ questions: [] }),
       cueDict: FULL_CUES,
       taxonomy,
     },
@@ -77,20 +78,64 @@ describe('handleSubmitAdditionalMessage', () => {
 });
 
 describe('handleAnswerFollowups', () => {
-  it('returns error when session has no split_issues', async () => {
+  it('returns error when session has no pending follow-up questions', async () => {
     const ctx = makeContext(ConversationState.NEEDS_TENANT_INPUT, ActionType.ANSWER_FOLLOWUPS, {
       answers: [{ question_id: 'q1', answer: 'yes' }],
     });
     const result = await handleAnswerFollowups(ctx);
     expect(result.errors).toBeDefined();
-    expect(result.errors![0].code).toBe('NO_ISSUES');
+    expect(result.errors![0].code).toBe('NO_PENDING_QUESTIONS');
   });
 
   it('re-classifies and reaches tenant_confirmation_pending with split_issues', async () => {
     const ctx = makeContext(ConversationState.NEEDS_TENANT_INPUT, ActionType.ANSWER_FOLLOWUPS, {
-      answers: [{ question_id: 'Priority', answer: 'normal' }],
+      answers: [{ question_id: 'q-priority', answer: 'normal' }],
     });
-    // Set up split_issues and classification_results on the session
+
+    // The re-classification mock returns a fully-resolved classification
+    const fullClassification = {
+      issue_id: 'i1',
+      classification: {
+        Category: 'maintenance',
+        Location: 'suite',
+        Sub_Location: 'bathroom',
+        Maintenance_Category: 'plumbing',
+        Maintenance_Object: 'toilet',
+        Maintenance_Problem: 'leak',
+        Management_Category: 'other_mgmt_cat',
+        Management_Object: 'other_mgmt_obj',
+        Priority: 'normal',
+      },
+      model_confidence: {
+        Category: 0.95, Location: 0.9, Sub_Location: 0.85,
+        Maintenance_Category: 0.92, Maintenance_Object: 0.95,
+        Maintenance_Problem: 0.88, Management_Category: 0.95,
+        Management_Object: 0.95, Priority: 0.9,
+      },
+      missing_fields: [],
+      needs_human_triage: false,
+    };
+    (ctx.deps as any).issueClassifier = vi.fn().mockResolvedValue(fullClassification);
+    (ctx.deps as any).followUpGenerator = vi.fn().mockResolvedValue({ questions: [] });
+
+    // Full cues covering all fields so confidence is high
+    const fullCues: CueDictionary = {
+      version: '1.0.0',
+      fields: {
+        Category: { maintenance: { keywords: ['leak'], regex: [] } },
+        Location: { suite: { keywords: ['toilet'], regex: [] } },
+        Sub_Location: { bathroom: { keywords: ['toilet'], regex: [] } },
+        Maintenance_Category: { plumbing: { keywords: ['leak', 'toilet'], regex: [] } },
+        Maintenance_Object: { toilet: { keywords: ['toilet'], regex: [] } },
+        Maintenance_Problem: { leak: { keywords: ['leak'], regex: [] } },
+        Management_Category: { other_mgmt_cat: { keywords: ['toilet'], regex: [] } },
+        Management_Object: { other_mgmt_obj: { keywords: ['toilet'], regex: [] } },
+        Priority: { normal: { keywords: ['leak'], regex: [] } },
+      },
+    };
+    (ctx.deps as any).cueDict = fullCues;
+
+    // Set up split_issues, classification_results, and pending questions
     let session = setSplitIssues(ctx.session, [
       { issue_id: 'i1', summary: 'Toilet leaking', raw_excerpt: 'My toilet is leaking' },
     ]);
@@ -106,7 +151,11 @@ describe('handleAnswerFollowups', () => {
       computedConfidence: { Category: 0.9 },
       fieldsNeedingInput: ['Priority'],
     }]);
+    session = setPendingFollowUpQuestions(session, [
+      { question_id: 'q-priority', field_target: 'Priority', prompt: 'How urgent?', options: ['low', 'normal', 'high'], answer_type: 'enum' },
+    ]);
     (ctx as any).session = session;
+
     const result = await handleAnswerFollowups(ctx);
     expect(result.intermediateSteps).toBeDefined();
     expect(result.intermediateSteps![0].state).toBe(ConversationState.CLASSIFICATION_IN_PROGRESS);

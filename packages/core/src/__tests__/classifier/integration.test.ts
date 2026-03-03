@@ -88,6 +88,9 @@ function makeDeps(overrides?: {
       issue_count: 1,
     }),
     issueClassifier: overrides?.classifierFn ?? vi.fn().mockResolvedValue(VALID_CLASSIFICATION),
+    followUpGenerator: vi.fn().mockResolvedValue({
+      questions: [{ question_id: 'q1', field_target: 'Priority', prompt: 'How urgent?', options: ['low', 'high'], answer_type: 'enum' }],
+    }),
     cueDict: overrides?.cueDict ?? FULL_CUES,
     taxonomy,
   };
@@ -317,6 +320,13 @@ describe('Classification integration', () => {
     });
 
     const deps = makeDeps({ classifierFn });
+    // Override followUpGenerator to return questions matching the missing fields
+    deps.followUpGenerator = vi.fn().mockResolvedValue({
+      questions: [
+        { question_id: 'q-priority', field_target: 'Priority', prompt: 'How urgent?', options: ['low', 'normal', 'high'], answer_type: 'enum' },
+        { question_id: 'q-location', field_target: 'Location', prompt: 'Where?', options: ['suite', 'common_area'], answer_type: 'enum' },
+      ],
+    });
     const dispatch = createDispatcher(deps as any);
 
     // Walk to classified (should land in needs_tenant_input due to missing_fields)
@@ -326,15 +336,15 @@ describe('Classification integration', () => {
       ConversationState.NEEDS_TENANT_INPUT,
     );
 
-    // Step 2: Dispatch ANSWER_FOLLOWUPS with tenant answers
+    // Step 2: Dispatch ANSWER_FOLLOWUPS with tenant answers (question_ids must match pending questions)
     const followupResult = await dispatch({
       conversation_id: convId,
       action_type: ActionType.ANSWER_FOLLOWUPS,
       actor: ActorType.TENANT,
       tenant_input: {
         answers: [
-          { question_id: 'Priority', answer: 'normal' },
-          { question_id: 'Location', answer: 'suite' },
+          { question_id: 'q-priority', answer: 'normal' },
+          { question_id: 'q-location', answer: 'suite' },
         ],
       },
       auth_context: AUTH,
