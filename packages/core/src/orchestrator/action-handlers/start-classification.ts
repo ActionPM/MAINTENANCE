@@ -4,13 +4,36 @@ import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
 import { callIssueClassifier, ClassifierError } from '../../classifier/issue-classifier.js';
 import { computeCueScores } from '../../classifier/cue-scoring.js';
 import { computeAllFieldConfidences, determineFieldsNeedingInput } from '../../classifier/confidence.js';
-import { setClassificationResults, updateFollowUpTracking, setPendingFollowUpQuestions } from '../../session/session.js';
+import { setClassificationResults, updateFollowUpTracking, setPendingFollowUpQuestions, setConfirmationTracking } from '../../session/session.js';
+import { computeContentHash } from '../../confirmation/payload-builder.js';
 import type { IssueClassificationResult } from '../../session/types.js';
+import type { ConversationSession } from '../../session/types.js';
+import type { SplitIssue } from '@wo-agent/schemas';
 import { SystemEvent } from '../../state-machine/system-events.js';
 import { resolveLlmClassifySuccess } from '../../state-machine/guards.js';
 import { checkFollowUpCaps } from '../../followup/caps.js';
 import { callFollowUpGenerator } from '../../followup/followup-generator.js';
 import { buildFollowUpQuestionsEvent } from '../../followup/event-builder.js';
+
+/**
+ * Apply confirmation tracking fields to a session before transitioning
+ * to tenant_confirmation_pending.
+ */
+function applyConfirmationTracking(
+  session: ConversationSession,
+  issues: readonly SplitIssue[],
+  clock: () => string,
+): ConversationSession {
+  const sourceHash = computeContentHash(issues.map(i => i.raw_excerpt).join('|'));
+  const splitHash = computeContentHash(
+    JSON.stringify(issues.map(i => ({ id: i.issue_id, summary: i.summary }))),
+  );
+  return setConfirmationTracking(session, {
+    confirmationEnteredAt: clock(),
+    sourceTextHash: sourceHash,
+    splitHash,
+  });
+}
 
 /**
  * Handle START_CLASSIFICATION (spec §11.2, §14).
@@ -168,6 +191,7 @@ export async function handleStartClassification(
         fieldsNeedingInput: [] as string[],
       }));
       updatedSession = setClassificationResults(updatedSession, triageResults);
+      updatedSession = applyConfirmationTracking(updatedSession, issues, deps.clock);
 
       return {
         newState: ConversationState.TENANT_CONFIRMATION_PENDING,
@@ -214,6 +238,7 @@ export async function handleStartClassification(
           fieldsNeedingInput: [] as string[],
         }));
         updatedSession = setClassificationResults(updatedSession, triageResults);
+        updatedSession = applyConfirmationTracking(updatedSession, issues, deps.clock);
 
         return {
           newState: ConversationState.TENANT_CONFIRMATION_PENDING,
@@ -241,6 +266,7 @@ export async function handleStartClassification(
           fieldsNeedingInput: [] as string[],
         }));
         updatedSession = setClassificationResults(updatedSession, triageResults);
+        updatedSession = applyConfirmationTracking(updatedSession, issues, deps.clock);
 
         return {
           newState: ConversationState.TENANT_CONFIRMATION_PENDING,
@@ -263,6 +289,7 @@ export async function handleStartClassification(
         fieldsNeedingInput: [] as string[],
       }));
       updatedSession = setClassificationResults(updatedSession, triageResults);
+      updatedSession = applyConfirmationTracking(updatedSession, issues, deps.clock);
 
       return {
         newState: ConversationState.TENANT_CONFIRMATION_PENDING,
@@ -318,6 +345,7 @@ export async function handleStartClassification(
   const targetState = resolveLlmClassifySuccess({
     fields_needing_input: [],
   });
+  updatedSession = applyConfirmationTracking(updatedSession, issues, deps.clock);
 
   return {
     newState: targetState,
