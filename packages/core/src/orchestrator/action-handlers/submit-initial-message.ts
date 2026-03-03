@@ -2,19 +2,23 @@ import { ConversationState } from '@wo-agent/schemas';
 import type { TenantInputSubmitInitialMessage, IssueSplitterInput } from '@wo-agent/schemas';
 import { SystemEvent } from '../../state-machine/system-events.js';
 import { resolveSubmitInitialMessage } from '../../state-machine/guards.js';
-import { setSplitIssues } from '../../session/session.js';
+import { setSplitIssues, setRiskTriggers, setEscalationState } from '../../session/session.js';
 import { callIssueSplitter, SplitterError } from '../../splitter/issue-splitter.js';
-import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
+import { scanTextForTriggers } from '../../risk/trigger-scanner.js';
+import { renderMitigationMessages } from '../../risk/mitigation.js';
+import { buildRiskDetectedEvent } from '../../risk/event-builder.js';
+import type { ActionHandlerContext, ActionHandlerResult, UIMessageInput, QuickReplyInput } from '../types.js';
 
 /**
- * Handle SUBMIT_INITIAL_MESSAGE (spec §11.2, §13).
+ * Handle SUBMIT_INITIAL_MESSAGE (spec §11.2, §13, §17).
  *
  * Matrix-compliant flow:
  * 1. Validate unit is resolved (guard)
  * 2. Enter split_in_progress (intermediate — recorded as event)
  * 3. Call IssueSplitter via deps (schema-validated with one retry)
- * 4. On success: LLM_SPLIT_SUCCESS → split_proposed (final event)
- * 5. On failure: LLM_FAIL → llm_error_retryable (final event)
+ * 4. Risk scan tenant text against risk_protocols triggers
+ * 5. On success: LLM_SPLIT_SUCCESS → split_proposed (final event)
+ * 6. On failure: LLM_FAIL → llm_error_retryable (final event)
  */
 export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Promise<ActionHandlerResult> {
   const { session, deps } = ctx;
@@ -54,12 +58,55 @@ export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Pro
       .map((issue, i) => `${i + 1}. ${issue.summary}`)
       .join('\n');
 
+    // --- Risk scanning (spec §17, non-negotiable #7) ---
+    const riskScan = scanTextForTriggers(input.message, deps.riskProtocols);
+    let sessionAfterRisk = updatedSession;
+    const additionalMessages: UIMessageInput[] = [];
+    const additionalQuickReplies: QuickReplyInput[] = [];
+
+    if (riskScan.triggers_matched.length > 0) {
+      sessionAfterRisk = setRiskTriggers(updatedSession, riskScan.triggers_matched);
+
+      // Record risk_detected event
+      const riskEvent = buildRiskDetectedEvent({
+        eventId: deps.idGenerator(),
+        conversationId: session.conversation_id,
+        triggersMatched: riskScan.triggers_matched,
+        hasEmergency: riskScan.has_emergency,
+        highestSeverity: riskScan.highest_severity,
+        createdAt: deps.clock(),
+      });
+      await deps.eventRepo.insert(riskEvent);
+
+      // Render mitigation messages
+      const mitigationMessages = renderMitigationMessages(
+        riskScan.triggers_matched,
+        deps.riskProtocols,
+      );
+      for (const msg of mitigationMessages) {
+        additionalMessages.push({ role: 'system', content: msg });
+      }
+
+      // If emergency requires confirmation, add quick replies
+      const needsConfirmation = riskScan.triggers_matched.some(
+        m => m.trigger.requires_confirmation && m.trigger.severity === 'emergency',
+      );
+      if (needsConfirmation) {
+        sessionAfterRisk = setEscalationState(sessionAfterRisk, 'pending_confirmation');
+        additionalQuickReplies.push(
+          { label: 'Yes, this is an emergency', value: 'confirm_emergency' },
+          { label: 'No, not an emergency', value: 'decline_emergency' },
+        );
+      }
+    }
+
     return {
       newState: ConversationState.SPLIT_PROPOSED,
-      session: updatedSession,
+      session: sessionAfterRisk,
       intermediateSteps: [intermediateStep],
       finalSystemAction: SystemEvent.LLM_SPLIT_SUCCESS,
       uiMessages: [
+        ...additionalMessages,
         {
           role: 'agent',
           content: splitResult.issue_count === 1
@@ -68,10 +115,17 @@ export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Pro
         },
       ],
       quickReplies: [
+        ...additionalQuickReplies,
         { label: 'Confirm', value: 'confirm', action_type: 'CONFIRM_SPLIT' },
         { label: 'Reject (single issue)', value: 'reject', action_type: 'REJECT_SPLIT' },
       ],
-      eventPayload: { split_result: splitResult },
+      eventPayload: {
+        split_result: splitResult,
+        ...(riskScan.triggers_matched.length > 0 ? {
+          risk_detected: true,
+          risk_trigger_ids: riskScan.triggers_matched.map(t => t.trigger.trigger_id),
+        } : {}),
+      },
       eventType: 'state_transition',
     };
   } catch (err) {
