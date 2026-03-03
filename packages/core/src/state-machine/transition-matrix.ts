@@ -91,6 +91,7 @@ export const TRANSITION_MATRIX: Record<
 
   [ConversationState.TENANT_CONFIRMATION_PENDING]: {
     [ActionType.CONFIRM_SUBMISSION]: [ConversationState.SUBMITTED],
+    [SystemEvent.STALENESS_DETECTED]: [ConversationState.SPLIT_FINALIZED],
     [ActionType.SUBMIT_ADDITIONAL_MESSAGE]: [ConversationState.TENANT_CONFIRMATION_PENDING],
     [ActionType.ABANDON]: [ConversationState.INTAKE_ABANDONED],
   },

@@ -6,6 +6,9 @@ import { checkStaleness } from '../../confirmation/staleness.js';
 import { buildConfirmationEvent, buildStalenessEvent } from '../../confirmation/event-builder.js';
 import { classifyConfidenceBand } from '../../classifier/confidence.js';
 import type { ConfidenceBand } from '../../classifier/confidence.js';
+import { SystemEvent } from '../../state-machine/system-events.js';
+
+const BAND_SEVERITY: Record<ConfidenceBand, number> = { low: 0, medium: 1, high: 2 };
 
 /**
  * Handle CONFIRM_SUBMISSION (spec §16, non-negotiable #4).
@@ -61,11 +64,18 @@ export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promis
     const confidenceConfig: ConfidenceConfig =
       deps.confidenceConfig ?? DEFAULT_CONFIDENCE_CONFIG;
 
-    // Build confidence bands from classification results
+    // Build confidence bands from classification results.
+    // When multiple issues share a field name, keep the WORST (lowest) band
+    // so that a low-confidence field on one issue isn't hidden by a
+    // high-confidence field on another.
     const confidenceBands: Record<string, ConfidenceBand> = {};
     for (const result of session.classification_results) {
       for (const [field, conf] of Object.entries(result.computedConfidence)) {
-        confidenceBands[field] = classifyConfidenceBand(conf, confidenceConfig);
+        const band = classifyConfidenceBand(conf, confidenceConfig);
+        const existing = confidenceBands[field];
+        if (!existing || BAND_SEVERITY[band] < BAND_SEVERITY[existing]) {
+          confidenceBands[field] = band;
+        }
       }
     }
 
@@ -90,7 +100,8 @@ export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promis
       });
       await deps.eventRepo.insert(stalenessEvent);
 
-      // Re-route to split_finalized to trigger re-classification via auto-fire
+      // Re-route to split_finalized to trigger re-classification via auto-fire.
+      // Uses STALENESS_DETECTED system event so the transition is in-matrix.
       return {
         newState: ConversationState.SPLIT_FINALIZED,
         session: {
@@ -100,6 +111,7 @@ export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promis
           split_hash: null,
           confirmation_presented: false,
         },
+        finalSystemAction: SystemEvent.STALENESS_DETECTED,
         uiMessages: [{
           role: 'agent',
           content: 'Some information has changed since your last visit. Let me re-verify your issue details.',

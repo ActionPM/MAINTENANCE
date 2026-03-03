@@ -146,4 +146,70 @@ describe('handleConfirmSubmission', () => {
     const result = await handleConfirmSubmission(ctx);
     expect(result.uiMessages.length).toBeGreaterThan(0);
   });
+
+  it('detects staleness when earlier issue has low confidence on shared field (multi-issue)', async () => {
+    // Issue 1: Category low confidence (0.30)
+    // Issue 2: Category high confidence (0.92)
+    // With flat map keyed by field name, issue 2 overwrites issue 1 → hides the low band.
+    const multiIssues = [
+      { issue_id: 'issue-1', summary: 'Toilet leaking', raw_excerpt: 'My toilet leaks' },
+      { issue_id: 'issue-2', summary: 'Sink broken', raw_excerpt: 'My sink is broken' },
+    ];
+    const multiClassification: IssueClassificationResult[] = [
+      {
+        issue_id: 'issue-1',
+        classifierOutput: {
+          issue_id: 'issue-1',
+          classification: { Category: 'maintenance' },
+          model_confidence: { Category: 0.3 },
+          missing_fields: [],
+          needs_human_triage: false,
+        },
+        computedConfidence: { Category: 0.30 }, // low band
+        fieldsNeedingInput: [],
+      },
+      {
+        issue_id: 'issue-2',
+        classifierOutput: {
+          issue_id: 'issue-2',
+          classification: { Category: 'maintenance' },
+          model_confidence: { Category: 0.95 },
+          missing_fields: [],
+          needs_human_triage: false,
+        },
+        computedConfidence: { Category: 0.92 }, // high band
+        fieldsNeedingInput: [],
+      },
+    ];
+
+    const sourceHash = computeContentHash(multiIssues.map(i => i.raw_excerpt).join('|'));
+    const splitHash = computeContentHash(
+      JSON.stringify(multiIssues.map(i => ({ id: i.issue_id, summary: i.summary }))),
+    );
+
+    const ctx = makeCtx({
+      split_issues: multiIssues,
+      classification_results: multiClassification,
+      source_text_hash: sourceHash,
+      split_hash: splitHash,
+      confirmation_presented: true,
+      // 61 min after confirmation entered → over threshold, borderline check applies
+      confirmation_entered_at: '2026-01-01T09:29:00.000Z',
+    });
+    const result = await handleConfirmSubmission(ctx);
+
+    // Should be stale because issue 1 has Category in low band + age > 60 min
+    expect(result.newState).toBe(ConversationState.SPLIT_FINALIZED);
+    expect(result.eventPayload).toMatchObject({ staleness_detected: true });
+  });
+
+  it('sets finalSystemAction to STALENESS_DETECTED when stale', async () => {
+    const ctx = makeCtx({
+      source_text_hash: 'original-hash-that-wont-match',
+      confirmation_entered_at: '2026-01-01T10:00:00.000Z',
+    });
+    const result = await handleConfirmSubmission(ctx);
+    expect(result.newState).toBe(ConversationState.SPLIT_FINALIZED);
+    expect(result.finalSystemAction).toBe('STALENESS_DETECTED');
+  });
 });

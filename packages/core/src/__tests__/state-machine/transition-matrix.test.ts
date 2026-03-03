@@ -9,12 +9,13 @@ import {
 } from '../../state-machine/transition-matrix.js';
 
 describe('SystemEvent', () => {
-  it('defines all 6 system events from spec §11.2', () => {
-    expect(ALL_SYSTEM_EVENTS).toHaveLength(6);
+  it('defines all 7 system events from spec §11.2 + §16', () => {
+    expect(ALL_SYSTEM_EVENTS).toHaveLength(7);
     expect(ALL_SYSTEM_EVENTS).toContain('LLM_SPLIT_SUCCESS');
     expect(ALL_SYSTEM_EVENTS).toContain('LLM_CLASSIFY_SUCCESS');
     expect(ALL_SYSTEM_EVENTS).toContain('LLM_FAIL');
     expect(ALL_SYSTEM_EVENTS).toContain('START_CLASSIFICATION');
+    expect(ALL_SYSTEM_EVENTS).toContain('STALENESS_DETECTED');
     expect(ALL_SYSTEM_EVENTS).toContain('RETRY_LLM');
     expect(ALL_SYSTEM_EVENTS).toContain('EXPIRE');
   });
@@ -90,6 +91,7 @@ describe('TRANSITION_MATRIX', () => {
     ['needs_tenant_input', 'ABANDON', ['intake_abandoned']],
     // tenant_confirmation_pending
     ['tenant_confirmation_pending', 'CONFIRM_SUBMISSION', ['submitted']],
+    ['tenant_confirmation_pending', 'STALENESS_DETECTED', ['split_finalized']],
     ['tenant_confirmation_pending', 'SUBMIT_ADDITIONAL_MESSAGE', ['tenant_confirmation_pending']],
     ['tenant_confirmation_pending', 'ABANDON', ['intake_abandoned']],
     // submitted
