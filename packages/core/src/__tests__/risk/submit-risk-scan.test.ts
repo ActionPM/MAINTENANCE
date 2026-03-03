@@ -118,4 +118,26 @@ describe('submit-initial-message risk scanning', () => {
     const qrLabels = result.quickReplies?.map(qr => qr.label) ?? [];
     expect(qrLabels.some(l => l.toLowerCase().includes('emergency'))).toBe(true);
   });
+
+  it('preserves risk mitigation and session triggers when splitter fails', async () => {
+    const ctx = buildCtx('There is fire in my kitchen', {
+      issueSplitter: vi.fn().mockRejectedValue(new Error('LLM timeout')),
+    });
+    const result = await handleSubmitInitialMessage(ctx);
+
+    // Splitter failed → llm_error_retryable
+    expect(result.newState).toBe(ConversationState.LLM_ERROR_RETRYABLE);
+
+    // Risk data still present despite splitter failure
+    expect(result.session.risk_triggers).toHaveLength(1);
+    expect(result.session.risk_triggers[0].trigger.trigger_id).toBe('fire-001');
+
+    // Mitigation messages still in UI output
+    const allContent = result.uiMessages.map(m => m.content).join(' ');
+    expect(allContent).toContain('Fire Safety');
+    expect(allContent).toContain('911');
+
+    // Risk event payload still included
+    expect(result.eventPayload?.risk_detected).toBe(true);
+  });
 });

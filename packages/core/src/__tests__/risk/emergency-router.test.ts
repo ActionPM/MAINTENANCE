@@ -82,4 +82,40 @@ describe('routeEmergency', () => {
       }),
     ).rejects.toThrow('No escalation plan found for building: unknown-building');
   });
+
+  it('treats contactExecutor errors as unanswered and continues chain', async () => {
+    const contactExecutor = vi.fn()
+      .mockRejectedValueOnce(new Error('network timeout')) // BM throws
+      .mockResolvedValueOnce(false)                        // PM doesn't answer
+      .mockResolvedValueOnce(true);                        // Fallback answers
+
+    const result = await routeEmergency({
+      buildingId: 'bldg-001',
+      escalationPlans: TEST_PLANS,
+      contactExecutor,
+      clock: () => '2026-03-03T00:00:00Z',
+    });
+
+    expect(result.state).toBe('completed');
+    expect(result.answered_by!.contact_id).toBe('c-3');
+    expect(contactExecutor).toHaveBeenCalledTimes(3);
+    // First attempt recorded as unanswered
+    expect(result.attempts[0].answered).toBe(false);
+  });
+
+  it('reaches exhaustion when all contacts throw', async () => {
+    const contactExecutor = vi.fn().mockRejectedValue(new Error('provider down'));
+
+    const result = await routeEmergency({
+      buildingId: 'bldg-001',
+      escalationPlans: TEST_PLANS,
+      contactExecutor,
+      clock: () => '2026-03-03T00:00:00Z',
+    });
+
+    expect(result.state).toBe('exhausted');
+    expect(result.answered_by).toBeNull();
+    expect(result.attempts).toHaveLength(3);
+    expect(result.attempts.every(a => !a.answered)).toBe(true);
+  });
 });

@@ -132,16 +132,16 @@ function buildScanResult(matched: MatchedTrigger[]): RiskScanResult {
 
 function buildTaxonomyPaths(classification: Record<string, string>): Set<string> {
   const paths = new Set<string>();
-  const category = classification.maintenance_category;
-  const subcategory = classification.maintenance_subcategory;
-  const object = classification.maintenance_object;
+  // Classifier outputs use PascalCase field keys: Category, Maintenance_Category, etc.
+  const topCategory = classification['Category'];
+  const maintenanceCategory = classification['Maintenance_Category'];
+  const maintenanceProblem = classification['Maintenance_Problem'];
 
-  if (category) {
-    paths.add(`maintenance.${category}`);
-    if (subcategory) {
-      paths.add(`maintenance.${category}.${subcategory}`);
-      if (object) {
-        paths.add(`maintenance.${category}.${subcategory}.${object}`);
+  if (topCategory) {
+    if (maintenanceCategory) {
+      paths.add(`${topCategory}.${maintenanceCategory}`);
+      if (maintenanceProblem) {
+        paths.add(`${topCategory}.${maintenanceCategory}.${maintenanceProblem}`);
       }
     }
   }

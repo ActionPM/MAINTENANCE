@@ -41,6 +41,50 @@ export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Pro
     eventPayload: { message: input.message },
   };
 
+  // --- Risk scanning FIRST (spec §17, non-negotiable #7) ---
+  // Risk scan is deterministic and must run before the splitter so that
+  // emergency mitigation messaging survives splitter failures.
+  const riskScan = scanTextForTriggers(input.message, deps.riskProtocols);
+  let sessionAfterRisk = session;
+  const riskMessages: UIMessageInput[] = [];
+  const riskQuickReplies: QuickReplyInput[] = [];
+
+  if (riskScan.triggers_matched.length > 0) {
+    sessionAfterRisk = setRiskTriggers(session, riskScan.triggers_matched);
+
+    // Record risk_detected event
+    const riskEvent = buildRiskDetectedEvent({
+      eventId: deps.idGenerator(),
+      conversationId: session.conversation_id,
+      triggersMatched: riskScan.triggers_matched,
+      hasEmergency: riskScan.has_emergency,
+      highestSeverity: riskScan.highest_severity,
+      createdAt: deps.clock(),
+    });
+    await deps.eventRepo.insert(riskEvent);
+
+    // Render mitigation messages
+    const mitigationMessages = renderMitigationMessages(
+      riskScan.triggers_matched,
+      deps.riskProtocols,
+    );
+    for (const msg of mitigationMessages) {
+      riskMessages.push({ role: 'system', content: msg });
+    }
+
+    // If emergency requires confirmation, add quick replies
+    const needsConfirmation = riskScan.triggers_matched.some(
+      m => m.trigger.requires_confirmation && m.trigger.severity === 'emergency',
+    );
+    if (needsConfirmation) {
+      sessionAfterRisk = setEscalationState(sessionAfterRisk, 'pending_confirmation');
+      riskQuickReplies.push(
+        { label: 'Yes, this is an emergency', value: 'confirm_emergency' },
+        { label: 'No, not an emergency', value: 'decline_emergency' },
+      );
+    }
+  }
+
   // Build splitter input from session's pinned versions
   const splitterInput: IssueSplitterInput = {
     raw_text: input.message,
@@ -52,61 +96,19 @@ export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Pro
 
   try {
     const splitResult = await callIssueSplitter(splitterInput, deps.issueSplitter);
-    const updatedSession = setSplitIssues(session, splitResult.issues);
+    const updatedSession = setSplitIssues(sessionAfterRisk, splitResult.issues);
 
     const issueList = splitResult.issues
       .map((issue, i) => `${i + 1}. ${issue.summary}`)
       .join('\n');
 
-    // --- Risk scanning (spec §17, non-negotiable #7) ---
-    const riskScan = scanTextForTriggers(input.message, deps.riskProtocols);
-    let sessionAfterRisk = updatedSession;
-    const additionalMessages: UIMessageInput[] = [];
-    const additionalQuickReplies: QuickReplyInput[] = [];
-
-    if (riskScan.triggers_matched.length > 0) {
-      sessionAfterRisk = setRiskTriggers(updatedSession, riskScan.triggers_matched);
-
-      // Record risk_detected event
-      const riskEvent = buildRiskDetectedEvent({
-        eventId: deps.idGenerator(),
-        conversationId: session.conversation_id,
-        triggersMatched: riskScan.triggers_matched,
-        hasEmergency: riskScan.has_emergency,
-        highestSeverity: riskScan.highest_severity,
-        createdAt: deps.clock(),
-      });
-      await deps.eventRepo.insert(riskEvent);
-
-      // Render mitigation messages
-      const mitigationMessages = renderMitigationMessages(
-        riskScan.triggers_matched,
-        deps.riskProtocols,
-      );
-      for (const msg of mitigationMessages) {
-        additionalMessages.push({ role: 'system', content: msg });
-      }
-
-      // If emergency requires confirmation, add quick replies
-      const needsConfirmation = riskScan.triggers_matched.some(
-        m => m.trigger.requires_confirmation && m.trigger.severity === 'emergency',
-      );
-      if (needsConfirmation) {
-        sessionAfterRisk = setEscalationState(sessionAfterRisk, 'pending_confirmation');
-        additionalQuickReplies.push(
-          { label: 'Yes, this is an emergency', value: 'confirm_emergency' },
-          { label: 'No, not an emergency', value: 'decline_emergency' },
-        );
-      }
-    }
-
     return {
       newState: ConversationState.SPLIT_PROPOSED,
-      session: sessionAfterRisk,
+      session: updatedSession,
       intermediateSteps: [intermediateStep],
       finalSystemAction: SystemEvent.LLM_SPLIT_SUCCESS,
       uiMessages: [
-        ...additionalMessages,
+        ...riskMessages,
         {
           role: 'agent',
           content: splitResult.issue_count === 1
@@ -115,7 +117,7 @@ export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Pro
         },
       ],
       quickReplies: [
-        ...additionalQuickReplies,
+        ...riskQuickReplies,
         { label: 'Confirm', value: 'confirm', action_type: 'CONFIRM_SPLIT' },
         { label: 'Reject (single issue)', value: 'reject', action_type: 'REJECT_SPLIT' },
       ],
@@ -132,13 +134,22 @@ export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Pro
     const errorMessage = err instanceof SplitterError ? err.message : 'Unexpected error analyzing your request';
     return {
       newState: ConversationState.LLM_ERROR_RETRYABLE,
-      session,
+      session: sessionAfterRisk,
       intermediateSteps: [intermediateStep],
       finalSystemAction: SystemEvent.LLM_FAIL,
-      uiMessages: [{ role: 'agent', content: 'I had trouble analyzing your request. Please try again.' }],
+      uiMessages: [
+        ...riskMessages,
+        { role: 'agent', content: 'I had trouble analyzing your request. Please try again.' },
+      ],
       errors: [{ code: 'SPLITTER_FAILED', message: errorMessage }],
       transitionContext: { prior_state: ConversationState.SPLIT_IN_PROGRESS },
-      eventPayload: { error: errorMessage },
+      eventPayload: {
+        error: errorMessage,
+        ...(riskScan.triggers_matched.length > 0 ? {
+          risk_detected: true,
+          risk_trigger_ids: riskScan.triggers_matched.map(t => t.trigger.trigger_id),
+        } : {}),
+      },
       eventType: 'error_occurred',
     };
   }

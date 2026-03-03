@@ -40,7 +40,13 @@ export async function routeEmergency(input: RouteEmergencyInput): Promise<Escala
   const attempts: EscalationAttempt[] = [];
 
   for (const contact of plan.contact_chain) {
-    const answered = await contactExecutor(contact);
+    let answered: boolean;
+    try {
+      answered = await contactExecutor(contact);
+    } catch {
+      // Provider/network error — treat as unanswered and continue chain
+      answered = false;
+    }
     attempts.push({
       contact_id: contact.contact_id,
       role: contact.role,
