@@ -14,6 +14,12 @@ export function buildResponse(result: ActionHandlerResult): OrchestratorActionRe
       ? buildConfirmationPayload(result.session.split_issues, result.session.classification_results)
       : undefined;
 
+  const workOrderIds =
+    result.newState === ConversationState.SUBMITTED &&
+    result.eventPayload?.work_order_ids
+      ? (result.eventPayload.work_order_ids as readonly string[])
+      : undefined;
+
   const snapshot: ConversationSnapshot = {
     conversation_id: result.session.conversation_id,
     state: result.session.state,
@@ -26,6 +32,7 @@ export function buildResponse(result: ActionHandlerResult): OrchestratorActionRe
       ? { pending_followup_questions: result.session.pending_followup_questions as any }
       : {}),
     ...(confirmationPayload ? { confirmation_payload: confirmationPayload } : {}),
+    ...(workOrderIds ? { work_order_ids: workOrderIds } : {}),
     pinned_versions: result.session.pinned_versions,
     created_at: result.session.created_at,
     last_activity_at: result.session.last_activity_at,
