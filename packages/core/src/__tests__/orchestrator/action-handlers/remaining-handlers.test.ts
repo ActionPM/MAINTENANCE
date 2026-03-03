@@ -24,7 +24,12 @@ const FULL_CUES: CueDictionary = {
   },
 };
 
-function makeContext(state: string, actionType: string, tenantInput: Record<string, unknown> = {}): ActionHandlerContext {
+function makeContext(
+  state: string,
+  actionType: string,
+  tenantInput: Record<string, unknown> = {},
+  extras: Record<string, unknown> = {},
+): ActionHandlerContext {
   let counter = 0;
   let session = createSession({
     conversation_id: 'conv-1',
@@ -44,6 +49,7 @@ function makeContext(state: string, actionType: string, tenantInput: Record<stri
       actor: ActorType.TENANT,
       tenant_input: tenantInput as any,
       auth_context: { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['u1'] },
+      ...extras,
     },
     deps: {
       eventRepo: new InMemoryEventStore(),
@@ -176,7 +182,7 @@ describe('handleAnswerFollowups', () => {
 
 describe('handleConfirmSubmission', () => {
   it('transitions to submitted when session has issues and classification', async () => {
-    const ctx = makeContext(ConversationState.TENANT_CONFIRMATION_PENDING, ActionType.CONFIRM_SUBMISSION);
+    const ctx = makeContext(ConversationState.TENANT_CONFIRMATION_PENDING, ActionType.CONFIRM_SUBMISSION, {}, { idempotency_key: 'test-key' });
     // Set up required session data for confirmation
     let session = setSplitIssues(ctx.session, [
       { issue_id: 'i1', summary: 'Toilet leaking', raw_excerpt: 'My toilet is leaking' },

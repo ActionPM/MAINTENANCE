@@ -67,7 +67,10 @@ function makeSession(overrides: Partial<ConversationSession> = {}): Conversation
   };
 }
 
-function makeCtx(sessionOverrides: Partial<ConversationSession> = {}): ActionHandlerContext {
+function makeCtx(
+  sessionOverrides: Partial<ConversationSession> = {},
+  requestOverrides: Record<string, unknown> = {},
+): ActionHandlerContext {
   const events: unknown[] = [];
   return {
     session: makeSession(sessionOverrides),
@@ -76,11 +79,13 @@ function makeCtx(sessionOverrides: Partial<ConversationSession> = {}): ActionHan
       action_type: ActionType.CONFIRM_SUBMISSION,
       actor: ActorType.TENANT,
       tenant_input: {},
+      idempotency_key: 'test-key',
       auth_context: {
         tenant_user_id: 'user-1',
         tenant_account_id: 'acct-1',
         authorized_unit_ids: ['unit-1'],
       },
+      ...requestOverrides,
     },
     deps: {
       eventRepo: {
@@ -209,6 +214,14 @@ describe('handleConfirmSubmission', () => {
     // Should be stale because issue 1 has Category in low band + age > 60 min
     expect(result.newState).toBe(ConversationState.SPLIT_FINALIZED);
     expect(result.eventPayload).toMatchObject({ staleness_detected: true });
+  });
+
+  it('returns error when idempotency key is missing', async () => {
+    const ctx = makeCtx({}, { idempotency_key: undefined });
+    const result = await handleConfirmSubmission(ctx);
+    expect(result.errors).toBeDefined();
+    expect(result.errors![0].code).toBe('MISSING_IDEMPOTENCY_KEY');
+    expect(result.newState).toBe(ConversationState.TENANT_CONFIRMATION_PENDING);
   });
 
   it('sets finalSystemAction to STALENESS_DETECTED when stale', async () => {

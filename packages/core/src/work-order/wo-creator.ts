@@ -38,12 +38,9 @@ export function createWorkOrders(input: CreateWorkOrdersInput): WorkOrder[] {
     session.classification_results.map(r => [r.issue_id, r]),
   );
 
-  const photos = session.draft_photo_ids.map(photoId => ({
-    photo_id: photoId,
-    storage_key: '',
-    sha256: '',
-    scanned_status: 'pending' as const,
-  }));
+  // Photos are NOT attached at creation time. Draft photo IDs on the session
+  // lack the storage_key and sha256 required by the schema. Photo attachment
+  // is a separate post-creation enrichment step once upload metadata is available.
 
   return session.split_issues.map(issue => {
     const classResult = resultMap.get(issue.issue_id);
@@ -65,7 +62,7 @@ export function createWorkOrders(input: CreateWorkOrdersInput): WorkOrder[] {
       }],
       raw_text: issue.raw_excerpt,
       summary_confirmed: issue.summary,
-      photos,
+      photos: [],
       classification: classResult ? { ...classResult.classifierOutput.classification } : {},
       confidence_by_field: classResult ? { ...classResult.computedConfidence } : {},
       missing_fields: classResult ? [...classResult.classifierOutput.missing_fields] : [],

@@ -180,6 +180,7 @@ describe('WO creation on CONFIRM_SUBMISSION', () => {
       action_type: ActionType.CONFIRM_SUBMISSION,
       actor: ActorType.TENANT,
       tenant_input: {},
+      idempotency_key: 'idemp-side-effect',
       auth_context: AUTH,
     });
 

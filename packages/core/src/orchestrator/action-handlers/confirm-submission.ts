@@ -15,15 +15,27 @@ const BAND_SEVERITY: Record<ConfidenceBand, number> = { low: 0, medium: 1, high:
  * Handle CONFIRM_SUBMISSION (spec §16, non-negotiable #4, §18 WO creation).
  *
  * Flow:
- * 1. Idempotency check: if key seen before, return cached result
+ * 1. Guard: idempotency key required (irreversible side effects)
  * 2. Guard: session must have split_issues and classification_results
  * 3. Build confirmation payload
  * 4. Run staleness check
  * 5. If stale: record staleness event, re-route to split_finalized (triggers re-classification)
- * 6. If fresh: record confirmation event, create WOs, store idempotency, transition to submitted
+ * 6. Reserve idempotency key atomically (if already reserved → replay cached result)
+ * 7. If fresh: record confirmation event, create WOs, complete idempotency, transition to submitted
  */
 export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promise<ActionHandlerResult> {
   const { session, request, deps } = ctx;
+
+  // Guard: idempotency key is required — CONFIRM_SUBMISSION has irreversible side effects
+  const idempotencyKey = request.idempotency_key;
+  if (!idempotencyKey) {
+    return {
+      newState: session.state,
+      session,
+      uiMessages: [],
+      errors: [{ code: 'MISSING_IDEMPOTENCY_KEY', message: 'CONFIRM_SUBMISSION requires an idempotency_key' }],
+    };
+  }
 
   // Guard: must have split issues
   if (!session.split_issues || session.split_issues.length === 0) {
@@ -125,28 +137,26 @@ export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promis
     }
   }
 
-  // Idempotency check — if we've seen this key before, return cached result
-  const idempotencyKey = request.idempotency_key;
-  if (idempotencyKey) {
-    const existing = await deps.idempotencyStore.get(idempotencyKey);
-    if (existing) {
-      return {
-        newState: ConversationState.SUBMITTED,
-        session,
-        uiMessages: [{ role: 'agent', content: 'Your request has been submitted. We\'ll be in touch.' }],
-        sideEffects: [{
-          effect_type: 'create_work_orders',
-          status: 'completed',
-          idempotency_key: idempotencyKey,
-        }],
-        eventPayload: {
-          confirmed: true,
-          confirmation_payload: confirmationPayload,
-          work_order_ids: existing.work_order_ids,
-        },
-        eventType: 'confirmation_accepted',
-      };
-    }
+  // Atomic idempotency reservation — claim the key before creating WOs
+  const reservation = await deps.idempotencyStore.tryReserve(idempotencyKey);
+  if (!reservation.reserved) {
+    // Key already claimed — return cached result
+    return {
+      newState: ConversationState.SUBMITTED,
+      session,
+      uiMessages: [{ role: 'agent', content: 'Your request has been submitted. We\'ll be in touch.' }],
+      sideEffects: [{
+        effect_type: 'create_work_orders',
+        status: 'completed',
+        idempotency_key: idempotencyKey,
+      }],
+      eventPayload: {
+        confirmed: true,
+        confirmation_payload: confirmationPayload,
+        work_order_ids: reservation.existing.work_order_ids,
+      },
+      eventType: 'confirmation_accepted',
+    };
   }
 
   // Fresh — record confirmation event
@@ -168,13 +178,11 @@ export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promis
   // Persist atomically
   await deps.workOrderRepo.insertBatch(workOrders);
 
-  // Store idempotency record
+  // Complete idempotency record with the created WO IDs
   const woIds = workOrders.map(wo => wo.work_order_id);
-  if (idempotencyKey) {
-    await deps.idempotencyStore.set(idempotencyKey, {
-      work_order_ids: woIds,
-    });
-  }
+  await deps.idempotencyStore.complete(idempotencyKey, {
+    work_order_ids: woIds,
+  });
 
   return {
     newState: ConversationState.SUBMITTED,

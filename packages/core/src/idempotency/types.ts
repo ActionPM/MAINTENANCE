@@ -8,12 +8,30 @@ export interface IdempotencyRecord {
 }
 
 /**
- * Idempotency store. Production: PostgreSQL row with TTL.
+ * Result of attempting to reserve an idempotency key.
+ * - reserved: true  → key was unclaimed, caller now owns it and should proceed with WO creation
+ * - reserved: false → key was already claimed; existing record is returned for replay
+ */
+export type ReservationResult =
+  | { readonly reserved: true }
+  | { readonly reserved: false; readonly existing: IdempotencyRecord };
+
+/**
+ * Idempotency store with atomic reserve-then-complete protocol.
+ *
+ * Usage:
+ *   1. tryReserve(key) — atomically claim the key
+ *   2. If reserved: create WOs, then complete(key, record)
+ *   3. If not reserved: return existing.work_order_ids as cached replay
+ *
+ * Production: PostgreSQL row with INSERT … ON CONFLICT.
  * Testing: in-memory Map.
  */
 export interface IdempotencyStore {
-  /** Get existing result for key. Returns null if unseen. */
+  /** Atomically reserve a key. Returns existing record if already claimed. */
+  tryReserve(key: string): Promise<ReservationResult>;
+  /** Fill in the WO IDs after successful creation. Only valid after a successful reserve. */
+  complete(key: string, record: IdempotencyRecord): Promise<void>;
+  /** Get existing result for key. Returns null if unseen or reserved-but-incomplete. */
   get(key: string): Promise<IdempotencyRecord | null>;
-  /** Store result. No-op if key already exists (first-write-wins). */
-  set(key: string, record: IdempotencyRecord): Promise<void>;
 }

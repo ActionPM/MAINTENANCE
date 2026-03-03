@@ -122,12 +122,13 @@ describe('createWorkOrders', () => {
     expect(wo1.summary_confirmed).toBe('Leaky faucet');
   });
 
-  it('attaches draft_photo_ids as photo references', () => {
+  it('does not attach placeholder photos (metadata unavailable at creation time)', () => {
     let session = baseSession();
     session = { ...session, draft_photo_ids: ['photo-1', 'photo-2'] };
     const wos = createWorkOrders({ session, idGenerator: idGen, clock });
     for (const wo of wos) {
-      expect(wo.photos).toHaveLength(2);
+      // Photos are empty at creation — enriched post-creation when upload metadata is available
+      expect(wo.photos).toHaveLength(0);
     }
   });
 

@@ -160,6 +160,7 @@ describe('Confirmation integration — happy path', () => {
       action_type: ActionType.CONFIRM_SUBMISSION,
       actor: ActorType.TENANT,
       tenant_input: {},
+      idempotency_key: 'idemp-fresh-1',
       auth_context: AUTH,
     });
 
@@ -246,6 +247,7 @@ describe('Confirmation integration — staleness (age + high confidence = NOT st
       action_type: ActionType.CONFIRM_SUBMISSION,
       actor: ActorType.TENANT,
       tenant_input: {},
+      idempotency_key: 'idemp-stale-1',
       auth_context: AUTH,
     });
 
