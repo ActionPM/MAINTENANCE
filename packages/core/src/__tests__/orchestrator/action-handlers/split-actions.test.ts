@@ -1,10 +1,20 @@
 import { describe, it, expect } from 'vitest';
-import { ConversationState, ActionType, ActorType } from '@wo-agent/schemas';
-import type { SplitIssue } from '@wo-agent/schemas';
+import { ConversationState, ActionType, ActorType, loadTaxonomy } from '@wo-agent/schemas';
+import type { SplitIssue, CueDictionary } from '@wo-agent/schemas';
 import { handleSplitAction } from '../../../orchestrator/action-handlers/split-actions.js';
 import { createSession, updateSessionState, setSplitIssues } from '../../../session/session.js';
 import { InMemoryEventStore } from '../../../events/in-memory-event-store.js';
 import type { ActionHandlerContext } from '../../../orchestrator/types.js';
+
+const taxonomy = loadTaxonomy();
+const MINI_CUES: CueDictionary = {
+  version: '1.0.0',
+  fields: {
+    Maintenance_Category: {
+      plumbing: { keywords: ['leak', 'toilet'], regex: [] },
+    },
+  },
+};
 
 const ISSUES: SplitIssue[] = [
   { issue_id: 'i1', summary: 'Toilet leaking', raw_excerpt: 'toilet is leaking' },
@@ -43,6 +53,16 @@ function makeContext(
       idGenerator: () => `id-${++counter}`,
       clock: () => '2026-01-15T12:00:00Z',
       issueSplitter: async () => ({ issues: [], issue_count: 0 }),
+      issueClassifier: async () => ({
+        issue_id: 'issue-1',
+        classification: { Category: 'maintenance' },
+        model_confidence: { Category: 0.9 },
+        missing_fields: [],
+        needs_human_triage: false,
+      }),
+      followUpGenerator: async () => ({ questions: [] }),
+      cueDict: MINI_CUES,
+      taxonomy,
     },
   };
 }

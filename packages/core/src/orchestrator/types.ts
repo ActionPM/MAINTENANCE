@@ -1,4 +1,5 @@
-import type { ConversationState, IssueSplitterInput, IssueSplitterOutput, OrchestratorActionRequest, OrchestratorActionResponse } from '@wo-agent/schemas';
+import type { ConversationState, IssueClassifierInput, IssueSplitterInput, IssueSplitterOutput, OrchestratorActionRequest, OrchestratorActionResponse, FollowUpGeneratorInput } from '@wo-agent/schemas';
+import type { CueDictionary, Taxonomy, ConfidenceConfig, FollowUpCaps } from '@wo-agent/schemas';
 import type { EventRepository } from '../events/event-repository.js';
 import type { ConversationSession } from '../session/types.js';
 import type { TransitionContext } from '../state-machine/guards.js';
@@ -13,6 +14,18 @@ export interface OrchestratorDependencies {
   readonly idGenerator: () => string;
   readonly clock: () => string; // ISO 8601
   readonly issueSplitter: (input: IssueSplitterInput) => Promise<IssueSplitterOutput>;
+  readonly issueClassifier: (
+    input: IssueClassifierInput,
+    retryContext?: { retryHint: string; constraint?: string },
+  ) => Promise<unknown>;
+  readonly followUpGenerator: (
+    input: FollowUpGeneratorInput,
+    retryContext?: { retryHint: string },
+  ) => Promise<unknown>;
+  readonly cueDict: CueDictionary;
+  readonly taxonomy: Taxonomy;
+  readonly confidenceConfig?: ConfidenceConfig;
+  readonly followUpCaps?: FollowUpCaps;
 }
 
 /**

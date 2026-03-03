@@ -10,6 +10,12 @@ export function buildResponse(result: ActionHandlerResult): OrchestratorActionRe
     state: result.session.state,
     unit_id: result.session.unit_id,
     ...(result.session.split_issues ? { issues: result.session.split_issues as any } : {}),
+    ...(result.session.classification_results
+      ? { classification_results: result.session.classification_results as any }
+      : {}),
+    ...(result.session.pending_followup_questions
+      ? { pending_followup_questions: result.session.pending_followup_questions as any }
+      : {}),
     pinned_versions: result.session.pinned_versions,
     created_at: result.session.created_at,
     last_activity_at: result.session.last_activity_at,

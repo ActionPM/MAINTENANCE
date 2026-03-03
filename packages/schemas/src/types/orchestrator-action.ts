@@ -1,4 +1,5 @@
 import type { ActionType, ActorType } from '../action-types.js';
+import type { FollowUpQuestion } from './followups.js';
 import type { PinnedVersions } from '../version-pinning.js';
 
 export interface AuthContext {
@@ -119,6 +120,8 @@ export interface ConversationSnapshot {
   readonly state: string;
   readonly unit_id?: string | null;
   readonly issues?: readonly Record<string, unknown>[];
+  readonly classification_results?: readonly Record<string, unknown>[];
+  readonly pending_followup_questions?: readonly FollowUpQuestion[] | null;
   readonly pinned_versions: PinnedVersions;
   readonly created_at?: string;
   readonly last_activity_at?: string;

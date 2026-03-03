@@ -1,10 +1,21 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { ConversationState, ActionType, ActorType } from '@wo-agent/schemas';
+import { ConversationState, ActionType, ActorType, loadTaxonomy } from '@wo-agent/schemas';
+import type { CueDictionary } from '@wo-agent/schemas';
 import { createDispatcher } from '../../orchestrator/dispatcher.js';
 import { InMemoryEventStore } from '../../events/in-memory-event-store.js';
 import { createSession } from '../../session/session.js';
 import type { OrchestratorDependencies, SessionStore } from '../../orchestrator/types.js';
 import type { ConversationSession } from '../../session/types.js';
+
+const taxonomy = loadTaxonomy();
+const MINI_CUES: CueDictionary = {
+  version: '1.0.0',
+  fields: {
+    Maintenance_Category: {
+      plumbing: { keywords: ['leak', 'toilet'], regex: [] },
+    },
+  },
+};
 
 class InMemorySessionStore implements SessionStore {
   private sessions = new Map<string, ConversationSession>();
@@ -27,6 +38,16 @@ function makeDeps(): OrchestratorDependencies & { sessionStore: InMemorySessionS
     idGenerator: () => `id-${++counter}`,
     clock: () => '2026-01-15T12:00:00Z',
     issueSplitter: async () => ({ issues: [], issue_count: 0 }),
+    issueClassifier: async () => ({
+      issue_id: 'issue-1',
+      classification: { Category: 'maintenance' },
+      model_confidence: { Category: 0.9 },
+      missing_fields: [],
+      needs_human_triage: false,
+    }),
+    followUpGenerator: async () => ({ questions: [] }),
+    cueDict: MINI_CUES,
+    taxonomy,
   };
 }
 

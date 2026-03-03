@@ -45,6 +45,9 @@ export {
   touchActivity,
   setSessionUnit,
   setSplitIssues,
+  setClassificationResults,
+  updateFollowUpTracking,
+  setPendingFollowUpQuestions,
   markAbandoned,
   markExpired,
   isExpired,
@@ -54,6 +57,7 @@ export type {
   ConversationSession,
   CreateSessionInput,
   ExpirationConfig,
+  IssueClassificationResult,
 } from './session/index.js';
 
 // --- Events (Phase 3) ---
@@ -68,6 +72,46 @@ export type {
 // --- Splitter (Phase 4) ---
 export { sanitizeIssueText, validateIssueConstraints, callIssueSplitter, SplitterError, SplitterErrorCode } from './splitter/index.js';
 export type { IssueConstraintResult } from './splitter/index.js';
+
+// --- Classifier (Phase 5) ---
+export {
+  computeCueScores,
+  computeCueStrengthForField,
+  computeFieldConfidence,
+  computeAllFieldConfidences,
+  classifyConfidenceBand,
+  determineFieldsNeedingInput,
+  callIssueClassifier,
+  ClassifierError,
+  ClassifierErrorCode,
+} from './classifier/index.js';
+export type {
+  CueFieldResult,
+  CueScoreMap,
+  ConfidenceBand,
+  FieldConfidenceInput,
+  ComputeAllInput,
+  ClassifierResult,
+} from './classifier/index.js';
+
+// --- Follow-up (Phase 6) ---
+export {
+  checkFollowUpCaps,
+  filterEligibleFields,
+  truncateQuestions,
+  callFollowUpGenerator,
+  FollowUpGeneratorError,
+  FollowUpGeneratorErrorCode,
+  buildFollowUpQuestionsEvent,
+  buildFollowUpAnswersEvent,
+} from './followup/index.js';
+export type {
+  CapsCheckInput,
+  CapsCheckResult,
+  FollowUpGeneratorResult,
+  QuestionsEventInput,
+  AnswersEventInput,
+} from './followup/index.js';
 
 // --- Orchestrator (Phase 3) ---
 export { createDispatcher, buildResponse, getActionHandler } from './orchestrator/index.js';

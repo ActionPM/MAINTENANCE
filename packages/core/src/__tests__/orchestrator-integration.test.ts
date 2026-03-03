@@ -1,10 +1,21 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { ConversationState, ActionType, ActorType } from '@wo-agent/schemas';
+import { ConversationState, ActionType, ActorType, loadTaxonomy } from '@wo-agent/schemas';
+import type { CueDictionary } from '@wo-agent/schemas';
 import { createDispatcher } from '../orchestrator/dispatcher.js';
 import { InMemoryEventStore } from '../events/in-memory-event-store.js';
 import { SystemEvent } from '../state-machine/system-events.js';
 import type { OrchestratorDependencies, SessionStore } from '../orchestrator/types.js';
 import type { ConversationSession } from '../session/types.js';
+
+const taxonomy = loadTaxonomy();
+const MINI_CUES: CueDictionary = {
+  version: '1.0.0',
+  fields: {
+    Maintenance_Category: {
+      plumbing: { keywords: ['leak', 'toilet'], regex: [] },
+    },
+  },
+};
 
 class InMemorySessionStore implements SessionStore {
   private sessions = new Map<string, ConversationSession>();
@@ -30,6 +41,16 @@ function makeDeps() {
       ],
       issue_count: 1,
     }),
+    issueClassifier: async () => ({
+      issue_id: 'issue-1',
+      classification: { Category: 'maintenance' },
+      model_confidence: { Category: 0.9 },
+      missing_fields: [],
+      needs_human_triage: false,
+    }),
+    followUpGenerator: async () => ({ questions: [] }),
+    cueDict: MINI_CUES,
+    taxonomy,
   };
 }
 
@@ -173,7 +194,7 @@ describe('Orchestrator integration: split confirmation flow', () => {
     return convId;
   }
 
-  it('walks split_proposed → CONFIRM_SPLIT → split_finalized', async () => {
+  it('walks split_proposed → CONFIRM_SPLIT → auto-classification', async () => {
     const convId = await reachSplitProposed();
 
     const r = await dispatch({
@@ -183,10 +204,14 @@ describe('Orchestrator integration: split confirmation flow', () => {
       tenant_input: {},
       auth_context: AUTH,
     });
-    expect(r.response.conversation_snapshot.state).toBe('split_finalized');
+    // Auto-chaining: CONFIRM_SPLIT -> split_finalized -> START_CLASSIFICATION -> classification result
+    expect([
+      ConversationState.TENANT_CONFIRMATION_PENDING,
+      ConversationState.NEEDS_TENANT_INPUT,
+    ]).toContain(r.response.conversation_snapshot.state);
   });
 
-  it('walks split_proposed → ADD_ISSUE → CONFIRM_SPLIT', async () => {
+  it('walks split_proposed → ADD_ISSUE → CONFIRM_SPLIT → auto-classification', async () => {
     const convId = await reachSplitProposed();
 
     const r1 = await dispatch({
@@ -206,10 +231,14 @@ describe('Orchestrator integration: split confirmation flow', () => {
       tenant_input: {},
       auth_context: AUTH,
     });
-    expect(r2.response.conversation_snapshot.state).toBe('split_finalized');
+    // Auto-chaining: CONFIRM_SPLIT -> split_finalized -> START_CLASSIFICATION -> classification result
+    expect([
+      ConversationState.TENANT_CONFIRMATION_PENDING,
+      ConversationState.NEEDS_TENANT_INPUT,
+    ]).toContain(r2.response.conversation_snapshot.state);
   });
 
-  it('walks split_proposed → REJECT_SPLIT → split_finalized (single issue)', async () => {
+  it('walks split_proposed → REJECT_SPLIT → auto-classification (single issue)', async () => {
     const convId = await reachSplitProposed();
 
     const r = await dispatch({
@@ -219,7 +248,11 @@ describe('Orchestrator integration: split confirmation flow', () => {
       tenant_input: {},
       auth_context: AUTH,
     });
-    expect(r.response.conversation_snapshot.state).toBe('split_finalized');
+    // Auto-chaining: REJECT_SPLIT -> split_finalized -> START_CLASSIFICATION -> classification result
+    expect([
+      ConversationState.TENANT_CONFIRMATION_PENDING,
+      ConversationState.NEEDS_TENANT_INPUT,
+    ]).toContain(r.response.conversation_snapshot.state);
     expect(r.response.conversation_snapshot.issues!.length).toBe(1);
   });
 

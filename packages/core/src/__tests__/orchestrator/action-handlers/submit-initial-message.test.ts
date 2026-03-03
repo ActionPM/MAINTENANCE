@@ -1,11 +1,21 @@
 import { describe, it, expect, vi } from 'vitest';
-import { ConversationState, ActionType, ActorType } from '@wo-agent/schemas';
-import type { IssueSplitterOutput } from '@wo-agent/schemas';
+import { ConversationState, ActionType, ActorType, loadTaxonomy } from '@wo-agent/schemas';
+import type { IssueSplitterOutput, CueDictionary } from '@wo-agent/schemas';
 import { handleSubmitInitialMessage } from '../../../orchestrator/action-handlers/submit-initial-message.js';
 import { createSession, updateSessionState, setSessionUnit } from '../../../session/session.js';
 import { InMemoryEventStore } from '../../../events/in-memory-event-store.js';
 import { SystemEvent } from '../../../state-machine/system-events.js';
 import type { ActionHandlerContext } from '../../../orchestrator/types.js';
+
+const taxonomy = loadTaxonomy();
+const MINI_CUES: CueDictionary = {
+  version: '1.0.0',
+  fields: {
+    Maintenance_Category: {
+      plumbing: { keywords: ['leak', 'toilet'], regex: [] },
+    },
+  },
+};
 
 const VALID_SPLIT: IssueSplitterOutput = {
   issues: [
@@ -51,6 +61,16 @@ function makeContext(
       idGenerator: () => `id-${++counter}`,
       clock: () => '2026-01-15T12:00:00Z',
       issueSplitter,
+      issueClassifier: vi.fn().mockResolvedValue({
+        issue_id: 'issue-1',
+        classification: { Category: 'maintenance' },
+        model_confidence: { Category: 0.9 },
+        missing_fields: [],
+        needs_human_triage: false,
+      }),
+      followUpGenerator: vi.fn().mockResolvedValue({ questions: [] }),
+      cueDict: MINI_CUES,
+      taxonomy,
     },
   };
 }

@@ -1,13 +1,23 @@
-import { ActionType } from '@wo-agent/schemas';
+import { ActionType, ActorType, ConversationState } from '@wo-agent/schemas';
 import type { OrchestratorActionRequest } from '@wo-agent/schemas';
 import { isValidTransition, isPhotoAction, ALL_SYSTEM_EVENTS } from '../state-machine/index.js';
+import { SystemEvent } from '../state-machine/system-events.js';
 import { updateSessionState, touchActivity, createSession } from '../session/session.js';
 import type { ConversationEvent } from '../events/types.js';
 import { buildResponse } from './response-builder.js';
 import { getActionHandler } from './action-handlers/index.js';
-import type { OrchestratorDependencies, DispatchResult } from './types.js';
+import type { OrchestratorDependencies, ActionHandlerResult, DispatchResult } from './types.js';
 
 const SYSTEM_EVENT_SET = new Set<string>(ALL_SYSTEM_EVENTS);
+
+/**
+ * Auto-fire map: when a handler lands in one of these states,
+ * the dispatcher automatically fires the associated system event.
+ * This implements spec §11.2 chaining (e.g., split_finalized -> START_CLASSIFICATION).
+ */
+const AUTO_FIRE_MAP: Partial<Record<ConversationState, string>> = {
+  [ConversationState.SPLIT_FINALIZED]: SystemEvent.START_CLASSIFICATION,
+};
 
 /**
  * Create the orchestrator dispatcher.
@@ -153,28 +163,77 @@ export function createDispatcher(deps: OrchestratorDependencies) {
     const handler = getActionHandler(action_type);
     const handlerResult = await handler({ session, request, deps });
 
-    // Apply state change
-    const updatedSession = handlerResult.newState !== session.state
-      ? updateSessionState(handlerResult.session, handlerResult.newState)
-      : touchActivity(handlerResult.session);
+    // Write events and apply state for the initial handler result
+    let currentResult = handlerResult;
+    let currentSession = session;
+    let latestUpdatedSession = writeHandlerEvents(
+      currentResult,
+      currentSession,
+      action_type,
+      request.actor,
+    );
 
-    // Write events — handlers may declare intermediate steps for matrix compliance.
-    // Example: SUBMIT_INITIAL_MESSAGE enters split_in_progress (intermediate),
-    // then LLM_SPLIT_SUCCESS moves to split_proposed (final).
-    let priorState = session.state;
+    // Auto-chain: if the handler landed in a state that has a registered
+    // system event (e.g., split_finalized -> START_CLASSIFICATION), fire it
+    // automatically. This implements spec §11.2 chaining.
+    const autoFireEvent = AUTO_FIRE_MAP[currentResult.newState as ConversationState];
+    if (autoFireEvent) {
+      const chainHandler = getActionHandler(autoFireEvent);
+      const chainSession = await latestUpdatedSession;
+      const chainResult = await chainHandler({
+        session: chainSession,
+        request: { ...request, action_type: autoFireEvent as any },
+        deps,
+      });
+
+      // Write events for the chained handler result.
+      // The prior state for the chain starts at the newState of the initial result.
+      latestUpdatedSession = writeHandlerEvents(
+        chainResult,
+        chainSession,
+        autoFireEvent,
+        request.actor,
+      );
+
+      // The chained result becomes the final result returned to the caller
+      currentResult = chainResult;
+    }
+
+    const finalSession = await latestUpdatedSession;
+    await deps.sessionStore.save(finalSession);
+
+    return {
+      response: buildResponse({ ...currentResult, session: finalSession }),
+      session: finalSession,
+    };
+  };
+
+  /**
+   * Write events for a handler result (intermediate steps + final event)
+   * and return the updated session with the new state applied.
+   */
+  async function writeHandlerEvents(
+    handlerResult: ActionHandlerResult,
+    priorSession: { conversation_id: string; state: ConversationState },
+    actionType: string,
+    actor: ActorType,
+  ) {
+    let priorState = priorSession.state;
+    const conversationId = priorSession.conversation_id;
+    const versions = handlerResult.session.pinned_versions;
 
     if (handlerResult.intermediateSteps?.length) {
       for (const step of handlerResult.intermediateSteps) {
         const intermediateEvent: ConversationEvent = {
           event_id: deps.idGenerator(),
-          conversation_id: session.conversation_id,
+          conversation_id: conversationId,
           event_type: (step.eventType as any) ?? 'state_transition',
           prior_state: priorState,
           new_state: step.state,
-          action_type,
-          actor: request.actor,
+          action_type: actionType,
+          actor,
           payload: step.eventPayload ?? null,
-          pinned_versions: null,
+          pinned_versions: versions,
           created_at: deps.clock(),
         };
         await deps.eventRepo.insert(intermediateEvent);
@@ -185,23 +244,21 @@ export function createDispatcher(deps: OrchestratorDependencies) {
     // Write final event (uses finalSystemAction as action_type when present)
     const event: ConversationEvent = {
       event_id: deps.idGenerator(),
-      conversation_id: session.conversation_id,
+      conversation_id: conversationId,
       event_type: (handlerResult.eventType as any) ?? 'state_transition',
       prior_state: priorState,
       new_state: handlerResult.newState,
-      action_type: handlerResult.finalSystemAction ?? action_type,
-      actor: request.actor,
+      action_type: handlerResult.finalSystemAction ?? actionType,
+      actor,
       payload: handlerResult.eventPayload ?? null,
-      pinned_versions: null,
+      pinned_versions: versions,
       created_at: deps.clock(),
     };
     await deps.eventRepo.insert(event);
 
-    await deps.sessionStore.save(updatedSession);
-
-    return {
-      response: buildResponse({ ...handlerResult, session: updatedSession }),
-      session: updatedSession,
-    };
-  };
+    // Apply state change
+    return handlerResult.newState !== priorSession.state
+      ? updateSessionState(handlerResult.session, handlerResult.newState)
+      : touchActivity(handlerResult.session);
+  }
 }
