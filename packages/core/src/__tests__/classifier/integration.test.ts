@@ -93,6 +93,13 @@ function makeDeps(overrides?: {
     }),
     cueDict: overrides?.cueDict ?? FULL_CUES,
     taxonomy,
+    unitResolver: {
+      resolve: async (unitId: string) => ({
+        unit_id: unitId,
+        property_id: `prop-for-${unitId}`,
+        client_id: `client-for-${unitId}`,
+      }),
+    },
   };
 }
 

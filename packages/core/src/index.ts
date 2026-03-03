@@ -54,6 +54,7 @@ export {
   filterResumableDrafts,
   setConfirmationTracking,
   markConfirmationPresented,
+  setSessionScope,
 } from './session/index.js';
 export type {
   ConversationSession,
@@ -61,7 +62,11 @@ export type {
   ExpirationConfig,
   IssueClassificationResult,
   ConfirmationTrackingInput,
+  ScopeInput,
 } from './session/index.js';
+
+// --- Unit Resolver (Phase 8) ---
+export type { UnitInfo, UnitResolver } from './unit-resolver/index.js';
 
 // --- Events (Phase 3) ---
 export { InMemoryEventStore } from './events/index.js';

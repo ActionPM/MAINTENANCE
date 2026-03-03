@@ -13,7 +13,9 @@ export {
   isExpired,
   setConfirmationTracking,
   markConfirmationPresented,
+  setSessionScope,
   type ExpirationConfig,
   type ConfirmationTrackingInput,
+  type ScopeInput,
 } from './session.js';
 export { filterResumableDrafts } from './draft-discovery.js';
