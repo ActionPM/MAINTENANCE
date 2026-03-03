@@ -68,6 +68,10 @@ export type {
 // --- Unit Resolver (Phase 8) ---
 export type { UnitInfo, UnitResolver } from './unit-resolver/index.js';
 
+// --- Work Order (Phase 8) ---
+export { InMemoryWorkOrderStore } from './work-order/index.js';
+export type { WorkOrderEvent, WorkOrderRepository } from './work-order/index.js';
+
 // --- Events (Phase 3) ---
 export { InMemoryEventStore } from './events/index.js';
 export type {
