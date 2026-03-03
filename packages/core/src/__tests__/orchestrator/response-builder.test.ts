@@ -32,6 +32,8 @@ const mockSession: ConversationSession = {
   source_text_hash: null,
   split_hash: null,
   confirmation_presented: false,
+  property_id: null,
+  client_id: null,
 };
 
 describe('buildResponse', () => {

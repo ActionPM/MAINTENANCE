@@ -4,6 +4,9 @@ import type { SplitIssue, CueDictionary } from '@wo-agent/schemas';
 import { handleSplitAction } from '../../../orchestrator/action-handlers/split-actions.js';
 import { createSession, updateSessionState, setSplitIssues } from '../../../session/session.js';
 import { InMemoryEventStore } from '../../../events/in-memory-event-store.js';
+import { InMemoryWorkOrderStore } from '../../../work-order/in-memory-wo-store.js';
+import { InMemoryIdempotencyStore } from '../../../idempotency/in-memory-idempotency-store.js';
+import type { UnitResolver } from '../../../unit-resolver/types.js';
 import type { ActionHandlerContext } from '../../../orchestrator/types.js';
 
 const taxonomy = loadTaxonomy();
@@ -63,6 +66,9 @@ function makeContext(
       followUpGenerator: async () => ({ questions: [] }),
       cueDict: MINI_CUES,
       taxonomy,
+      unitResolver: { resolve: async () => null } satisfies UnitResolver,
+      workOrderRepo: new InMemoryWorkOrderStore(),
+      idempotencyStore: new InMemoryIdempotencyStore(),
     },
   };
 }

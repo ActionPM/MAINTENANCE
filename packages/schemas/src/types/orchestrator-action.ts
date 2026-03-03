@@ -133,6 +133,7 @@ export interface ConversationSnapshot {
       readonly needs_human_triage: boolean;
     }[];
   };
+  readonly work_order_ids?: readonly string[];
   readonly pinned_versions: PinnedVersions;
   readonly created_at?: string;
   readonly last_activity_at?: string;

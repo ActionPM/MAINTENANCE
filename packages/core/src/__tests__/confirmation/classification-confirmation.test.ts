@@ -6,6 +6,9 @@ import type { ActionHandlerContext } from '../../orchestrator/types.js';
 import type { ConversationSession } from '../../session/types.js';
 import { createSession, updateSessionState, setSplitIssues } from '../../session/session.js';
 import { InMemoryEventStore } from '../../events/in-memory-event-store.js';
+import { InMemoryWorkOrderStore } from '../../work-order/in-memory-wo-store.js';
+import { InMemoryIdempotencyStore } from '../../idempotency/in-memory-idempotency-store.js';
+import type { UnitResolver } from '../../unit-resolver/types.js';
 
 const taxonomy = loadTaxonomy();
 
@@ -95,6 +98,9 @@ function makeCtx(): ActionHandlerContext {
       followUpGenerator: async () => ({ questions: [] }),
       cueDict: FULL_CUES,
       taxonomy,
+      unitResolver: { resolve: async () => null } satisfies UnitResolver,
+      workOrderRepo: new InMemoryWorkOrderStore(),
+      idempotencyStore: new InMemoryIdempotencyStore(),
     },
   };
 }

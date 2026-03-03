@@ -3,6 +3,9 @@ import type { CueDictionary, Taxonomy, ConfidenceConfig, FollowUpCaps } from '@w
 import type { EventRepository } from '../events/event-repository.js';
 import type { ConversationSession } from '../session/types.js';
 import type { TransitionContext } from '../state-machine/guards.js';
+import type { UnitResolver } from '../unit-resolver/types.js';
+import type { WorkOrderRepository } from '../work-order/types.js';
+import type { IdempotencyStore } from '../idempotency/types.js';
 
 /**
  * Dependencies injected into the orchestrator.
@@ -26,6 +29,9 @@ export interface OrchestratorDependencies {
   readonly taxonomy: Taxonomy;
   readonly confidenceConfig?: ConfidenceConfig;
   readonly followUpCaps?: FollowUpCaps;
+  readonly unitResolver: UnitResolver;
+  readonly workOrderRepo: WorkOrderRepository;
+  readonly idempotencyStore: IdempotencyStore;
 }
 
 /**

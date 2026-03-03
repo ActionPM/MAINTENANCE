@@ -54,6 +54,7 @@ export {
   filterResumableDrafts,
   setConfirmationTracking,
   markConfirmationPresented,
+  setSessionScope,
 } from './session/index.js';
 export type {
   ConversationSession,
@@ -61,7 +62,19 @@ export type {
   ExpirationConfig,
   IssueClassificationResult,
   ConfirmationTrackingInput,
+  ScopeInput,
 } from './session/index.js';
+
+// --- Unit Resolver (Phase 8) ---
+export type { UnitInfo, UnitResolver } from './unit-resolver/index.js';
+
+// --- Idempotency (Phase 8) ---
+export { InMemoryIdempotencyStore } from './idempotency/index.js';
+export type { IdempotencyRecord, IdempotencyStore } from './idempotency/index.js';
+
+// --- Work Order (Phase 8) ---
+export { InMemoryWorkOrderStore, createWorkOrders, buildWorkOrderCreatedEvent } from './work-order/index.js';
+export type { WorkOrderEvent, WorkOrderRepository, CreateWorkOrdersInput, WOCreatedEventInput } from './work-order/index.js';
 
 // --- Events (Phase 3) ---
 export { InMemoryEventStore } from './events/index.js';

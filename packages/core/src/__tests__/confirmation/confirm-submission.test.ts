@@ -4,6 +4,9 @@ import { ConversationState, ActionType, ActorType, DEFAULT_CONFIDENCE_CONFIG } f
 import type { ActionHandlerContext } from '../../orchestrator/types.js';
 import type { ConversationSession, IssueClassificationResult } from '../../session/types.js';
 import { computeContentHash } from '../../confirmation/payload-builder.js';
+import { InMemoryWorkOrderStore } from '../../work-order/in-memory-wo-store.js';
+import { InMemoryIdempotencyStore } from '../../idempotency/in-memory-idempotency-store.js';
+import type { UnitResolver } from '../../unit-resolver/types.js';
 
 const PINNED = {
   taxonomy_version: '1.0.0',
@@ -58,11 +61,16 @@ function makeSession(overrides: Partial<ConversationSession> = {}): Conversation
     source_text_hash: MATCHING_SOURCE_HASH,
     split_hash: MATCHING_SPLIT_HASH,
     confirmation_presented: true,
+    property_id: 'prop-1',
+    client_id: 'client-1',
     ...overrides,
   };
 }
 
-function makeCtx(sessionOverrides: Partial<ConversationSession> = {}): ActionHandlerContext {
+function makeCtx(
+  sessionOverrides: Partial<ConversationSession> = {},
+  requestOverrides: Record<string, unknown> = {},
+): ActionHandlerContext {
   const events: unknown[] = [];
   return {
     session: makeSession(sessionOverrides),
@@ -71,11 +79,13 @@ function makeCtx(sessionOverrides: Partial<ConversationSession> = {}): ActionHan
       action_type: ActionType.CONFIRM_SUBMISSION,
       actor: ActorType.TENANT,
       tenant_input: {},
+      idempotency_key: 'test-key',
       auth_context: {
         tenant_user_id: 'user-1',
         tenant_account_id: 'acct-1',
         authorized_unit_ids: ['unit-1'],
       },
+      ...requestOverrides,
     },
     deps: {
       eventRepo: {
@@ -94,6 +104,9 @@ function makeCtx(sessionOverrides: Partial<ConversationSession> = {}): ActionHan
       followUpGenerator: async () => ({}),
       cueDict: { version: '1.0.0', fields: {} },
       taxonomy: { version: '1.0.0', categories: {} } as any,
+      unitResolver: { resolve: async () => ({ unit_id: 'unit-1', property_id: 'prop-1', client_id: 'client-1' }) } satisfies UnitResolver,
+      workOrderRepo: new InMemoryWorkOrderStore(),
+      idempotencyStore: new InMemoryIdempotencyStore(),
     },
   };
 }
@@ -110,7 +123,7 @@ describe('handleConfirmSubmission', () => {
     const result = await handleConfirmSubmission(ctx);
     expect(result.sideEffects).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ effect_type: 'create_work_orders', status: 'pending' }),
+        expect.objectContaining({ effect_type: 'create_work_orders', status: 'completed' }),
       ]),
     );
   });
@@ -201,6 +214,14 @@ describe('handleConfirmSubmission', () => {
     // Should be stale because issue 1 has Category in low band + age > 60 min
     expect(result.newState).toBe(ConversationState.SPLIT_FINALIZED);
     expect(result.eventPayload).toMatchObject({ staleness_detected: true });
+  });
+
+  it('returns error when idempotency key is missing', async () => {
+    const ctx = makeCtx({}, { idempotency_key: undefined });
+    const result = await handleConfirmSubmission(ctx);
+    expect(result.errors).toBeDefined();
+    expect(result.errors![0].code).toBe('MISSING_IDEMPOTENCY_KEY');
+    expect(result.newState).toBe(ConversationState.TENANT_CONFIRMATION_PENDING);
   });
 
   it('sets finalSystemAction to STALENESS_DETECTED when stale', async () => {

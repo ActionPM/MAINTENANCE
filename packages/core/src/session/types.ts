@@ -42,6 +42,10 @@ export interface ConversationSession {
   readonly split_hash: string | null;
   /** Whether confirmation payload has been shown to the tenant */
   readonly confirmation_presented: boolean;
+  /** Property ID derived from unit_id via UnitResolver (spec §2.5) */
+  readonly property_id: string | null;
+  /** Client ID derived from unit_id via UnitResolver (spec §2.5) */
+  readonly client_id: string | null;
 }
 
 export interface CreateSessionInput {

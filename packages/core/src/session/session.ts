@@ -35,6 +35,8 @@ export function createSession(input: CreateSessionInput): ConversationSession {
     source_text_hash: null,
     split_hash: null,
     confirmation_presented: false,
+    property_id: null,
+    client_id: null,
   };
 }
 
@@ -223,4 +225,19 @@ export function markConfirmationPresented(
     confirmation_presented: true,
     last_activity_at: new Date().toISOString(),
   };
+}
+
+export interface ScopeInput {
+  readonly property_id: string;
+  readonly client_id: string;
+}
+
+/**
+ * Set property and client scope on the session (derived from UnitResolver).
+ */
+export function setSessionScope(
+  session: ConversationSession,
+  scope: ScopeInput,
+): ConversationSession {
+  return { ...session, property_id: scope.property_id, client_id: scope.client_id };
 }

@@ -7,23 +7,35 @@ import { buildConfirmationEvent, buildStalenessEvent } from '../../confirmation/
 import { classifyConfidenceBand } from '../../classifier/confidence.js';
 import type { ConfidenceBand } from '../../classifier/confidence.js';
 import { SystemEvent } from '../../state-machine/system-events.js';
+import { createWorkOrders } from '../../work-order/wo-creator.js';
 
 const BAND_SEVERITY: Record<ConfidenceBand, number> = { low: 0, medium: 1, high: 2 };
 
 /**
- * Handle CONFIRM_SUBMISSION (spec §16, non-negotiable #4).
+ * Handle CONFIRM_SUBMISSION (spec §16, non-negotiable #4, §18 WO creation).
  *
  * Flow:
- * 1. Guard: session must have split_issues and classification_results
- * 2. Build confirmation payload
- * 3. Run staleness check
- * 4. If stale: record staleness event, re-route to split_finalized (triggers re-classification)
- * 5. If fresh: record confirmation event, transition to submitted
- *
- * WO creation is NOT done here — that's Phase 8.
+ * 1. Guard: idempotency key required (irreversible side effects)
+ * 2. Guard: session must have split_issues and classification_results
+ * 3. Build confirmation payload
+ * 4. Run staleness check
+ * 5. If stale: record staleness event, re-route to split_finalized (triggers re-classification)
+ * 6. Reserve idempotency key atomically (if already reserved → replay cached result)
+ * 7. If fresh: record confirmation event, create WOs, complete idempotency, transition to submitted
  */
 export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promise<ActionHandlerResult> {
-  const { session, deps } = ctx;
+  const { session, request, deps } = ctx;
+
+  // Guard: idempotency key is required — CONFIRM_SUBMISSION has irreversible side effects
+  const idempotencyKey = request.idempotency_key;
+  if (!idempotencyKey) {
+    return {
+      newState: session.state,
+      session,
+      uiMessages: [],
+      errors: [{ code: 'MISSING_IDEMPOTENCY_KEY', message: 'CONFIRM_SUBMISSION requires an idempotency_key' }],
+    };
+  }
 
   // Guard: must have split issues
   if (!session.split_issues || session.split_issues.length === 0) {
@@ -125,6 +137,28 @@ export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promis
     }
   }
 
+  // Atomic idempotency reservation — claim the key before creating WOs
+  const reservation = await deps.idempotencyStore.tryReserve(idempotencyKey);
+  if (!reservation.reserved) {
+    // Key already claimed — return cached result
+    return {
+      newState: ConversationState.SUBMITTED,
+      session,
+      uiMessages: [{ role: 'agent', content: 'Your request has been submitted. We\'ll be in touch.' }],
+      sideEffects: [{
+        effect_type: 'create_work_orders',
+        status: 'completed',
+        idempotency_key: idempotencyKey,
+      }],
+      eventPayload: {
+        confirmed: true,
+        confirmation_payload: confirmationPayload,
+        work_order_ids: reservation.existing.work_order_ids,
+      },
+      eventType: 'confirmation_accepted',
+    };
+  }
+
   // Fresh — record confirmation event
   const confirmationEvent = buildConfirmationEvent({
     eventId: deps.idGenerator(),
@@ -134,14 +168,35 @@ export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promis
   });
   await deps.eventRepo.insert(confirmationEvent);
 
+  // Create work orders (spec §18 — one WO per split issue, atomic batch)
+  const workOrders = createWorkOrders({
+    session,
+    idGenerator: deps.idGenerator,
+    clock: deps.clock,
+  });
+
+  // Persist atomically
+  await deps.workOrderRepo.insertBatch(workOrders);
+
+  // Complete idempotency record with the created WO IDs
+  const woIds = workOrders.map(wo => wo.work_order_id);
+  await deps.idempotencyStore.complete(idempotencyKey, {
+    work_order_ids: woIds,
+  });
+
   return {
     newState: ConversationState.SUBMITTED,
     session,
     uiMessages: [{ role: 'agent', content: 'Your request has been submitted. We\'ll be in touch.' }],
-    sideEffects: [{ effect_type: 'create_work_orders', status: 'pending' }],
+    sideEffects: [{
+      effect_type: 'create_work_orders',
+      status: 'completed',
+      idempotency_key: idempotencyKey,
+    }],
     eventPayload: {
       confirmed: true,
       confirmation_payload: confirmationPayload,
+      work_order_ids: woIds,
     },
     eventType: 'confirmation_accepted',
   };
