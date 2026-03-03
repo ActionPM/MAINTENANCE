@@ -1,10 +1,19 @@
+import { ConversationState } from '@wo-agent/schemas';
 import type { OrchestratorActionResponse, ConversationSnapshot, UIDirective } from '@wo-agent/schemas';
 import type { ActionHandlerResult } from './types.js';
+import { buildConfirmationPayload } from '../confirmation/payload-builder.js';
 
 /**
  * Build an OrchestratorActionResponse from an action handler result.
  */
 export function buildResponse(result: ActionHandlerResult): OrchestratorActionResponse {
+  const confirmationPayload =
+    result.newState === ConversationState.TENANT_CONFIRMATION_PENDING &&
+    result.session.split_issues &&
+    result.session.classification_results
+      ? buildConfirmationPayload(result.session.split_issues, result.session.classification_results)
+      : undefined;
+
   const snapshot: ConversationSnapshot = {
     conversation_id: result.session.conversation_id,
     state: result.session.state,
@@ -16,6 +25,7 @@ export function buildResponse(result: ActionHandlerResult): OrchestratorActionRe
     ...(result.session.pending_followup_questions
       ? { pending_followup_questions: result.session.pending_followup_questions as any }
       : {}),
+    ...(confirmationPayload ? { confirmation_payload: confirmationPayload } : {}),
     pinned_versions: result.session.pinned_versions,
     created_at: result.session.created_at,
     last_activity_at: result.session.last_activity_at,

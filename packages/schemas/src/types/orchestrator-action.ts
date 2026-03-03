@@ -122,6 +122,17 @@ export interface ConversationSnapshot {
   readonly issues?: readonly Record<string, unknown>[];
   readonly classification_results?: readonly Record<string, unknown>[];
   readonly pending_followup_questions?: readonly FollowUpQuestion[] | null;
+  readonly confirmation_payload?: {
+    readonly issues: readonly {
+      readonly issue_id: string;
+      readonly summary: string;
+      readonly raw_excerpt: string;
+      readonly classification: Record<string, string>;
+      readonly confidence_by_field: Record<string, number>;
+      readonly missing_fields: readonly string[];
+      readonly needs_human_triage: boolean;
+    }[];
+  };
   readonly pinned_versions: PinnedVersions;
   readonly created_at?: string;
   readonly last_activity_at?: string;
