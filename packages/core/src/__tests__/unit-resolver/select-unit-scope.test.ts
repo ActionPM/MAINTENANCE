@@ -57,6 +57,9 @@ describe('SELECT_UNIT resolves scope via UnitResolver', () => {
       },
       workOrderRepo: new InMemoryWorkOrderStore(),
       idempotencyStore: new InMemoryIdempotencyStore(),
+      riskProtocols: { version: '1.0.0', triggers: [], mitigation_templates: [] },
+      escalationPlans: { version: '1.0.0', plans: [] },
+      contactExecutor: async () => false,
     };
     const dispatch = createDispatcher(deps);
 
@@ -103,6 +106,9 @@ describe('SELECT_UNIT resolves scope via UnitResolver', () => {
       unitResolver: { resolve: async () => null },
       workOrderRepo: new InMemoryWorkOrderStore(),
       idempotencyStore: new InMemoryIdempotencyStore(),
+      riskProtocols: { version: '1.0.0', triggers: [], mitigation_templates: [] },
+      escalationPlans: { version: '1.0.0', plans: [] },
+      contactExecutor: async () => false,
     };
     const dispatch = createDispatcher(deps);
 

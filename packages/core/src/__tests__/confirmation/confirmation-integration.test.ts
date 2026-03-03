@@ -90,6 +90,9 @@ function makeDeps() {
     },
     workOrderRepo: new InMemoryWorkOrderStore(),
     idempotencyStore: new InMemoryIdempotencyStore(),
+    riskProtocols: { version: '1.0.0', triggers: [], mitigation_templates: [] },
+    escalationPlans: { version: '1.0.0', plans: [] },
+    contactExecutor: async () => false,
   };
 }
 

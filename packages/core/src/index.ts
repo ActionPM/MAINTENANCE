@@ -55,6 +55,8 @@ export {
   setConfirmationTracking,
   markConfirmationPresented,
   setSessionScope,
+  setRiskTriggers,
+  setEscalationState,
 } from './session/index.js';
 export type {
   ConversationSession,
@@ -148,6 +150,27 @@ export type {
   ConfirmationEvent,
   StalenessEvent,
 } from './confirmation/index.js';
+
+// --- Risk (Phase 9) ---
+export {
+  scanTextForTriggers,
+  scanClassificationForTriggers,
+  mergeRiskScanResults,
+  resolveMitigationTemplate,
+  renderMitigationMessages,
+  buildRiskDetectedEvent,
+  buildEscalationAttemptEvent,
+  buildEscalationResultEvent,
+  routeEmergency,
+} from './risk/index.js';
+export type {
+  RiskEvent,
+  RiskDetectedInput,
+  EscalationAttemptInput,
+  EscalationResultInput,
+  ContactExecutor,
+  RouteEmergencyInput,
+} from './risk/index.js';
 
 // --- Orchestrator (Phase 3) ---
 export { createDispatcher, buildResponse, getActionHandler } from './orchestrator/index.js';

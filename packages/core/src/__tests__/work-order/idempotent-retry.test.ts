@@ -112,6 +112,9 @@ function makeCtx(shared: {
       unitResolver: { resolve: async () => null },
       workOrderRepo: shared.workOrderRepo,
       idempotencyStore: shared.idempotencyStore,
+      riskProtocols: { version: '1.0.0', triggers: [], mitigation_templates: [] },
+      escalationPlans: { version: '1.0.0', plans: [] },
+      contactExecutor: async () => false,
     },
   };
 }
