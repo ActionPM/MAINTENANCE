@@ -82,6 +82,23 @@ export type {
   ScannedStatus,
 } from './types/photo.js';
 
+export type {
+  RiskSeverity,
+  TriggerGrammar,
+  RiskTrigger,
+  MitigationTemplate,
+  RiskProtocols,
+  MatchedTrigger,
+  RiskScanResult,
+  ContactChainEntry,
+  ExhaustionBehavior,
+  EscalationPlan,
+  EscalationPlans,
+  EscalationState,
+  EscalationAttempt,
+  EscalationResult,
+} from './types/risk.js';
+
 // --- Validator infrastructure ---
 export { validate } from './validator.js';
 export type { ValidationResult, ValidationError } from './validator.js';
