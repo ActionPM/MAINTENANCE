@@ -134,6 +134,12 @@ export interface ConversationSnapshot {
     }[];
   };
   readonly work_order_ids?: readonly string[];
+  readonly risk_summary?: {
+    readonly has_emergency: boolean;
+    readonly highest_severity: string;
+    readonly trigger_ids: readonly string[];
+    readonly escalation_state: string;
+  };
   readonly pinned_versions: PinnedVersions;
   readonly created_at?: string;
   readonly last_activity_at?: string;

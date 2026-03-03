@@ -20,6 +20,21 @@ export function buildResponse(result: ActionHandlerResult): OrchestratorActionRe
       ? (result.eventPayload.work_order_ids as readonly string[])
       : undefined;
 
+  const riskSummary =
+    result.session.risk_triggers && result.session.risk_triggers.length > 0
+      ? {
+          has_emergency: result.session.risk_triggers.some(t => t.trigger.severity === 'emergency'),
+          highest_severity: result.session.risk_triggers.reduce((worst: string, t) => {
+            const rank: Record<string, number> = { emergency: 3, high: 2, medium: 1 };
+            return (rank[t.trigger.severity] ?? 0) > (rank[worst] ?? 0)
+              ? t.trigger.severity
+              : worst;
+          }, ''),
+          trigger_ids: result.session.risk_triggers.map(t => t.trigger.trigger_id),
+          escalation_state: result.session.escalation_state,
+        }
+      : undefined;
+
   const snapshot: ConversationSnapshot = {
     conversation_id: result.session.conversation_id,
     state: result.session.state,
@@ -33,6 +48,7 @@ export function buildResponse(result: ActionHandlerResult): OrchestratorActionRe
       : {}),
     ...(confirmationPayload ? { confirmation_payload: confirmationPayload } : {}),
     ...(workOrderIds ? { work_order_ids: workOrderIds } : {}),
+    ...(riskSummary ? { risk_summary: riskSummary } : {}),
     pinned_versions: result.session.pinned_versions,
     created_at: result.session.created_at,
     last_activity_at: result.session.last_activity_at,

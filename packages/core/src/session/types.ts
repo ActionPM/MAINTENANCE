@@ -1,4 +1,4 @@
-import type { ConversationState, IssueClassifierOutput, PinnedVersions, SplitIssue, PreviousQuestion, FollowUpQuestion } from '@wo-agent/schemas';
+import type { ConversationState, IssueClassifierOutput, PinnedVersions, SplitIssue, PreviousQuestion, FollowUpQuestion, MatchedTrigger, EscalationState } from '@wo-agent/schemas';
 
 /**
  * Per-issue classification result stored on the session.
@@ -46,6 +46,12 @@ export interface ConversationSession {
   readonly property_id: string | null;
   /** Client ID derived from unit_id via UnitResolver (spec §2.5) */
   readonly client_id: string | null;
+  /** Matched risk triggers from deterministic scan (spec §17) */
+  readonly risk_triggers: readonly MatchedTrigger[];
+  /** Current escalation state */
+  readonly escalation_state: EscalationState;
+  /** Escalation plan ID if emergency routing is active */
+  readonly escalation_plan_id: string | null;
 }
 
 export interface CreateSessionInput {

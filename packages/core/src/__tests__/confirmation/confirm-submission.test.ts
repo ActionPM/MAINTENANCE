@@ -63,6 +63,9 @@ function makeSession(overrides: Partial<ConversationSession> = {}): Conversation
     confirmation_presented: true,
     property_id: 'prop-1',
     client_id: 'client-1',
+    risk_triggers: [],
+    escalation_state: 'none' as const,
+    escalation_plan_id: null,
     ...overrides,
   };
 }
@@ -107,6 +110,9 @@ function makeCtx(
       unitResolver: { resolve: async () => ({ unit_id: 'unit-1', property_id: 'prop-1', client_id: 'client-1' }) } satisfies UnitResolver,
       workOrderRepo: new InMemoryWorkOrderStore(),
       idempotencyStore: new InMemoryIdempotencyStore(),
+      riskProtocols: { version: '1.0.0', triggers: [], mitigation_templates: [] },
+      escalationPlans: { version: '1.0.0', plans: [] },
+      contactExecutor: async () => false,
     },
   };
 }

@@ -1,4 +1,4 @@
-import type { ConversationState, IssueClassifierInput, IssueSplitterInput, IssueSplitterOutput, OrchestratorActionRequest, OrchestratorActionResponse, FollowUpGeneratorInput } from '@wo-agent/schemas';
+import type { ConversationState, IssueClassifierInput, IssueSplitterInput, IssueSplitterOutput, OrchestratorActionRequest, OrchestratorActionResponse, FollowUpGeneratorInput, RiskProtocols, EscalationPlans } from '@wo-agent/schemas';
 import type { CueDictionary, Taxonomy, ConfidenceConfig, FollowUpCaps } from '@wo-agent/schemas';
 import type { EventRepository } from '../events/event-repository.js';
 import type { ConversationSession } from '../session/types.js';
@@ -6,6 +6,7 @@ import type { TransitionContext } from '../state-machine/guards.js';
 import type { UnitResolver } from '../unit-resolver/types.js';
 import type { WorkOrderRepository } from '../work-order/types.js';
 import type { IdempotencyStore } from '../idempotency/types.js';
+import type { ContactExecutor } from '../risk/emergency-router.js';
 
 /**
  * Dependencies injected into the orchestrator.
@@ -32,6 +33,9 @@ export interface OrchestratorDependencies {
   readonly unitResolver: UnitResolver;
   readonly workOrderRepo: WorkOrderRepository;
   readonly idempotencyStore: IdempotencyStore;
+  readonly riskProtocols: RiskProtocols;
+  readonly escalationPlans: EscalationPlans;
+  readonly contactExecutor: ContactExecutor;
 }
 
 /**

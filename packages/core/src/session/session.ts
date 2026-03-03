@@ -1,5 +1,5 @@
 import { ConversationState } from '@wo-agent/schemas';
-import type { SplitIssue, FollowUpQuestion, PreviousQuestion } from '@wo-agent/schemas';
+import type { SplitIssue, FollowUpQuestion, PreviousQuestion, MatchedTrigger, EscalationState } from '@wo-agent/schemas';
 import type { ConversationSession, CreateSessionInput, IssueClassificationResult } from './types.js';
 
 const ERROR_STATES: ReadonlySet<ConversationState> = new Set([
@@ -37,6 +37,9 @@ export function createSession(input: CreateSessionInput): ConversationSession {
     confirmation_presented: false,
     property_id: null,
     client_id: null,
+    risk_triggers: [],
+    escalation_state: 'none',
+    escalation_plan_id: null,
   };
 }
 
@@ -240,4 +243,23 @@ export function setSessionScope(
   scope: ScopeInput,
 ): ConversationSession {
   return { ...session, property_id: scope.property_id, client_id: scope.client_id };
+}
+
+export function setRiskTriggers(
+  session: ConversationSession,
+  triggers: readonly MatchedTrigger[],
+): ConversationSession {
+  return { ...session, risk_triggers: triggers };
+}
+
+export function setEscalationState(
+  session: ConversationSession,
+  state: EscalationState,
+  planId?: string,
+): ConversationSession {
+  return {
+    ...session,
+    escalation_state: state,
+    ...(planId !== undefined ? { escalation_plan_id: planId } : {}),
+  };
 }
