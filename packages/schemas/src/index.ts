@@ -99,6 +99,9 @@ export type {
   EscalationResult,
 } from './types/risk.js';
 
+export { loadRiskProtocols } from './risk-protocols.js';
+export { loadEscalationPlans } from './escalation-plans.js';
+
 // --- Validator infrastructure ---
 export { validate } from './validator.js';
 export type { ValidationResult, ValidationError } from './validator.js';
