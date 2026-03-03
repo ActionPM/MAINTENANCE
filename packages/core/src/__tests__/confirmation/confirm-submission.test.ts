@@ -6,6 +6,7 @@ import type { ConversationSession, IssueClassificationResult } from '../../sessi
 import { computeContentHash } from '../../confirmation/payload-builder.js';
 import { InMemoryWorkOrderStore } from '../../work-order/in-memory-wo-store.js';
 import { InMemoryIdempotencyStore } from '../../idempotency/in-memory-idempotency-store.js';
+import type { UnitResolver } from '../../unit-resolver/types.js';
 
 const PINNED = {
   taxonomy_version: '1.0.0',
@@ -98,6 +99,7 @@ function makeCtx(sessionOverrides: Partial<ConversationSession> = {}): ActionHan
       followUpGenerator: async () => ({}),
       cueDict: { version: '1.0.0', fields: {} },
       taxonomy: { version: '1.0.0', categories: {} } as any,
+      unitResolver: { resolve: async () => ({ unit_id: 'unit-1', property_id: 'prop-1', client_id: 'client-1' }) } satisfies UnitResolver,
       workOrderRepo: new InMemoryWorkOrderStore(),
       idempotencyStore: new InMemoryIdempotencyStore(),
     },

@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
-import { createDispatcher, InMemoryEventStore } from '@wo-agent/core';
-import type { SessionStore, OrchestratorDependencies } from '@wo-agent/core';
+import { createDispatcher, InMemoryEventStore, InMemoryWorkOrderStore, InMemoryIdempotencyStore } from '@wo-agent/core';
+import type { SessionStore, OrchestratorDependencies, UnitResolver } from '@wo-agent/core';
 import type { ConversationSession } from '@wo-agent/core';
 import type { CueDictionary, IssueClassifierInput } from '@wo-agent/schemas';
 import { loadTaxonomy } from '@wo-agent/schemas';
@@ -60,6 +60,11 @@ export function getOrchestrator() {
       followUpGenerator: async () => ({ questions: [] }),
       cueDict: classificationCues as CueDictionary,
       taxonomy: loadTaxonomy(),
+      unitResolver: {
+        resolve: async (unitId: string) => ({ unit_id: unitId, property_id: `prop-${unitId}`, client_id: `client-${unitId}` }),
+      } satisfies UnitResolver,
+      workOrderRepo: new InMemoryWorkOrderStore(),
+      idempotencyStore: new InMemoryIdempotencyStore(),
     };
     dispatcher = createDispatcher(deps);
   }

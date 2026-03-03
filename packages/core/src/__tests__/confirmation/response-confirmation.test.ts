@@ -45,6 +45,8 @@ function makeSession(state: ConversationState): ConversationSession {
     source_text_hash: 'abc',
     split_hash: 'def',
     confirmation_presented: true,
+    property_id: 'prop-1',
+    client_id: 'client-1',
   };
 }
 

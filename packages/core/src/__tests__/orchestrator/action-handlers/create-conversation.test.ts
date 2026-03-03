@@ -4,6 +4,9 @@ import type { CueDictionary } from '@wo-agent/schemas';
 import { handleCreateConversation } from '../../../orchestrator/action-handlers/create-conversation.js';
 import { createSession } from '../../../session/session.js';
 import { InMemoryEventStore } from '../../../events/in-memory-event-store.js';
+import { InMemoryWorkOrderStore } from '../../../work-order/in-memory-wo-store.js';
+import { InMemoryIdempotencyStore } from '../../../idempotency/in-memory-idempotency-store.js';
+import type { UnitResolver } from '../../../unit-resolver/types.js';
 import type { ActionHandlerContext } from '../../../orchestrator/types.js';
 
 const taxonomy = loadTaxonomy();
@@ -59,6 +62,9 @@ function makeContext(unitIds: string[]): ActionHandlerContext {
       followUpGenerator: async () => ({ questions: [] }),
       cueDict: MINI_CUES,
       taxonomy,
+      unitResolver: { resolve: async () => null } satisfies UnitResolver,
+      workOrderRepo: new InMemoryWorkOrderStore(),
+      idempotencyStore: new InMemoryIdempotencyStore(),
     },
   };
 }
