@@ -2,7 +2,7 @@ import { ActionType, ActorType, ConversationState } from '@wo-agent/schemas';
 import type { OrchestratorActionRequest } from '@wo-agent/schemas';
 import { isValidTransition, isPhotoAction, ALL_SYSTEM_EVENTS } from '../state-machine/index.js';
 import { SystemEvent } from '../state-machine/system-events.js';
-import { updateSessionState, touchActivity, createSession } from '../session/session.js';
+import { updateSessionState, touchActivity, createSession, markConfirmationPresented } from '../session/session.js';
 import type { ConversationEvent } from '../events/types.js';
 import { buildResponse } from './response-builder.js';
 import { getActionHandler } from './action-handlers/index.js';
@@ -199,7 +199,17 @@ export function createDispatcher(deps: OrchestratorDependencies) {
       currentResult = chainResult;
     }
 
-    const finalSession = await latestUpdatedSession;
+    let finalSession = await latestUpdatedSession;
+
+    // When entering tenant_confirmation_pending the response will include
+    // the confirmation payload, so mark it as presented on the persisted
+    // session. This ensures the staleness checker uses the
+    // "seen_artifact_borderline_expired" path (confidence-aware) instead of
+    // the unconditional "unseen_artifact_expired" path.
+    if (finalSession.state === ConversationState.TENANT_CONFIRMATION_PENDING) {
+      finalSession = markConfirmationPresented(finalSession);
+    }
+
     await deps.sessionStore.save(finalSession);
 
     return {
