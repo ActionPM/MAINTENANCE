@@ -34,6 +34,14 @@ export interface ConversationSession {
   readonly draft_photo_ids: readonly string[];
   readonly created_at: string;
   readonly last_activity_at: string;
+  /** ISO timestamp when session entered tenant_confirmation_pending */
+  readonly confirmation_entered_at: string | null;
+  /** SHA-256 hash of source text at classification time */
+  readonly source_text_hash: string | null;
+  /** SHA-256 hash of split issues at classification time */
+  readonly split_hash: string | null;
+  /** Whether confirmation payload has been shown to the tenant */
+  readonly confirmation_presented: boolean;
 }
 
 export interface CreateSessionInput {

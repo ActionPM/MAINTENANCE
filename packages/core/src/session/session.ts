@@ -31,6 +31,10 @@ export function createSession(input: CreateSessionInput): ConversationSession {
     draft_photo_ids: [],
     created_at: now,
     last_activity_at: now,
+    confirmation_entered_at: null,
+    source_text_hash: null,
+    split_hash: null,
+    confirmation_presented: false,
   };
 }
 
@@ -181,6 +185,42 @@ export function setPendingFollowUpQuestions(
   return {
     ...session,
     pending_followup_questions: questions ? [...questions] : null,
+    last_activity_at: new Date().toISOString(),
+  };
+}
+
+export interface ConfirmationTrackingInput {
+  readonly confirmationEnteredAt: string;
+  readonly sourceTextHash: string;
+  readonly splitHash: string;
+}
+
+/**
+ * Set confirmation tracking fields when entering tenant_confirmation_pending.
+ */
+export function setConfirmationTracking(
+  session: ConversationSession,
+  input: ConfirmationTrackingInput,
+): ConversationSession {
+  return {
+    ...session,
+    confirmation_entered_at: input.confirmationEnteredAt,
+    source_text_hash: input.sourceTextHash,
+    split_hash: input.splitHash,
+    confirmation_presented: false,
+    last_activity_at: new Date().toISOString(),
+  };
+}
+
+/**
+ * Mark that the confirmation payload has been presented to the tenant.
+ */
+export function markConfirmationPresented(
+  session: ConversationSession,
+): ConversationSession {
+  return {
+    ...session,
+    confirmation_presented: true,
     last_activity_at: new Date().toISOString(),
   };
 }
