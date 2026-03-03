@@ -73,8 +73,8 @@ export { InMemoryIdempotencyStore } from './idempotency/index.js';
 export type { IdempotencyRecord, IdempotencyStore } from './idempotency/index.js';
 
 // --- Work Order (Phase 8) ---
-export { InMemoryWorkOrderStore, createWorkOrders } from './work-order/index.js';
-export type { WorkOrderEvent, WorkOrderRepository, CreateWorkOrdersInput } from './work-order/index.js';
+export { InMemoryWorkOrderStore, createWorkOrders, buildWorkOrderCreatedEvent } from './work-order/index.js';
+export type { WorkOrderEvent, WorkOrderRepository, CreateWorkOrdersInput, WOCreatedEventInput } from './work-order/index.js';
 
 // --- Events (Phase 3) ---
 export { InMemoryEventStore } from './events/index.js';
