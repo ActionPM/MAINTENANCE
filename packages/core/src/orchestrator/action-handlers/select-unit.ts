@@ -1,11 +1,11 @@
 import { ConversationState } from '@wo-agent/schemas';
 import type { TenantInputSelectUnit } from '@wo-agent/schemas';
 import { resolveSelectUnit } from '../../state-machine/guards.js';
-import { setSessionUnit } from '../../session/session.js';
+import { setSessionUnit, setSessionScope } from '../../session/session.js';
 import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
 
 export async function handleSelectUnit(ctx: ActionHandlerContext): Promise<ActionHandlerResult> {
-  const { session, request } = ctx;
+  const { session, request, deps } = ctx;
   const input = request.tenant_input as TenantInputSelectUnit;
   const unitId = input.unit_id;
 
@@ -23,7 +23,22 @@ export async function handleSelectUnit(ctx: ActionHandlerContext): Promise<Actio
     };
   }
 
-  const updatedSession = setSessionUnit(session, unitId);
+  // Resolve property/client scope from unit
+  const unitInfo = await deps.unitResolver.resolve(unitId);
+  if (!unitInfo) {
+    return {
+      newState: session.state,
+      session,
+      uiMessages: [{ role: 'agent', content: 'Unable to resolve unit information. Please try again.' }],
+      errors: [{ code: 'UNIT_NOT_FOUND', message: 'Unit not found in property database' }],
+    };
+  }
+
+  let updatedSession = setSessionUnit(session, unitId);
+  updatedSession = setSessionScope(updatedSession, {
+    property_id: unitInfo.property_id,
+    client_id: unitInfo.client_id,
+  });
 
   return {
     newState: targetState,
