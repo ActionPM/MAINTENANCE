@@ -5,6 +5,8 @@ import { createDispatcher } from '../../orchestrator/dispatcher.js';
 import { InMemoryEventStore } from '../../events/in-memory-event-store.js';
 import type { OrchestratorDependencies, SessionStore } from '../../orchestrator/types.js';
 import type { ConversationSession } from '../../session/types.js';
+import { InMemoryWorkOrderStore } from '../../work-order/in-memory-wo-store.js';
+import { InMemoryIdempotencyStore } from '../../idempotency/in-memory-idempotency-store.js';
 
 const taxonomy = loadTaxonomy();
 const MINI_CUES: CueDictionary = {
@@ -53,6 +55,8 @@ describe('SELECT_UNIT resolves scope via UnitResolver', () => {
           client_id: `client-for-${unitId}`,
         }),
       },
+      workOrderRepo: new InMemoryWorkOrderStore(),
+      idempotencyStore: new InMemoryIdempotencyStore(),
     };
     const dispatch = createDispatcher(deps);
 
@@ -97,6 +101,8 @@ describe('SELECT_UNIT resolves scope via UnitResolver', () => {
       cueDict: MINI_CUES,
       taxonomy,
       unitResolver: { resolve: async () => null },
+      workOrderRepo: new InMemoryWorkOrderStore(),
+      idempotencyStore: new InMemoryIdempotencyStore(),
     };
     const dispatch = createDispatcher(deps);
 

@@ -6,6 +6,8 @@ import { InMemoryEventStore } from '../../events/in-memory-event-store.js';
 import { createSession } from '../../session/session.js';
 import type { OrchestratorDependencies, SessionStore } from '../../orchestrator/types.js';
 import type { ConversationSession } from '../../session/types.js';
+import { InMemoryWorkOrderStore } from '../../work-order/in-memory-wo-store.js';
+import { InMemoryIdempotencyStore } from '../../idempotency/in-memory-idempotency-store.js';
 
 const taxonomy = loadTaxonomy();
 const MINI_CUES: CueDictionary = {
@@ -55,6 +57,8 @@ function makeDeps(): OrchestratorDependencies & { sessionStore: InMemorySessionS
         client_id: `client-for-${unitId}`,
       }),
     },
+    workOrderRepo: new InMemoryWorkOrderStore(),
+    idempotencyStore: new InMemoryIdempotencyStore(),
   };
 }
 

@@ -5,6 +5,8 @@ import { createDispatcher } from '../../orchestrator/dispatcher.js';
 import { InMemoryEventStore } from '../../events/in-memory-event-store.js';
 import type { OrchestratorDependencies, SessionStore } from '../../orchestrator/types.js';
 import type { ConversationSession } from '../../session/types.js';
+import { InMemoryWorkOrderStore } from '../../work-order/in-memory-wo-store.js';
+import { InMemoryIdempotencyStore } from '../../idempotency/in-memory-idempotency-store.js';
 
 const taxonomy = loadTaxonomy();
 
@@ -86,6 +88,8 @@ function makeDeps() {
         client_id: `client-for-${unitId}`,
       }),
     },
+    workOrderRepo: new InMemoryWorkOrderStore(),
+    idempotencyStore: new InMemoryIdempotencyStore(),
   };
 }
 

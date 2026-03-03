@@ -4,6 +4,8 @@ import { ConversationState, ActionType, ActorType, DEFAULT_CONFIDENCE_CONFIG } f
 import type { ActionHandlerContext } from '../../orchestrator/types.js';
 import type { ConversationSession, IssueClassificationResult } from '../../session/types.js';
 import { computeContentHash } from '../../confirmation/payload-builder.js';
+import { InMemoryWorkOrderStore } from '../../work-order/in-memory-wo-store.js';
+import { InMemoryIdempotencyStore } from '../../idempotency/in-memory-idempotency-store.js';
 
 const PINNED = {
   taxonomy_version: '1.0.0',
@@ -94,6 +96,8 @@ function makeCtx(sessionOverrides: Partial<ConversationSession> = {}): ActionHan
       followUpGenerator: async () => ({}),
       cueDict: { version: '1.0.0', fields: {} },
       taxonomy: { version: '1.0.0', categories: {} } as any,
+      workOrderRepo: new InMemoryWorkOrderStore(),
+      idempotencyStore: new InMemoryIdempotencyStore(),
     },
   };
 }
