@@ -99,6 +99,15 @@ export type {
   EscalationResult,
 } from './types/risk.js';
 
+export type {
+  NotificationChannel,
+  NotificationType,
+  NotificationStatus,
+  NotificationEvent,
+  NotificationPreference,
+  SmsConsent,
+} from './types/notification.js';
+
 export { loadRiskProtocols } from './risk-protocols.js';
 export { loadEscalationPlans } from './escalation-plans.js';
 
