@@ -68,7 +68,7 @@ export function createWorkOrders(input: CreateWorkOrdersInput): WorkOrder[] {
       missing_fields: classResult ? [...classResult.classifierOutput.missing_fields] : [],
       pets_present: 'unknown',
       needs_human_triage: classResult?.classifierOutput.needs_human_triage ?? true,
-      ...(session.risk_triggers.length > 0 ? {
+      ...(session.risk_triggers && session.risk_triggers.length > 0 ? {
         risk_flags: {
           trigger_ids: session.risk_triggers.map(t => t.trigger.trigger_id),
           highest_severity: session.risk_triggers.reduce((worst, t) => {
