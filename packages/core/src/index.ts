@@ -72,7 +72,7 @@ export type { UnitInfo, UnitResolver } from './unit-resolver/index.js';
 
 // --- Idempotency (Phase 8) ---
 export { InMemoryIdempotencyStore } from './idempotency/index.js';
-export type { IdempotencyRecord, IdempotencyStore } from './idempotency/index.js';
+export type { IdempotencyRecord, IdempotencyStore, ReservationResult } from './idempotency/index.js';
 
 // --- Work Order (Phase 8) ---
 export { InMemoryWorkOrderStore, createWorkOrders, buildWorkOrderCreatedEvent, buildWorkOrderStatusChangedEvent } from './work-order/index.js';

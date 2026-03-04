@@ -3,7 +3,13 @@ import { PostgresEventStore } from '../repos/pg-event-store.js';
 import type { Pool } from '../pool.js';
 
 // Fake pool for unit tests — integration tests hit real Neon
-function createFakePool(): Pool & { lastQuery: { text: string; values: unknown[] } | null } {
+interface FakePool extends Pool {
+  lastQuery: { text: string; values: unknown[] } | null;
+  queries: { text: string; values: unknown[] }[];
+  nextRows: Record<string, unknown>[];
+}
+
+function createFakePool(): FakePool {
   const fake = {
     lastQuery: null as { text: string; values: unknown[] } | null,
     queries: [] as { text: string; values: unknown[] }[],
@@ -16,7 +22,7 @@ function createFakePool(): Pool & { lastQuery: { text: string; values: unknown[]
     },
     end: async () => {},
   };
-  return fake as unknown as Pool & { lastQuery: { text: string; values: unknown[] } | null };
+  return fake as unknown as FakePool;
 }
 
 describe('PostgresEventStore', () => {
