@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@wo-agent/core": "workspace:*",
+    "@wo-agent/db": "workspace:*",
     "@wo-agent/mock-erp": "workspace:*",
     "@wo-agent/schemas": "workspace:*",
     "next": "^15.0.0",
