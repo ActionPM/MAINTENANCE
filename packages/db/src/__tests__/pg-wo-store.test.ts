@@ -99,4 +99,12 @@ describe('PostgresWorkOrderStore', () => {
     expect(query!.text).toContain('client_id');
     expect(query!.text).toContain('created_at >=');
   });
+
+  it('listAll() returns empty when unit_ids is empty array (deny-all)', async () => {
+    pool.nextRows = [makeWo()];
+    const result = await store.listAll({ unit_ids: [] });
+    expect(result).toEqual([]);
+    // Should not even hit the database
+    expect(pool.queries.length).toBe(0);
+  });
 });

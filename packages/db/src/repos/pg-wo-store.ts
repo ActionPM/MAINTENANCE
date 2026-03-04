@@ -68,7 +68,8 @@ export class PostgresWorkOrderStore implements WorkOrderRepository {
       conditions.push(`unit_id = $${idx++}`);
       values.push(filters.unit_id);
     }
-    if (filters?.unit_ids && filters.unit_ids.length > 0) {
+    if (filters?.unit_ids) {
+      if (filters.unit_ids.length === 0) return [];
       conditions.push(`unit_id = ANY($${idx++})`);
       values.push([...filters.unit_ids]);
     }

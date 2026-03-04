@@ -32,7 +32,8 @@ export class InMemoryWorkOrderStore implements WorkOrderRepository {
     if (filters?.unit_id) {
       results = results.filter(wo => wo.unit_id === filters.unit_id);
     }
-    if (filters?.unit_ids && filters.unit_ids.length > 0) {
+    if (filters?.unit_ids) {
+      if (filters.unit_ids.length === 0) return [];
       const unitSet = new Set(filters.unit_ids);
       results = results.filter(wo => unitSet.has(wo.unit_id));
     }
