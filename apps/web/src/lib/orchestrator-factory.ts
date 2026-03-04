@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
-import { createDispatcher, ERPSyncService, AnalyticsService } from '@wo-agent/core';
+import { createDispatcher, ERPSyncService, AnalyticsService, createLlmDependencies } from '@wo-agent/core';
+import type { LlmDependencies } from '@wo-agent/core';
 import { InMemoryEventStore, InMemoryWorkOrderStore, InMemoryIdempotencyStore } from '@wo-agent/core';
 import { InMemoryNotificationStore, InMemoryNotificationPreferenceStore, MockSmsSender, NotificationService } from '@wo-agent/core';
 import type { SessionStore, OrchestratorDependencies, UnitResolver, SlaPolicies, EventRepository, WorkOrderRepository, NotificationRepository, NotificationPreferenceStore, IdempotencyStore } from '@wo-agent/core';
@@ -90,16 +91,28 @@ function ensureInitialized() {
       clock,
     });
 
+    const taxonomy = loadTaxonomy();
+    const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
+
+    let llmDeps: LlmDependencies | null = null;
+    if (anthropicApiKey) {
+      llmDeps = createLlmDependencies({
+        apiKey: anthropicApiKey,
+        taxonomy,
+        defaultModel: process.env.LLM_DEFAULT_MODEL,
+      });
+    }
+
     const deps: OrchestratorDependencies = {
       eventRepo: stores.eventRepo,
       sessionStore: stores.sessionStore,
       idGenerator,
       clock,
-      issueSplitter: async (input) => ({
+      issueSplitter: llmDeps?.issueSplitter ?? (async (input) => ({
         issues: [{ issue_id: randomUUID(), summary: input.raw_text.slice(0, 200), raw_excerpt: input.raw_text }],
         issue_count: 1,
-      }),
-      issueClassifier: async (input: IssueClassifierInput) => ({
+      })),
+      issueClassifier: llmDeps?.issueClassifier ?? (async (input: IssueClassifierInput) => ({
         issue_id: input.issue_id,
         classification: {
           Category: 'maintenance',
@@ -125,10 +138,10 @@ function ensureInitialized() {
         },
         missing_fields: [],
         needs_human_triage: false,
-      }),
-      followUpGenerator: async () => ({ questions: [] }),
+      })),
+      followUpGenerator: llmDeps?.followUpGenerator ?? (async () => ({ questions: [] })),
       cueDict: classificationCues as CueDictionary,
-      taxonomy: loadTaxonomy(),
+      taxonomy,
       unitResolver: {
         resolve: async (unitId: string) => ({ unit_id: unitId, property_id: `prop-${unitId}`, client_id: `client-${unitId}` }),
       } satisfies UnitResolver,
