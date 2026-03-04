@@ -6,22 +6,28 @@ export class PostgresNotificationStore implements NotificationRepository {
   constructor(private readonly pool: Pool) {}
 
   async insert(event: NotificationEvent): Promise<void> {
-    await this.pool.query(
-      `INSERT INTO notification_events
-        (event_id, notification_id, conversation_id, tenant_user_id, tenant_account_id,
-         channel, notification_type, work_order_ids, issue_group_id, template_id,
-         status, idempotency_key, payload, created_at, sent_at, delivered_at, failed_at, failure_reason)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
-       ON CONFLICT (event_id) DO NOTHING`,
-      [
-        event.event_id, event.notification_id, event.conversation_id,
-        event.tenant_user_id, event.tenant_account_id, event.channel,
-        event.notification_type, event.work_order_ids,
-        event.issue_group_id, event.template_id, event.status, event.idempotency_key,
-        JSON.stringify(event.payload), event.created_at,
-        event.sent_at, event.delivered_at, event.failed_at, event.failure_reason,
-      ],
-    );
+    try {
+      await this.pool.query(
+        `INSERT INTO notification_events
+          (event_id, notification_id, conversation_id, tenant_user_id, tenant_account_id,
+           channel, notification_type, work_order_ids, issue_group_id, template_id,
+           status, idempotency_key, payload, created_at, sent_at, delivered_at, failed_at, failure_reason)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+         ON CONFLICT (event_id) DO NOTHING`,
+        [
+          event.event_id, event.notification_id, event.conversation_id,
+          event.tenant_user_id, event.tenant_account_id, event.channel,
+          event.notification_type, event.work_order_ids,
+          event.issue_group_id, event.template_id, event.status, event.idempotency_key,
+          JSON.stringify(event.payload), event.created_at,
+          event.sent_at, event.delivered_at, event.failed_at, event.failure_reason,
+        ],
+      );
+    } catch (err: unknown) {
+      // Unique violation on idempotency_key (code 23505) — treat as safe dedup
+      if (err && typeof err === 'object' && 'code' in err && err.code === '23505') return;
+      throw err;
+    }
   }
 
   async queryByTenantUser(tenantUserId: string, limit?: number): Promise<readonly NotificationEvent[]> {

@@ -63,6 +63,66 @@ describe('PostgresNotificationStore', () => {
     expect(pool.queries[0].text).toContain('notification_type');
     expect(pool.queries[0].text).toContain('created_at >=');
   });
+
+  it('insert() swallows unique violation on idempotency_key (23505)', async () => {
+    const throwingPool = createFakePool();
+    const err = Object.assign(new Error('duplicate key'), { code: '23505' });
+    throwingPool.query = async () => { throw err; };
+    const throwingStore = new PostgresNotificationStore(throwingPool as never);
+
+    const event = {
+      event_id: 'ne-2',
+      notification_id: 'n-2',
+      conversation_id: 'c-1',
+      tenant_user_id: 'tu-1',
+      tenant_account_id: 'ta-1',
+      channel: 'in_app' as const,
+      notification_type: 'work_order_created' as const,
+      work_order_ids: ['wo-1'],
+      issue_group_id: 'ig-1',
+      template_id: 'tpl-1',
+      status: 'sent' as const,
+      idempotency_key: 'ik-duplicate',
+      payload: {},
+      created_at: '2026-03-04T00:00:00Z',
+      sent_at: null,
+      delivered_at: null,
+      failed_at: null,
+      failure_reason: null,
+    };
+
+    // Should not throw — unique violation is treated as dedup
+    await expect(throwingStore.insert(event)).resolves.toBeUndefined();
+  });
+
+  it('insert() rethrows non-unique-violation errors', async () => {
+    const throwingPool = createFakePool();
+    throwingPool.query = async () => { throw new Error('connection lost'); };
+    const throwingStore = new PostgresNotificationStore(throwingPool as never);
+
+    const event = {
+      event_id: 'ne-3',
+      notification_id: 'n-3',
+      conversation_id: 'c-1',
+      tenant_user_id: 'tu-1',
+      tenant_account_id: 'ta-1',
+      channel: 'in_app' as const,
+      notification_type: 'work_order_created' as const,
+      work_order_ids: ['wo-1'],
+      issue_group_id: null,
+      template_id: 'tpl-1',
+      status: 'sent' as const,
+      idempotency_key: 'ik-3',
+      payload: {},
+      created_at: '2026-03-04T00:00:00Z',
+      sent_at: null,
+      delivered_at: null,
+      failed_at: null,
+      failure_reason: null,
+    };
+
+    await expect(throwingStore.insert(event)).rejects.toThrow('connection lost');
+  });
 });
 
 describe('PostgresNotificationPreferenceStore', () => {
