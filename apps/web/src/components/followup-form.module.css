@@ -1,0 +1,52 @@
+.container {
+  padding: 1rem;
+}
+
+.heading {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.questionGroup {
+  margin-bottom: 1.25rem;
+}
+
+.questionPrompt {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.optionLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0;
+  cursor: pointer;
+  font-size: 0.9375rem;
+}
+
+.textInput {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 0.375rem;
+  font-size: 0.9375rem;
+}
+
+.submitBtn {
+  padding: 0.625rem 1.5rem;
+  background: #0066cc;
+  color: #fff;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  margin-top: 0.5rem;
+}
+
+.submitBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
