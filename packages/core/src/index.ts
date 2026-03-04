@@ -199,6 +199,8 @@ export type {
   ERPStatusPollEventInput,
   ERPSyncEventInput,
 } from './erp/index.js';
+export { ERPSyncService } from './erp/index.js';
+export type { ERPSyncServiceDeps, SyncResult, SyncError } from './erp/index.js';
 
 // --- Orchestrator (Phase 3) ---
 export { createDispatcher, buildResponse, getActionHandler } from './orchestrator/index.js';

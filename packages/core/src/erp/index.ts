@@ -16,3 +16,5 @@ export type {
   ERPStatusPollEventInput,
   ERPSyncEventInput,
 } from './event-builder.js';
+export { ERPSyncService } from './erp-sync-service.js';
+export type { ERPSyncServiceDeps, SyncResult, SyncError } from './erp-sync-service.js';
