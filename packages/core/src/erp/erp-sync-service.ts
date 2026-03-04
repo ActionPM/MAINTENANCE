@@ -27,6 +27,10 @@ export interface SyncError {
  * ERP sync service (spec §23).
  * Pulls status updates from the ERP adapter and applies them to the WO store.
  * Each applied update produces a status_changed WorkOrderEvent.
+ *
+ * NOTE: Events are returned to the caller but not persisted here — a
+ * WorkOrderEventRepository does not exist yet. When the PostgreSQL migration
+ * adds one, inject it here and persist events + ERPSyncEvents during sync.
  */
 export class ERPSyncService {
   private readonly deps: ERPSyncServiceDeps;

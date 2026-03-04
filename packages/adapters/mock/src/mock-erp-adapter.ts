@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type { WorkOrder, WorkOrderStatus } from '@wo-agent/schemas';
 import type {
   ERPAdapter,
@@ -38,11 +39,9 @@ const NEXT_STATUS: Partial<Record<WorkOrderStatus, WorkOrderStatus>> = {
   scheduled: 'resolved' as WorkOrderStatus,
 };
 
-let extCounter = 0;
-
 /**
  * Mock ERP adapter for testing and MVP (spec §23).
- * Returns EXT-<counter> IDs and simulates status transitions.
+ * Returns EXT-<uuid> IDs and simulates status transitions.
  */
 export class MockERPAdapter implements ERPAdapter {
   private readonly config: MockERPAdapterConfig;
@@ -71,7 +70,7 @@ export class MockERPAdapter implements ERPAdapter {
       throw new Error(`Work order ${workOrder.work_order_id} already registered with ERP`);
     }
 
-    const ext_id = `EXT-${++extCounter}`;
+    const ext_id = `EXT-${randomUUID()}`;
     const now = workOrder.created_at;
 
     this.records.set(ext_id, {
@@ -157,8 +156,4 @@ export class MockERPAdapter implements ERPAdapter {
     return this.byWorkOrderId.get(workOrderId);
   }
 
-  /** Test helper: reset the counter (call in beforeEach). */
-  static resetCounter(): void {
-    extCounter = 0;
-  }
 }

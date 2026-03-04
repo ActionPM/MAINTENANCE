@@ -183,8 +183,14 @@ export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promis
     for (const wo of workOrders) {
       try {
         await deps.erpAdapter.createWorkOrder(wo);
-      } catch {
-        // ERP registration failure is non-fatal; sync service will retry later
+      } catch (err) {
+        // ERP registration failure is non-fatal but must be logged for diagnosis.
+        // There is no automatic retry — unregistered WOs need manual reconciliation.
+        console.error('[ERP] registration failed', {
+          work_order_id: wo.work_order_id,
+          conversation_id: wo.conversation_id,
+          error: err instanceof Error ? err.message : String(err),
+        });
       }
     }
   }
