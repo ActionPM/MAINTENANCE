@@ -1,12 +1,13 @@
 import { randomUUID } from 'crypto';
-import { createDispatcher, InMemoryEventStore, InMemoryWorkOrderStore, InMemoryIdempotencyStore, ERPSyncService } from '@wo-agent/core';
+import { createDispatcher, InMemoryEventStore, InMemoryWorkOrderStore, InMemoryIdempotencyStore, ERPSyncService, AnalyticsService } from '@wo-agent/core';
 import { InMemoryNotificationStore, InMemoryNotificationPreferenceStore, MockSmsSender, NotificationService } from '@wo-agent/core';
-import type { SessionStore, OrchestratorDependencies, UnitResolver } from '@wo-agent/core';
+import type { SessionStore, OrchestratorDependencies, UnitResolver, SlaPolicies } from '@wo-agent/core';
 import type { ConversationSession } from '@wo-agent/core';
 import type { CueDictionary, IssueClassifierInput } from '@wo-agent/schemas';
 import { loadTaxonomy } from '@wo-agent/schemas';
 import classificationCues from '@wo-agent/schemas/classification_cues.json' with { type: 'json' };
 import { MockERPAdapter } from '@wo-agent/mock-erp';
+import slaPoliciesJson from '@wo-agent/schemas/sla_policies.json' with { type: 'json' };
 
 // In-memory session store for MVP — PostgreSQL in Phase 8
 class InMemorySessionStore implements SessionStore {
@@ -25,6 +26,7 @@ let _deps: {
   dispatcher: ReturnType<typeof createDispatcher>;
   erpAdapter: MockERPAdapter;
   erpSyncService: ERPSyncService;
+  analyticsService: AnalyticsService;
 } | null = null;
 
 function ensureInitialized() {
@@ -101,12 +103,20 @@ function ensureInitialized() {
       erpAdapter,
     };
 
+    const analyticsService = new AnalyticsService({
+      workOrderRepo,
+      notificationRepo,
+      slaPolicies: slaPoliciesJson as SlaPolicies,
+      clock,
+    });
+
     _deps = {
       workOrderRepo,
       notificationRepo,
       dispatcher: createDispatcher(deps),
       erpAdapter,
       erpSyncService,
+      analyticsService,
     };
   }
   return _deps;
@@ -130,4 +140,8 @@ export function getERPAdapter() {
 
 export function getERPSyncService() {
   return ensureInitialized().erpSyncService;
+}
+
+export function getAnalyticsService() {
+  return ensureInitialized().analyticsService;
 }

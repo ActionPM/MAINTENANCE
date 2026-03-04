@@ -1,5 +1,5 @@
 import type { WorkOrder, WorkOrderStatus, ActorType } from '@wo-agent/schemas';
-import type { WorkOrderRepository } from './types.js';
+import type { WorkOrderRepository, WorkOrderListFilters } from './types.js';
 
 /**
  * In-memory WO store for testing (spec §18 — multi-WO atomic insert).
@@ -18,6 +18,34 @@ export class InMemoryWorkOrderStore implements WorkOrderRepository {
     for (const wo of workOrders) {
       this.store.set(wo.work_order_id, wo);
     }
+  }
+
+  async listAll(filters?: WorkOrderListFilters): Promise<readonly WorkOrder[]> {
+    let results = [...this.store.values()];
+
+    if (filters?.client_id) {
+      results = results.filter(wo => wo.client_id === filters.client_id);
+    }
+    if (filters?.property_id) {
+      results = results.filter(wo => wo.property_id === filters.property_id);
+    }
+    if (filters?.unit_id) {
+      results = results.filter(wo => wo.unit_id === filters.unit_id);
+    }
+    if (filters?.unit_ids && filters.unit_ids.length > 0) {
+      const unitSet = new Set(filters.unit_ids);
+      results = results.filter(wo => unitSet.has(wo.unit_id));
+    }
+    if (filters?.from) {
+      const fromMs = new Date(filters.from).getTime();
+      results = results.filter(wo => new Date(wo.created_at).getTime() >= fromMs);
+    }
+    if (filters?.to) {
+      const toMs = new Date(filters.to).getTime();
+      results = results.filter(wo => new Date(wo.created_at).getTime() < toMs);
+    }
+
+    return results;
   }
 
   async getById(workOrderId: string): Promise<WorkOrder | null> {
