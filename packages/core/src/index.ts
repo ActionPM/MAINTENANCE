@@ -172,6 +172,14 @@ export type {
   RouteEmergencyInput,
 } from './risk/index.js';
 
+// --- Notifications (Phase 10) ---
+export { InMemoryNotificationStore, InMemoryNotificationPreferenceStore, MockSmsSender, NotificationService } from './notifications/index.js';
+export type { NotificationRepository, NotificationPreferenceStore, SmsSender, NotificationServiceDeps, NotifyWoCreatedInput, NotifyResult } from './notifications/index.js';
+
+// --- Record Bundle (Phase 11) ---
+export { assembleRecordBundle, computeSlaMetadata } from './record-bundle/index.js';
+export type { RecordBundleDeps, SlaPolicies, SlaPolicyEntry, SlaOverride, ComputeSlaInput } from './record-bundle/index.js';
+
 // --- Orchestrator (Phase 3) ---
 export { createDispatcher, buildResponse, getActionHandler } from './orchestrator/index.js';
 export type {
