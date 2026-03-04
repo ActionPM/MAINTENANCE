@@ -1,15 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createAnthropicClient, type LlmClient } from '../anthropic-client.js';
+import { describe, it, expect, vi } from 'vitest';
+import { createAnthropicClient } from '../anthropic-client.js';
 
-// Mock the SDK
+const mockCreate = vi.fn();
+
 vi.mock('@anthropic-ai/sdk', () => {
   return {
     default: class MockAnthropic {
-      messages = {
-        create: vi.fn().mockResolvedValue({
-          content: [{ type: 'text', text: '{"result": true}' }],
-        }),
-      };
+      messages = { create: mockCreate };
     },
   };
 });
@@ -22,6 +19,9 @@ describe('createAnthropicClient', () => {
   });
 
   it('calls the SDK and returns the text content', async () => {
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'text', text: '{"result": true}' }],
+    });
     const client = createAnthropicClient({ apiKey: 'test-key' });
     const result = await client.complete({
       system: 'You are a helper.',
@@ -33,9 +33,8 @@ describe('createAnthropicClient', () => {
   });
 
   it('throws if no text content in response', async () => {
+    mockCreate.mockResolvedValueOnce({ content: [] });
     const client = createAnthropicClient({ apiKey: 'test-key' });
-    // Override the mock for this specific call
-    (client as any)._sdk.messages.create = vi.fn().mockResolvedValue({ content: [] });
     await expect(client.complete({
       system: 'test',
       userMessage: 'test',

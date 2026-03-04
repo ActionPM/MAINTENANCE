@@ -17,8 +17,6 @@ export interface CompletionRequest {
 
 export interface LlmClient {
   complete(request: CompletionRequest): Promise<string>;
-  /** Exposed for testing only */
-  readonly _sdk: Anthropic;
 }
 
 /**
@@ -31,7 +29,6 @@ export function createAnthropicClient(config: LlmClientConfig): LlmClient {
   const defaultMaxTokens = config.defaultMaxTokens ?? 2048;
 
   return {
-    _sdk: sdk,
     async complete(request: CompletionRequest): Promise<string> {
       const response = await sdk.messages.create({
         model: request.model ?? defaultModel,

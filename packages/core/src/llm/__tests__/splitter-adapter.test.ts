@@ -6,7 +6,6 @@ import type { IssueSplitterInput } from '@wo-agent/schemas';
 function mockClient(responseText: string): LlmClient {
   return {
     complete: vi.fn().mockResolvedValue(responseText),
-    _sdk: {} as any,
   };
 }
 
@@ -48,7 +47,6 @@ describe('createSplitterAdapter', () => {
   it('propagates LLM errors', async () => {
     const client: LlmClient = {
       complete: vi.fn().mockRejectedValue(new Error('API rate limit')),
-      _sdk: {} as any,
     };
     const adapter = createSplitterAdapter(client);
     await expect(adapter(VALID_INPUT)).rejects.toThrow('API rate limit');

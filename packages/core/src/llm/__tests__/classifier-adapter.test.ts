@@ -7,7 +7,6 @@ import { loadTaxonomy } from '@wo-agent/schemas';
 function mockClient(responseText: string): LlmClient {
   return {
     complete: vi.fn().mockResolvedValue(responseText),
-    _sdk: {} as any,
   };
 }
 

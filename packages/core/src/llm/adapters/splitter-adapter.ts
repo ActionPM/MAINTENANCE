@@ -12,9 +12,11 @@ import { extractJsonFromResponse } from '../parse-response.js';
 export function createSplitterAdapter(
   client: LlmClient,
 ): (input: IssueSplitterInput) => Promise<IssueSplitterOutput> {
+  const systemPrompt = buildSplitterSystemPrompt();
+
   return async (input: IssueSplitterInput): Promise<IssueSplitterOutput> => {
     const response = await client.complete({
-      system: buildSplitterSystemPrompt(),
+      system: systemPrompt,
       userMessage: buildSplitterUserMessage(input.raw_text),
       model: input.model_id,
     });
