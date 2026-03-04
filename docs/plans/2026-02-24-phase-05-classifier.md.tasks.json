@@ -1,0 +1,21 @@
+{
+  "planPath": "docs/plans/2026-02-24-phase-05-classifier.md",
+  "tasks": [
+    { "id": 0, "subject": "Task 0: Create worktree and branch from Phase 4", "status": "pending" },
+    { "id": 1, "subject": "Task 1: Implement cue-scoring function", "status": "pending", "blockedBy": [0] },
+    { "id": 2, "subject": "Task 2: Implement confidence heuristic", "status": "pending", "blockedBy": [0] },
+    { "id": 3, "subject": "Task 3: Implement IssueClassifier wrapper with schema validation, category gating retry, and error handling", "status": "pending", "blockedBy": [0] },
+    { "id": 4, "subject": "Task 4: Create classifier barrel export and add issueClassifier port to OrchestratorDependencies", "status": "pending", "blockedBy": [1, 2, 3] },
+    { "id": 5, "subject": "Task 5: Extend ConversationSession with classification results storage", "status": "pending", "blockedBy": [4] },
+    { "id": 6, "subject": "Task 6: Implement handleStartClassification action handler", "status": "pending", "blockedBy": [4, 5] },
+    { "id": 7, "subject": "Task 7: Wire CONFIRM_SPLIT to auto-trigger START_CLASSIFICATION", "status": "pending", "blockedBy": [6] },
+    { "id": 8, "subject": "Task 8: Add cueDict and taxonomy to OrchestratorDependencies and wire into factory", "status": "pending", "blockedBy": [6] },
+    { "id": 9, "subject": "Task 9: Handle ANSWER_FOLLOWUPS re-classification entry point", "status": "pending", "blockedBy": [6, 7] },
+    { "id": 10, "subject": "Task 10: Update response builder and snapshot with classification data", "status": "pending", "blockedBy": [5] },
+    { "id": 11, "subject": "Task 11: Add classification_events recording", "status": "pending", "blockedBy": [6] },
+    { "id": 12, "subject": "Task 12: Full integration test for happy path and edge cases", "status": "pending", "blockedBy": [7, 8, 9, 10, 11] },
+    { "id": 13, "subject": "Task 13: Update apps/web orchestrator factory with classifier stub", "status": "pending", "blockedBy": [8] },
+    { "id": 14, "subject": "Task 14: Final verification and cleanup", "status": "pending", "blockedBy": [12, 13] }
+  ],
+  "lastUpdated": "2026-02-24T12:00:00Z"
+}

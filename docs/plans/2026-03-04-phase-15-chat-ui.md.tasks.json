@@ -1,0 +1,20 @@
+{
+  "planPath": "docs/plans/2026-03-04-phase-15-chat-ui.md",
+  "tasks": [
+    {"id": 0, "subject": "Task 0: Install React Testing Library", "status": "pending"},
+    {"id": 1, "subject": "Task 1: API Client Module", "status": "pending", "blockedBy": [0]},
+    {"id": 2, "subject": "Task 2: useConversation Hook", "status": "pending", "blockedBy": [1]},
+    {"id": 3, "subject": "Task 3: ChatMessage Component", "status": "pending", "blockedBy": [0]},
+    {"id": 4, "subject": "Task 4: MessageInput Component", "status": "pending", "blockedBy": [0]},
+    {"id": 5, "subject": "Task 5: UnitSelector Component", "status": "pending", "blockedBy": [0]},
+    {"id": 6, "subject": "Task 6: SplitReview Component", "status": "pending", "blockedBy": [0]},
+    {"id": 7, "subject": "Task 7: FollowupForm Component", "status": "pending", "blockedBy": [0]},
+    {"id": 8, "subject": "Task 8: ConfirmationPanel Component", "status": "pending", "blockedBy": [0]},
+    {"id": 9, "subject": "Task 9: StatusIndicator Component", "status": "pending", "blockedBy": [0]},
+    {"id": 10, "subject": "Task 10: QuickReplies Component", "status": "pending", "blockedBy": [0]},
+    {"id": 11, "subject": "Task 11: ChatShell — Main Conversation Container", "status": "pending", "blockedBy": [2, 3, 4, 5, 6, 7, 8, 9, 10]},
+    {"id": 12, "subject": "Task 12: Wire ChatShell into Page", "status": "pending", "blockedBy": [11]},
+    {"id": 13, "subject": "Task 13: Smoke Test — Full Flow Verification", "status": "pending", "blockedBy": [12]}
+  ],
+  "lastUpdated": "2026-03-04T12:00:00Z"
+}
