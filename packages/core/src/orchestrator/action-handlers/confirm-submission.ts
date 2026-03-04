@@ -178,6 +178,17 @@ export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promis
   // Persist atomically
   await deps.workOrderRepo.insertBatch(workOrders);
 
+  // Register with ERP (best-effort — failures do not roll back WO creation)
+  if (deps.erpAdapter) {
+    for (const wo of workOrders) {
+      try {
+        await deps.erpAdapter.createWorkOrder(wo);
+      } catch {
+        // ERP registration failure is non-fatal; sync service will retry later
+      }
+    }
+  }
+
   // Complete idempotency record with the created WO IDs
   const woIds = workOrders.map(wo => wo.work_order_id);
   await deps.idempotencyStore.complete(idempotencyKey, {

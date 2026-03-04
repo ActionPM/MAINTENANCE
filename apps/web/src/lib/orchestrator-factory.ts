@@ -45,6 +45,14 @@ function ensureInitialized() {
       clock,
     });
 
+    const erpAdapter = new MockERPAdapter();
+    const erpSyncService = new ERPSyncService({
+      erpAdapter,
+      workOrderRepo,
+      idGenerator,
+      clock,
+    });
+
     const deps: OrchestratorDependencies = {
       eventRepo,
       sessionStore: new InMemorySessionStore(),
@@ -90,15 +98,8 @@ function ensureInitialized() {
       workOrderRepo,
       idempotencyStore: new InMemoryIdempotencyStore(),
       notificationService,
-    };
-
-    const erpAdapter = new MockERPAdapter();
-    const erpSyncService = new ERPSyncService({
       erpAdapter,
-      workOrderRepo,
-      idGenerator,
-      clock,
-    });
+    };
 
     _deps = {
       workOrderRepo,

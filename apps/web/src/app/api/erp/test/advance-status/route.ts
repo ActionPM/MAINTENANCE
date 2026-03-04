@@ -9,6 +9,11 @@ import { getERPAdapter, getERPSyncService } from '../../../../../lib/orchestrato
  * Advances the WO to the next status in the lifecycle and syncs.
  */
 export async function POST(request: NextRequest) {
+  // Guard: test-only endpoint, disabled in production
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Test endpoint disabled in production' }, { status: 403 });
+  }
+
   try {
     const body = await request.json() as { work_order_id?: string };
     if (!body.work_order_id) {
