@@ -75,8 +75,8 @@ export { InMemoryIdempotencyStore } from './idempotency/index.js';
 export type { IdempotencyRecord, IdempotencyStore } from './idempotency/index.js';
 
 // --- Work Order (Phase 8) ---
-export { InMemoryWorkOrderStore, createWorkOrders, buildWorkOrderCreatedEvent } from './work-order/index.js';
-export type { WorkOrderEvent, WorkOrderRepository, CreateWorkOrdersInput, WOCreatedEventInput } from './work-order/index.js';
+export { InMemoryWorkOrderStore, createWorkOrders, buildWorkOrderCreatedEvent, buildWorkOrderStatusChangedEvent } from './work-order/index.js';
+export type { WorkOrderEvent, WorkOrderRepository, CreateWorkOrdersInput, WOCreatedEventInput, WOStatusChangedEventInput } from './work-order/index.js';
 
 // --- Events (Phase 3) ---
 export { InMemoryEventStore } from './events/index.js';
@@ -179,6 +179,26 @@ export type { NotificationRepository, NotificationPreferenceStore, SmsSender, No
 // --- Record Bundle (Phase 11) ---
 export { assembleRecordBundle, computeSlaMetadata } from './record-bundle/index.js';
 export type { RecordBundleDeps, SlaPolicies, SlaPolicyEntry, SlaOverride, ComputeSlaInput } from './record-bundle/index.js';
+
+// --- ERP Adapter (Phase 12) ---
+export type {
+  ERPAdapter,
+  ERPCreateResult,
+  ERPStatusResult,
+  ERPStatusUpdate,
+  ERPHealthResult,
+  ERPSyncEvent,
+} from './erp/index.js';
+export {
+  buildERPCreateEvent,
+  buildERPStatusPollEvent,
+  buildERPSyncEvent,
+} from './erp/index.js';
+export type {
+  ERPCreateEventInput,
+  ERPStatusPollEventInput,
+  ERPSyncEventInput,
+} from './erp/index.js';
 
 // --- Orchestrator (Phase 3) ---
 export { createDispatcher, buildResponse, getActionHandler } from './orchestrator/index.js';
