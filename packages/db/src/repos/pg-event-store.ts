@@ -72,6 +72,6 @@ function mapRowToConversationEvent(row: Record<string, unknown>): ConversationEv
     actor: row.actor as ConversationEvent['actor'],
     payload: (row.payload as Record<string, unknown>) ?? null,
     pinned_versions: (row.pinned_versions as ConversationEvent['pinned_versions']) ?? null,
-    created_at: (row.created_at as Date).toISOString(),
+    created_at: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at as string,
   };
 }
