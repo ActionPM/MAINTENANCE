@@ -3,7 +3,7 @@ import { assembleRecordBundle } from '../../record-bundle/record-bundle-assemble
 import { InMemoryWorkOrderStore } from '../../work-order/in-memory-wo-store.js';
 import { InMemoryNotificationStore } from '../../notifications/in-memory-notification-store.js';
 import type { WorkOrder, NotificationEvent } from '@wo-agent/schemas';
-import { WorkOrderStatus, ActorType } from '@wo-agent/schemas';
+import { WorkOrderStatus, ActorType, validateRecordBundle } from '@wo-agent/schemas';
 import type { RecordBundleDeps } from '../../record-bundle/types.js';
 
 describe('assembleRecordBundle', () => {
@@ -161,5 +161,33 @@ describe('assembleRecordBundle', () => {
     const bundle = await assembleRecordBundle('wo-1', deps);
 
     expect(bundle!.communications).toEqual([]);
+  });
+
+  it('assembler output passes JSON Schema validation', async () => {
+    const uuidWo = makeWorkOrder({
+      work_order_id: '00000000-0000-0000-0000-000000000001',
+      conversation_id: '00000000-0000-0000-0000-000000000002',
+      unit_id: '00000000-0000-0000-0000-000000000003',
+      issue_group_id: '00000000-0000-0000-0000-000000000004',
+      issue_id: '00000000-0000-0000-0000-000000000005',
+      client_id: '00000000-0000-0000-0000-000000000006',
+      property_id: '00000000-0000-0000-0000-000000000007',
+      tenant_user_id: '00000000-0000-0000-0000-000000000008',
+      tenant_account_id: '00000000-0000-0000-0000-000000000009',
+    });
+    await workOrderRepo.insertBatch([uuidWo]);
+    await notificationRepo.insert(makeNotification({
+      conversation_id: '00000000-0000-0000-0000-000000000002',
+      work_order_ids: ['00000000-0000-0000-0000-000000000001'],
+    }));
+
+    const bundle = await assembleRecordBundle('00000000-0000-0000-0000-000000000001', deps);
+
+    const result = validateRecordBundle(bundle);
+    if (!result.valid) {
+      console.error('Validation errors:', JSON.stringify(result.errors, null, 2));
+      console.error('Bundle:', JSON.stringify(bundle, null, 2));
+    }
+    expect(result.valid).toBe(true);
   });
 });
