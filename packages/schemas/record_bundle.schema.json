@@ -1,0 +1,94 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "record_bundle.schema.json",
+  "definitions": {
+    "SlaMetadata": {
+      "type": "object",
+      "properties": {
+        "priority": { "type": "string" },
+        "response_hours": { "type": "number" },
+        "resolution_hours": { "type": "number" },
+        "response_due_at": { "type": "string", "format": "date-time" },
+        "resolution_due_at": { "type": "string", "format": "date-time" }
+      },
+      "required": ["priority", "response_hours", "resolution_hours", "response_due_at", "resolution_due_at"],
+      "additionalProperties": false
+    },
+    "CommunicationEntry": {
+      "type": "object",
+      "properties": {
+        "notification_id": { "type": "string" },
+        "channel": { "type": "string", "enum": ["in_app", "sms"] },
+        "notification_type": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "sent", "delivered", "failed"] },
+        "created_at": { "type": "string", "format": "date-time" },
+        "sent_at": { "type": ["string", "null"], "format": "date-time" }
+      },
+      "required": ["notification_id", "channel", "notification_type", "status", "created_at", "sent_at"],
+      "additionalProperties": false
+    },
+    "ResolutionInfo": {
+      "type": "object",
+      "properties": {
+        "resolved": { "type": "boolean" },
+        "final_status": { "$ref": "work_order.schema.json#/definitions/WorkOrderStatus" },
+        "resolved_at": { "type": ["string", "null"], "format": "date-time" }
+      },
+      "required": ["resolved", "final_status", "resolved_at"],
+      "additionalProperties": false
+    },
+    "RecordBundle": {
+      "type": "object",
+      "properties": {
+        "work_order_id": { "type": "string", "format": "uuid" },
+        "conversation_id": { "type": "string", "format": "uuid" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "unit_id": { "type": "string", "format": "uuid" },
+        "summary": { "type": "string" },
+        "classification": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "urgency_basis": {
+          "type": "object",
+          "properties": {
+            "has_emergency": { "type": "boolean" },
+            "highest_severity": { "type": ["string", "null"] },
+            "trigger_ids": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "required": ["has_emergency", "highest_severity", "trigger_ids"],
+          "additionalProperties": false
+        },
+        "status_history": {
+          "type": "array",
+          "items": { "$ref": "work_order.schema.json#/definitions/StatusHistoryEntry" }
+        },
+        "communications": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/CommunicationEntry" }
+        },
+        "schedule": { "$ref": "#/definitions/SlaMetadata" },
+        "resolution": { "$ref": "#/definitions/ResolutionInfo" },
+        "exported_at": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "work_order_id",
+        "conversation_id",
+        "created_at",
+        "unit_id",
+        "summary",
+        "classification",
+        "urgency_basis",
+        "status_history",
+        "communications",
+        "schedule",
+        "resolution",
+        "exported_at"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
