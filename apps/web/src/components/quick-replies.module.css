@@ -1,0 +1,26 @@
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.replyBtn {
+  padding: 0.375rem 0.875rem;
+  border: 1px solid #0066cc;
+  border-radius: 1.25rem;
+  background: #fff;
+  color: #0066cc;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: background 0.15s;
+}
+
+.replyBtn:hover:not(:disabled) {
+  background: #e8f0fe;
+}
+
+.replyBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
