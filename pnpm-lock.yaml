@@ -13,6 +13,9 @@ importers:
       '@wo-agent/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@wo-agent/mock-erp':
+        specifier: workspace:*
+        version: link:../../packages/adapters/mock
       '@wo-agent/schemas':
         specifier: workspace:*
         version: link:../../packages/schemas
@@ -38,6 +41,25 @@ importers:
       typescript:
         specifier: ^5.7.0
         version: 5.9.3
+
+  packages/adapters/mock:
+    dependencies:
+      '@wo-agent/core':
+        specifier: workspace:*
+        version: link:../../core
+      '@wo-agent/schemas':
+        specifier: workspace:*
+        version: link:../../schemas
+    devDependencies:
+      '@types/node':
+        specifier: ^25.3.0
+        version: 25.3.0
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.4(@types/node@25.3.0)
 
   packages/core:
     dependencies:

@@ -1,6 +1,6 @@
 import { ConversationState, DEFAULT_CONFIDENCE_CONFIG } from '@wo-agent/schemas';
 import type { ConfidenceConfig } from '@wo-agent/schemas';
-import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
+import type { ActionHandlerContext, ActionHandlerResult, SideEffectInput } from '../types.js';
 import { buildConfirmationPayload, computeContentHash } from '../../confirmation/payload-builder.js';
 import { checkStaleness } from '../../confirmation/staleness.js';
 import { buildConfirmationEvent, buildStalenessEvent } from '../../confirmation/event-builder.js';
@@ -178,21 +178,62 @@ export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promis
   // Persist atomically
   await deps.workOrderRepo.insertBatch(workOrders);
 
+  // Register with ERP (best-effort — failures do not roll back WO creation)
+  if (deps.erpAdapter) {
+    for (const wo of workOrders) {
+      try {
+        await deps.erpAdapter.createWorkOrder(wo);
+      } catch {
+        // ERP registration failure is non-fatal; sync service will retry later
+      }
+    }
+  }
+
   // Complete idempotency record with the created WO IDs
   const woIds = workOrders.map(wo => wo.work_order_id);
   await deps.idempotencyStore.complete(idempotencyKey, {
     work_order_ids: woIds,
   });
 
+  // Dispatch notifications (spec §20 — batch multi-issue into one notification)
+  // Notifications are best-effort: failures do not roll back WO creation.
+  const notifSideEffects: SideEffectInput[] = [];
+  if (deps.notificationService) {
+    try {
+      const notifResult = await deps.notificationService.notifyWorkOrdersCreated({
+        conversationId: session.conversation_id,
+        tenantUserId: session.tenant_user_id,
+        tenantAccountId: session.tenant_account_id,
+        workOrderIds: woIds,
+        issueGroupId: workOrders[0].issue_group_id,
+        idempotencyKey: `${idempotencyKey}-notif`,
+      });
+      notifSideEffects.push({
+        effect_type: 'send_notifications',
+        status: notifResult.in_app_sent || notifResult.sms_sent ? 'completed' : 'pending',
+        idempotency_key: `${idempotencyKey}-notif`,
+      });
+    } catch {
+      notifSideEffects.push({
+        effect_type: 'send_notifications',
+        status: 'failed',
+        idempotency_key: `${idempotencyKey}-notif`,
+      });
+    }
+  }
+
   return {
     newState: ConversationState.SUBMITTED,
     session,
     uiMessages: [{ role: 'agent', content: 'Your request has been submitted. We\'ll be in touch.' }],
-    sideEffects: [{
-      effect_type: 'create_work_orders',
-      status: 'completed',
-      idempotency_key: idempotencyKey,
-    }],
+    sideEffects: [
+      {
+        effect_type: 'create_work_orders',
+        status: 'completed',
+        idempotency_key: idempotencyKey,
+      },
+      ...notifSideEffects,
+    ],
     eventPayload: {
       confirmed: true,
       confirmation_payload: confirmationPayload,

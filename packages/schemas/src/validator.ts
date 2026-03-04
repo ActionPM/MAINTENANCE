@@ -32,6 +32,7 @@ const SCHEMA_FILES = [
   'followups.schema.json',
   'work_order.schema.json',
   'photo.schema.json',
+  'record_bundle.schema.json',
 ] as const;
 
 function createAjvInstance(): Ajv {

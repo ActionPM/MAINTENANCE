@@ -6,6 +6,7 @@ const makeWO = (): WorkOrder => ({
   work_order_id: 'wo-1',
   issue_group_id: 'ig-1',
   issue_id: 'iss-1',
+  conversation_id: 'conv-1',
   client_id: 'c-1',
   property_id: 'p-1',
   unit_id: 'u-1',

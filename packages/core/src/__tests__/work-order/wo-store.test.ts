@@ -6,6 +6,7 @@ const makeWO = (overrides?: Partial<WorkOrder>): WorkOrder => ({
   work_order_id: 'wo-1',
   issue_group_id: 'ig-1',
   issue_id: 'iss-1',
+  conversation_id: 'conv-1',
   client_id: 'client-1',
   property_id: 'prop-1',
   unit_id: 'unit-1',

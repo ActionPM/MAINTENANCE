@@ -83,6 +83,13 @@ export type {
 } from './types/photo.js';
 
 export type {
+  RecordBundle,
+  SlaMetadata,
+  CommunicationEntry,
+  ResolutionInfo,
+} from './types/record-bundle.js';
+
+export type {
   RiskSeverity,
   TriggerGrammar,
   RiskTrigger,
@@ -99,6 +106,15 @@ export type {
   EscalationResult,
 } from './types/risk.js';
 
+export type {
+  NotificationChannel,
+  NotificationType,
+  NotificationStatus,
+  NotificationEvent,
+  NotificationPreference,
+  SmsConsent,
+} from './types/notification.js';
+
 export { loadRiskProtocols } from './risk-protocols.js';
 export { loadEscalationPlans } from './escalation-plans.js';
 
@@ -112,6 +128,7 @@ export { validateIssueSplitterInput, validateIssueSplitterOutput } from './valid
 export { validateClassifierInput, validateClassifierOutput } from './validators/classification.js';
 export { validateFollowUpInput, validateFollowUpOutput, validateFollowUpEvent } from './validators/followups.js';
 export { validateWorkOrder } from './validators/work-order.js';
+export { validateRecordBundle } from './validators/record-bundle.js';
 export { validatePhoto } from './validators/photo.js';
 
 // --- Domain validators ---

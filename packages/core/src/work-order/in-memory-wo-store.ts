@@ -1,4 +1,4 @@
-import type { WorkOrder } from '@wo-agent/schemas';
+import type { WorkOrder, WorkOrderStatus, ActorType } from '@wo-agent/schemas';
 import type { WorkOrderRepository } from './types.js';
 
 /**
@@ -26,5 +26,35 @@ export class InMemoryWorkOrderStore implements WorkOrderRepository {
 
   async getByIssueGroup(issueGroupId: string): Promise<readonly WorkOrder[]> {
     return [...this.store.values()].filter(wo => wo.issue_group_id === issueGroupId);
+  }
+
+  async updateStatus(
+    workOrderId: string,
+    newStatus: WorkOrderStatus,
+    actor: ActorType,
+    changedAt: string,
+    expectedVersion: number,
+  ): Promise<WorkOrder> {
+    const existing = this.store.get(workOrderId);
+    if (!existing) {
+      throw new Error(`WorkOrder not found: ${workOrderId}`);
+    }
+    if (existing.row_version !== expectedVersion) {
+      throw new Error(`Version mismatch: expected ${expectedVersion}, got ${existing.row_version}`);
+    }
+
+    const updated: WorkOrder = {
+      ...existing,
+      status: newStatus,
+      status_history: [
+        ...existing.status_history,
+        { status: newStatus, changed_at: changedAt, actor },
+      ],
+      updated_at: changedAt,
+      row_version: existing.row_version + 1,
+    };
+
+    this.store.set(workOrderId, updated);
+    return updated;
   }
 }
