@@ -49,6 +49,7 @@ export function createWorkOrders(input: CreateWorkOrdersInput): WorkOrder[] {
       work_order_id: idGenerator(),
       issue_group_id: issueGroupId,
       issue_id: issue.issue_id,
+      conversation_id: session.conversation_id,
       client_id: session.client_id!,
       property_id: session.property_id!,
       unit_id: session.unit_id!,

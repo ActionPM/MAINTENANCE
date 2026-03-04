@@ -21,6 +21,7 @@ export interface WorkOrder {
   readonly work_order_id: string;
   readonly issue_group_id: string;
   readonly issue_id: string;
+  readonly conversation_id: string;
   readonly client_id: string;
   readonly property_id: string;
   readonly unit_id: string;
