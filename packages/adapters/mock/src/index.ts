@@ -1,1 +1,2 @@
-// Mock ERP adapter (Phase 12, spec §23)
+export { MockERPAdapter } from './mock-erp-adapter.js';
+export type { MockERPAdapterConfig } from './mock-erp-adapter.js';
