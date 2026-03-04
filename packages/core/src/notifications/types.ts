@@ -4,6 +4,15 @@ import type { NotificationEvent, NotificationPreference } from '@wo-agent/schema
  * Notification event repository — append-only (spec §7, §20).
  * INSERT + SELECT only. No UPDATE. No DELETE.
  */
+/**
+ * Filters for listing notifications (Phase 13 analytics).
+ */
+export interface NotificationListFilters {
+  readonly from?: string;
+  readonly to?: string;
+  readonly tenant_user_id?: string;
+}
+
 export interface NotificationRepository {
   /** Append a notification event. Rejects on duplicate event_id. */
   insert(event: NotificationEvent): Promise<void>;
@@ -11,6 +20,8 @@ export interface NotificationRepository {
   queryByTenantUser(tenantUserId: string, limit?: number): Promise<readonly NotificationEvent[]>;
   /** Query notification events for a conversation. */
   queryByConversation(conversationId: string): Promise<readonly NotificationEvent[]>;
+  /** List all notifications matching optional filters. Used by analytics (Phase 13). */
+  listAll(filters?: NotificationListFilters): Promise<readonly NotificationEvent[]>;
   /** Find an existing notification by idempotency key. Returns null if unseen. */
   findByIdempotencyKey(key: string): Promise<NotificationEvent | null>;
   /** Find recent notifications within cooldown window for dedup (spec §20). */
