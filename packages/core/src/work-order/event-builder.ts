@@ -1,4 +1,4 @@
-import type { WorkOrder } from '@wo-agent/schemas';
+import type { WorkOrder, WorkOrderStatus, ActorType } from '@wo-agent/schemas';
 import type { WorkOrderEvent } from './types.js';
 
 export interface WOCreatedEventInput {
@@ -27,5 +27,33 @@ export function buildWorkOrderCreatedEvent(input: WOCreatedEventInput): WorkOrde
       pinned_versions: workOrder.pinned_versions,
     },
     created_at: createdAt,
+  };
+}
+
+export interface WOStatusChangedEventInput {
+  readonly eventId: string;
+  readonly workOrderId: string;
+  readonly conversationId: string;
+  readonly previousStatus: WorkOrderStatus;
+  readonly newStatus: WorkOrderStatus;
+  readonly actor: ActorType;
+  readonly createdAt: string;
+}
+
+/**
+ * Build an append-only status_changed event (spec §7 — INSERT only).
+ */
+export function buildWorkOrderStatusChangedEvent(input: WOStatusChangedEventInput): WorkOrderEvent {
+  return {
+    event_id: input.eventId,
+    work_order_id: input.workOrderId,
+    event_type: 'status_changed',
+    payload: {
+      conversation_id: input.conversationId,
+      previous_status: input.previousStatus,
+      new_status: input.newStatus,
+      actor: input.actor,
+    },
+    created_at: input.createdAt,
   };
 }

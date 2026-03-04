@@ -1,4 +1,4 @@
-import type { WorkOrder } from '@wo-agent/schemas';
+import type { WorkOrder, WorkOrderStatus, ActorType } from '@wo-agent/schemas';
 
 /**
  * Append-only work order event (spec §7 — work_order_events table).
@@ -24,4 +24,12 @@ export interface WorkOrderRepository {
   getById(workOrderId: string): Promise<WorkOrder | null>;
   /** Get all WOs sharing an issue_group_id. No aggregate status (spec §18). */
   getByIssueGroup(issueGroupId: string): Promise<readonly WorkOrder[]>;
+  /** Update a WO's status with optimistic locking (spec §18). Rejects on version mismatch. */
+  updateStatus(
+    workOrderId: string,
+    newStatus: WorkOrderStatus,
+    actor: ActorType,
+    changedAt: string,
+    expectedVersion: number,
+  ): Promise<WorkOrder>;
 }
