@@ -1,0 +1,45 @@
+.message {
+  display: flex;
+  flex-direction: column;
+  max-width: 75%;
+  padding: 0.75rem 1rem;
+  border-radius: 1rem;
+  margin-bottom: 0.5rem;
+  word-wrap: break-word;
+}
+
+.message[data-role='agent'] {
+  align-self: flex-start;
+  background: #f0f0f0;
+  color: #1a1a1a;
+  border-bottom-left-radius: 0.25rem;
+}
+
+.message[data-role='tenant'] {
+  align-self: flex-end;
+  background: #0066cc;
+  color: #fff;
+  border-bottom-right-radius: 0.25rem;
+}
+
+.message[data-role='system'] {
+  align-self: center;
+  background: #fff8e1;
+  color: #6d4c00;
+  font-size: 0.875rem;
+  max-width: 90%;
+}
+
+.content {
+  white-space: pre-wrap;
+}
+
+.time {
+  font-size: 0.7rem;
+  opacity: 0.6;
+  margin-top: 0.25rem;
+}
+
+.message[data-role='tenant'] .time {
+  text-align: right;
+}

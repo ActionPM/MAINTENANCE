@@ -1,0 +1,38 @@
+.container {
+  padding: 1rem;
+  text-align: center;
+}
+
+.prompt {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  color: #333;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 20rem;
+  margin: 0 auto;
+}
+
+.unitButton {
+  padding: 0.75rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  transition: background 0.15s;
+}
+
+.unitButton:hover:not(:disabled) {
+  background: #e8f0fe;
+  border-color: #0066cc;
+}
+
+.unitButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

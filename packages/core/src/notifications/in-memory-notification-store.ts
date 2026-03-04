@@ -1,5 +1,5 @@
 import type { NotificationEvent, NotificationPreference } from '@wo-agent/schemas';
-import type { NotificationRepository, NotificationPreferenceStore } from './types.js';
+import type { NotificationRepository, NotificationPreferenceStore, NotificationListFilters } from './types.js';
 
 /**
  * In-memory notification event store for testing (append-only).
@@ -15,6 +15,24 @@ export class InMemoryNotificationStore implements NotificationRepository {
     }
     this.ids.add(event.event_id);
     this.events.push(event);
+  }
+
+  async listAll(filters?: NotificationListFilters): Promise<readonly NotificationEvent[]> {
+    let results = [...this.events];
+
+    if (filters?.tenant_user_id) {
+      results = results.filter(e => e.tenant_user_id === filters.tenant_user_id);
+    }
+    if (filters?.from) {
+      const fromMs = new Date(filters.from).getTime();
+      results = results.filter(e => new Date(e.created_at).getTime() >= fromMs);
+    }
+    if (filters?.to) {
+      const toMs = new Date(filters.to).getTime();
+      results = results.filter(e => new Date(e.created_at).getTime() < toMs);
+    }
+
+    return results;
   }
 
   async queryByTenantUser(tenantUserId: string, limit?: number): Promise<readonly NotificationEvent[]> {

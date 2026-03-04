@@ -72,11 +72,11 @@ export type { UnitInfo, UnitResolver } from './unit-resolver/index.js';
 
 // --- Idempotency (Phase 8) ---
 export { InMemoryIdempotencyStore } from './idempotency/index.js';
-export type { IdempotencyRecord, IdempotencyStore } from './idempotency/index.js';
+export type { IdempotencyRecord, IdempotencyStore, ReservationResult } from './idempotency/index.js';
 
 // --- Work Order (Phase 8) ---
 export { InMemoryWorkOrderStore, createWorkOrders, buildWorkOrderCreatedEvent, buildWorkOrderStatusChangedEvent } from './work-order/index.js';
-export type { WorkOrderEvent, WorkOrderRepository, CreateWorkOrdersInput, WOCreatedEventInput, WOStatusChangedEventInput } from './work-order/index.js';
+export type { WorkOrderEvent, WorkOrderRepository, WorkOrderListFilters, CreateWorkOrdersInput, WOCreatedEventInput, WOStatusChangedEventInput } from './work-order/index.js';
 
 // --- Events (Phase 3) ---
 export { InMemoryEventStore } from './events/index.js';
@@ -174,7 +174,7 @@ export type {
 
 // --- Notifications (Phase 10) ---
 export { InMemoryNotificationStore, InMemoryNotificationPreferenceStore, MockSmsSender, NotificationService } from './notifications/index.js';
-export type { NotificationRepository, NotificationPreferenceStore, SmsSender, NotificationServiceDeps, NotifyWoCreatedInput, NotifyResult } from './notifications/index.js';
+export type { NotificationRepository, NotificationPreferenceStore, SmsSender, NotificationListFilters, NotificationServiceDeps, NotifyWoCreatedInput, NotifyResult } from './notifications/index.js';
 
 // --- Record Bundle (Phase 11) ---
 export { assembleRecordBundle, computeSlaMetadata } from './record-bundle/index.js';
@@ -201,6 +201,18 @@ export type {
 } from './erp/index.js';
 export { ERPSyncService } from './erp/index.js';
 export type { ERPSyncServiceDeps, SyncResult, SyncError } from './erp/index.js';
+
+// --- Analytics (Phase 13) ---
+export { AnalyticsService } from './analytics/index.js';
+export type {
+  AnalyticsServiceDeps,
+  AnalyticsQuery,
+  AnalyticsResult,
+  OverviewMetrics,
+  TaxonomyBreakdown,
+  SlaMetrics,
+  NotificationMetrics,
+} from './analytics/index.js';
 
 // --- Orchestrator (Phase 3) ---
 export { createDispatcher, buildResponse, getActionHandler } from './orchestrator/index.js';
