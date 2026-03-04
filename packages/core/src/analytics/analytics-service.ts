@@ -2,6 +2,7 @@ import type { WorkOrder, NotificationEvent } from '@wo-agent/schemas';
 import type { WorkOrderRepository } from '../work-order/types.js';
 import type { NotificationRepository } from '../notifications/types.js';
 import type { SlaPolicies } from '../record-bundle/types.js';
+import { computeSlaMetadata } from '../record-bundle/sla-calculator.js';
 import type {
   AnalyticsQuery,
   AnalyticsResult,
@@ -81,8 +82,72 @@ export class AnalyticsService {
     return result;
   }
 
-  private computeSlaMetrics(_workOrders: readonly WorkOrder[]): SlaMetrics {
-    return { total_with_sla: 0, response_adherence_pct: 0, resolution_adherence_pct: 0, avg_response_hours: null, avg_resolution_hours: null };
+  private computeSlaMetrics(workOrders: readonly WorkOrder[]): SlaMetrics {
+    if (workOrders.length === 0) {
+      return { total_with_sla: 0, response_adherence_pct: 0, resolution_adherence_pct: 0, avg_response_hours: null, avg_resolution_hours: null };
+    }
+
+    let totalWithSla = 0;
+    let responseMetCount = 0;
+    let resolutionMetCount = 0;
+    let totalResponseHours = 0;
+    let responseCount = 0;
+    let totalResolutionHours = 0;
+    let resolutionCount = 0;
+
+    for (const wo of workOrders) {
+      const priority = wo.classification['Priority'] ?? 'normal';
+      const sla = computeSlaMetadata({
+        priority,
+        classification: wo.classification,
+        createdAt: wo.created_at,
+        slaPolicies: this.deps.slaPolicies,
+      });
+
+      // Find first non-"created" status transition for response time
+      const createdMs = new Date(wo.created_at).getTime();
+      const firstResponse = wo.status_history.find(
+        (e) => e.status !== 'created',
+      );
+
+      if (firstResponse) {
+        totalWithSla++;
+        const responseMs = new Date(firstResponse.changed_at).getTime() - createdMs;
+        const responseHours = responseMs / 3_600_000;
+        totalResponseHours += responseHours;
+        responseCount++;
+        if (responseHours <= sla.response_hours) responseMetCount++;
+      }
+
+      // Find terminal status (resolved/cancelled) for resolution time
+      const terminal = wo.status_history.find(
+        (e) => e.status === 'resolved' || e.status === 'cancelled',
+      );
+      if (terminal) {
+        if (!firstResponse) totalWithSla++;
+        const resolutionMs = new Date(terminal.changed_at).getTime() - createdMs;
+        const resolutionHours = resolutionMs / 3_600_000;
+        totalResolutionHours += resolutionHours;
+        resolutionCount++;
+        if (resolutionHours <= sla.resolution_hours) resolutionMetCount++;
+      }
+    }
+
+    return {
+      total_with_sla: totalWithSla,
+      response_adherence_pct: responseCount > 0
+        ? Math.round((responseMetCount / responseCount) * 100 * 100) / 100
+        : 0,
+      resolution_adherence_pct: resolutionCount > 0
+        ? Math.round((resolutionMetCount / resolutionCount) * 100 * 100) / 100
+        : 0,
+      avg_response_hours: responseCount > 0
+        ? Math.round(totalResponseHours / responseCount * 100) / 100
+        : null,
+      avg_resolution_hours: resolutionCount > 0
+        ? Math.round(totalResolutionHours / resolutionCount * 100) / 100
+        : null,
+    };
   }
 
   private computeNotificationMetrics(_notifications: readonly NotificationEvent[]): NotificationMetrics {
