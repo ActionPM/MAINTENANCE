@@ -13,12 +13,10 @@ describe('Analytics types (Phase 13)', () => {
     const query: AnalyticsQuery = {
       from: '2026-01-01T00:00:00Z',
       to: '2026-03-01T00:00:00Z',
-      client_id: 'c-1',
-      property_id: 'p-1',
-      unit_id: 'u-1',
+      authorized_unit_ids: ['u-1', 'u-2'],
     };
     expect(query.from).toBe('2026-01-01T00:00:00Z');
-    expect(query.client_id).toBe('c-1');
+    expect(query.authorized_unit_ids).toEqual(['u-1', 'u-2']);
   });
 
   it('AnalyticsQuery fields are all optional', () => {

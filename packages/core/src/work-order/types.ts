@@ -25,6 +25,8 @@ export interface WorkOrderListFilters {
   readonly client_id?: string;
   readonly property_id?: string;
   readonly unit_id?: string;
+  /** Filter to WOs in any of these units (auth scope). */
+  readonly unit_ids?: readonly string[];
   /** ISO 8601 start of time range (inclusive, compared to created_at). */
   readonly from?: string;
   /** ISO 8601 end of time range (exclusive, compared to created_at). */

@@ -170,11 +170,20 @@ describe('Analytics integration (Phase 13)', () => {
     expect(result.notifications.delivery_success_pct).toBeCloseTo(66.67, 0);
   });
 
-  it('client_id filter narrows results', async () => {
-    const result = await svc.compute({ client_id: 'c-1' });
-    expect(result.overview.total_work_orders).toBe(2);
-    expect(result.overview.has_emergency).toBe(1);
-    expect(result.taxonomy_breakdown['Category']).toEqual({ maintenance: 2 });
+  it('authorized_unit_ids scopes results to authorized units', async () => {
+    // wo-1 is in u-1, wo-2 is in u-1, wo-3 is in u-1 (all default to u-1 from makeWO)
+    // But we overrode wo-3 to p-3 — let's use unit_ids to scope
+    const result = await svc.compute({ authorized_unit_ids: ['u-1'] });
+    // All 3 WOs have unit_id 'u-1' (default from makeWO)
+    expect(result.overview.total_work_orders).toBe(3);
+  });
+
+  it('authorized_unit_ids excludes WOs and their notifications from other units', async () => {
+    // wo-1 and wo-2 link to n-1, n-2, n-3 respectively
+    // If we scope to unit 'u-nonexistent', we should see 0 WOs and 0 notifications
+    const result = await svc.compute({ authorized_unit_ids: ['u-nonexistent'] });
+    expect(result.overview.total_work_orders).toBe(0);
+    expect(result.notifications.total_sent).toBe(0);
   });
 
   it('time range filter works', async () => {

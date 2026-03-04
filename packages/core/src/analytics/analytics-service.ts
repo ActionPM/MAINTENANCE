@@ -28,17 +28,20 @@ export class AnalyticsService {
 
   async compute(query: AnalyticsQuery): Promise<AnalyticsResult> {
     const workOrders = await this.deps.workOrderRepo.listAll({
-      client_id: query.client_id,
-      property_id: query.property_id,
-      unit_id: query.unit_id,
+      unit_ids: query.authorized_unit_ids as string[] | undefined,
       from: query.from,
       to: query.to,
     });
 
-    const notifications = await this.deps.notificationRepo.listAll({
+    // Scope notifications to WOs in the filtered set (fix: cross-tenant leak)
+    const woIdSet = new Set(workOrders.map(wo => wo.work_order_id));
+    const allNotifications = await this.deps.notificationRepo.listAll({
       from: query.from,
       to: query.to,
     });
+    const notifications = allNotifications.filter(n =>
+      n.work_order_ids.some(id => woIdSet.has(id)),
+    );
 
     return {
       query,

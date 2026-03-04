@@ -92,16 +92,16 @@ describe('AnalyticsService.computeOverview (Phase 13)', () => {
     expect(result.overview.has_emergency).toBe(1);
   });
 
-  it('passes query filters through to repository', async () => {
+  it('passes authorized_unit_ids filter through to repository', async () => {
     const woRepo = new InMemoryWorkOrderStore();
     const notifRepo = new InMemoryNotificationStore();
     await woRepo.insertBatch([
-      makeWO({ work_order_id: 'wo-1', client_id: 'c-1' }),
-      makeWO({ work_order_id: 'wo-2', client_id: 'c-2' }),
+      makeWO({ work_order_id: 'wo-1', unit_id: 'u-1' }),
+      makeWO({ work_order_id: 'wo-2', unit_id: 'u-2' }),
     ]);
 
     const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
-    const result = await svc.compute({ client_id: 'c-1' });
+    const result = await svc.compute({ authorized_unit_ids: ['u-1'] });
 
     expect(result.overview.total_work_orders).toBe(1);
   });

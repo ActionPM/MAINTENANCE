@@ -1,18 +1,15 @@
 /**
  * Query filters for analytics endpoint (spec §24.1).
- * All fields optional — omitted fields mean "no filter".
+ * Scope is derived from auth context (authorized_unit_ids), never from
+ * tenant-supplied client/property/unit params (Non-Negotiable #5).
  */
 export interface AnalyticsQuery {
   /** ISO 8601 start of time range (inclusive). */
   readonly from?: string;
   /** ISO 8601 end of time range (exclusive). */
   readonly to?: string;
-  /** Filter to specific client. */
-  readonly client_id?: string;
-  /** Filter to specific property. */
-  readonly property_id?: string;
-  /** Filter to specific unit. */
-  readonly unit_id?: string;
+  /** Unit IDs the caller is authorized to see — derived from auth context. */
+  readonly authorized_unit_ids?: readonly string[];
 }
 
 /**

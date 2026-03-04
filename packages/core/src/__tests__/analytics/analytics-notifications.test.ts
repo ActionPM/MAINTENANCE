@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { AnalyticsService } from '../../analytics/analytics-service.js';
 import { InMemoryWorkOrderStore } from '../../work-order/index.js';
 import { InMemoryNotificationStore } from '../../notifications/index.js';
-import type { NotificationEvent } from '@wo-agent/schemas';
+import type { WorkOrder, NotificationEvent } from '@wo-agent/schemas';
 import type { SlaPolicies } from '../../record-bundle/index.js';
 
 const SLA_POLICIES: SlaPolicies = {
@@ -10,6 +10,35 @@ const SLA_POLICIES: SlaPolicies = {
   client_defaults: { normal: { response_hours: 24, resolution_hours: 168 } },
   overrides: [],
 };
+
+/** Seed a minimal WO so notification scoping can match on work_order_ids */
+function makeWO(id: string): WorkOrder {
+  return {
+    work_order_id: id,
+    issue_group_id: 'ig-1',
+    issue_id: 'i-1',
+    conversation_id: 'conv-1',
+    client_id: 'c-1',
+    property_id: 'p-1',
+    unit_id: 'u-1',
+    tenant_user_id: 'tu-1',
+    tenant_account_id: 'ta-1',
+    status: 'created',
+    status_history: [{ status: 'created', changed_at: '2026-03-01T10:00:00Z', actor: 'system' }],
+    raw_text: 'test',
+    summary_confirmed: 'test',
+    photos: [],
+    classification: { Category: 'maintenance', Priority: 'normal' },
+    confidence_by_field: {},
+    missing_fields: [],
+    pets_present: 'unknown',
+    needs_human_triage: false,
+    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'test', prompt_version: '1.0.0' },
+    created_at: '2026-03-01T10:00:00Z',
+    updated_at: '2026-03-01T10:00:00Z',
+    row_version: 0,
+  };
+}
 
 function makeNotif(overrides: Partial<NotificationEvent> & { event_id: string; notification_id: string }): NotificationEvent {
   return {
@@ -48,6 +77,7 @@ describe('AnalyticsService.computeNotificationMetrics (Phase 13)', () => {
   it('counts by channel and type', async () => {
     const woRepo = new InMemoryWorkOrderStore();
     const notifRepo = new InMemoryNotificationStore();
+    await woRepo.insertBatch([makeWO('wo-1')]);
     await notifRepo.insert(makeNotif({ event_id: 'e-1', notification_id: 'n-1', channel: 'in_app', notification_type: 'work_order_created' }));
     await notifRepo.insert(makeNotif({ event_id: 'e-2', notification_id: 'n-2', channel: 'sms', notification_type: 'status_changed' }));
     await notifRepo.insert(makeNotif({ event_id: 'e-3', notification_id: 'n-3', channel: 'in_app', notification_type: 'needs_input' }));
@@ -63,6 +93,7 @@ describe('AnalyticsService.computeNotificationMetrics (Phase 13)', () => {
   it('computes delivery success percentage', async () => {
     const woRepo = new InMemoryWorkOrderStore();
     const notifRepo = new InMemoryNotificationStore();
+    await woRepo.insertBatch([makeWO('wo-1')]);
     await notifRepo.insert(makeNotif({ event_id: 'e-1', notification_id: 'n-1', status: 'delivered' }));
     await notifRepo.insert(makeNotif({ event_id: 'e-2', notification_id: 'n-2', status: 'delivered' }));
     await notifRepo.insert(makeNotif({ event_id: 'e-3', notification_id: 'n-3', status: 'sent' }));
