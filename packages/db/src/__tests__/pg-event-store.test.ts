@@ -34,7 +34,7 @@ describe('PostgresEventStore', () => {
     store = new PostgresEventStore(pool);
   });
 
-  it('insert() executes INSERT with correct params', async () => {
+  it('insert() routes ConversationEvent to conversation_events with all columns', async () => {
     const event = {
       event_id: 'e-1',
       conversation_id: 'c-1',
@@ -53,6 +53,129 @@ describe('PostgresEventStore', () => {
     expect(pool.lastQuery).not.toBeNull();
     expect(pool.lastQuery!.text).toContain('INSERT INTO conversation_events');
     expect(pool.lastQuery!.values[0]).toBe('e-1');
+    expect(pool.lastQuery!.values[6]).toBe('tenant'); // actor column
+    expect(pool.lastQuery!.values).toHaveLength(10);
+  });
+
+  it('insert() routes RiskEvent to conversation_events with system actor and null state columns', async () => {
+    const event = {
+      event_id: 'r-1',
+      conversation_id: 'c-1',
+      event_type: 'risk_detected' as const,
+      payload: { has_emergency: true },
+      created_at: '2026-03-04T00:00:00Z',
+    };
+
+    await store.insert(event);
+
+    expect(pool.lastQuery!.text).toContain('INSERT INTO conversation_events');
+    expect(pool.lastQuery!.text).toContain("'system'");
+    expect(pool.lastQuery!.values[0]).toBe('r-1');
+    expect(pool.lastQuery!.values[2]).toBe('risk_detected');
+    expect(pool.lastQuery!.values[3]).toBe(JSON.stringify({ has_emergency: true }));
+    expect(pool.lastQuery!.values).toHaveLength(5);
+  });
+
+  it('insert() routes ConfirmationEvent to conversation_events with system actor', async () => {
+    const event = {
+      event_id: 'conf-1',
+      conversation_id: 'c-1',
+      event_type: 'confirmation_accepted' as const,
+      payload: { confirmation_payload: { issues: [] } },
+      created_at: '2026-03-04T00:00:00Z',
+    };
+
+    await store.insert(event);
+
+    expect(pool.lastQuery!.text).toContain('INSERT INTO conversation_events');
+    expect(pool.lastQuery!.values[0]).toBe('conf-1');
+    expect(pool.lastQuery!.values[2]).toBe('confirmation_accepted');
+  });
+
+  it('insert() routes StalenessEvent to conversation_events with system actor', async () => {
+    const event = {
+      event_id: 'stale-1',
+      conversation_id: 'c-1',
+      event_type: 'staleness_detected' as const,
+      payload: { staleness_result: { isStale: true, reasons: [] } },
+      created_at: '2026-03-04T00:00:00Z',
+    };
+
+    await store.insert(event);
+
+    expect(pool.lastQuery!.text).toContain('INSERT INTO conversation_events');
+    expect(pool.lastQuery!.values[0]).toBe('stale-1');
+    expect(pool.lastQuery!.values[2]).toBe('staleness_detected');
+  });
+
+  it('insert() routes FollowUpEvent (questions) with derived event_type and packed payload', async () => {
+    const event = {
+      event_id: 'fu-1',
+      conversation_id: 'c-1',
+      issue_id: 'iss-1',
+      turn_number: 1,
+      questions_asked: [{ question_id: 'q1', field_target: 'color', prompt: 'What color?', options: [] as string[], answer_type: 'text' as const }],
+      answers_received: null,
+      created_at: '2026-03-04T00:00:00Z',
+    };
+
+    await store.insert(event);
+
+    expect(pool.lastQuery!.text).toContain('INSERT INTO conversation_events');
+    expect(pool.lastQuery!.values[0]).toBe('fu-1');
+    expect(pool.lastQuery!.values[2]).toBe('followup_questions_asked');
+    const payload = JSON.parse(pool.lastQuery!.values[3] as string);
+    expect(payload.issue_id).toBe('iss-1');
+    expect(payload.turn_number).toBe(1);
+    expect(payload.questions_asked).toHaveLength(1);
+    expect(payload.answers_received).toBeNull();
+  });
+
+  it('insert() routes FollowUpEvent (answers) with followup_answers_received type', async () => {
+    const event = {
+      event_id: 'fu-2',
+      conversation_id: 'c-1',
+      issue_id: 'iss-1',
+      turn_number: 1,
+      questions_asked: [{ question_id: 'q1', field_target: 'color', prompt: 'What color?', options: [] as string[], answer_type: 'text' as const }],
+      answers_received: [{ question_id: 'q1', answer: 'blue', received_at: '2026-03-04T00:01:00Z' }],
+      created_at: '2026-03-04T00:00:00Z',
+    };
+
+    await store.insert(event);
+
+    expect(pool.lastQuery!.values[2]).toBe('followup_answers_received');
+    const payload = JSON.parse(pool.lastQuery!.values[3] as string);
+    expect(payload.answers_received).toHaveLength(1);
+  });
+
+  it('insert() routes NotificationEvent to notification_events table', async () => {
+    const event = {
+      event_id: 'n-1',
+      notification_id: 'notif-1',
+      conversation_id: 'c-1',
+      tenant_user_id: 'u-1',
+      tenant_account_id: 'a-1',
+      channel: 'in_app' as const,
+      notification_type: 'work_order_created' as const,
+      work_order_ids: ['wo-1'],
+      issue_group_id: null,
+      template_id: 'tpl-1',
+      status: 'pending' as const,
+      idempotency_key: 'idem-1',
+      payload: {},
+      created_at: '2026-03-04T00:00:00Z',
+      sent_at: null,
+      delivered_at: null,
+      failed_at: null,
+      failure_reason: null,
+    };
+
+    await store.insert(event);
+
+    expect(pool.lastQuery!.text).toContain('INSERT INTO notification_events');
+    expect(pool.lastQuery!.values[0]).toBe('n-1');
+    expect(pool.lastQuery!.values[1]).toBe('notif-1');
   });
 
   it('query() builds SELECT with filters', async () => {

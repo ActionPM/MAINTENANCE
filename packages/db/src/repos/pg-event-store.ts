@@ -7,6 +7,22 @@ import type { RiskEvent } from '@wo-agent/core';
 
 type AnyEvent = ConversationEvent | FollowUpEvent | ConfirmationEvent | StalenessEvent | RiskEvent | NotificationEvent;
 
+/* ------------------------------------------------------------------ */
+/*  Structural type guards                                            */
+/* ------------------------------------------------------------------ */
+
+function isNotificationEvent(e: AnyEvent): e is NotificationEvent {
+  return 'notification_id' in e;
+}
+
+function isFollowUpEvent(e: AnyEvent): e is FollowUpEvent {
+  return 'issue_id' in e && 'turn_number' in e;
+}
+
+function isConversationEvent(e: AnyEvent): e is ConversationEvent {
+  return 'actor' in e;
+}
+
 /**
  * PostgreSQL-backed event store (append-only, spec §7).
  * INSERT + SELECT only. Trigger guards prevent UPDATE/DELETE in the DB.
@@ -15,7 +31,21 @@ export class PostgresEventStore implements EventRepository {
   constructor(private readonly pool: Pool) {}
 
   async insert(event: AnyEvent): Promise<void> {
-    const e = event as ConversationEvent;
+    if (isNotificationEvent(event)) {
+      return this.insertNotification(event);
+    }
+    if (isFollowUpEvent(event)) {
+      return this.insertFollowUp(event);
+    }
+    if (isConversationEvent(event)) {
+      return this.insertConversation(event);
+    }
+    // RiskEvent | ConfirmationEvent | StalenessEvent — have event_type + payload
+    return this.insertMinimalEvent(event);
+  }
+
+  /** ConversationEvent → conversation_events with all columns. */
+  private async insertConversation(e: ConversationEvent): Promise<void> {
     await this.pool.query(
       `INSERT INTO conversation_events
         (event_id, conversation_id, event_type, prior_state, new_state, action_type, actor, payload, pinned_versions, created_at)
@@ -34,6 +64,79 @@ export class PostgresEventStore implements EventRepository {
         e.created_at,
       ],
     );
+  }
+
+  /**
+   * RiskEvent | ConfirmationEvent | StalenessEvent → conversation_events.
+   * These have event_type + payload but no actor/state/pinned_versions.
+   */
+  private async insertMinimalEvent(e: RiskEvent | ConfirmationEvent | StalenessEvent): Promise<void> {
+    await this.pool.query(
+      `INSERT INTO conversation_events
+        (event_id, conversation_id, event_type, prior_state, new_state, action_type, actor, payload, pinned_versions, created_at)
+       VALUES ($1, $2, $3, NULL, NULL, NULL, 'system', $4, NULL, $5)
+       ON CONFLICT (event_id) DO NOTHING`,
+      [
+        e.event_id,
+        e.conversation_id,
+        e.event_type,
+        JSON.stringify(e.payload),
+        e.created_at,
+      ],
+    );
+  }
+
+  /**
+   * FollowUpEvent → conversation_events.
+   * Derives event_type from answers_received presence and packs fields into payload.
+   */
+  private async insertFollowUp(e: FollowUpEvent): Promise<void> {
+    const eventType = e.answers_received ? 'followup_answers_received' : 'followup_questions_asked';
+    const payload = {
+      issue_id: e.issue_id,
+      turn_number: e.turn_number,
+      questions_asked: e.questions_asked,
+      answers_received: e.answers_received,
+    };
+    await this.pool.query(
+      `INSERT INTO conversation_events
+        (event_id, conversation_id, event_type, prior_state, new_state, action_type, actor, payload, pinned_versions, created_at)
+       VALUES ($1, $2, $3, NULL, NULL, NULL, 'system', $4, NULL, $5)
+       ON CONFLICT (event_id) DO NOTHING`,
+      [
+        e.event_id,
+        e.conversation_id,
+        eventType,
+        JSON.stringify(payload),
+        e.created_at,
+      ],
+    );
+  }
+
+  /** NotificationEvent → notification_events table. */
+  private async insertNotification(e: NotificationEvent): Promise<void> {
+    try {
+      await this.pool.query(
+        `INSERT INTO notification_events
+          (event_id, notification_id, conversation_id, tenant_user_id, tenant_account_id,
+           channel, notification_type, work_order_ids, issue_group_id, template_id,
+           status, idempotency_key, payload, created_at, sent_at, delivered_at, failed_at, failure_reason)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+         ON CONFLICT (event_id) DO NOTHING`,
+        [
+          e.event_id, e.notification_id, e.conversation_id,
+          e.tenant_user_id, e.tenant_account_id, e.channel,
+          e.notification_type, e.work_order_ids,
+          e.issue_group_id, e.template_id, e.status, e.idempotency_key,
+          JSON.stringify(e.payload), e.created_at,
+          e.sent_at, e.delivered_at, e.failed_at, e.failure_reason,
+        ],
+      );
+    } catch (err: unknown) {
+      // Unique violation on idempotency_key (code 23505) — treat as safe dedup
+      if (err && typeof err === 'object' && 'code' in err && err.code === '23505') return;
+      throw err;
+    }
   }
 
   async query(filters: EventQuery): Promise<readonly ConversationEvent[]> {
