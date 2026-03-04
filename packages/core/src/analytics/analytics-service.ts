@@ -150,7 +150,26 @@ export class AnalyticsService {
     };
   }
 
-  private computeNotificationMetrics(_notifications: readonly NotificationEvent[]): NotificationMetrics {
-    return { total_sent: 0, by_channel: {}, by_type: {}, delivery_success_pct: 0 };
+  private computeNotificationMetrics(notifications: readonly NotificationEvent[]): NotificationMetrics {
+    if (notifications.length === 0) {
+      return { total_sent: 0, by_channel: {}, by_type: {}, delivery_success_pct: 0 };
+    }
+
+    const byChannel: Record<string, number> = {};
+    const byType: Record<string, number> = {};
+    let successCount = 0;
+
+    for (const n of notifications) {
+      byChannel[n.channel] = (byChannel[n.channel] ?? 0) + 1;
+      byType[n.notification_type] = (byType[n.notification_type] ?? 0) + 1;
+      if (n.status === 'delivered' || n.status === 'sent') successCount++;
+    }
+
+    return {
+      total_sent: notifications.length,
+      by_channel: byChannel,
+      by_type: byType,
+      delivery_success_pct: Math.round((successCount / notifications.length) * 100 * 100) / 100,
+    };
   }
 }
