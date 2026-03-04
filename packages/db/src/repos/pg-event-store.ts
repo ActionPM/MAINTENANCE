@@ -1,10 +1,9 @@
 import type { Pool } from '@neondatabase/serverless';
-import type { NotificationEvent } from '@wo-agent/schemas';
+import type { NotificationEvent, FollowUpEvent } from '@wo-agent/schemas';
 import type { EventRepository } from '@wo-agent/core';
 import type { ConversationEvent, EventQuery } from '@wo-agent/core';
 import type { ConfirmationEvent, StalenessEvent } from '@wo-agent/core';
 import type { RiskEvent } from '@wo-agent/core';
-import type { FollowUpEvent } from '@wo-agent/core';
 
 type AnyEvent = ConversationEvent | FollowUpEvent | ConfirmationEvent | StalenessEvent | RiskEvent | NotificationEvent;
 
