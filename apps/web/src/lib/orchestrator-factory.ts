@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { createDispatcher, InMemoryEventStore, InMemoryWorkOrderStore, InMemoryIdempotencyStore } from '@wo-agent/core';
+import { InMemoryNotificationStore, InMemoryNotificationPreferenceStore, MockSmsSender, NotificationService } from '@wo-agent/core';
 import type { SessionStore, OrchestratorDependencies, UnitResolver } from '@wo-agent/core';
 import type { ConversationSession } from '@wo-agent/core';
 import type { CueDictionary, IssueClassifierInput } from '@wo-agent/schemas';
@@ -17,15 +18,35 @@ class InMemorySessionStore implements SessionStore {
   async save(session: ConversationSession) { this.sessions.set(session.conversation_id, session); }
 }
 
-let dispatcher: ReturnType<typeof createDispatcher> | null = null;
+let _deps: {
+  workOrderRepo: InMemoryWorkOrderStore;
+  notificationRepo: InMemoryNotificationStore;
+  dispatcher: ReturnType<typeof createDispatcher>;
+} | null = null;
 
-export function getOrchestrator() {
-  if (!dispatcher) {
+function ensureInitialized() {
+  if (!_deps) {
+    const workOrderRepo = new InMemoryWorkOrderStore();
+    const notificationRepo = new InMemoryNotificationStore();
+    const prefStore = new InMemoryNotificationPreferenceStore();
+    const smsSender = new MockSmsSender();
+    const eventRepo = new InMemoryEventStore();
+    const idGenerator = () => randomUUID();
+    const clock = () => new Date().toISOString();
+
+    const notificationService = new NotificationService({
+      notificationRepo,
+      preferenceStore: prefStore,
+      smsSender,
+      idGenerator,
+      clock,
+    });
+
     const deps: OrchestratorDependencies = {
-      eventRepo: new InMemoryEventStore(),
+      eventRepo,
       sessionStore: new InMemorySessionStore(),
-      idGenerator: () => randomUUID(),
-      clock: () => new Date().toISOString(),
+      idGenerator,
+      clock,
       issueSplitter: async (input) => ({
         issues: [{ issue_id: randomUUID(), summary: input.raw_text.slice(0, 200), raw_excerpt: input.raw_text }],
         issue_count: 1,
@@ -63,10 +84,28 @@ export function getOrchestrator() {
       unitResolver: {
         resolve: async (unitId: string) => ({ unit_id: unitId, property_id: `prop-${unitId}`, client_id: `client-${unitId}` }),
       } satisfies UnitResolver,
-      workOrderRepo: new InMemoryWorkOrderStore(),
+      workOrderRepo,
       idempotencyStore: new InMemoryIdempotencyStore(),
+      notificationService,
     };
-    dispatcher = createDispatcher(deps);
+
+    _deps = {
+      workOrderRepo,
+      notificationRepo,
+      dispatcher: createDispatcher(deps),
+    };
   }
-  return dispatcher;
+  return _deps;
+}
+
+export function getOrchestrator() {
+  return ensureInitialized().dispatcher;
+}
+
+export function getWorkOrderRepo() {
+  return ensureInitialized().workOrderRepo;
+}
+
+export function getNotificationRepo() {
+  return ensureInitialized().notificationRepo;
 }
