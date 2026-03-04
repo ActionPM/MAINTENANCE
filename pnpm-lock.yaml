@@ -13,6 +13,9 @@ importers:
       '@wo-agent/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@wo-agent/mock-erp':
+        specifier: workspace:*
+        version: link:../../packages/adapters/mock
       '@wo-agent/schemas':
         specifier: workspace:*
         version: link:../../packages/schemas

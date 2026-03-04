@@ -1,11 +1,12 @@
 import { randomUUID } from 'crypto';
-import { createDispatcher, InMemoryEventStore, InMemoryWorkOrderStore, InMemoryIdempotencyStore } from '@wo-agent/core';
+import { createDispatcher, InMemoryEventStore, InMemoryWorkOrderStore, InMemoryIdempotencyStore, ERPSyncService } from '@wo-agent/core';
 import { InMemoryNotificationStore, InMemoryNotificationPreferenceStore, MockSmsSender, NotificationService } from '@wo-agent/core';
 import type { SessionStore, OrchestratorDependencies, UnitResolver } from '@wo-agent/core';
 import type { ConversationSession } from '@wo-agent/core';
 import type { CueDictionary, IssueClassifierInput } from '@wo-agent/schemas';
 import { loadTaxonomy } from '@wo-agent/schemas';
 import classificationCues from '@wo-agent/schemas/classification_cues.json' with { type: 'json' };
+import { MockERPAdapter } from '@wo-agent/mock-erp';
 
 // In-memory session store for MVP — PostgreSQL in Phase 8
 class InMemorySessionStore implements SessionStore {
@@ -22,6 +23,8 @@ let _deps: {
   workOrderRepo: InMemoryWorkOrderStore;
   notificationRepo: InMemoryNotificationStore;
   dispatcher: ReturnType<typeof createDispatcher>;
+  erpAdapter: MockERPAdapter;
+  erpSyncService: ERPSyncService;
 } | null = null;
 
 function ensureInitialized() {
@@ -89,10 +92,20 @@ function ensureInitialized() {
       notificationService,
     };
 
+    const erpAdapter = new MockERPAdapter();
+    const erpSyncService = new ERPSyncService({
+      erpAdapter,
+      workOrderRepo,
+      idGenerator,
+      clock,
+    });
+
     _deps = {
       workOrderRepo,
       notificationRepo,
       dispatcher: createDispatcher(deps),
+      erpAdapter,
+      erpSyncService,
     };
   }
   return _deps;
@@ -108,4 +121,12 @@ export function getWorkOrderRepo() {
 
 export function getNotificationRepo() {
   return ensureInitialized().notificationRepo;
+}
+
+export function getERPAdapter() {
+  return ensureInitialized().erpAdapter;
+}
+
+export function getERPSyncService() {
+  return ensureInitialized().erpSyncService;
 }
