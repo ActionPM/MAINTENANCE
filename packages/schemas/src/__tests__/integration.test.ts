@@ -204,6 +204,7 @@ describe('Integration — round-trip: build valid data, validate, access typed r
       work_order_id: uuid(),
       issue_group_id: uuid(),
       issue_id: uuid(),
+      conversation_id: uuid(),
       client_id: uuid(),
       property_id: uuid(),
       unit_id: uuid(),
