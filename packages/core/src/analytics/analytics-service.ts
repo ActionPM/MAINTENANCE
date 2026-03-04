@@ -68,9 +68,17 @@ export class AnalyticsService {
     };
   }
 
-  // Stubs for later tasks — return empty defaults
-  private computeTaxonomyBreakdown(_workOrders: readonly WorkOrder[]): TaxonomyBreakdown {
-    return {};
+  private computeTaxonomyBreakdown(workOrders: readonly WorkOrder[]): TaxonomyBreakdown {
+    const result: Record<string, Record<string, number>> = {};
+
+    for (const wo of workOrders) {
+      for (const [field, value] of Object.entries(wo.classification)) {
+        if (!result[field]) result[field] = {};
+        result[field]![value] = (result[field]![value] ?? 0) + 1;
+      }
+    }
+
+    return result;
   }
 
   private computeSlaMetrics(_workOrders: readonly WorkOrder[]): SlaMetrics {
