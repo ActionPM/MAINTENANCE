@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback } from 'react';
 import { useConversation } from '@/hooks/use-conversation';
 import { ChatMessage } from './chat-message';
 import { MessageInput } from './message-input';
@@ -41,6 +42,27 @@ export function ChatShell({ token, unitIds }: ChatShellProps) {
   const directive = conv.response?.ui_directive;
   const state = snapshot?.state;
   const isLoading = conv.status === 'loading';
+
+  const handleQuickReply = useCallback(
+    (reply: { label: string; value: string; action_type?: string }) => {
+      switch (reply.action_type) {
+        case 'CONFIRM_SPLIT':
+          return conv.confirmSplit();
+        case 'REJECT_SPLIT':
+          return conv.rejectSplit();
+        case 'CONFIRM_SUBMISSION':
+          return conv.confirmSubmission();
+        case 'SELECT_UNIT':
+          return conv.selectUnit(reply.value);
+        case 'RESUME':
+          return conv.resumeConversation(conv.conversationId!);
+        default:
+          // Fallback: treat as additional message text
+          return conv.submitAdditionalMessage(reply.value);
+      }
+    },
+    [conv],
+  );
 
   if (!conv.response) {
     return (
@@ -131,7 +153,7 @@ export function ChatShell({ token, unitIds }: ChatShellProps) {
         {quickReplies.length > 0 && (
           <QuickReplies
             replies={quickReplies}
-            onSelect={() => {}}
+            onSelect={handleQuickReply}
             disabled={isLoading}
           />
         )}

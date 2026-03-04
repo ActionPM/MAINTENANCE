@@ -160,4 +160,30 @@ describe('ChatShell', () => {
     await user.click(screen.getByRole('button', { name: /start/i }));
     expect(screen.getByText('Hello!')).toBeInTheDocument();
   });
+
+  it('dispatches quick reply action based on action_type', async () => {
+    const resp = {
+      ...makeResponse('split_proposed', {
+        issues: [
+          { issue_id: 'i1', summary: 'Sink leaking', raw_excerpt: 'sink' },
+        ],
+      }),
+      ui_directive: {
+        messages: [],
+        quick_replies: [
+          { label: 'Confirm split', value: 'confirm', action_type: 'CONFIRM_SPLIT' },
+        ],
+      },
+    };
+    vi.mocked(api.createConversation).mockResolvedValueOnce(resp as any);
+    vi.mocked(api.confirmSplit).mockResolvedValueOnce(
+      makeResponse('split_finalized') as any,
+    );
+    const user = userEvent.setup();
+    render(<ChatShell token="tok" unitIds={['unit-1']} />);
+
+    await user.click(screen.getByRole('button', { name: /start/i }));
+    await user.click(screen.getByText('Confirm split'));
+    expect(api.confirmSplit).toHaveBeenCalledWith('tok', 'conv-1');
+  });
 });
