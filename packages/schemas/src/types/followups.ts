@@ -14,6 +14,7 @@ export interface FollowUpGeneratorInput {
   readonly total_questions_asked: number;
   readonly taxonomy_version: string;
   readonly prompt_version: string;
+  readonly original_text?: string;
 }
 
 export type FollowUpAnswerType = 'enum' | 'yes_no' | 'text';

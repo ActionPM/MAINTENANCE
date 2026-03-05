@@ -38,7 +38,8 @@
         "turn_number": { "type": "integer", "minimum": 1 },
         "total_questions_asked": { "type": "integer", "minimum": 0 },
         "taxonomy_version": { "type": "string" },
-        "prompt_version": { "type": "string" }
+        "prompt_version": { "type": "string" },
+        "original_text": { "type": "string" }
       },
       "required": [
         "issue_id",

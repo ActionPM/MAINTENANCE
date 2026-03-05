@@ -247,6 +247,7 @@ export async function handleAnswerFollowups(
 
     // Generate next round of follow-up questions
     const targetResult = classificationResults.find(r => r.fieldsNeedingInput.length > 0)!;
+    const targetIssueData = issues.find(i => i.issue_id === targetResult.issue_id);
     const followUpInput: FollowUpGeneratorInput = {
       issue_id: targetResult.issue_id,
       classification: targetResult.classifierOutput.classification,
@@ -258,6 +259,7 @@ export async function handleAnswerFollowups(
       total_questions_asked: updatedSession.total_questions_asked,
       taxonomy_version: session.pinned_versions.taxonomy_version,
       prompt_version: session.pinned_versions.prompt_version,
+      original_text: targetIssueData?.raw_excerpt,
     };
 
     let nextQuestions;

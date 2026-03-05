@@ -53,6 +53,36 @@ describe('createFollowUpAdapter', () => {
     expect(call.userMessage).toContain('Maintenance_Object');
   });
 
+  it('includes original_text in user message when provided', async () => {
+    const client = mockClient('{"questions":[]}');
+    const adapter = createFollowUpAdapter(client);
+    const inputWithText = { ...VALID_INPUT, original_text: 'I have a leak in my apartment' };
+    await adapter(inputWithText);
+
+    const call = vi.mocked(client.complete).mock.calls[0][0];
+    expect(call.userMessage).toContain('I have a leak in my apartment');
+    expect(call.userMessage).toContain("Tenant's original description");
+  });
+
+  it('omits original_text line when not provided', async () => {
+    const client = mockClient('{"questions":[]}');
+    const adapter = createFollowUpAdapter(client);
+    await adapter(VALID_INPUT);
+
+    const call = vi.mocked(client.complete).mock.calls[0][0];
+    expect(call.userMessage).not.toContain("Tenant's original description");
+  });
+
+  it('system prompt includes context-awareness rules', async () => {
+    const client = mockClient('{"questions":[]}');
+    const adapter = createFollowUpAdapter(client);
+    await adapter(VALID_INPUT);
+
+    const call = vi.mocked(client.complete).mock.calls[0][0];
+    expect(call.system).toContain('confirmation');
+    expect(call.system).toContain('original description');
+  });
+
   it('includes retry context when provided', async () => {
     const client = mockClient('{"questions":[]}');
     const adapter = createFollowUpAdapter(client);

@@ -18,6 +18,11 @@ RULES:
 6. Use answer_type "yes_no" for boolean questions, "text" only when no reasonable options exist.
 7. Write questions in plain, friendly language a tenant would understand.
 8. Do not ask about fields the tenant has already answered (check previous_questions).
+9. Consider the tenant's original description when generating questions. If the tenant already
+   implied a value (e.g., "in my apartment" implies Location=suite), prefer a short confirmation
+   question ("Is this in your apartment unit?") over broad options (hallway/exterior/basement).
+10. For Sub_Location, if the tenant mentioned a room or area, confirm it rather than listing
+    all possible locations.
 
 RESPOND WITH ONLY a JSON object (no markdown, no explanation):
 {
@@ -40,7 +45,13 @@ export function buildFollowUpUserMessage(
   input: FollowUpGeneratorInput,
   retryContext?: { retryHint: string },
 ): string {
-  const parts: string[] = [
+  const parts: string[] = [];
+
+  if (input.original_text) {
+    parts.push(`Tenant's original description: "${input.original_text}"`);
+  }
+
+  parts.push(
     `Issue ID: ${input.issue_id}`,
     `\nCurrent classification:`,
     ...Object.entries(input.classification).map(([k, v]) => `  ${k}: ${v}`),
@@ -50,7 +61,7 @@ export function buildFollowUpUserMessage(
     `\nFields needing input (generate questions for THESE ONLY): ${input.fields_needing_input.join(', ')}`,
     `\nTurn number: ${input.turn_number}`,
     `Total questions asked so far: ${input.total_questions_asked}`,
-  ];
+  );
 
   if (input.previous_questions.length > 0) {
     parts.push(`\nPreviously asked (do NOT re-ask unless necessary):`);
