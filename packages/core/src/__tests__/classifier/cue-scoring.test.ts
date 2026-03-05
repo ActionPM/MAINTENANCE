@@ -24,19 +24,19 @@ describe('computeCueStrengthForField', () => {
     expect(result.topLabel).toBeNull();
   });
 
-  it('returns normalized score for keyword hits', () => {
+  it('returns boosted score for keyword hits', () => {
     const result = computeCueStrengthForField('my toilet is leaking water from the pipe', 'Maintenance_Category', MINI_CUES);
-    // plumbing: leak(1) + toilet(1) + pipe(1) = 3/5 = 0.6
-    expect(result.score).toBeCloseTo(0.6);
+    // plumbing: leak(1) + toilet(1) + pipe(1) = 3 hits * 0.6 = 1.8 → clamped to 1.0
+    expect(result.score).toBe(1.0);
     expect(result.topLabel).toBe('plumbing');
   });
 
   it('returns top label when multiple labels match', () => {
     const result = computeCueStrengthForField('the outlet sparks when I plug in the toilet', 'Maintenance_Category', MINI_CUES);
-    // plumbing: toilet(1) = 1/5 = 0.2
-    // electrical: outlet(1) + sparks(1) = 2/5 = 0.4
+    // plumbing: toilet(1) = 1 * 0.6 = 0.6
+    // electrical: outlet(1) + sparks(1) = 2 * 0.6 = 1.0 (clamped)
     expect(result.topLabel).toBe('electrical');
-    expect(result.score).toBeCloseTo(0.4);
+    expect(result.score).toBe(1.0);
   });
 
   it('returns 0 for a field not in cue dictionary', () => {
@@ -61,7 +61,8 @@ describe('computeCueStrengthForField', () => {
       },
     };
     const result = computeCueStrengthForField('the faucet is leaking badly', 'Maintenance_Problem', cues);
-    expect(result.score).toBe(1.0);
+    // 1 regex hit → min(1, 1 * 0.6) = 0.6
+    expect(result.score).toBeCloseTo(0.6);
     expect(result.topLabel).toBe('leak');
   });
 
@@ -74,9 +75,9 @@ describe('computeCueStrengthForField', () => {
         },
       },
     };
-    // Should not throw, regex error is skipped
+    // 1 keyword hit (invalid regex skipped) → min(1, 1 * 0.6) = 0.6
     const result = computeCueStrengthForField('there is a leak', 'Maintenance_Problem', cues);
-    expect(result.score).toBeCloseTo(0.5); // 1 keyword hit / 2 total cues
+    expect(result.score).toBeCloseTo(0.6);
   });
 });
 
