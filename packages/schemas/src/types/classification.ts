@@ -12,6 +12,7 @@ export interface IssueClassifierInput {
   readonly model_id: string;
   readonly prompt_version: string;
   readonly cue_scores?: Record<string, number>;
+  readonly retry_context?: string;
 }
 
 export interface IssueClassifierOutput {

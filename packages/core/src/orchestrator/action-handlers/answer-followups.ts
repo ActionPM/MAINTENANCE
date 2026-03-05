@@ -1,4 +1,5 @@
-import { ConversationState, DEFAULT_CONFIDENCE_CONFIG, DEFAULT_FOLLOWUP_CAPS } from '@wo-agent/schemas';
+import { ConversationState, DEFAULT_CONFIDENCE_CONFIG, DEFAULT_FOLLOWUP_CAPS, taxonomyConstraints, validateHierarchicalConstraints } from '@wo-agent/schemas';
+import { resolveConstraintImpliedFields } from '../../classifier/constraint-resolver.js';
 import type {
   IssueClassifierInput,
   IssueClassifierOutput,
@@ -180,16 +181,79 @@ export async function handleAnswerFollowups(
       output = classifierResult.output!;
     }
 
+    // Step A: Validate hierarchical constraints (I7)
+    if (!output.needs_human_triage) {
+      const hierarchyResult = validateHierarchicalConstraints(output.classification, taxonomyConstraints);
+      if (!hierarchyResult.valid) {
+        const constraintHint = `Hierarchical violations: ${hierarchyResult.violations.join('; ')}`;
+        try {
+          const retryInput: IssueClassifierInput = { ...classifierInput, retry_context: constraintHint };
+          const retryResult = await callIssueClassifier(retryInput, deps.issueClassifier, taxonomy);
+          if (retryResult.status === 'ok' && retryResult.output) {
+            const retryHierarchy = validateHierarchicalConstraints(retryResult.output.classification, taxonomyConstraints);
+            if (retryHierarchy.valid) {
+              output = retryResult.output;
+            }
+          }
+        } catch {
+          // Retry failed, continue with original output
+        }
+        // If still invalid after retry, log violation and escalate
+        const postRetryCheck = validateHierarchicalConstraints(output.classification, taxonomyConstraints);
+        if (!postRetryCheck.valid) {
+          output = { ...output, needs_human_triage: true };
+          await deps.eventRepo.insert({
+            event_id: deps.idGenerator(),
+            event_type: 'classification_hierarchy_violation_unresolved',
+            conversation_id: session.conversation_id,
+            issue_id: issue.issue_id,
+            violations: postRetryCheck.violations,
+            created_at: deps.clock(),
+          });
+        }
+      }
+    }
+
+    // Step B: Resolve implied fields (C1)
+    const impliedFields = output.needs_human_triage
+      ? {}
+      : resolveConstraintImpliedFields(output.classification, taxonomyConstraints);
+    if (Object.keys(impliedFields).length > 0) {
+      output = { ...output, classification: { ...output.classification, ...impliedFields } };
+      await deps.eventRepo.insert({
+        event_id: deps.idGenerator(),
+        event_type: 'classification_constraint_resolution',
+        conversation_id: session.conversation_id,
+        issue_id: issue.issue_id,
+        resolved_fields: impliedFields,
+        created_at: deps.clock(),
+      });
+    }
+
+    // Step C: Confidence with constraint boost (C2)
     const computedConfidence = computeAllFieldConfidences({
       classification: output.classification,
       modelConfidence: output.model_confidence,
       cueResults: cueScoreMap,
       config: confidenceConfig,
+      impliedFields,
     });
 
-    const fieldsNeedingInput = output.needs_human_triage
+    let fieldsNeedingInput = output.needs_human_triage
       ? []
-      : determineFieldsNeedingInput(computedConfidence, confidenceConfig, output.missing_fields);
+      : determineFieldsNeedingInput(computedConfidence, confidenceConfig, output.missing_fields, output.classification);
+
+    // Short-circuit: remove fields the tenant directly answered this round.
+    // A tenant explicitly answering a field resolves it regardless of confidence.
+    if (issue.issue_id === targetIssueId && followupAnswers.length > 0) {
+      const answeredFields = new Set(followupAnswers.map(a => a.field_target));
+      fieldsNeedingInput = fieldsNeedingInput.filter(f => !answeredFields.has(f));
+    }
+
+    // Short-circuit: remove constraint-implied fields — deterministically resolved.
+    if (Object.keys(impliedFields).length > 0) {
+      fieldsNeedingInput = fieldsNeedingInput.filter(f => !(f in impliedFields));
+    }
 
     if (fieldsNeedingInput.length > 0) anyFieldsNeedInput = true;
 
@@ -240,6 +304,7 @@ export async function handleAnswerFollowups(
 
     // Generate next round of follow-up questions
     const targetResult = classificationResults.find(r => r.fieldsNeedingInput.length > 0)!;
+    const targetIssueData = issues.find(i => i.issue_id === targetResult.issue_id);
     const followUpInput: FollowUpGeneratorInput = {
       issue_id: targetResult.issue_id,
       classification: targetResult.classifierOutput.classification,
@@ -251,6 +316,7 @@ export async function handleAnswerFollowups(
       total_questions_asked: updatedSession.total_questions_asked,
       taxonomy_version: session.pinned_versions.taxonomy_version,
       prompt_version: session.pinned_versions.prompt_version,
+      original_text: targetIssueData?.raw_excerpt,
     };
 
     let nextQuestions;

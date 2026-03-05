@@ -214,6 +214,23 @@ export type {
   NotificationMetrics,
 } from './analytics/index.js';
 
+// --- LLM Adapters (Phase 16) ---
+export {
+  createAnthropicClient,
+  createLlmDependencies,
+  extractJsonFromResponse,
+  createSplitterAdapter,
+  createClassifierAdapter,
+  createFollowUpAdapter,
+} from './llm/index.js';
+export type {
+  LlmClient,
+  LlmClientConfig,
+  CompletionRequest,
+  CreateLlmDepsConfig,
+  LlmDependencies,
+} from './llm/index.js';
+
 // --- Orchestrator (Phase 3) ---
 export { createDispatcher, buildResponse, getActionHandler } from './orchestrator/index.js';
 export type {

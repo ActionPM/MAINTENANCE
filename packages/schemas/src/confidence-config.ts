@@ -5,9 +5,14 @@
  *     weights.cue_strength * cue_strength
  *     + weights.completeness * completeness
  *     + weights.model_hint * model_hint
+ *     + weights.constraint_implied * constraint_implied
  *     - weights.disagreement * disagreement
  *     - weights.ambiguity_penalty * ambiguity_penalty
  *   )
+ *
+ * Note: Positive weights intentionally sum to >1.0 (1.10) so that
+ * constraint-implied fields with model agreement can reach high_threshold.
+ * The clamp01 ensures the final score stays in [0, 1].
  */
 export interface ConfidenceConfig {
   readonly high_threshold: number;
@@ -18,6 +23,7 @@ export interface ConfidenceConfig {
     readonly cue_strength: number;
     readonly completeness: number;
     readonly model_hint: number;
+    readonly constraint_implied: number;
     readonly disagreement: number;
     readonly ambiguity_penalty: number;
   };
@@ -32,6 +38,7 @@ export const DEFAULT_CONFIDENCE_CONFIG: ConfidenceConfig = {
     cue_strength: 0.40,
     completeness: 0.25,
     model_hint: 0.20,
+    constraint_implied: 0.25,
     disagreement: 0.10,
     ambiguity_penalty: 0.05,
   },

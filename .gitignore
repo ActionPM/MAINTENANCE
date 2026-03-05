@@ -33,3 +33,10 @@ coverage/
 # Next.js
 .next/
 out/
+next-env.d.ts
+
+# Generated dev artifacts
+apps/web/public/dev.htm
+
+# Claude Code local settings
+.claude/settings.local.json

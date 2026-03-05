@@ -180,6 +180,13 @@ describe('handleAnswerFollowups', () => {
     const ctx = makeAnswerContext({
       classifierFn: vi.fn().mockResolvedValue(stillLowConf),
       cueDict: MINI_CUES,
+      // Return a question for a non-answered field (Priority is answered and short-circuited)
+      followUpFn: vi.fn().mockResolvedValue({
+        questions: [{
+          question_id: 'q2', field_target: 'Sub_Location',
+          prompt: 'Which room?', options: ['kitchen', 'bathroom'], answer_type: 'enum',
+        }],
+      }),
     });
     const result = await handleAnswerFollowups(ctx);
     expect(result.newState).toBe(ConversationState.NEEDS_TENANT_INPUT);
@@ -227,6 +234,100 @@ describe('handleAnswerFollowups', () => {
     const result = await handleAnswerFollowups(ctx);
     expect(result.newState).toBe(ConversationState.TENANT_CONFIRMATION_PENDING);
     expect(result.session.classification_results![0].classifierOutput.needs_human_triage).toBe(true);
+  });
+
+  it('does not re-ask fields that were directly answered by tenant', async () => {
+    // Classifier still returns low confidence for Priority and Sub_Location,
+    // but tenant answered Priority — it should be removed from fieldsNeedingInput
+    const stillLowConf: IssueClassifierOutput = {
+      ...HIGH_CONF_OUTPUT,
+      model_confidence: {
+        ...HIGH_CONF_OUTPUT.model_confidence,
+        Priority: 0.3,
+        Sub_Location: 0.3,
+      },
+    };
+    const ctx = makeAnswerContext({
+      classifierFn: vi.fn().mockResolvedValue(stillLowConf),
+      cueDict: MINI_CUES,
+      // Return a question for Sub_Location (not Priority, which is answered)
+      followUpFn: vi.fn().mockResolvedValue({
+        questions: [{
+          question_id: 'q-sub2', field_target: 'Sub_Location',
+          prompt: 'Which room?', options: ['kitchen', 'bathroom'], answer_type: 'enum',
+        }],
+      }),
+    });
+    // Add Sub_Location to pending questions so we have two low-confidence fields
+    ctx.session = setPendingFollowUpQuestions(ctx.session, [
+      ...PENDING_QUESTIONS,
+      {
+        question_id: 'q-sub',
+        field_target: 'Sub_Location',
+        prompt: 'Which room?',
+        options: ['kitchen', 'bathroom'],
+        answer_type: 'enum',
+      },
+    ]);
+    // Answer only Priority (q1)
+    ctx.request = {
+      ...ctx.request,
+      tenant_input: {
+        answers: [
+          { question_id: 'q1', answer: 'normal', received_at: '2026-02-25T12:05:00.000Z' },
+        ],
+      },
+    } as any;
+
+    const result = await handleAnswerFollowups(ctx);
+
+    // Priority was answered — should NOT appear in fieldsNeedingInput
+    const fieldsNeeding = result.session.classification_results![0].fieldsNeedingInput;
+    expect(fieldsNeeding).not.toContain('Priority');
+    // Sub_Location was NOT answered and is still low confidence — should remain
+    expect(fieldsNeeding).toContain('Sub_Location');
+  });
+
+  it('resolves all fields when all low-confidence fields are answered', async () => {
+    // Both Priority and Sub_Location are low confidence, tenant answers both
+    const stillLowConf: IssueClassifierOutput = {
+      ...HIGH_CONF_OUTPUT,
+      model_confidence: {
+        ...HIGH_CONF_OUTPUT.model_confidence,
+        Priority: 0.3,
+        Sub_Location: 0.3,
+      },
+    };
+    const pendingBoth: FollowUpQuestion[] = [
+      ...PENDING_QUESTIONS,
+      {
+        question_id: 'q-sub',
+        field_target: 'Sub_Location',
+        prompt: 'Which room?',
+        options: ['kitchen', 'bathroom'],
+        answer_type: 'enum',
+      },
+    ];
+    const ctx = makeAnswerContext({
+      classifierFn: vi.fn().mockResolvedValue(stillLowConf),
+      cueDict: MINI_CUES,
+    });
+    ctx.session = setPendingFollowUpQuestions(ctx.session, pendingBoth);
+    ctx.session = updateFollowUpTracking(ctx.session, pendingBoth);
+    ctx.request = {
+      ...ctx.request,
+      tenant_input: {
+        answers: [
+          { question_id: 'q1', answer: 'normal', received_at: '2026-02-25T12:05:00.000Z' },
+          { question_id: 'q-sub', answer: 'kitchen', received_at: '2026-02-25T12:05:00.000Z' },
+        ],
+      },
+    } as any;
+
+    const result = await handleAnswerFollowups(ctx);
+
+    // Both answered fields removed — no fields need input → confirmation pending
+    expect(result.newState).toBe(ConversationState.TENANT_CONFIRMATION_PENDING);
   });
 
   it('clears pending questions from session on completion', async () => {

@@ -5,6 +5,19 @@
 export { loadTaxonomy, isTaxonomyValue, taxonomy, TAXONOMY_FIELD_NAMES, MAINTENANCE_FIELDS, MANAGEMENT_FIELDS } from './taxonomy.js';
 export type { Taxonomy, TaxonomyFieldName } from './taxonomy.js';
 
+// --- Taxonomy Constraints ---
+export {
+  loadTaxonomyConstraints,
+  taxonomyConstraints,
+  deriveConstraintEdges,
+  CONSTRAINT_EDGES,
+} from './taxonomy-constraints.js';
+export type {
+  TaxonomyConstraints,
+  ConstraintMapName,
+  ConstraintEdge,
+} from './taxonomy-constraints.js';
+
 // --- Enums ---
 export { ConversationState, ALL_CONVERSATION_STATES, RESUMABLE_STATES } from './conversation-states.js';
 export { WorkOrderStatus, ALL_WORK_ORDER_STATUSES } from './work-order-status.js';
@@ -132,7 +145,7 @@ export { validateRecordBundle } from './validators/record-bundle.js';
 export { validatePhoto } from './validators/photo.js';
 
 // --- Domain validators ---
-export { validateClassificationAgainstTaxonomy } from './validators/taxonomy-cross-validator.js';
-export type { DomainValidationResult } from './validators/taxonomy-cross-validator.js';
+export { validateClassificationAgainstTaxonomy, validateHierarchicalConstraints } from './validators/taxonomy-cross-validator.js';
+export type { DomainValidationResult, HierarchicalValidationResult } from './validators/taxonomy-cross-validator.js';
 export { validateCueDictionary } from './validators/cue-dictionary-validator.js';
 export type { CueDictionary } from './validators/cue-dictionary-validator.js';

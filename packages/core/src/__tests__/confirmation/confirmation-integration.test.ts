@@ -12,19 +12,22 @@ const taxonomy = loadTaxonomy();
 
 /**
  * Full cues so all fields score high → all fields resolved → tenant_confirmation_pending.
+ * Each label has 2 keywords matching "My toilet is leaking" so that per-hit boost
+ * normalization (2 * 0.6 = 1.2 → clamped to 1.0) produces maximum cue_strength.
+ * Keywords are chosen for test mechanics, not semantic accuracy.
  */
 const FULL_CUES: CueDictionary = {
   version: '1.0.0',
   fields: {
-    Category: { maintenance: { keywords: ['leak'], regex: [] } },
-    Location: { suite: { keywords: ['toilet'], regex: [] } },
-    Sub_Location: { bathroom: { keywords: ['toilet'], regex: [] } },
+    Category: { maintenance: { keywords: ['leak', 'toilet'], regex: [] } },
+    Location: { suite: { keywords: ['toilet', 'leak'], regex: [] } },
+    Sub_Location: { bathroom: { keywords: ['toilet', 'leak'], regex: [] } },
     Maintenance_Category: { plumbing: { keywords: ['leak', 'toilet'], regex: [] } },
-    Maintenance_Object: { toilet: { keywords: ['toilet'], regex: [] } },
-    Maintenance_Problem: { leak: { keywords: ['leak'], regex: [] } },
-    Management_Category: { other_mgmt_cat: { keywords: ['toilet'], regex: [] } },
-    Management_Object: { other_mgmt_obj: { keywords: ['toilet'], regex: [] } },
-    Priority: { normal: { keywords: ['leak'], regex: [] } },
+    Maintenance_Object: { toilet: { keywords: ['toilet', 'leak'], regex: [] } },
+    Maintenance_Problem: { leak: { keywords: ['leak', 'toilet'], regex: [] } },
+    Management_Category: { other_mgmt_cat: { keywords: ['toilet', 'leak'], regex: [] } },
+    Management_Object: { other_mgmt_obj: { keywords: ['toilet', 'leak'], regex: [] } },
+    Priority: { normal: { keywords: ['leak', 'toilet'], regex: [] } },
   },
 };
 
@@ -191,6 +194,7 @@ const RELAXED_CONFIDENCE: ConfidenceConfig = {
     cue_strength: 0.40,
     completeness: 0.25,
     model_hint: 0.20,
+    constraint_implied: 0.25,
     disagreement: 0.10,
     ambiguity_penalty: 0.05,
   },

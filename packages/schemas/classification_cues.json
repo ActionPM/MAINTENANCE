@@ -1,6 +1,78 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "fields": {
+    "Category": {
+      "maintenance": {
+        "keywords": ["leak", "broken", "repair", "not working", "clog"],
+        "regex": []
+      },
+      "management": {
+        "keywords": ["rent", "lease", "move out", "receipt", "payment"],
+        "regex": []
+      }
+    },
+    "Location": {
+      "suite": {
+        "keywords": ["apartment", "unit", "suite", "my room", "my place"],
+        "regex": ["\\b(in|inside)\\s+my\\s+(apartment|unit|suite|place|room)\\b"]
+      },
+      "building_interior": {
+        "keywords": ["hallway", "lobby", "elevator", "stairwell", "laundry room"],
+        "regex": []
+      },
+      "building_exterior": {
+        "keywords": ["parking", "roof", "exterior", "garage", "sidewalk"],
+        "regex": []
+      }
+    },
+    "Sub_Location": {
+      "kitchen": {
+        "keywords": ["kitchen", "stove", "oven", "fridge", "dishwasher", "microwave", "range hood", "refrigerator"],
+        "regex": []
+      },
+      "bathroom": {
+        "keywords": ["bathroom", "shower", "bathtub", "toilet", "washroom"],
+        "regex": []
+      },
+      "common_living_dining": {
+        "keywords": ["living room", "dining room", "den"],
+        "regex": []
+      },
+      "bedroom": {
+        "keywords": ["bedroom", "master bedroom", "guest room"],
+        "regex": []
+      },
+      "keys_locks": {
+        "keywords": ["lock", "key", "locked out", "deadbolt"],
+        "regex": []
+      },
+      "balcony": {
+        "keywords": ["balcony", "patio", "terrace", "deck"],
+        "regex": []
+      },
+      "general": {
+        "keywords": ["apartment", "unit", "suite", "my place"],
+        "regex": []
+      }
+    },
+    "Priority": {
+      "emergency": {
+        "keywords": ["flood", "fire", "gas leak", "burst pipe", "sewage"],
+        "regex": []
+      },
+      "high": {
+        "keywords": ["no water", "sparks", "infestation", "dangerous", "mold"],
+        "regex": []
+      },
+      "normal": {
+        "keywords": ["leak", "broken", "not working", "clog", "peeling"],
+        "regex": []
+      },
+      "low": {
+        "keywords": ["cosmetic", "scratch", "minor", "scuff"],
+        "regex": []
+      }
+    },
     "Maintenance_Category": {
       "plumbing": { "keywords": ["leak", "toilet", "sink", "drain", "pipe", "water", "faucet", "shower", "clog", "plumbing"], "regex": [] },
       "electrical": { "keywords": ["breaker", "outlet", "switch", "sparks", "power", "light", "fuse", "electrical", "wiring"], "regex": [] },

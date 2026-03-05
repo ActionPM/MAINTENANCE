@@ -18,3 +18,5 @@ export {
   ClassifierErrorCode,
 } from './issue-classifier.js';
 export type { ClassifierResult } from './issue-classifier.js';
+
+export { resolveValidOptions, resolveConstraintImpliedFields } from './constraint-resolver.js';

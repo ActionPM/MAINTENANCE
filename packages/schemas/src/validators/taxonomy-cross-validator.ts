@@ -1,5 +1,7 @@
 import type { Taxonomy, TaxonomyFieldName } from '../taxonomy.js';
 import { TAXONOMY_FIELD_NAMES, MAINTENANCE_FIELDS, MANAGEMENT_FIELDS } from '../taxonomy.js';
+import type { TaxonomyConstraints } from '../taxonomy-constraints.js';
+import { CONSTRAINT_EDGES } from '../taxonomy-constraints.js';
 
 export interface DomainValidationResult {
   readonly valid: boolean;
@@ -66,4 +68,47 @@ export function validateClassificationAgainstTaxonomy(
   const valid = invalidValues.length === 0 && !contradictory;
 
   return { valid, contradictory, invalidValues, crossDomainViolations };
+}
+
+// --- Hierarchical constraint validation ---
+
+export interface HierarchicalValidationResult {
+  readonly valid: boolean;
+  readonly violations: readonly string[];
+}
+
+const SKIP_VALUES = new Set([
+  'other_object', 'no_object', 'needs_object', 'other_maintenance_object',
+  'other_problem', 'other_maintenance_category', 'other_issue',
+  'other_mgmt_cat', 'other_management_category', 'other_mgmt_obj', 'other_management_object',
+  'other_sub_location', 'other_category', 'other_priority', 'general',
+]);
+
+export function validateHierarchicalConstraints(
+  classification: Record<string, string>,
+  constraints: TaxonomyConstraints,
+): HierarchicalValidationResult {
+  const category = classification['Category'];
+  const edgesToCheck = category === 'management'
+    ? CONSTRAINT_EDGES.filter(e => e.mapKey === 'Location_to_Sub_Location')
+    : CONSTRAINT_EDGES;
+
+  const violations: string[] = [];
+
+  for (const edge of edgesToCheck) {
+    const parentValue = classification[edge.parentField];
+    const childValue = classification[edge.childField];
+    if (!parentValue || !childValue) continue;
+    if (SKIP_VALUES.has(parentValue) || SKIP_VALUES.has(childValue)) continue;
+
+    const map = constraints[edge.mapKey] as Record<string, readonly string[]>;
+    const allowed = map[parentValue];
+    if (allowed && !allowed.includes(childValue)) {
+      violations.push(
+        `${edge.childField} "${childValue}" is not valid for ${edge.parentField} "${parentValue}"`,
+      );
+    }
+  }
+
+  return { valid: violations.length === 0, violations };
 }
