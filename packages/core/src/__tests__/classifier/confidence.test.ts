@@ -179,6 +179,82 @@ describe('determineFieldsNeedingInput', () => {
   });
 });
 
+describe('category gating', () => {
+  it('excludes Management fields when Category=maintenance and Category is confident', () => {
+    const confidences: Record<string, number> = {
+      Category: 0.70,
+      Location: 0.70,
+      Sub_Location: 0.30,
+      Maintenance_Category: 0.70,
+      Maintenance_Object: 0.30,
+      Maintenance_Problem: 0.70,
+      Management_Category: 0.25,
+      Management_Object: 0.25,
+      Priority: 0.30,
+    };
+    const classification = {
+      Category: 'maintenance',
+      Management_Category: 'other_mgmt_cat',
+      Management_Object: 'other_mgmt_obj',
+    };
+    const result = determineFieldsNeedingInput(confidences, DEFAULT_CONFIDENCE_CONFIG, [], classification);
+    expect(result).not.toContain('Management_Category');
+    expect(result).not.toContain('Management_Object');
+    expect(result).toContain('Sub_Location');
+    expect(result).toContain('Maintenance_Object');
+    expect(result).toContain('Priority');
+  });
+
+  it('excludes Maintenance fields when Category=management and Category is confident', () => {
+    const confidences: Record<string, number> = {
+      Category: 0.70,
+      Location: 0.70,
+      Sub_Location: 0.30,
+      Maintenance_Category: 0.25,
+      Maintenance_Object: 0.25,
+      Maintenance_Problem: 0.25,
+      Management_Category: 0.70,
+      Management_Object: 0.30,
+      Priority: 0.30,
+    };
+    const classification = {
+      Category: 'management',
+      Maintenance_Category: 'other_maintenance_category',
+      Maintenance_Object: 'other_maintenance_object',
+      Maintenance_Problem: 'other_problem',
+    };
+    const result = determineFieldsNeedingInput(confidences, DEFAULT_CONFIDENCE_CONFIG, [], classification);
+    expect(result).not.toContain('Maintenance_Category');
+    expect(result).not.toContain('Maintenance_Object');
+    expect(result).not.toContain('Maintenance_Problem');
+    expect(result).toContain('Sub_Location');
+    expect(result).toContain('Management_Object');
+    expect(result).toContain('Priority');
+  });
+
+  it('does NOT gate when Category itself is low confidence', () => {
+    const confidences: Record<string, number> = {
+      Category: 0.30,
+      Management_Category: 0.25,
+      Management_Object: 0.25,
+    };
+    const classification = { Category: 'maintenance' };
+    const result = determineFieldsNeedingInput(confidences, DEFAULT_CONFIDENCE_CONFIG, [], classification);
+    expect(result).toContain('Category');
+    expect(result).toContain('Management_Category');
+    expect(result).toContain('Management_Object');
+  });
+
+  it('does NOT gate when classification is not provided (backward compat)', () => {
+    const confidences: Record<string, number> = {
+      Category: 0.70,
+      Management_Category: 0.25,
+    };
+    const result = determineFieldsNeedingInput(confidences, DEFAULT_CONFIDENCE_CONFIG);
+    expect(result).toContain('Management_Category');
+  });
+});
+
 describe('computeAllFieldConfidences', () => {
   it('computes confidence for all classified fields', () => {
     const classification = { Category: 'maintenance', Maintenance_Category: 'plumbing' };

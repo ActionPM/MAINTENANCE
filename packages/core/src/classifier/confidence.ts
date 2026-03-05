@@ -93,6 +93,10 @@ export function computeAllFieldConfidences(input: ComputeAllInput): Record<strin
   return result;
 }
 
+/** Fields to exclude when Category is confidently resolved */
+const MAINTENANCE_EXCLUDES = ['Management_Category', 'Management_Object'];
+const MANAGEMENT_EXCLUDES = ['Maintenance_Category', 'Maintenance_Object', 'Maintenance_Problem'];
+
 /**
  * Determine which fields need tenant input based on confidence bands
  * and any fields the classifier reported as missing.
@@ -103,11 +107,13 @@ export function computeAllFieldConfidences(input: ComputeAllInput): Record<strin
  *   medium as needing input would create an unwinnable loop).
  * - High-confidence fields are accepted.
  * - Fields in missingFields are always included regardless of confidence.
+ * - Category gating: when Category is confident, cross-category fields are excluded.
  */
 export function determineFieldsNeedingInput(
   confidences: Record<string, number>,
   config: ConfidenceConfig,
   missingFields?: readonly string[],
+  classification?: Record<string, string>,
 ): string[] {
   const fields: string[] = [];
 
@@ -126,6 +132,16 @@ export function determineFieldsNeedingInput(
         fields.push(field);
       }
     }
+  }
+
+  // Category gating: if Category is confident, exclude irrelevant cross-category fields
+  if (classification && !fields.includes('Category')) {
+    const category = classification['Category'];
+    const excludes =
+      category === 'maintenance' ? MAINTENANCE_EXCLUDES :
+      category === 'management' ? MANAGEMENT_EXCLUDES :
+      [];
+    return fields.filter(f => !excludes.includes(f));
   }
 
   return fields;
