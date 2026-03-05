@@ -156,6 +156,7 @@ export async function handleStartClassification(
         if (!postRetryCheck.valid) {
           output = { ...output, needs_human_triage: true };
           await deps.eventRepo.insert({
+            event_id: deps.idGenerator(),
             event_type: 'classification_hierarchy_violation_unresolved',
             conversation_id: session.conversation_id,
             issue_id: issue.issue_id,
@@ -173,6 +174,7 @@ export async function handleStartClassification(
     if (Object.keys(impliedFields).length > 0) {
       output = { ...output, classification: { ...output.classification, ...impliedFields } };
       await deps.eventRepo.insert({
+        event_id: deps.idGenerator(),
         event_type: 'classification_constraint_resolution',
         conversation_id: session.conversation_id,
         issue_id: issue.issue_id,
@@ -190,9 +192,14 @@ export async function handleStartClassification(
       impliedFields,
     });
 
-    const fieldsNeedingInput = output.needs_human_triage
+    let fieldsNeedingInput = output.needs_human_triage
       ? []
       : determineFieldsNeedingInput(computedConfidence, confidenceConfig, output.missing_fields, output.classification);
+
+    // Short-circuit: remove constraint-implied fields — deterministically resolved.
+    if (Object.keys(impliedFields).length > 0) {
+      fieldsNeedingInput = fieldsNeedingInput.filter(f => !(f in impliedFields));
+    }
 
     if (fieldsNeedingInput.length > 0) {
       anyFieldsNeedInput = true;

@@ -203,6 +203,7 @@ export async function handleAnswerFollowups(
         if (!postRetryCheck.valid) {
           output = { ...output, needs_human_triage: true };
           await deps.eventRepo.insert({
+            event_id: deps.idGenerator(),
             event_type: 'classification_hierarchy_violation_unresolved',
             conversation_id: session.conversation_id,
             issue_id: issue.issue_id,
@@ -220,6 +221,7 @@ export async function handleAnswerFollowups(
     if (Object.keys(impliedFields).length > 0) {
       output = { ...output, classification: { ...output.classification, ...impliedFields } };
       await deps.eventRepo.insert({
+        event_id: deps.idGenerator(),
         event_type: 'classification_constraint_resolution',
         conversation_id: session.conversation_id,
         issue_id: issue.issue_id,
@@ -246,6 +248,11 @@ export async function handleAnswerFollowups(
     if (issue.issue_id === targetIssueId && followupAnswers.length > 0) {
       const answeredFields = new Set(followupAnswers.map(a => a.field_target));
       fieldsNeedingInput = fieldsNeedingInput.filter(f => !answeredFields.has(f));
+    }
+
+    // Short-circuit: remove constraint-implied fields — deterministically resolved.
+    if (Object.keys(impliedFields).length > 0) {
+      fieldsNeedingInput = fieldsNeedingInput.filter(f => !(f in impliedFields));
     }
 
     if (fieldsNeedingInput.length > 0) anyFieldsNeedInput = true;
