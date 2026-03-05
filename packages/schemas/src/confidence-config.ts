@@ -9,6 +9,10 @@
  *     - weights.disagreement * disagreement
  *     - weights.ambiguity_penalty * ambiguity_penalty
  *   )
+ *
+ * Note: Positive weights intentionally sum to >1.0 (1.10) so that
+ * constraint-implied fields with model agreement can reach high_threshold.
+ * The clamp01 ensures the final score stays in [0, 1].
  */
 export interface ConfidenceConfig {
   readonly high_threshold: number;

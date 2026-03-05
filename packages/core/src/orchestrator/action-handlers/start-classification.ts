@@ -147,10 +147,21 @@ export async function handleStartClassification(
             if (retryHierarchy.valid) {
               output = retryResult.output;
             }
-            // If still invalid, continue with original output — constraint resolution may fix it
           }
         } catch {
           // Retry failed, continue with original output
+        }
+        // If still invalid after retry, log violation and escalate
+        const postRetryCheck = validateHierarchicalConstraints(output.classification, taxonomyConstraints);
+        if (!postRetryCheck.valid) {
+          output = { ...output, needs_human_triage: true };
+          await deps.eventRepo.insert({
+            event_type: 'classification_hierarchy_violation_unresolved',
+            conversation_id: session.conversation_id,
+            issue_id: issue.issue_id,
+            violations: postRetryCheck.violations,
+            created_at: deps.clock(),
+          });
         }
       }
     }
