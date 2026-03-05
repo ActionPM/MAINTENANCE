@@ -14,7 +14,7 @@
     "Location": {
       "suite": {
         "keywords": ["apartment", "unit", "suite", "my room", "my place"],
-        "regex": []
+        "regex": ["\\b(in|inside)\\s+my\\s+(apartment|unit|suite|place|room)\\b"]
       },
       "building_interior": {
         "keywords": ["hallway", "lobby", "elevator", "stairwell", "laundry room"],
@@ -27,7 +27,7 @@
     },
     "Sub_Location": {
       "kitchen": {
-        "keywords": ["kitchen", "stove", "oven", "fridge", "dishwasher"],
+        "keywords": ["kitchen", "stove", "oven", "fridge", "dishwasher", "microwave", "range hood", "refrigerator"],
         "regex": []
       },
       "bathroom": {
