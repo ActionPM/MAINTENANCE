@@ -1,4 +1,5 @@
-import { ConversationState, DEFAULT_CONFIDENCE_CONFIG, DEFAULT_FOLLOWUP_CAPS } from '@wo-agent/schemas';
+import { ConversationState, DEFAULT_CONFIDENCE_CONFIG, DEFAULT_FOLLOWUP_CAPS, taxonomyConstraints, validateHierarchicalConstraints } from '@wo-agent/schemas';
+import { resolveConstraintImpliedFields } from '../../classifier/constraint-resolver.js';
 import type {
   IssueClassifierInput,
   IssueClassifierOutput,
@@ -180,11 +181,48 @@ export async function handleAnswerFollowups(
       output = classifierResult.output!;
     }
 
+    // Step A: Validate hierarchical constraints (I7)
+    if (!output.needs_human_triage) {
+      const hierarchyResult = validateHierarchicalConstraints(output.classification, taxonomyConstraints);
+      if (!hierarchyResult.valid) {
+        const constraintHint = `Hierarchical violations: ${hierarchyResult.violations.join('; ')}`;
+        try {
+          const retryInput: IssueClassifierInput = { ...classifierInput, retry_context: constraintHint };
+          const retryResult = await callIssueClassifier(retryInput, deps.issueClassifier, taxonomy);
+          if (retryResult.status === 'ok' && retryResult.output) {
+            const retryHierarchy = validateHierarchicalConstraints(retryResult.output.classification, taxonomyConstraints);
+            if (retryHierarchy.valid) {
+              output = retryResult.output;
+            }
+          }
+        } catch {
+          // Retry failed, continue with original output
+        }
+      }
+    }
+
+    // Step B: Resolve implied fields (C1)
+    const impliedFields = output.needs_human_triage
+      ? {}
+      : resolveConstraintImpliedFields(output.classification, taxonomyConstraints);
+    if (Object.keys(impliedFields).length > 0) {
+      output = { ...output, classification: { ...output.classification, ...impliedFields } };
+      await deps.eventRepo.insert({
+        event_type: 'classification_constraint_resolution',
+        conversation_id: session.conversation_id,
+        issue_id: issue.issue_id,
+        resolved_fields: impliedFields,
+        created_at: deps.clock(),
+      });
+    }
+
+    // Step C: Confidence with constraint boost (C2)
     const computedConfidence = computeAllFieldConfidences({
       classification: output.classification,
       modelConfidence: output.model_confidence,
       cueResults: cueScoreMap,
       config: confidenceConfig,
+      impliedFields,
     });
 
     let fieldsNeedingInput = output.needs_human_triage
