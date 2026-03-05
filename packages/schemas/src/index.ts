@@ -145,7 +145,7 @@ export { validateRecordBundle } from './validators/record-bundle.js';
 export { validatePhoto } from './validators/photo.js';
 
 // --- Domain validators ---
-export { validateClassificationAgainstTaxonomy } from './validators/taxonomy-cross-validator.js';
-export type { DomainValidationResult } from './validators/taxonomy-cross-validator.js';
+export { validateClassificationAgainstTaxonomy, validateHierarchicalConstraints } from './validators/taxonomy-cross-validator.js';
+export type { DomainValidationResult, HierarchicalValidationResult } from './validators/taxonomy-cross-validator.js';
 export { validateCueDictionary } from './validators/cue-dictionary-validator.js';
 export type { CueDictionary } from './validators/cue-dictionary-validator.js';
