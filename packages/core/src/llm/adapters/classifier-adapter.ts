@@ -24,7 +24,7 @@ export function createClassifierAdapter(
     const response = await client.complete({
       system: systemPrompt,
       userMessage: buildClassifierUserMessage(input, retryContext),
-      model: input.model_id,
+      model: input.model_id === 'default' ? undefined : input.model_id,
     });
     return extractJsonFromResponse(response);
   };

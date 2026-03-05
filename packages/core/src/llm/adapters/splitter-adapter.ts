@@ -18,7 +18,7 @@ export function createSplitterAdapter(
     const response = await client.complete({
       system: systemPrompt,
       userMessage: buildSplitterUserMessage(input.raw_text),
-      model: input.model_id,
+      model: input.model_id === 'default' ? undefined : input.model_id,
     });
     return extractJsonFromResponse(response) as IssueSplitterOutput;
   };
