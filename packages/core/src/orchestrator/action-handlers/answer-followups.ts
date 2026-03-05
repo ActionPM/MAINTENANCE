@@ -189,7 +189,7 @@ export async function handleAnswerFollowups(
 
     const fieldsNeedingInput = output.needs_human_triage
       ? []
-      : determineFieldsNeedingInput(computedConfidence, confidenceConfig, output.missing_fields);
+      : determineFieldsNeedingInput(computedConfidence, confidenceConfig, output.missing_fields, output.classification);
 
     if (fieldsNeedingInput.length > 0) anyFieldsNeedInput = true;
 
