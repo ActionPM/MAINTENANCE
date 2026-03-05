@@ -25,6 +25,22 @@ RULES:
 6. Set needs_human_triage to false unless you truly cannot classify the issue.
 7. The issue_id in your response MUST match the issue_id provided in the input.
 
+HIERARCHICAL CONSTRAINTS:
+Fields are not independent — they must be logically consistent with each other.
+- Location constrains Sub_Location: "suite" Sub_Locations include kitchen, bathroom, bedroom, etc. "building_interior" includes elevator, parking_garage, etc.
+- Sub_Location constrains Maintenance_Category: e.g., "elevator" only allows electrical, general_maintenance.
+- Maintenance_Category constrains Maintenance_Object: e.g., "plumbing" allows toilet, sink, pipe, etc. NOT breaker, fridge.
+- Maintenance_Object constrains Maintenance_Problem: e.g., "toilet" allows leak, clog, not_working. NOT no_heat, infestation.
+- Maintenance_Object constrains Sub_Location: e.g., "toilet" must be in bathroom. "fridge" must be in kitchen.
+
+Examples:
+- toilet + bathroom + plumbing + leak = VALID
+- fridge + kitchen + appliance + not_working = VALID
+- toilet + bedroom = INVALID (do not classify toilet in bedroom)
+- shelf + no_heat = INVALID (shelves don't have heating problems)
+
+When unsure about a constrained field, use the appropriate "other_*" or "general" value and report it in missing_fields.
+
 RESPOND WITH ONLY a JSON object (no markdown, no explanation):
 {
   "issue_id": "<same as input>",
