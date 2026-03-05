@@ -273,17 +273,17 @@ describe('Follow-up loop integration', () => {
     expect(followupEvents.length).toBeGreaterThanOrEqual(1);
   });
 
-  it('session tracks follow-up turn progression', async () => {
+  it('session tracks follow-up turn progression and answered fields resolve', async () => {
     const deps = makeDeps({
-      // Always missing Priority to force multiple follow-up rounds
+      // Always missing Priority to force follow-up
       classifierResponses: Array(10).fill(MISSING_PRIORITY_CLASSIFICATION),
     });
     const dispatch = createDispatcher(deps as any);
 
     const { convId } = await walkToFollowUp(dispatch);
 
-    // Answer first round
-    await dispatch({
+    // Answer first round — Priority was asked, tenant answers it
+    const r = await dispatch({
       conversation_id: convId, action_type: ActionType.ANSWER_FOLLOWUPS,
       actor: ActorType.TENANT,
       tenant_input: {
@@ -292,16 +292,19 @@ describe('Follow-up loop integration', () => {
       auth_context: AUTH,
     });
 
+    // Answered field should be resolved — no more follow-ups needed
+    // (Priority was the only field needing input, and tenant answered it)
+    expect(r.response.conversation_snapshot.state).toBe(ConversationState.TENANT_CONFIRMATION_PENDING);
+
     // Read internal session from the session store to verify tracking fields
     const session = await deps.sessionStore.get(convId);
     expect(session).not.toBeNull();
-    // After initial classification (turn 1) + answer round (turn 2):
-    expect(session!.followup_turn_number).toBeGreaterThanOrEqual(2);
-    expect(session!.total_questions_asked).toBeGreaterThanOrEqual(2);
-    // previous_questions tracks unique fields — Priority was asked 2+ times
+    // After initial classification (turn 1), answer resolved Priority immediately
+    expect(session!.followup_turn_number).toBeGreaterThanOrEqual(1);
+    expect(session!.total_questions_asked).toBeGreaterThanOrEqual(1);
+    // previous_questions tracks unique fields — Priority was asked at least once
     expect(session!.previous_questions.length).toBeGreaterThanOrEqual(1);
     const priorityEntry = session!.previous_questions.find(p => p.field_target === 'Priority');
     expect(priorityEntry).toBeDefined();
-    expect(priorityEntry!.times_asked).toBeGreaterThanOrEqual(2);
   });
 });

@@ -187,9 +187,16 @@ export async function handleAnswerFollowups(
       config: confidenceConfig,
     });
 
-    const fieldsNeedingInput = output.needs_human_triage
+    let fieldsNeedingInput = output.needs_human_triage
       ? []
       : determineFieldsNeedingInput(computedConfidence, confidenceConfig, output.missing_fields, output.classification);
+
+    // Short-circuit: remove fields the tenant directly answered this round.
+    // A tenant explicitly answering a field resolves it regardless of confidence.
+    if (issue.issue_id === targetIssueId && followupAnswers.length > 0) {
+      const answeredFields = new Set(followupAnswers.map(a => a.field_target));
+      fieldsNeedingInput = fieldsNeedingInput.filter(f => !answeredFields.has(f));
+    }
 
     if (fieldsNeedingInput.length > 0) anyFieldsNeedInput = true;
 

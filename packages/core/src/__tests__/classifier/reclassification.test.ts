@@ -181,10 +181,10 @@ describe('handleAnswerFollowups (re-classification)', () => {
       classifierFn: vi.fn().mockResolvedValue(HIGH_CONFIDENCE_OUTPUT),
       cueDict: emptyCues,
     });
-    // FollowUpGenerator must return valid questions so handler goes to needs_tenant_input
-    // (empty questions triggers escape hatch → tenant_confirmation_pending)
+    // FollowUpGenerator must return valid questions for a non-answered field
+    // (Priority is answered and short-circuited; targeting it would get filtered)
     (ctx.deps as any).followUpGenerator = vi.fn().mockResolvedValue({
-      questions: [{ question_id: 'q1', field_target: 'Priority', prompt: 'How urgent?', options: ['low', 'normal', 'high'], answer_type: 'enum' }],
+      questions: [{ question_id: 'q2', field_target: 'Sub_Location', prompt: 'Which room?', options: ['kitchen', 'bathroom'], answer_type: 'enum' }],
     });
     const result = await handleAnswerFollowups(ctx);
     expect(result.newState).toBe(ConversationState.NEEDS_TENANT_INPUT);
