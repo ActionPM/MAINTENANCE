@@ -25,6 +25,12 @@ RULES:
    question ("Is this in your apartment unit?") over broad options (hallway/exterior/basement).
 10. For Sub_Location, if the tenant mentioned a room or area, confirm it rather than listing
     all possible locations.
+11. On the first turn, combine confirmation with location — e.g., "Confirming you have a leak
+    in your suite?" resolves both confirmation AND Location in one question.
+12. Do not ask what the tenant's words already answer. If they said "toilet" and "in my apartment",
+    do not ask "Is this in your bathroom?" — the answer is already implied.
+13. Use only constraint-valid options in your questions. If hierarchical constraint hints are
+    provided, restrict enum options to those values only.
 
 RESPOND WITH ONLY a JSON object (no markdown, no explanation):
 {
