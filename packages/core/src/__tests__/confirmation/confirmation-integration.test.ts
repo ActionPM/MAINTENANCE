@@ -194,6 +194,7 @@ const RELAXED_CONFIDENCE: ConfidenceConfig = {
     cue_strength: 0.40,
     completeness: 0.25,
     model_hint: 0.20,
+    constraint_implied: 0.25,
     disagreement: 0.10,
     ambiguity_penalty: 0.05,
   },
