@@ -12,6 +12,9 @@ const taxonomy = loadTaxonomy();
 
 /**
  * Full cues so all fields score high → all fields resolved → tenant_confirmation_pending.
+ * Each label has 2 keywords matching "My toilet is leaking" so that per-hit boost
+ * normalization (2 * 0.6 = 1.2 → clamped to 1.0) produces maximum cue_strength.
+ * Keywords are chosen for test mechanics, not semantic accuracy.
  */
 const FULL_CUES: CueDictionary = {
   version: '1.0.0',

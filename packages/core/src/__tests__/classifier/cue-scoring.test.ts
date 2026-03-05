@@ -260,8 +260,8 @@ describe('computeCueScores', () => {
   it('computes ambiguity when top-2 scores are close', () => {
     // Both plumbing and electrical get similar hits
     const result = computeCueScores('the pipe outlet is leaking sparks', MINI_CUES);
-    // plumbing: leak(1) + pipe(1) = 2/5 = 0.4
-    // electrical: outlet(1) + sparks(1) = 2/5 = 0.4
+    // plumbing: leak(1) + pipe(1) = 2 * 0.6 = 1.0 (clamped)
+    // electrical: outlet(1) + sparks(1) = 2 * 0.6 = 1.0 (clamped)
     expect(result.Maintenance_Category.ambiguity).toBeGreaterThan(0);
   });
 });
