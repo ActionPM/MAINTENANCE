@@ -184,6 +184,64 @@ describe('confidence integration: vague input should remain low', () => {
   });
 });
 
+describe('confidence integration: category gating', () => {
+  const text = 'I have a leak in my apartment';
+
+  const classification = {
+    Category: 'maintenance',
+    Location: 'suite',
+    Sub_Location: 'general',
+    Maintenance_Category: 'plumbing',
+    Maintenance_Object: 'other_object',
+    Maintenance_Problem: 'leak',
+    Management_Category: 'other_mgmt_cat',
+    Management_Object: 'other_mgmt_obj',
+    Priority: 'normal',
+  };
+
+  const modelConfidence = {
+    Category: 0.95,
+    Location: 0.90,
+    Sub_Location: 0.5,
+    Maintenance_Category: 0.90,
+    Maintenance_Object: 0.5,
+    Maintenance_Problem: 0.95,
+    Management_Category: 0.0,
+    Management_Object: 0.0,
+    Priority: 0.7,
+  };
+
+  it('does NOT include Management fields in fieldsNeedingInput for maintenance issues', () => {
+    const cueScores = computeCueScores(text, cueDict);
+    const confidences = computeAllFieldConfidences({
+      classification,
+      modelConfidence,
+      cueResults: cueScores,
+      config,
+    });
+
+    const fieldsNeedingInput = determineFieldsNeedingInput(confidences, config, [], classification);
+
+    expect(fieldsNeedingInput).not.toContain('Management_Category');
+    expect(fieldsNeedingInput).not.toContain('Management_Object');
+  });
+
+  it('still includes genuinely uncertain maintenance fields', () => {
+    const cueScores = computeCueScores(text, cueDict);
+    const confidences = computeAllFieldConfidences({
+      classification,
+      modelConfidence,
+      cueResults: cueScores,
+      config,
+    });
+
+    const fieldsNeedingInput = determineFieldsNeedingInput(confidences, config, [], classification);
+
+    // Maintenance_Object has no cue hits and low model confidence — should still need input
+    expect(fieldsNeedingInput).toContain('Maintenance_Object');
+  });
+});
+
 describe('confidence integration: cue/model disagreement penalizes correctly', () => {
   const text = 'I have a leak in my apartment';
 
