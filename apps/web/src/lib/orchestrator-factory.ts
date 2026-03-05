@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto';
-import { createDispatcher, ERPSyncService, AnalyticsService, createLlmDependencies } from '@wo-agent/core';
+import { createDispatcher, ERPSyncService, AnalyticsService, createLlmDependencies, computeCueScores } from '@wo-agent/core';
 import type { LlmDependencies } from '@wo-agent/core';
 import { InMemoryEventStore, InMemoryWorkOrderStore, InMemoryIdempotencyStore } from '@wo-agent/core';
 import { InMemoryNotificationStore, InMemoryNotificationPreferenceStore, MockSmsSender, NotificationService } from '@wo-agent/core';
@@ -112,33 +112,55 @@ function ensureInitialized() {
         issues: [{ issue_id: randomUUID(), summary: input.raw_text.slice(0, 200), raw_excerpt: input.raw_text }],
         issue_count: 1,
       })),
-      issueClassifier: llmDeps?.issueClassifier ?? (async (input: IssueClassifierInput) => ({
-        issue_id: input.issue_id,
-        classification: {
-          Category: 'maintenance',
-          Location: 'suite',
-          Sub_Location: 'general',
-          Maintenance_Category: 'general_maintenance',
-          Maintenance_Object: 'other_object',
-          Maintenance_Problem: 'not_working',
-          Management_Category: 'other_mgmt_cat',
-          Management_Object: 'other_mgmt_obj',
-          Priority: 'normal',
-        },
-        model_confidence: {
-          Category: 0.7,
-          Location: 0.5,
-          Sub_Location: 0.5,
-          Maintenance_Category: 0.6,
-          Maintenance_Object: 0.5,
-          Maintenance_Problem: 0.5,
-          Management_Category: 0.0,
-          Management_Object: 0.0,
-          Priority: 0.5,
-        },
-        missing_fields: [],
-        needs_human_triage: false,
-      })),
+      issueClassifier: llmDeps?.issueClassifier ?? (async (input: IssueClassifierInput) => {
+        const text = `${input.issue_summary} ${input.raw_excerpt}`;
+        const cueScores = computeCueScores(text, classificationCues as CueDictionary);
+
+        // Derive classification from top cue labels, falling back to sensible defaults
+        const category = cueScores['Category']?.topLabel ?? 'maintenance';
+        const location = cueScores['Location']?.topLabel ?? 'suite';
+        const subLocation = cueScores['Sub_Location']?.topLabel ?? 'general';
+        const maintCategory = cueScores['Maintenance_Category']?.topLabel ?? 'general_maintenance';
+        const maintObject = cueScores['Maintenance_Object']?.topLabel ?? 'other_object';
+        const maintProblem = cueScores['Maintenance_Problem']?.topLabel ?? 'not_working';
+        const mgmtCategory = cueScores['Management_Category']?.topLabel ?? 'other_mgmt_cat';
+        const mgmtObject = cueScores['Management_Object']?.topLabel ?? 'other_mgmt_obj';
+        const priority = cueScores['Priority']?.topLabel ?? 'normal';
+
+        // Use cue score as model_confidence proxy (higher cue = more confident mock)
+        const conf = (field: string) => {
+          const s = cueScores[field]?.score ?? 0;
+          return s > 0 ? Math.min(0.95, 0.7 + s * 0.25) : 0.5;
+        };
+
+        return {
+          issue_id: input.issue_id,
+          classification: {
+            Category: category,
+            Location: location,
+            Sub_Location: subLocation,
+            Maintenance_Category: maintCategory,
+            Maintenance_Object: maintObject,
+            Maintenance_Problem: maintProblem,
+            Management_Category: category === 'management' ? mgmtCategory : 'other_mgmt_cat',
+            Management_Object: category === 'management' ? mgmtObject : 'other_mgmt_obj',
+            Priority: priority,
+          },
+          model_confidence: {
+            Category: conf('Category'),
+            Location: conf('Location'),
+            Sub_Location: conf('Sub_Location'),
+            Maintenance_Category: conf('Maintenance_Category'),
+            Maintenance_Object: conf('Maintenance_Object'),
+            Maintenance_Problem: conf('Maintenance_Problem'),
+            Management_Category: category === 'management' ? conf('Management_Category') : 0.0,
+            Management_Object: category === 'management' ? conf('Management_Object') : 0.0,
+            Priority: conf('Priority'),
+          },
+          missing_fields: [],
+          needs_human_triage: false,
+        };
+      }),
       followUpGenerator: llmDeps?.followUpGenerator ?? (async () => ({ questions: [] })),
       cueDict: classificationCues as CueDictionary,
       taxonomy,
