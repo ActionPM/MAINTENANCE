@@ -5,6 +5,19 @@
 export { loadTaxonomy, isTaxonomyValue, taxonomy, TAXONOMY_FIELD_NAMES, MAINTENANCE_FIELDS, MANAGEMENT_FIELDS } from './taxonomy.js';
 export type { Taxonomy, TaxonomyFieldName } from './taxonomy.js';
 
+// --- Taxonomy Constraints ---
+export {
+  loadTaxonomyConstraints,
+  taxonomyConstraints,
+  deriveConstraintEdges,
+  CONSTRAINT_EDGES,
+} from './taxonomy-constraints.js';
+export type {
+  TaxonomyConstraints,
+  ConstraintMapName,
+  ConstraintEdge,
+} from './taxonomy-constraints.js';
+
 // --- Enums ---
 export { ConversationState, ALL_CONVERSATION_STATES, RESUMABLE_STATES } from './conversation-states.js';
 export { WorkOrderStatus, ALL_WORK_ORDER_STATUSES } from './work-order-status.js';
