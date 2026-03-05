@@ -117,6 +117,131 @@ describe('per-hit boost normalization', () => {
   });
 });
 
+const EXTENDED_CUES: CueDictionary = {
+  version: '1.1.0',
+  fields: {
+    ...MINI_CUES.fields,
+    Category: {
+      maintenance: { keywords: ['leak', 'broken', 'repair', 'not working', 'clog'], regex: [] },
+      management: { keywords: ['rent', 'lease', 'move out', 'receipt', 'payment'], regex: [] },
+    },
+    Location: {
+      suite: { keywords: ['apartment', 'unit', 'suite', 'my room'], regex: [] },
+      building_interior: { keywords: ['hallway', 'lobby', 'elevator', 'stairwell'], regex: [] },
+      building_exterior: { keywords: ['parking', 'roof', 'exterior', 'garage'], regex: [] },
+    },
+    Sub_Location: {
+      kitchen: { keywords: ['kitchen', 'stove', 'oven', 'fridge'], regex: [] },
+      bathroom: { keywords: ['bathroom', 'shower', 'bathtub', 'toilet'], regex: [] },
+      general: { keywords: ['apartment', 'unit', 'suite'], regex: [] },
+    },
+    Priority: {
+      emergency: { keywords: ['flood', 'fire', 'gas leak', 'burst pipe', 'sewage'], regex: [] },
+      high: { keywords: ['no water', 'sparks', 'infestation', 'dangerous'], regex: [] },
+      normal: { keywords: ['leak', 'broken', 'not working', 'clog'], regex: [] },
+      low: { keywords: ['cosmetic', 'scratch', 'minor', 'scuff'], regex: [] },
+    },
+  },
+};
+
+describe('Category cue scoring', () => {
+  it('scores "maintenance" for leak-related text', () => {
+    const result = computeCueStrengthForField(
+      'I have a leak in my apartment',
+      'Category',
+      EXTENDED_CUES,
+    );
+    expect(result.topLabel).toBe('maintenance');
+    expect(result.score).toBeCloseTo(0.6); // 1 hit * HIT_BOOST
+  });
+
+  it('scores "management" for rent-related text', () => {
+    const result = computeCueStrengthForField(
+      'I need a copy of my rent receipt',
+      'Category',
+      EXTENDED_CUES,
+    );
+    expect(result.topLabel).toBe('management');
+    expect(result.score).toBe(1.0); // 2 hits: rent + receipt → min(1, 1.2)
+  });
+});
+
+describe('Location cue scoring', () => {
+  it('scores "suite" for apartment text', () => {
+    const result = computeCueStrengthForField(
+      'I have a leak in my apartment',
+      'Location',
+      EXTENDED_CUES,
+    );
+    expect(result.topLabel).toBe('suite');
+    expect(result.score).toBeCloseTo(0.6);
+  });
+
+  it('scores "building_interior" for hallway text', () => {
+    const result = computeCueStrengthForField(
+      'The hallway light is broken',
+      'Location',
+      EXTENDED_CUES,
+    );
+    expect(result.topLabel).toBe('building_interior');
+    expect(result.score).toBeCloseTo(0.6);
+  });
+
+  it('scores "building_exterior" for parking text', () => {
+    const result = computeCueStrengthForField(
+      'The parking lot has a pothole',
+      'Location',
+      EXTENDED_CUES,
+    );
+    expect(result.topLabel).toBe('building_exterior');
+    expect(result.score).toBeCloseTo(0.6);
+  });
+});
+
+describe('Sub_Location cue scoring', () => {
+  it('scores "bathroom" for shower/toilet text', () => {
+    const result = computeCueStrengthForField(
+      'My shower is leaking',
+      'Sub_Location',
+      EXTENDED_CUES,
+    );
+    expect(result.topLabel).toBe('bathroom');
+    expect(result.score).toBeCloseTo(0.6);
+  });
+
+  it('scores "kitchen" for kitchen text', () => {
+    const result = computeCueStrengthForField(
+      'The kitchen sink is clogged',
+      'Sub_Location',
+      EXTENDED_CUES,
+    );
+    expect(result.topLabel).toBe('kitchen');
+    expect(result.score).toBeCloseTo(0.6);
+  });
+});
+
+describe('Priority cue scoring', () => {
+  it('scores "emergency" for flood text', () => {
+    const result = computeCueStrengthForField(
+      'Water is flooding my apartment',
+      'Priority',
+      EXTENDED_CUES,
+    );
+    expect(result.topLabel).toBe('emergency');
+    expect(result.score).toBeCloseTo(0.6);
+  });
+
+  it('scores "normal" for routine leak text', () => {
+    const result = computeCueStrengthForField(
+      'There is a small leak under the sink',
+      'Priority',
+      EXTENDED_CUES,
+    );
+    expect(result.topLabel).toBe('normal');
+    expect(result.score).toBeCloseTo(0.6);
+  });
+});
+
 describe('computeCueScores', () => {
   it('returns cue_strength and topLabel for all cue dictionary fields', () => {
     const result = computeCueScores('my toilet is leaking', MINI_CUES);
