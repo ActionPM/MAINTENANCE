@@ -80,6 +80,42 @@ describe('computeCueStrengthForField', () => {
   });
 });
 
+describe('per-hit boost normalization', () => {
+  it('produces meaningful score from a single keyword hit', () => {
+    // With 5 keywords but only 1 hit, score should still be substantial
+    // (not diluted to 1/5 = 0.2 as with old normalization)
+    const result = computeCueStrengthForField(
+      'there is a leak',
+      'Maintenance_Category',
+      MINI_CUES,
+    );
+    // 1 hit out of 5 keywords for plumbing: should be HIT_BOOST (0.6), not 0.2
+    expect(result.score).toBeGreaterThanOrEqual(0.5);
+    expect(result.topLabel).toBe('plumbing');
+  });
+
+  it('saturates to 1.0 with multiple hits', () => {
+    const result = computeCueStrengthForField(
+      'my toilet is leaking water from the pipe',
+      'Maintenance_Category',
+      MINI_CUES,
+    );
+    // 3 hits (leak, toilet, pipe) * 0.6 = 1.8 → clamped to 1.0
+    expect(result.score).toBe(1.0);
+    expect(result.topLabel).toBe('plumbing');
+  });
+
+  it('preserves ambiguity detection when two labels have equal hits', () => {
+    // plumbing: pipe(1) = 0.6, electrical: sparks(1) = 0.6 → tied → ambiguous
+    const result = computeCueStrengthForField(
+      'the pipe has sparks',
+      'Maintenance_Category',
+      MINI_CUES,
+    );
+    expect(result.ambiguity).toBeGreaterThan(0.9); // nearly identical scores
+  });
+});
+
 describe('computeCueScores', () => {
   it('returns cue_strength and topLabel for all cue dictionary fields', () => {
     const result = computeCueScores('my toilet is leaking', MINI_CUES);

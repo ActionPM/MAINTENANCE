@@ -18,6 +18,13 @@ export type CueScoreMap = Record<string, CueFieldResult>;
  * Keyword hits and regex matches contribute to a normalized 0..1 score
  * per candidate label; the top score becomes cue_strength.
  */
+/**
+ * Per-hit boost factor for cue scoring normalization.
+ * Each keyword/regex hit contributes this much to the score (clamped to 1.0).
+ * This replaces hits/totalCues which produced negligible scores for large keyword lists.
+ */
+const HIT_BOOST = 0.6;
+
 export function computeCueStrengthForField(
   text: string,
   fieldName: string,
@@ -51,7 +58,7 @@ export function computeCueStrengthForField(
       }
     }
 
-    scores.push({ label, score: hits / totalCues });
+    scores.push({ label, score: Math.min(1, hits * HIT_BOOST) });
   }
 
   if (scores.length === 0) {
