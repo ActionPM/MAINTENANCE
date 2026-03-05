@@ -3,9 +3,9 @@ import { createDispatcher, ERPSyncService, AnalyticsService, createLlmDependenci
 import type { LlmDependencies } from '@wo-agent/core';
 import { InMemoryEventStore, InMemoryWorkOrderStore, InMemoryIdempotencyStore } from '@wo-agent/core';
 import { InMemoryNotificationStore, InMemoryNotificationPreferenceStore, MockSmsSender, NotificationService } from '@wo-agent/core';
-import type { SessionStore, OrchestratorDependencies, UnitResolver, SlaPolicies, EventRepository, WorkOrderRepository, NotificationRepository, NotificationPreferenceStore, IdempotencyStore } from '@wo-agent/core';
+import type { SessionStore, OrchestratorDependencies, UnitResolver, SlaPolicies, EventRepository, WorkOrderRepository, NotificationRepository, NotificationPreferenceStore, IdempotencyStore, ContactExecutor } from '@wo-agent/core';
 import type { ConversationSession } from '@wo-agent/core';
-import type { CueDictionary, IssueClassifierInput } from '@wo-agent/schemas';
+import type { CueDictionary, IssueClassifierInput, RiskProtocols, EscalationPlans } from '@wo-agent/schemas';
 import { loadTaxonomy } from '@wo-agent/schemas';
 import classificationCues from '@wo-agent/schemas/classification_cues.json' with { type: 'json' };
 import { MockERPAdapter } from '@wo-agent/mock-erp';
@@ -59,17 +59,21 @@ function createStores(): Stores {
   };
 }
 
-let _deps: {
+// Persist singleton on globalThis so in-memory stores survive Next.js dev
+// module re-evaluations and per-route webpack bundles (same pattern as Prisma).
+interface FactoryDeps {
   workOrderRepo: WorkOrderRepository;
   notificationRepo: NotificationRepository;
   dispatcher: ReturnType<typeof createDispatcher>;
   erpAdapter: MockERPAdapter;
   erpSyncService: ERPSyncService;
   analyticsService: AnalyticsService;
-} | null = null;
+}
 
-function ensureInitialized() {
-  if (!_deps) {
+const globalForFactory = globalThis as unknown as { __woAgentDeps?: FactoryDeps };
+
+function ensureInitialized(): FactoryDeps {
+  if (!globalForFactory.__woAgentDeps) {
     const stores = createStores();
     const smsSender = new MockSmsSender();
     const idGenerator = () => randomUUID();
@@ -171,6 +175,9 @@ function ensureInitialized() {
       idempotencyStore: stores.idempotencyStore,
       notificationService,
       erpAdapter,
+      riskProtocols: { version: '1.0.0', triggers: [], mitigation_templates: [] } satisfies RiskProtocols,
+      escalationPlans: { version: '1.0.0', plans: [] } satisfies EscalationPlans,
+      contactExecutor: (async () => false) as ContactExecutor,
     };
 
     const analyticsService = new AnalyticsService({
@@ -180,7 +187,7 @@ function ensureInitialized() {
       clock,
     });
 
-    _deps = {
+    globalForFactory.__woAgentDeps = {
       workOrderRepo: stores.workOrderRepo,
       notificationRepo: stores.notificationRepo,
       dispatcher: createDispatcher(deps),
@@ -189,7 +196,7 @@ function ensureInitialized() {
       analyticsService,
     };
   }
-  return _deps;
+  return globalForFactory.__woAgentDeps;
 }
 
 export function getOrchestrator() { return ensureInitialized().dispatcher; }
