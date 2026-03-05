@@ -138,3 +138,92 @@ describe('confidence integration: obvious management request', () => {
     expect(classifyConfidenceBand(confidences['Category'], config)).not.toBe('low');
   });
 });
+
+describe('confidence integration: vague input should remain low', () => {
+  const text = 'I have a problem';
+
+  const classification = {
+    Category: 'maintenance',
+    Location: 'suite',
+    Sub_Location: 'general',
+    Maintenance_Category: 'general_maintenance',
+    Maintenance_Object: 'other_object',
+    Maintenance_Problem: 'not_working',
+    Management_Category: 'other_mgmt_cat',
+    Management_Object: 'other_mgmt_obj',
+    Priority: 'normal',
+  };
+
+  const modelConfidence = {
+    Category: 0.6,
+    Location: 0.5,
+    Sub_Location: 0.5,
+    Maintenance_Category: 0.5,
+    Maintenance_Object: 0.3,
+    Maintenance_Problem: 0.4,
+    Management_Category: 0.3,
+    Management_Object: 0.3,
+    Priority: 0.5,
+  };
+
+  it('flags most fields as needing input for vague text', () => {
+    const cueScores = computeCueScores(text, cueDict);
+    const confidences = computeAllFieldConfidences({
+      classification,
+      modelConfidence,
+      cueResults: cueScores,
+      config,
+    });
+
+    const fieldsNeedingInput = determineFieldsNeedingInput(confidences, config);
+
+    // "I have a problem" matches nothing specific — should need follow-ups
+    expect(fieldsNeedingInput.length).toBeGreaterThanOrEqual(5);
+    expect(fieldsNeedingInput).toContain('Category');
+    expect(fieldsNeedingInput).toContain('Location');
+  });
+});
+
+describe('confidence integration: cue/model disagreement penalizes correctly', () => {
+  const text = 'I have a leak in my apartment';
+
+  it('penalizes when model says electrical but cues say plumbing', () => {
+    const cueScores = computeCueScores(text, cueDict);
+
+    // Model says "electrical" but text clearly matches "plumbing" cues
+    const badClassification = {
+      Category: 'maintenance',
+      Location: 'suite',
+      Sub_Location: 'general',
+      Maintenance_Category: 'electrical', // WRONG — cues say plumbing
+      Maintenance_Object: 'outlet',
+      Maintenance_Problem: 'not_working',
+      Management_Category: 'other_mgmt_cat',
+      Management_Object: 'other_mgmt_obj',
+      Priority: 'normal',
+    };
+
+    const modelConfidence = {
+      Category: 0.95,
+      Location: 0.90,
+      Sub_Location: 0.5,
+      Maintenance_Category: 0.90,
+      Maintenance_Object: 0.85,
+      Maintenance_Problem: 0.90,
+      Management_Category: 0.0,
+      Management_Object: 0.0,
+      Priority: 0.7,
+    };
+
+    const confidences = computeAllFieldConfidences({
+      classification: badClassification,
+      modelConfidence,
+      cueResults: cueScores,
+      config,
+    });
+
+    // Maintenance_Category should be penalized by disagreement
+    const maintCatBand = classifyConfidenceBand(confidences['Maintenance_Category'], config);
+    expect(maintCatBand).toBe('low'); // disagreement drops it
+  });
+});
