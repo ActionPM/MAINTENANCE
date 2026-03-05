@@ -1,4 +1,6 @@
 import type { FollowUpGeneratorInput } from '@wo-agent/schemas';
+import { taxonomyConstraints } from '@wo-agent/schemas';
+import { resolveValidOptions } from '../../classifier/constraint-resolver.js';
 
 /**
  * System prompt for the FollowUpGenerator LLM tool.
@@ -68,6 +70,19 @@ export function buildFollowUpUserMessage(
     for (const pq of input.previous_questions) {
       parts.push(`  - ${pq.field_target} (asked ${pq.times_asked} time(s))`);
     }
+  }
+
+  // Add constraint hints for each field needing input
+  const constraintHints: string[] = [];
+  for (const field of input.fields_needing_input) {
+    const valid = resolveValidOptions(field, input.classification, taxonomyConstraints);
+    if (valid && valid.length <= 10) {
+      constraintHints.push(`  ${field}: valid options are [${valid.join(', ')}]`);
+    }
+  }
+  if (constraintHints.length > 0) {
+    parts.push(`\nHierarchical constraint hints (use ONLY these values for options):`);
+    parts.push(...constraintHints);
   }
 
   if (retryContext) {

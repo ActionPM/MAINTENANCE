@@ -1,5 +1,6 @@
 import type { FollowUpGeneratorInput, FollowUpGeneratorOutput, FollowUpQuestion } from '@wo-agent/schemas';
-import { validateFollowUpOutput } from '@wo-agent/schemas';
+import { validateFollowUpOutput, taxonomyConstraints } from '@wo-agent/schemas';
+import { resolveValidOptions } from '../classifier/constraint-resolver.js';
 import { truncateQuestions } from './caps.js';
 
 export enum FollowUpGeneratorErrorCode {
@@ -86,8 +87,16 @@ export async function callFollowUpGenerator(
     (q) => eligibleFields.has(q.field_target),
   );
 
+  // Filter question options by hierarchical constraints
+  const constraintFiltered = filteredQuestions.map(q => {
+    const valid = resolveValidOptions(q.field_target, input.classification, taxonomyConstraints);
+    if (valid === null) return q;
+    const opts = q.options.filter(opt => valid.includes(opt));
+    return { ...q, options: opts.length > 0 ? opts : q.options };
+  });
+
   // Truncate to remaining budget (spec §15: max 3 per turn)
-  const finalQuestions = truncateQuestions(filteredQuestions, remainingBudget);
+  const finalQuestions = truncateQuestions(constraintFiltered, remainingBudget);
 
   return {
     status: 'ok',
