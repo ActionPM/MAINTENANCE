@@ -12,3 +12,10 @@ export { validateOrchestratorActionDomain, SIDE_EFFECT_ACTIONS } from './orchest
 export type { ActionDomainValidationResult } from './orchestrator-action-domain.js';
 export { validateIssueSplitDomain } from './issue-split-domain.js';
 export type { IssueSplitDomainValidationResult } from './issue-split-domain.js';
+export {
+  validateEvalExample,
+  validateEvalManifest,
+  validateEvalRun,
+  validateEvalReport,
+} from './eval-validators.js';
+export type { EvalValidationResult } from './eval-validators.js';

@@ -5,6 +5,14 @@
 export { loadTaxonomy, isTaxonomyValue, taxonomy, TAXONOMY_FIELD_NAMES, MAINTENANCE_FIELDS, MANAGEMENT_FIELDS } from './taxonomy.js';
 export type { Taxonomy, TaxonomyFieldName } from './taxonomy.js';
 
+// --- Taxonomy Manifest ---
+export { loadTaxonomyManifest, taxonomyManifest } from './taxonomy-manifest.js';
+export type { TaxonomyManifest, AuthoritativeHierarchy, SentinelPolicy } from './taxonomy-manifest.js';
+
+// --- Taxonomy Analytic Classes ---
+export { loadTaxonomyAnalyticClasses, taxonomyAnalyticClasses, isSentinelValue, isDeprecatedValue } from './taxonomy-analytic-classes.js';
+export type { TaxonomyAnalyticClasses, AnalyticClass } from './taxonomy-analytic-classes.js';
+
 // --- Taxonomy Constraints ---
 export {
   loadTaxonomyConstraints,
@@ -145,7 +153,7 @@ export { validateRecordBundle } from './validators/record-bundle.js';
 export { validatePhoto } from './validators/photo.js';
 
 // --- Domain validators ---
-export { validateClassificationAgainstTaxonomy, validateHierarchicalConstraints } from './validators/taxonomy-cross-validator.js';
+export { validateClassificationAgainstTaxonomy, validateHierarchicalConstraints, semverLt } from './validators/taxonomy-cross-validator.js';
 export type { DomainValidationResult, HierarchicalValidationResult } from './validators/taxonomy-cross-validator.js';
 export { validateCueDictionary } from './validators/cue-dictionary-validator.js';
 export type { CueDictionary } from './validators/cue-dictionary-validator.js';
@@ -153,3 +161,12 @@ export { validateOrchestratorActionDomain, SIDE_EFFECT_ACTIONS } from './validat
 export type { ActionDomainValidationResult } from './validators/orchestrator-action-domain.js';
 export { validateIssueSplitDomain } from './validators/issue-split-domain.js';
 export type { IssueSplitDomainValidationResult } from './validators/issue-split-domain.js';
+
+// --- Eval validators ---
+export {
+  validateEvalExample,
+  validateEvalManifest,
+  validateEvalRun,
+  validateEvalReport,
+} from './validators/eval-validators.js';
+export type { EvalValidationResult } from './validators/eval-validators.js';
