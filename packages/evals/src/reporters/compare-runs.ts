@@ -25,8 +25,78 @@ export interface ComparisonReport {
   readonly gate_passed: boolean;
 }
 
-const CRITICAL_SLICES = ['emergency', 'access', 'pest', 'ood'] as const;
+/** Must match CRITICAL_SLICES names in metrics/slices.ts and governance doc §6. */
+const CRITICAL_SLICES = ['emergency', 'building_access', 'pest_control', 'ood'] as const;
 const REGRESSION_THRESHOLD = 0.02; // 2% drop triggers regression
+
+/**
+ * Rate metrics where ANY increase (above threshold) blocks merge,
+ * regardless of which slice they appear on (governance doc §6).
+ * These have inverted polarity: higher value = worse.
+ */
+const INVERTED_METRICS = new Set([
+  'schema_invalid_rate',
+  'taxonomy_invalid_rate',
+  'contradiction_after_retry_rate',
+  'needs_human_triage_rate',
+]);
+
+/**
+ * Subset of INVERTED_METRICS that block the gate on any increase.
+ */
+const BLOCKING_RATE_METRICS = new Set([
+  'schema_invalid_rate',
+  'taxonomy_invalid_rate',
+  'contradiction_after_retry_rate',
+]);
+
+/**
+ * Classify a delta as regression, improvement, or neutral.
+ * For inverted metrics (rates where higher = worse), a positive delta is a regression.
+ * For normal metrics (accuracy where higher = better), a negative delta is a regression.
+ */
+function classifyDelta(
+  metric: string,
+  delta: number,
+  threshold: number,
+): 'regression' | 'improvement' | 'neutral' {
+  const inverted = INVERTED_METRICS.has(metric);
+  const absDelta = Math.abs(delta);
+  if (absDelta <= threshold) return 'neutral';
+
+  if (inverted) {
+    // Higher = worse: positive delta = regression, negative delta = improvement
+    return delta > 0 ? 'regression' : 'improvement';
+  }
+  // Higher = better: negative delta = regression, positive delta = improvement
+  return delta < 0 ? 'regression' : 'improvement';
+}
+
+function compareMetricSet(
+  baseMetrics: Record<string, number>,
+  candMetrics: Record<string, number>,
+  slice: string,
+  regressions: RegressionItem[],
+  improvements: ImprovementItem[],
+): void {
+  const allMetrics = new Set([
+    ...Object.keys(baseMetrics),
+    ...Object.keys(candMetrics),
+  ]);
+
+  for (const metric of allMetrics) {
+    const baseValue = baseMetrics[metric] ?? 0;
+    const candValue = candMetrics[metric] ?? 0;
+    const delta = candValue - baseValue;
+    const kind = classifyDelta(metric, delta, REGRESSION_THRESHOLD);
+
+    if (kind === 'regression') {
+      regressions.push({ metric, slice, baseline_value: baseValue, candidate_value: candValue, delta });
+    } else if (kind === 'improvement') {
+      improvements.push({ metric, slice, baseline_value: baseValue, candidate_value: candValue, delta });
+    }
+  }
+}
 
 export function compareRuns(baseline: RunMetrics, candidate: RunMetrics): ComparisonReport {
   const regressions: RegressionItem[] = [];
@@ -39,73 +109,26 @@ export function compareRuns(baseline: RunMetrics, candidate: RunMetrics): Compar
   ]);
 
   for (const slice of allSlices) {
-    const baseSlice = baseline.slice_metrics[slice] ?? {};
-    const candSlice = candidate.slice_metrics[slice] ?? {};
-
-    const allMetrics = new Set([
-      ...Object.keys(baseSlice),
-      ...Object.keys(candSlice),
-    ]);
-
-    for (const metric of allMetrics) {
-      const baseValue = baseSlice[metric] ?? 0;
-      const candValue = candSlice[metric] ?? 0;
-      const delta = candValue - baseValue;
-
-      if (delta < -REGRESSION_THRESHOLD) {
-        regressions.push({
-          metric,
-          slice,
-          baseline_value: baseValue,
-          candidate_value: candValue,
-          delta,
-        });
-      } else if (delta > REGRESSION_THRESHOLD) {
-        improvements.push({
-          metric,
-          slice,
-          baseline_value: baseValue,
-          candidate_value: candValue,
-          delta,
-        });
-      }
-    }
+    compareMetricSet(
+      baseline.slice_metrics[slice] ?? {},
+      candidate.slice_metrics[slice] ?? {},
+      slice,
+      regressions,
+      improvements,
+    );
   }
 
   // Compare top-level metrics
-  const allTopMetrics = new Set([
-    ...Object.keys(baseline.metrics),
-    ...Object.keys(candidate.metrics),
-  ]);
+  compareMetricSet(baseline.metrics, candidate.metrics, '_overall', regressions, improvements);
 
-  for (const metric of allTopMetrics) {
-    const baseValue = baseline.metrics[metric] ?? 0;
-    const candValue = candidate.metrics[metric] ?? 0;
-    const delta = candValue - baseValue;
-
-    if (delta < -REGRESSION_THRESHOLD) {
-      regressions.push({
-        metric,
-        slice: '_overall',
-        baseline_value: baseValue,
-        candidate_value: candValue,
-        delta,
-      });
-    } else if (delta > REGRESSION_THRESHOLD) {
-      improvements.push({
-        metric,
-        slice: '_overall',
-        baseline_value: baseValue,
-        candidate_value: candValue,
-        delta,
-      });
-    }
-  }
-
-  // Gate: no regressions on critical slices
+  // Gate rule 1: no regressions on critical slices
   const criticalSet = new Set<string>(CRITICAL_SLICES);
-  const hasCriticalRegression = regressions.some((r) => criticalSet.has(r.slice));
-  const gate_passed = !hasCriticalRegression;
+  const hasCriticalSliceRegression = regressions.some((r) => criticalSet.has(r.slice));
+
+  // Gate rule 2: no increases in blocking rate metrics (any slice or _overall)
+  const hasBlockingRateIncrease = regressions.some((r) => BLOCKING_RATE_METRICS.has(r.metric));
+
+  const gate_passed = !hasCriticalSliceRegression && !hasBlockingRateIncrease;
 
   return { regressions, improvements, gate_passed };
 }

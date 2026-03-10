@@ -1,36 +1,123 @@
 #!/usr/bin/env node
 /**
- * Usage: pnpm eval:run --dataset gold --adapter fixture
+ * Usage: pnpm eval:run --dataset gold [--adapter fixture] [--baseline <path>]
  *
- * Loads dataset, runs issue-level replay, computes metrics,
- * compares against baseline (if exists), writes report.
+ * Loads dataset, runs issue-level replay, computes metrics per-slice,
+ * compares against baseline (if provided or auto-discovered), and writes
+ * both an EvalRun JSON and a comparison report.
+ *
+ * Exit code 1 = gate failed (critical-slice regression or blocking-rate increase).
  */
 import { loadDataset } from '../datasets/load-dataset.js';
+import type { NormalizedExample } from '../datasets/load-dataset.js';
 import { runIssueReplay } from '../runners/issue-replay.js';
+import type { IssueReplayResult } from '../runners/issue-replay.js';
 import { FixtureClassifierAdapter } from '../runners/classifier-adapters.js';
 import type { ClassifierAdapterOutput } from '../runners/classifier-adapters.js';
 import {
+  computePerFieldAccuracy,
   computeOverallFieldAccuracy,
   computeSchemaInvalidRate,
   computeTaxonomyInvalidRate,
 } from '../metrics/field-metrics.js';
-import { generateJsonReport } from '../reporters/json-report.js';
+import { CRITICAL_SLICES, TAXONOMY_SLICES, INPUT_QUALITY_SLICES, filterBySlice } from '../metrics/slices.js';
+import type { SliceDefinition } from '../metrics/slices.js';
+import { compareRuns } from '../reporters/compare-runs.js';
+import type { RunMetrics } from '../reporters/compare-runs.js';
+import { generateMarkdownReport } from '../reporters/markdown-report.js';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-function parseArgs(argv: string[]): { dataset: string; adapter: string } {
+function parseArgs(argv: string[]): { dataset: string; adapter: string; baseline: string | undefined } {
   const datasetIdx = argv.indexOf('--dataset');
   const adapterIdx = argv.indexOf('--adapter');
+  const baselineIdx = argv.indexOf('--baseline');
 
   const dataset = datasetIdx !== -1 ? argv[datasetIdx + 1] : undefined;
   const adapter = adapterIdx !== -1 ? argv[adapterIdx + 1] : 'fixture';
+  const baseline = baselineIdx !== -1 ? argv[baselineIdx + 1] : undefined;
 
   if (!dataset) {
-    console.error('Usage: pnpm eval:run --dataset <name> [--adapter fixture]');
+    console.error('Usage: pnpm eval:run --dataset <name> [--adapter fixture] [--baseline <path>]');
     process.exit(1);
   }
 
-  return { dataset, adapter };
+  return { dataset, adapter, baseline };
+}
+
+/**
+ * Compute all metrics for a subset of results matched to examples.
+ */
+function computeMetricsForResults(
+  results: readonly IssueReplayResult[],
+): Record<string, number> {
+  const fieldPairs = results
+    .filter((r) => r.status === 'ok' && r.classification)
+    .map((r) => ({ predicted: r.classification!, expected: {} as Record<string, string> }));
+
+  const statuses = results.map((r) => r.status);
+
+  return {
+    field_accuracy: fieldPairs.length > 0 ? computeOverallFieldAccuracy(fieldPairs) : 0,
+    schema_invalid_rate: computeSchemaInvalidRate(statuses),
+    taxonomy_invalid_rate: computeTaxonomyInvalidRate(statuses),
+    needs_human_triage_rate: statuses.filter((s) => s === 'needs_human_triage').length / Math.max(statuses.length, 1),
+    example_count: results.length,
+  };
+}
+
+/**
+ * Group replay results by example, then compute per-slice metrics.
+ */
+function computeSliceMetrics(
+  examples: readonly NormalizedExample[],
+  resultsByExampleId: Map<string, IssueReplayResult[]>,
+): Record<string, Record<string, number>> {
+  const allSlices: readonly SliceDefinition[] = [
+    ...CRITICAL_SLICES,
+    ...TAXONOMY_SLICES,
+    ...INPUT_QUALITY_SLICES,
+  ];
+
+  const sliceMetrics: Record<string, Record<string, number>> = {};
+
+  for (const slice of allSlices) {
+    const matchedExamples = filterBySlice(examples as (NormalizedExample & { slice_tags: readonly string[] })[], slice);
+    if (matchedExamples.length === 0) continue;
+
+    const sliceResults: IssueReplayResult[] = [];
+    for (const ex of matchedExamples) {
+      const results = resultsByExampleId.get(ex.example_id);
+      if (results) sliceResults.push(...results);
+    }
+
+    if (sliceResults.length === 0) continue;
+
+    // Compute field accuracy using expected classifications from the matched examples
+    const fieldPairs: { predicted: Record<string, string>; expected: Record<string, string> }[] = [];
+    for (const ex of matchedExamples) {
+      const results = resultsByExampleId.get(ex.example_id);
+      if (!results) continue;
+      for (let i = 0; i < results.length; i++) {
+        if (results[i].status === 'ok' && results[i].classification) {
+          fieldPairs.push({
+            predicted: results[i].classification!,
+            expected: ex.expected_classification_by_issue[i] ?? {},
+          });
+        }
+      }
+    }
+
+    const statuses = sliceResults.map((r) => r.status);
+    sliceMetrics[slice.name] = {
+      field_accuracy: fieldPairs.length > 0 ? computeOverallFieldAccuracy(fieldPairs) : 0,
+      schema_invalid_rate: computeSchemaInvalidRate(statuses),
+      taxonomy_invalid_rate: computeTaxonomyInvalidRate(statuses),
+      example_count: sliceResults.length,
+    };
+  }
+
+  return sliceMetrics;
 }
 
 async function main() {
@@ -42,8 +129,8 @@ async function main() {
   console.log(`Loading dataset from ${datasetDir}...`);
   const { manifest, examples } = await loadDataset(datasetDir);
 
-  const taxonomyVersion = (manifest as Record<string, unknown>).taxonomy_version as string ?? '2.0';
-  const datasetId = (manifest as Record<string, unknown>).dataset_id as string ?? args.dataset;
+  const taxonomyVersion = (manifest as Record<string, unknown>).taxonomy_version as string ?? '2.0.0';
+  const manifestId = (manifest as Record<string, unknown>).manifest_id as string ?? args.dataset;
 
   // Build fixture map if using fixture adapter
   const fixtureMap: Record<string, ClassifierAdapterOutput> = {};
@@ -64,11 +151,12 @@ async function main() {
   const classifierAdapter = new FixtureClassifierAdapter(fixtureMap);
 
   console.log(`Running replay for ${examples.length} examples...`);
-  const results = [];
-  const fieldPairs = [];
-  const statuses: string[] = [];
+  const resultsByExampleId = new Map<string, IssueReplayResult[]>();
+  const allResults: IssueReplayResult[] = [];
+  const fieldPairs: { predicted: Record<string, string>; expected: Record<string, string> }[] = [];
 
   for (const ex of examples) {
+    const exResults: IssueReplayResult[] = [];
     for (let i = 0; i < ex.split_issues_expected.length; i++) {
       const result = await runIssueReplay({
         example_id: ex.example_id,
@@ -78,8 +166,8 @@ async function main() {
         classifierAdapter,
         taxonomyVersion,
       });
-      results.push(result);
-      statuses.push(result.status);
+      exResults.push(result);
+      allResults.push(result);
 
       if (result.classification) {
         fieldPairs.push({
@@ -88,41 +176,108 @@ async function main() {
         });
       }
     }
+    resultsByExampleId.set(ex.example_id, exResults);
   }
 
-  // Compute metrics
-  const fieldAccuracy = computeOverallFieldAccuracy(fieldPairs);
-  const schemaInvalidRate = computeSchemaInvalidRate(statuses);
-  const taxonomyInvalidRate = computeTaxonomyInvalidRate(statuses);
+  // Compute top-level metrics
+  const statuses = allResults.map((r) => r.status);
+  const topMetrics: Record<string, number> = {
+    field_accuracy: computeOverallFieldAccuracy(fieldPairs),
+    schema_invalid_rate: computeSchemaInvalidRate(statuses),
+    taxonomy_invalid_rate: computeTaxonomyInvalidRate(statuses),
+    needs_human_triage_rate: statuses.filter((s) => s === 'needs_human_triage').length / Math.max(statuses.length, 1),
+    total_examples: examples.length,
+    total_results: allResults.length,
+  };
 
+  // Compute per-slice metrics
+  const sliceMetrics = computeSliceMetrics(examples, resultsByExampleId);
+
+  // Build EvalRun
   const runId = `run-${Date.now()}`;
-  const reportJson = generateJsonReport({
-    report_id: `report-${Date.now()}`,
-    baseline_run_id: 'none',
-    candidate_run_id: runId,
-    metrics: {
-      field_accuracy: fieldAccuracy,
-      schema_invalid_rate: schemaInvalidRate,
-      taxonomy_invalid_rate: taxonomyInvalidRate,
-      total_examples: examples.length,
-      total_results: results.length,
-    },
-    slice_metrics: {},
-    regressions: [],
-    improvements: [],
-  });
+  const now = new Date().toISOString();
+  const evalRun = {
+    run_id: runId,
+    runner_type: 'issue_level',
+    dataset_manifest_id: manifestId,
+    taxonomy_version: taxonomyVersion,
+    schema_version: '1.0.0',
+    cue_dict_version: '1.2.0',
+    prompt_version: 'fixture-replay',
+    model_id: args.adapter === 'fixture' ? 'fixture' : 'unknown',
+    started_at: now,
+    completed_at: now,
+    results: allResults.map((r) => ({
+      example_id: r.example_id,
+      status: r.status,
+      classification: r.classification,
+      confidenceByField: r.confidenceByField,
+      fieldsNeedingInput: r.fieldsNeedingInput,
+      hierarchyValid: r.hierarchyValid,
+      errors: r.errors,
+    })),
+    // Extended fields for comparison (not in eval_run schema but useful for baseline)
+    metrics: topMetrics,
+    slice_metrics: sliceMetrics,
+  };
 
-  // Write report
+  // Write EvalRun
   const outputDir = path.resolve(evalsRoot, 'baselines');
   fs.mkdirSync(outputDir, { recursive: true });
-  const outputPath = path.join(outputDir, `${datasetId}-run-${Date.now()}.json`);
-  fs.writeFileSync(outputPath, reportJson);
+  const runPath = path.join(outputDir, `${args.dataset}-run-${Date.now()}.json`);
+  fs.writeFileSync(runPath, JSON.stringify(evalRun, null, 2));
+  console.log(`EvalRun written to ${runPath}`);
 
-  console.log(`Report written to ${outputPath}`);
-  console.log(`  field_accuracy: ${fieldAccuracy.toFixed(4)}`);
-  console.log(`  schema_invalid_rate: ${schemaInvalidRate.toFixed(4)}`);
-  console.log(`  taxonomy_invalid_rate: ${taxonomyInvalidRate.toFixed(4)}`);
-  console.log('Eval run complete.');
+  // Baseline comparison
+  const baselinePath = args.baseline ?? path.join(outputDir, `${manifestId}-baseline.json`);
+  let gatePassed = true;
+
+  if (fs.existsSync(baselinePath)) {
+    console.log(`Comparing against baseline: ${baselinePath}`);
+    const baselineRaw = JSON.parse(fs.readFileSync(baselinePath, 'utf-8'));
+    const baselineMetrics: RunMetrics = {
+      metrics: baselineRaw.metrics ?? {},
+      slice_metrics: baselineRaw.slice_metrics ?? {},
+    };
+    const candidateMetrics: RunMetrics = {
+      metrics: topMetrics,
+      slice_metrics: sliceMetrics,
+    };
+
+    const comparison = compareRuns(baselineMetrics, candidateMetrics);
+    gatePassed = comparison.gate_passed;
+
+    const markdown = generateMarkdownReport(comparison, {
+      baseline_id: baselineRaw.run_id ?? 'unknown',
+      candidate_id: runId,
+    });
+    console.log('\n' + markdown);
+
+    // Write comparison report
+    const reportPath = path.join(outputDir, `${args.dataset}-comparison-${Date.now()}.md`);
+    fs.writeFileSync(reportPath, markdown);
+    console.log(`Comparison report written to ${reportPath}`);
+  } else {
+    console.log('No baseline found — skipping comparison. Run eval:update-baseline to promote this run.');
+  }
+
+  // Summary
+  console.log('\n--- Metrics Summary ---');
+  for (const [k, v] of Object.entries(topMetrics)) {
+    console.log(`  ${k}: ${typeof v === 'number' ? v.toFixed(4) : v}`);
+  }
+  if (Object.keys(sliceMetrics).length > 0) {
+    console.log('\n--- Slice Metrics ---');
+    for (const [slice, metrics] of Object.entries(sliceMetrics)) {
+      const fa = metrics.field_accuracy?.toFixed(4) ?? 'N/A';
+      console.log(`  ${slice}: field_accuracy=${fa}, count=${metrics.example_count}`);
+    }
+  }
+
+  console.log(`\nEval run complete. Gate: ${gatePassed ? 'PASSED' : 'FAILED'}`);
+  if (!gatePassed) {
+    process.exit(1);
+  }
 }
 
 main().catch((err) => {
