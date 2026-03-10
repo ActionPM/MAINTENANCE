@@ -1,0 +1,16 @@
+{
+  "manifest_id": "hard-v0.1",
+  "dataset_type": "hard",
+  "taxonomy_version": "2.0.0",
+  "schema_version": "1.0.0",
+  "example_count": 20,
+  "slice_coverage": {
+    "ambiguous": 5,
+    "vague": 4,
+    "multi_issue": 4,
+    "slang": 4,
+    "typo": 3
+  },
+  "created_at": "2026-03-10T00:00:00Z",
+  "description": "v0 hard set — ambiguous, vague, slang-heavy, typo-filled, and multi-issue inputs"
+}

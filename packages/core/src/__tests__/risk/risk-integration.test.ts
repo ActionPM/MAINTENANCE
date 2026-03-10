@@ -13,15 +13,15 @@ const taxonomy = loadTaxonomy();
 const FULL_CUES: CueDictionary = {
   version: '1.0.0',
   fields: {
-    Category: { maintenance: { keywords: ['fire', 'leak'], regex: [] } },
-    Location: { suite: { keywords: ['kitchen'], regex: [] } },
-    Sub_Location: { kitchen: { keywords: ['kitchen'], regex: [] } },
-    Maintenance_Category: { plumbing: { keywords: ['fire', 'leak'], regex: [] } },
-    Maintenance_Object: { toilet: { keywords: ['kitchen'], regex: [] } },
-    Maintenance_Problem: { leak: { keywords: ['fire'], regex: [] } },
-    Management_Category: { other_mgmt_cat: { keywords: ['fire'], regex: [] } },
-    Management_Object: { other_mgmt_obj: { keywords: ['fire'], regex: [] } },
-    Priority: { normal: { keywords: ['fire'], regex: [] } },
+    Category: { maintenance: { keywords: ['fire', 'kitchen'], regex: [] } },
+    Location: { suite: { keywords: ['kitchen', 'my'], regex: [] } },
+    Sub_Location: { kitchen: { keywords: ['kitchen', 'fire'], regex: [] } },
+    Maintenance_Category: { plumbing: { keywords: ['fire', 'kitchen'], regex: [] } },
+    Maintenance_Object: { toilet: { keywords: ['kitchen', 'my'], regex: [] } },
+    Maintenance_Problem: { leak: { keywords: ['fire', 'smoke'], regex: [] } },
+    Management_Category: { other_mgmt_cat: { keywords: ['fire', 'kitchen'], regex: [] } },
+    Management_Object: { other_mgmt_obj: { keywords: ['fire', 'my'], regex: [] } },
+    Priority: { normal: { keywords: ['fire', 'kitchen'], regex: [] } },
   },
 };
 

@@ -45,15 +45,15 @@ const VALID_CLASSIFICATION: IssueClassifierOutput = {
 const FULL_CUES: CueDictionary = {
   version: '1.0.0',
   fields: {
-    Category: { maintenance: { keywords: ['leak'], regex: [] } },
-    Location: { suite: { keywords: ['toilet'], regex: [] } },
-    Sub_Location: { bathroom: { keywords: ['toilet'], regex: [] } },
+    Category: { maintenance: { keywords: ['leak', 'leaking'], regex: [] } },
+    Location: { suite: { keywords: ['toilet', 'my'], regex: [] } },
+    Sub_Location: { bathroom: { keywords: ['toilet', 'leaking'], regex: [] } },
     Maintenance_Category: { plumbing: { keywords: ['leak', 'toilet'], regex: [] } },
-    Maintenance_Object: { toilet: { keywords: ['toilet'], regex: [] } },
-    Maintenance_Problem: { leak: { keywords: ['leak'], regex: [] } },
-    Management_Category: { other_mgmt_cat: { keywords: ['toilet'], regex: [] } },
-    Management_Object: { other_mgmt_obj: { keywords: ['toilet'], regex: [] } },
-    Priority: { normal: { keywords: ['leak'], regex: [] } },
+    Maintenance_Object: { toilet: { keywords: ['toilet', 'leaking'], regex: [] } },
+    Maintenance_Problem: { leak: { keywords: ['leak', 'leaking'], regex: [] } },
+    Management_Category: { other_mgmt_cat: { keywords: ['toilet', 'my'], regex: [] } },
+    Management_Object: { other_mgmt_obj: { keywords: ['toilet', 'my'], regex: [] } },
+    Priority: { normal: { keywords: ['leak', 'toilet'], regex: [] } },
   },
 };
 
@@ -97,7 +97,9 @@ function makeContext(overrides?: {
       clock: () => '2026-02-24T12:00:00Z',
       issueSplitter: vi.fn(),
       issueClassifier: overrides?.classifierFn ?? vi.fn().mockResolvedValue(VALID_CLASSIFICATION),
-      followUpGenerator: vi.fn().mockResolvedValue({ questions: [] }),
+      followUpGenerator: vi.fn().mockResolvedValue({
+        questions: [{ question_id: 'q1', field_target: 'Category', prompt: 'What type of issue?', options: ['maintenance', 'management'], answer_type: 'enum' }],
+      }),
       cueDict: FULL_CUES,
       taxonomy,
     } as any,

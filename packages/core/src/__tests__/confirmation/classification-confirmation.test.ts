@@ -19,15 +19,15 @@ const taxonomy = loadTaxonomy();
 const FULL_CUES: CueDictionary = {
   version: '1.0.0',
   fields: {
-    Category: { maintenance: { keywords: ['leak'], regex: [] } },
-    Location: { suite: { keywords: ['toilet'], regex: [] } },
-    Sub_Location: { bathroom: { keywords: ['toilet'], regex: [] } },
+    Category: { maintenance: { keywords: ['leak', 'leaks'], regex: [] } },
+    Location: { suite: { keywords: ['toilet', 'my'], regex: [] } },
+    Sub_Location: { bathroom: { keywords: ['toilet', 'leaks'], regex: [] } },
     Maintenance_Category: { plumbing: { keywords: ['leak', 'toilet'], regex: [] } },
-    Maintenance_Object: { toilet: { keywords: ['toilet'], regex: [] } },
-    Maintenance_Problem: { leak: { keywords: ['leak'], regex: [] } },
-    Management_Category: { other_mgmt_cat: { keywords: ['toilet'], regex: [] } },
-    Management_Object: { other_mgmt_obj: { keywords: ['toilet'], regex: [] } },
-    Priority: { normal: { keywords: ['leak'], regex: [] } },
+    Maintenance_Object: { toilet: { keywords: ['toilet', 'leaks'], regex: [] } },
+    Maintenance_Problem: { leak: { keywords: ['leak', 'leaks'], regex: [] } },
+    Management_Category: { other_mgmt_cat: { keywords: ['toilet', 'my'], regex: [] } },
+    Management_Object: { other_mgmt_obj: { keywords: ['toilet', 'my'], regex: [] } },
+    Priority: { normal: { keywords: ['leak', 'toilet'], regex: [] } },
   },
 };
 

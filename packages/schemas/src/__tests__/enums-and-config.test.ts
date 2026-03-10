@@ -1,4 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   taxonomy,
   loadTaxonomy,
@@ -25,6 +28,9 @@ import {
   DEFAULT_CONFIDENCE_CONFIG,
   DEFAULT_FOLLOWUP_CAPS,
 } from '../confidence-config.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const schemasDir = resolve(__dirname, '..', '..');
 
 describe('Taxonomy', () => {
   it('loadTaxonomy returns a valid taxonomy object', () => {
@@ -231,5 +237,32 @@ describe('FollowUpCaps', () => {
     expect(DEFAULT_FOLLOWUP_CAPS.max_turns).toBe(8);
     expect(DEFAULT_FOLLOWUP_CAPS.max_total_questions).toBe(9);
     expect(DEFAULT_FOLLOWUP_CAPS.max_reasks_per_field).toBe(2);
+  });
+
+  it('schema bounds match DEFAULT_FOLLOWUP_CAPS', () => {
+    const requestSchema = JSON.parse(readFileSync(
+      resolve(schemasDir, 'followup_request.schema.json'), 'utf-8'));
+    const followupsSchema = JSON.parse(readFileSync(
+      resolve(schemasDir, 'followups.schema.json'), 'utf-8'));
+
+    // Input schema bounds
+    const input = requestSchema.definitions.FollowUpGeneratorInput.properties;
+    expect(input.turn_number.maximum).toBe(DEFAULT_FOLLOWUP_CAPS.max_turns);
+    expect(input.total_questions_asked.maximum).toBe(DEFAULT_FOLLOWUP_CAPS.max_total_questions - 1);
+    // Note: input cap is max_total_questions - 1 because >= 9 means exhausted (do not call)
+
+    // PreviousQuestion re-ask bound
+    const prev = requestSchema.definitions.PreviousQuestion.properties;
+    expect(prev.times_asked.maximum).toBe(DEFAULT_FOLLOWUP_CAPS.max_reasks_per_field);
+
+    // Output questions maxItems
+    const output = followupsSchema.definitions.FollowUpGeneratorOutput.properties;
+    expect(output.questions.maxItems).toBe(DEFAULT_FOLLOWUP_CAPS.max_questions_per_turn);
+
+    // Event bounds
+    const event = followupsSchema.definitions.FollowUpEvent.properties;
+    expect(event.turn_number.maximum).toBe(DEFAULT_FOLLOWUP_CAPS.max_turns);
+    expect(event.questions_asked.maxItems).toBe(DEFAULT_FOLLOWUP_CAPS.max_questions_per_turn);
+    expect(event.answers_received.maxItems).toBe(DEFAULT_FOLLOWUP_CAPS.max_questions_per_turn);
   });
 });

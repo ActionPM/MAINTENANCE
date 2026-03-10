@@ -44,22 +44,23 @@ const VALID_CLASSIFICATION: IssueClassifierOutput = {
 
 /**
  * Cue dictionary covering all fields in VALID_CLASSIFICATION.
- * Each entry has keywords matching the test text "Toilet leaking / My toilet is leaking"
- * so that cue_strength > 0 for every field, pushing confidence into the medium band
- * (>= 0.65) which is accepted without follow-up.
+ * Each entry has 2+ keywords matching the test text "Toilet leaking / My toilet is leaking"
+ * so that cue_strength = 1.0 for every field, pushing confidence into the high band
+ * (>= 0.85). Spec §14.3: medium-confidence required/risk-relevant fields now trigger
+ * prompts, so we need cue_strength high enough to clear the high threshold.
  */
 const FULL_CUES: CueDictionary = {
   version: '1.0.0',
   fields: {
-    Category: { maintenance: { keywords: ['leak'], regex: [] } },
-    Location: { suite: { keywords: ['toilet'], regex: [] } },
-    Sub_Location: { bathroom: { keywords: ['toilet'], regex: [] } },
+    Category: { maintenance: { keywords: ['leak', 'leaking'], regex: [] } },
+    Location: { suite: { keywords: ['toilet', 'my'], regex: [] } },
+    Sub_Location: { bathroom: { keywords: ['toilet', 'leaking'], regex: [] } },
     Maintenance_Category: { plumbing: { keywords: ['leak', 'toilet'], regex: [] } },
-    Maintenance_Object: { toilet: { keywords: ['toilet'], regex: [] } },
-    Maintenance_Problem: { leak: { keywords: ['leak'], regex: [] } },
-    Management_Category: { other_mgmt_cat: { keywords: ['toilet'], regex: [] } },
-    Management_Object: { other_mgmt_obj: { keywords: ['toilet'], regex: [] } },
-    Priority: { normal: { keywords: ['leak'], regex: [] } },
+    Maintenance_Object: { toilet: { keywords: ['toilet', 'leaking'], regex: [] } },
+    Maintenance_Problem: { leak: { keywords: ['leak', 'leaking'], regex: [] } },
+    Management_Category: { other_mgmt_cat: { keywords: ['toilet', 'my'], regex: [] } },
+    Management_Object: { other_mgmt_obj: { keywords: ['toilet', 'my'], regex: [] } },
+    Priority: { normal: { keywords: ['leak', 'toilet'], regex: [] } },
   },
 };
 
@@ -117,10 +118,12 @@ function makeContext(overrides?: {
 }
 
 describe('handleStartClassification', () => {
-  it('classifies all issues and transitions to tenant_confirmation_pending when all high confidence', async () => {
+  it('classifies all issues and transitions to needs_tenant_input when required fields are medium-confidence', async () => {
+    // Confidence formula max WITHOUT constraint_implied is 0.84 (< high_threshold 0.85),
+    // so required/risk-relevant fields are medium-confidence and trigger needs_tenant_input (spec §14.3).
     const ctx = makeContext();
     const result = await handleStartClassification(ctx);
-    expect(result.newState).toBe(ConversationState.TENANT_CONFIRMATION_PENDING);
+    expect(result.newState).toBe(ConversationState.NEEDS_TENANT_INPUT);
     expect(result.session.classification_results).toHaveLength(1);
     expect(result.session.classification_results![0].issue_id).toBe('i1');
   });

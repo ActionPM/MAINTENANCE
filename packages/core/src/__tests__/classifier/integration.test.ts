@@ -41,21 +41,23 @@ const VALID_CLASSIFICATION: IssueClassifierOutput = {
 
 /**
  * Cue dictionary covering all fields in VALID_CLASSIFICATION so that
- * cue_strength > 0 for every field, pushing confidence into the medium band
- * (>= 0.65) which is accepted without follow-up.
+ * cue_strength = 1.0 for every field (2+ keyword hits each), pushing
+ * confidence into the high band (>= 0.85) where no follow-up is needed.
+ * Spec §14.3: medium-confidence required/risk-relevant fields now
+ * trigger prompts, so we need cue_strength high enough to clear the threshold.
  */
 const FULL_CUES: CueDictionary = {
   version: '1.0.0',
   fields: {
-    Category: { maintenance: { keywords: ['leak'], regex: [] } },
-    Location: { suite: { keywords: ['toilet'], regex: [] } },
-    Sub_Location: { bathroom: { keywords: ['toilet'], regex: [] } },
+    Category: { maintenance: { keywords: ['leak', 'leaking'], regex: [] } },
+    Location: { suite: { keywords: ['toilet', 'my'], regex: [] } },
+    Sub_Location: { bathroom: { keywords: ['toilet', 'leaking'], regex: [] } },
     Maintenance_Category: { plumbing: { keywords: ['leak', 'toilet'], regex: [] } },
-    Maintenance_Object: { toilet: { keywords: ['toilet'], regex: [] } },
-    Maintenance_Problem: { leak: { keywords: ['leak'], regex: [] } },
-    Management_Category: { other_mgmt_cat: { keywords: ['toilet'], regex: [] } },
-    Management_Object: { other_mgmt_obj: { keywords: ['toilet'], regex: [] } },
-    Priority: { normal: { keywords: ['leak'], regex: [] } },
+    Maintenance_Object: { toilet: { keywords: ['toilet', 'leaking'], regex: [] } },
+    Maintenance_Problem: { leak: { keywords: ['leak', 'leaking'], regex: [] } },
+    Management_Category: { other_mgmt_cat: { keywords: ['toilet', 'my'], regex: [] } },
+    Management_Object: { other_mgmt_obj: { keywords: ['toilet', 'my'], regex: [] } },
+    Priority: { normal: { keywords: ['leak', 'toilet'], regex: [] } },
   },
 };
 
@@ -157,16 +159,18 @@ async function walkToClassified(
 describe('Classification integration', () => {
 
   // ---------------------------------------------------------------
-  // 1. Happy path: single issue, high confidence -> tenant_confirmation_pending
+  // 1. Happy path: single issue, medium-confidence required fields trigger follow-up
   // ---------------------------------------------------------------
-  it('happy path: single issue with high confidence reaches tenant_confirmation_pending', async () => {
+  it('happy path: single issue with medium-confidence required fields reaches needs_tenant_input', async () => {
     const deps = makeDeps();
     const dispatch = createDispatcher(deps as any);
 
     const { result } = await walkToClassified(dispatch);
 
+    // Confidence formula max WITHOUT constraint_implied is 0.84 (< high_threshold 0.85),
+    // so required/risk-relevant fields are medium-confidence and trigger needs_tenant_input (spec §14.3).
     expect(result.response.conversation_snapshot.state).toBe(
-      ConversationState.TENANT_CONFIRMATION_PENDING,
+      ConversationState.NEEDS_TENANT_INPUT,
     );
     expect(result.response.conversation_snapshot.classification_results).toBeDefined();
     expect(result.response.conversation_snapshot.classification_results!.length).toBe(1);
@@ -174,7 +178,7 @@ describe('Classification integration', () => {
     const cr = result.response.conversation_snapshot.classification_results![0] as any;
     expect(cr.issue_id).toBe('i1');
     expect(cr.classifierOutput.classification.Category).toBe('maintenance');
-    expect(cr.fieldsNeedingInput).toEqual([]);
+    expect(cr.fieldsNeedingInput.length).toBeGreaterThan(0);
   });
 
   // ---------------------------------------------------------------
@@ -206,8 +210,9 @@ describe('Classification integration', () => {
 
     const { result } = await walkToClassified(dispatch);
 
+    // Medium-confidence required fields trigger needs_tenant_input (spec §14.3)
     expect(result.response.conversation_snapshot.state).toBe(
-      ConversationState.TENANT_CONFIRMATION_PENDING,
+      ConversationState.NEEDS_TENANT_INPUT,
     );
 
     const classResults = result.response.conversation_snapshot.classification_results!;
@@ -280,8 +285,10 @@ describe('Classification integration', () => {
 
     const { result } = await walkToClassified(dispatch);
 
+    // After retry, fields are still medium-confidence (no constraint_implied),
+    // so required/risk-relevant fields trigger needs_tenant_input (spec §14.3).
     expect(result.response.conversation_snapshot.state).toBe(
-      ConversationState.TENANT_CONFIRMATION_PENDING,
+      ConversationState.NEEDS_TENANT_INPUT,
     );
 
     // The classifier should have been called twice: original + gating retry
@@ -393,7 +400,7 @@ describe('Classification integration', () => {
     // 3. LLM_SPLIT_SUCCESS -> split_proposed
     // 4. CONFIRM_SPLIT -> split_finalized
     // 5. START_CLASSIFICATION -> classification_in_progress (intermediate)
-    // 6. LLM_CLASSIFY_SUCCESS -> tenant_confirmation_pending
+    // 6. LLM_CLASSIFY_SUCCESS -> needs_tenant_input (medium-confidence required fields)
     expect(events.length).toBe(7);
 
     // Verify CREATE_CONVERSATION event
@@ -428,10 +435,10 @@ describe('Classification integration', () => {
     expect(events[5].payload).toBeDefined();
     expect((events[5].payload as any).issue_count).toBe(1);
 
-    // Verify LLM_CLASSIFY_SUCCESS -> tenant_confirmation_pending
+    // Verify LLM_CLASSIFY_SUCCESS -> needs_tenant_input (medium-confidence required fields)
     expect(events[6].action_type).toBe(SystemEvent.LLM_CLASSIFY_SUCCESS);
     expect(events[6].prior_state).toBe(ConversationState.CLASSIFICATION_IN_PROGRESS);
-    expect(events[6].new_state).toBe(ConversationState.TENANT_CONFIRMATION_PENDING);
+    expect(events[6].new_state).toBe(ConversationState.NEEDS_TENANT_INPUT);
     expect(events[6].payload).toBeDefined();
 
     // Verify the classification results payload contains expected data

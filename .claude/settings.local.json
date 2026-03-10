@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:api.github.com)",
+      "Read(//c/Users/Owner/.claude/**)",
+      "Bash(pnpm test)",
+      "Bash(npx tsc --noEmit)",
+      "Read(//c/Users/Owner/Documents/01_ActionPM/03_Agents/03_Work_Order_Triage/Work_Order_Agent/docs/**)",
+      "Read(//c/Users/Owner/Documents/01_ActionPM/03_Agents/03_Work_Order_Triage/Work_Order_Agent/packages/schemas/**)",
+      "Read(//c/Users/Owner/Documents/01_ActionPM/03_Agents/03_Work_Order_Triage/Work_Order_Agent/packages/schemas/src/types/**)",
+      "Bash(pnpm tsc --noEmit)",
+      "Bash(pnpm vitest run)",
+      "Bash(grep -E \"\\\\.ts$\")"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\Owner\\Documents\\01_ActionPM\\03_Agents\\03_Work Order Triage\\Work Order Agent\\.claude\\skills"
+    ]
+  }
+}

@@ -8,3 +8,14 @@ export { validateClassificationAgainstTaxonomy } from './taxonomy-cross-validato
 export type { DomainValidationResult } from './taxonomy-cross-validator.js';
 export { validateCueDictionary } from './cue-dictionary-validator.js';
 export type { CueDictionary } from './cue-dictionary-validator.js';
+export { validateOrchestratorActionDomain, SIDE_EFFECT_ACTIONS } from './orchestrator-action-domain.js';
+export type { ActionDomainValidationResult } from './orchestrator-action-domain.js';
+export { validateIssueSplitDomain } from './issue-split-domain.js';
+export type { IssueSplitDomainValidationResult } from './issue-split-domain.js';
+export {
+  validateEvalExample,
+  validateEvalManifest,
+  validateEvalRun,
+  validateEvalReport,
+} from './eval-validators.js';
+export type { EvalValidationResult } from './eval-validators.js';

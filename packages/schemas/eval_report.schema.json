@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "eval_report.schema.json",
+  "title": "EvalReport",
+  "type": "object",
+  "required": ["report_id", "baseline_run_id", "candidate_run_id", "metrics", "slice_metrics", "regressions", "created_at"],
+  "properties": {
+    "report_id": { "type": "string", "minLength": 1 },
+    "baseline_run_id": { "type": "string", "minLength": 1 },
+    "candidate_run_id": { "type": "string", "minLength": 1 },
+    "metrics": { "type": "object" },
+    "slice_metrics": { "type": "object" },
+    "regressions": { "type": "array", "items": { "type": "object" } },
+    "improvements": { "type": "array", "items": { "type": "object" } },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

@@ -105,46 +105,73 @@ export function computeAllFieldConfidences(input: ComputeAllInput): Record<strin
 const MAINTENANCE_EXCLUDES = ['Management_Category', 'Management_Object'];
 const MANAGEMENT_EXCLUDES = ['Maintenance_Category', 'Maintenance_Object', 'Maintenance_Problem'];
 
+export interface FieldPolicyMetadata {
+  readonly requiredFields: readonly string[];
+  readonly riskRelevantFields: readonly string[];
+}
+
 /**
- * Determine which fields need tenant input based on confidence bands
- * and any fields the classifier reported as missing.
+ * Default field policy derived from the taxonomy structure.
+ * This is the single source of truth for which fields are required
+ * and which are risk-relevant. Callers should use this rather than
+ * constructing their own policy — the parameter exists for testability,
+ * not for optional behavior.
+ */
+export const DEFAULT_FIELD_POLICY: FieldPolicyMetadata = {
+  requiredFields: ['Category', 'Location', 'Sub_Location', 'Priority'],
+  riskRelevantFields: ['Priority', 'Maintenance_Category', 'Maintenance_Problem'],
+} as const;
+
+export interface DetermineFieldsOptions {
+  readonly confidenceByField: Record<string, number>;
+  readonly config: ConfidenceConfig;
+  readonly missingFields?: readonly string[];
+  readonly classificationOutput?: Record<string, string>;
+  readonly fieldPolicy?: FieldPolicyMetadata;
+}
+
+/**
+ * Determine which fields need tenant input based on confidence bands,
+ * field policy (required/risk-relevant), and any missing fields.
  *
  * - Low-confidence fields always need input.
- * - Medium-confidence fields are accepted (the formula's theoretical max
- *   with default weights is ~0.84, below high_threshold 0.85, so treating
- *   medium as needing input would create an unwinnable loop).
+ * - Medium-confidence fields need input when required OR risk-relevant (spec §14.3).
  * - High-confidence fields are accepted.
  * - Fields in missingFields are always included regardless of confidence.
  * - Category gating: when Category is confident, cross-category fields are excluded.
  */
-export function determineFieldsNeedingInput(
-  confidences: Record<string, number>,
-  config: ConfidenceConfig,
-  missingFields?: readonly string[],
-  classification?: Record<string, string>,
-): string[] {
-  const fields: string[] = [];
+export function determineFieldsNeedingInput(opts: DetermineFieldsOptions): string[] {
+  const fieldPolicy = opts.fieldPolicy ?? DEFAULT_FIELD_POLICY;
+  const config = opts.config;
+  const needed = new Set<string>();
 
-  for (const [field, confidence] of Object.entries(confidences)) {
+  for (const [field, confidence] of Object.entries(opts.confidenceByField)) {
     const band = classifyConfidenceBand(confidence, config);
-    if (band === 'low') {
-      fields.push(field);
-    }
-  }
 
-  // Merge in any fields the classifier reported as missing (not classified at all).
-  // These won't appear in the confidences map since the LLM omitted them.
-  if (missingFields) {
-    for (const field of missingFields) {
-      if (!fields.includes(field)) {
-        fields.push(field);
+    if (band === 'low') {
+      needed.add(field);
+    } else if (band === 'medium') {
+      // Spec §14.3: medium confidence — ask if required OR risk-relevant
+      const isRequired = fieldPolicy.requiredFields.includes(field);
+      const isRiskRelevant = fieldPolicy.riskRelevantFields.includes(field);
+      if (isRequired || isRiskRelevant) {
+        needed.add(field);
       }
     }
   }
 
+  // Merge in any fields the classifier reported as missing (not classified at all).
+  if (opts.missingFields) {
+    for (const field of opts.missingFields) {
+      needed.add(field);
+    }
+  }
+
+  const fields = [...needed];
+
   // Category gating: if Category is confident, exclude irrelevant cross-category fields
-  if (classification && !fields.includes('Category')) {
-    const category = classification['Category'];
+  if (opts.classificationOutput && !fields.includes('Category')) {
+    const category = opts.classificationOutput['Category'];
     const excludes =
       category === 'maintenance' ? MAINTENANCE_EXCLUDES :
       category === 'management' ? MANAGEMENT_EXCLUDES :

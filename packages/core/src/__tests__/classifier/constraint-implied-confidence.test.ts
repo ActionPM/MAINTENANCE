@@ -33,14 +33,14 @@ describe('constraint_implied confidence term', () => {
     const withImplied = computeAllFieldConfidences({
       classification: { Sub_Location: 'bathroom' },
       modelConfidence: { Sub_Location: 0.4 },
-      cueResults: { Sub_Location: { score: 0.1, topLabel: 'general', ambiguity: 0.5 } },
+      cueResults: { Sub_Location: { score: 0.1, topLabel: 'general', ambiguity: 0.5, labelScores: [{ label: 'general', score: 0.1 }] } },
       config: DEFAULT_CONFIDENCE_CONFIG,
       impliedFields: { Sub_Location: 'bathroom' },
     });
     const without = computeAllFieldConfidences({
       classification: { Sub_Location: 'bathroom' },
       modelConfidence: { Sub_Location: 0.4 },
-      cueResults: { Sub_Location: { score: 0.1, topLabel: 'general', ambiguity: 0.5 } },
+      cueResults: { Sub_Location: { score: 0.1, topLabel: 'general', ambiguity: 0.5, labelScores: [{ label: 'general', score: 0.1 }] } },
       config: DEFAULT_CONFIDENCE_CONFIG,
     });
     expect(withImplied['Sub_Location']).toBeGreaterThan(without['Sub_Location']);

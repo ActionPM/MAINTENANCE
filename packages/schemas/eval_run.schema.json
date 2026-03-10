@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "eval_run.schema.json",
+  "title": "EvalRun",
+  "type": "object",
+  "required": ["run_id", "runner_type", "dataset_manifest_id", "taxonomy_version", "schema_version", "cue_dict_version", "prompt_version", "model_id", "started_at", "completed_at", "results"],
+  "properties": {
+    "run_id": { "type": "string", "minLength": 1 },
+    "runner_type": { "type": "string", "enum": ["issue_level", "conversation_level"] },
+    "dataset_manifest_id": { "type": "string", "minLength": 1 },
+    "taxonomy_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "schema_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "cue_dict_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "prompt_version": { "type": "string", "minLength": 1 },
+    "model_id": { "type": "string", "minLength": 1 },
+    "candidate_config": { "type": "object" },
+    "started_at": { "type": "string", "format": "date-time" },
+    "completed_at": { "type": "string", "format": "date-time" },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["example_id", "status"],
+        "properties": {
+          "example_id": { "type": "string", "minLength": 1 },
+          "status": { "type": "string", "enum": ["ok", "schema_fail", "taxonomy_fail", "needs_human_triage"] },
+          "classification": {
+            "type": "object",
+            "properties": {
+              "Category": { "type": "string" }, "Location": { "type": "string" },
+              "Sub_Location": { "type": "string" }, "Maintenance_Category": { "type": "string" },
+              "Maintenance_Object": { "type": "string" }, "Maintenance_Problem": { "type": "string" },
+              "Management_Category": { "type": "string" }, "Management_Object": { "type": "string" },
+              "Priority": { "type": "string" }
+            }
+          },
+          "confidenceByField": { "type": "object", "additionalProperties": { "type": "number", "minimum": 0, "maximum": 1 } },
+          "fieldsNeedingInput": { "type": "array", "items": { "type": "string" } },
+          "hierarchyValid": { "type": "boolean" },
+          "errors": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Computed top-level metrics (field_accuracy, schema_invalid_rate, etc.)",
+      "additionalProperties": { "type": "number" }
+    },
+    "slice_metrics": {
+      "type": "object",
+      "description": "Per-slice metrics keyed by slice name",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": { "type": "number" }
+      }
+    }
+  },
+  "additionalProperties": false
+}

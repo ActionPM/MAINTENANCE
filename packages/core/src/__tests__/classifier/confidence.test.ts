@@ -4,6 +4,7 @@ import {
   computeAllFieldConfidences,
   classifyConfidenceBand,
   determineFieldsNeedingInput,
+  DEFAULT_FIELD_POLICY,
 } from '../../classifier/confidence.js';
 import { DEFAULT_CONFIDENCE_CONFIG } from '@wo-agent/schemas';
 import type { CueFieldResult } from '../../classifier/cue-scoring.js';
@@ -145,33 +146,84 @@ describe('classifyConfidenceBand', () => {
 describe('determineFieldsNeedingInput', () => {
   it('includes low-confidence fields', () => {
     const confidences = { Category: 0.9, Maintenance_Category: 0.5 };
-    const result = determineFieldsNeedingInput(confidences, DEFAULT_CONFIDENCE_CONFIG);
+    const result = determineFieldsNeedingInput({
+      confidenceByField: confidences,
+      config: DEFAULT_CONFIDENCE_CONFIG,
+    });
     expect(result).toContain('Maintenance_Category');
     expect(result).not.toContain('Category');
   });
 
   it('returns empty array when all fields are high confidence', () => {
     const confidences = { Category: 0.9, Maintenance_Category: 0.88 };
-    const result = determineFieldsNeedingInput(confidences, DEFAULT_CONFIDENCE_CONFIG);
+    const result = determineFieldsNeedingInput({
+      confidenceByField: confidences,
+      config: DEFAULT_CONFIDENCE_CONFIG,
+    });
     expect(result).toEqual([]);
   });
 
-  it('accepts medium-confidence fields without follow-up', () => {
-    // Medium fields (>= 0.65, < 0.85) are accepted — treating them as needing
-    // input would create an unwinnable loop because the formula's theoretical
-    // max with default weights is ~0.84, below high_threshold 0.85.
-    const confidences = { Category: 0.9, Maintenance_Category: 0.7 };
-    const result = determineFieldsNeedingInput(confidences, DEFAULT_CONFIDENCE_CONFIG);
-    expect(result).not.toContain('Maintenance_Category');
+  it('accepts medium-confidence fields that are NOT required and NOT risk-relevant', () => {
+    // Management_Object is not in requiredFields or riskRelevantFields
+    const confidences = { Category: 0.9, Management_Object: 0.7 };
+    const result = determineFieldsNeedingInput({
+      confidenceByField: confidences,
+      config: DEFAULT_CONFIDENCE_CONFIG,
+    });
+    expect(result).not.toContain('Management_Object');
+  });
+
+  it('returns medium-confidence required fields as needing input', () => {
+    const result = determineFieldsNeedingInput({
+      confidenceByField: {
+        Category: 0.72,           // medium — required field
+        Location: 0.90,           // high
+        Maintenance_Category: 0.70, // medium — risk-relevant field
+      },
+      missingFields: [],
+      classificationOutput: {
+        Category: 'maintenance',
+        Location: 'suite',
+        Maintenance_Category: 'plumbing',
+      },
+      fieldPolicy: { requiredFields: ['Category', 'Location', 'Maintenance_Category'], riskRelevantFields: [] },
+      config: DEFAULT_CONFIDENCE_CONFIG,
+    });
+
+    expect(result).toContain('Category');
+    expect(result).toContain('Maintenance_Category');
+    expect(result).not.toContain('Location');
+  });
+
+  it('returns medium-confidence risk-relevant fields as needing input', () => {
+    const result = determineFieldsNeedingInput({
+      confidenceByField: {
+        Category: 0.90,
+        Priority: 0.72,           // medium — risk-relevant
+        Location: 0.88,
+      },
+      missingFields: [],
+      classificationOutput: {
+        Category: 'maintenance',
+        Priority: 'emergency',
+        Location: 'suite',
+      },
+      fieldPolicy: { requiredFields: ['Category'], riskRelevantFields: ['Priority'] },
+      config: DEFAULT_CONFIDENCE_CONFIG,
+    });
+
+    expect(result).toContain('Priority');
+    expect(result).not.toContain('Category');
+    expect(result).not.toContain('Location');
   });
 
   it('includes missing_fields regardless of confidence scores', () => {
     const confidences = { Category: 0.9 };
-    const result = determineFieldsNeedingInput(
-      confidences,
-      DEFAULT_CONFIDENCE_CONFIG,
-      ['Location', 'Sub_Location'],
-    );
+    const result = determineFieldsNeedingInput({
+      confidenceByField: confidences,
+      config: DEFAULT_CONFIDENCE_CONFIG,
+      missingFields: ['Location', 'Sub_Location'],
+    });
     expect(result).toContain('Location');
     expect(result).toContain('Sub_Location');
     expect(result).not.toContain('Category');
@@ -179,11 +231,11 @@ describe('determineFieldsNeedingInput', () => {
 
   it('deduplicates fields present in both low confidence and missing_fields', () => {
     const confidences = { Priority: 0.3 }; // low
-    const result = determineFieldsNeedingInput(
-      confidences,
-      DEFAULT_CONFIDENCE_CONFIG,
-      ['Priority'],
-    );
+    const result = determineFieldsNeedingInput({
+      confidenceByField: confidences,
+      config: DEFAULT_CONFIDENCE_CONFIG,
+      missingFields: ['Priority'],
+    });
     expect(result).toEqual(['Priority']);
   });
 });
@@ -191,12 +243,12 @@ describe('determineFieldsNeedingInput', () => {
 describe('category gating', () => {
   it('excludes Management fields when Category=maintenance and Category is confident', () => {
     const confidences: Record<string, number> = {
-      Category: 0.70,
-      Location: 0.70,
+      Category: 0.90,
+      Location: 0.90,
       Sub_Location: 0.30,
-      Maintenance_Category: 0.70,
+      Maintenance_Category: 0.90,
       Maintenance_Object: 0.30,
-      Maintenance_Problem: 0.70,
+      Maintenance_Problem: 0.90,
       Management_Category: 0.25,
       Management_Object: 0.25,
       Priority: 0.30,
@@ -206,7 +258,12 @@ describe('category gating', () => {
       Management_Category: 'other_mgmt_cat',
       Management_Object: 'other_mgmt_obj',
     };
-    const result = determineFieldsNeedingInput(confidences, DEFAULT_CONFIDENCE_CONFIG, [], classification);
+    const result = determineFieldsNeedingInput({
+      confidenceByField: confidences,
+      config: DEFAULT_CONFIDENCE_CONFIG,
+      missingFields: [],
+      classificationOutput: classification,
+    });
     expect(result).not.toContain('Management_Category');
     expect(result).not.toContain('Management_Object');
     expect(result).toContain('Sub_Location');
@@ -216,13 +273,13 @@ describe('category gating', () => {
 
   it('excludes Maintenance fields when Category=management and Category is confident', () => {
     const confidences: Record<string, number> = {
-      Category: 0.70,
-      Location: 0.70,
+      Category: 0.90,
+      Location: 0.90,
       Sub_Location: 0.30,
       Maintenance_Category: 0.25,
       Maintenance_Object: 0.25,
       Maintenance_Problem: 0.25,
-      Management_Category: 0.70,
+      Management_Category: 0.90,
       Management_Object: 0.30,
       Priority: 0.30,
     };
@@ -232,7 +289,12 @@ describe('category gating', () => {
       Maintenance_Object: 'other_maintenance_object',
       Maintenance_Problem: 'other_problem',
     };
-    const result = determineFieldsNeedingInput(confidences, DEFAULT_CONFIDENCE_CONFIG, [], classification);
+    const result = determineFieldsNeedingInput({
+      confidenceByField: confidences,
+      config: DEFAULT_CONFIDENCE_CONFIG,
+      missingFields: [],
+      classificationOutput: classification,
+    });
     expect(result).not.toContain('Maintenance_Category');
     expect(result).not.toContain('Maintenance_Object');
     expect(result).not.toContain('Maintenance_Problem');
@@ -248,7 +310,12 @@ describe('category gating', () => {
       Management_Object: 0.25,
     };
     const classification = { Category: 'maintenance' };
-    const result = determineFieldsNeedingInput(confidences, DEFAULT_CONFIDENCE_CONFIG, [], classification);
+    const result = determineFieldsNeedingInput({
+      confidenceByField: confidences,
+      config: DEFAULT_CONFIDENCE_CONFIG,
+      missingFields: [],
+      classificationOutput: classification,
+    });
     expect(result).toContain('Category');
     expect(result).toContain('Management_Category');
     expect(result).toContain('Management_Object');
@@ -259,7 +326,10 @@ describe('category gating', () => {
       Category: 0.70,
       Management_Category: 0.25,
     };
-    const result = determineFieldsNeedingInput(confidences, DEFAULT_CONFIDENCE_CONFIG);
+    const result = determineFieldsNeedingInput({
+      confidenceByField: confidences,
+      config: DEFAULT_CONFIDENCE_CONFIG,
+    });
     expect(result).toContain('Management_Category');
   });
 });

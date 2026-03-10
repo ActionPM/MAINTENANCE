@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "eval_dataset_manifest.schema.json",
+  "title": "EvalDatasetManifest",
+  "type": "object",
+  "required": ["manifest_id", "dataset_type", "taxonomy_version", "schema_version", "example_count", "created_at"],
+  "properties": {
+    "manifest_id": { "type": "string", "minLength": 1 },
+    "dataset_type": { "type": "string", "enum": ["gold", "hard", "ood", "regression"] },
+    "taxonomy_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "schema_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "example_count": { "type": "integer", "minimum": 0 },
+    "slice_coverage": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+    "created_at": { "type": "string", "format": "date-time" },
+    "description": { "type": "string" }
+  },
+  "additionalProperties": false
+}

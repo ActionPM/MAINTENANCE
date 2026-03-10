@@ -10,7 +10,8 @@ export {
   classifyConfidenceBand,
   determineFieldsNeedingInput,
 } from './confidence.js';
-export type { ConfidenceBand, FieldConfidenceInput, ComputeAllInput } from './confidence.js';
+export type { ConfidenceBand, FieldConfidenceInput, ComputeAllInput, DetermineFieldsOptions, FieldPolicyMetadata } from './confidence.js';
+export { DEFAULT_FIELD_POLICY } from './confidence.js';
 
 export {
   callIssueClassifier,

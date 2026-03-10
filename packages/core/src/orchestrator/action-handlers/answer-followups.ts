@@ -140,9 +140,10 @@ export async function handleAnswerFollowups(
       cue_scores: cueScoresForInput,
     };
 
+    const taxonomyVersion = session.pinned_versions.taxonomy_version;
     let classifierResult;
     try {
-      classifierResult = await callIssueClassifier(classifierInput, deps.issueClassifier, taxonomy);
+      classifierResult = await callIssueClassifier(classifierInput, deps.issueClassifier, taxonomy, taxonomyVersion);
     } catch {
       return {
         newState: ConversationState.LLM_ERROR_RETRYABLE,
@@ -183,14 +184,14 @@ export async function handleAnswerFollowups(
 
     // Step A: Validate hierarchical constraints (I7)
     if (!output.needs_human_triage) {
-      const hierarchyResult = validateHierarchicalConstraints(output.classification, taxonomyConstraints);
+      const hierarchyResult = validateHierarchicalConstraints(output.classification, taxonomyConstraints, taxonomyVersion);
       if (!hierarchyResult.valid) {
         const constraintHint = `Hierarchical violations: ${hierarchyResult.violations.join('; ')}`;
         try {
           const retryInput: IssueClassifierInput = { ...classifierInput, retry_context: constraintHint };
-          const retryResult = await callIssueClassifier(retryInput, deps.issueClassifier, taxonomy);
+          const retryResult = await callIssueClassifier(retryInput, deps.issueClassifier, taxonomy, taxonomyVersion);
           if (retryResult.status === 'ok' && retryResult.output) {
-            const retryHierarchy = validateHierarchicalConstraints(retryResult.output.classification, taxonomyConstraints);
+            const retryHierarchy = validateHierarchicalConstraints(retryResult.output.classification, taxonomyConstraints, taxonomyVersion);
             if (retryHierarchy.valid) {
               output = retryResult.output;
             }
@@ -199,7 +200,7 @@ export async function handleAnswerFollowups(
           // Retry failed, continue with original output
         }
         // If still invalid after retry, log violation and escalate
-        const postRetryCheck = validateHierarchicalConstraints(output.classification, taxonomyConstraints);
+        const postRetryCheck = validateHierarchicalConstraints(output.classification, taxonomyConstraints, taxonomyVersion);
         if (!postRetryCheck.valid) {
           output = { ...output, needs_human_triage: true };
           await deps.eventRepo.insert({
@@ -207,7 +208,7 @@ export async function handleAnswerFollowups(
             event_type: 'classification_hierarchy_violation_unresolved',
             conversation_id: session.conversation_id,
             issue_id: issue.issue_id,
-            violations: postRetryCheck.violations,
+            payload: { violations: postRetryCheck.violations },
             created_at: deps.clock(),
           });
         }
@@ -217,7 +218,7 @@ export async function handleAnswerFollowups(
     // Step B: Resolve implied fields (C1)
     const impliedFields = output.needs_human_triage
       ? {}
-      : resolveConstraintImpliedFields(output.classification, taxonomyConstraints);
+      : resolveConstraintImpliedFields(output.classification, taxonomyConstraints, taxonomyVersion);
     if (Object.keys(impliedFields).length > 0) {
       output = { ...output, classification: { ...output.classification, ...impliedFields } };
       await deps.eventRepo.insert({
@@ -225,7 +226,7 @@ export async function handleAnswerFollowups(
         event_type: 'classification_constraint_resolution',
         conversation_id: session.conversation_id,
         issue_id: issue.issue_id,
-        resolved_fields: impliedFields,
+        payload: { resolved_fields: impliedFields },
         created_at: deps.clock(),
       });
     }
@@ -241,7 +242,12 @@ export async function handleAnswerFollowups(
 
     let fieldsNeedingInput = output.needs_human_triage
       ? []
-      : determineFieldsNeedingInput(computedConfidence, confidenceConfig, output.missing_fields, output.classification);
+      : determineFieldsNeedingInput({
+          confidenceByField: computedConfidence,
+          config: confidenceConfig,
+          missingFields: output.missing_fields,
+          classificationOutput: output.classification,
+        });
 
     // Short-circuit: remove fields the tenant directly answered this round.
     // A tenant explicitly answering a field resolves it regardless of confidence.

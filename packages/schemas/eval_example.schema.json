@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "eval_example.schema.json",
+  "title": "EvalExample",
+  "type": "object",
+  "required": [
+    "example_id", "dataset_type", "source_type", "conversation_text",
+    "split_issues_expected", "expected_classification_by_issue",
+    "expected_missing_fields", "expected_followup_fields",
+    "expected_needs_human_triage", "expected_risk_flags",
+    "slice_tags", "taxonomy_version", "schema_version",
+    "review_status", "reviewed_by", "created_at"
+  ],
+  "properties": {
+    "example_id": { "type": "string", "minLength": 1 },
+    "dataset_type": { "type": "string", "enum": ["gold", "hard", "ood", "regression"] },
+    "source_type": { "type": "string", "enum": ["fixture", "production_reviewed", "synthetic_reviewed"] },
+    "conversation_text": { "type": "string", "minLength": 1 },
+    "split_issues_expected": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["issue_text"],
+        "properties": { "issue_text": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "expected_classification_by_issue": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "Category": { "type": "string" },
+          "Location": { "type": "string" },
+          "Sub_Location": { "type": "string" },
+          "Maintenance_Category": { "type": "string" },
+          "Maintenance_Object": { "type": "string" },
+          "Maintenance_Problem": { "type": "string" },
+          "Management_Category": { "type": "string" },
+          "Management_Object": { "type": "string" },
+          "Priority": { "type": "string" }
+        },
+        "required": ["Category"],
+        "additionalProperties": false
+      }
+    },
+    "expected_missing_fields": { "type": "array", "items": { "type": "string" } },
+    "expected_followup_fields": { "type": "array", "items": { "type": "string" } },
+    "expected_needs_human_triage": { "type": "boolean" },
+    "expected_risk_flags": { "type": "array", "items": { "type": "string" } },
+    "slice_tags": { "type": "array", "items": { "type": "string" } },
+    "taxonomy_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "schema_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "review_status": { "type": "string", "enum": ["draft", "reviewed", "approved_for_gate"] },
+    "reviewed_by": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}
