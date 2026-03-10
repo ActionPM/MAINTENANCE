@@ -40,9 +40,14 @@ async function main() {
     process.exit(1);
   }
 
-  // Require metrics to be present for a promotable baseline
+  // Require metrics AND slice_metrics to be present for a promotable baseline.
+  // Without slice_metrics the gate cannot enforce critical-slice comparisons.
   if (!raw.metrics || typeof raw.metrics !== 'object') {
     console.error('Run file is missing computed metrics. Re-run eval:run to produce a complete run file.');
+    process.exit(1);
+  }
+  if (!raw.slice_metrics || typeof raw.slice_metrics !== 'object' || Object.keys(raw.slice_metrics).length === 0) {
+    console.error('Run file is missing slice_metrics. Re-run eval:run to produce a complete run file.');
     process.exit(1);
   }
 

@@ -130,6 +130,58 @@ describe('validateEvalRun', () => {
     const result = validateEvalRun({ run_id: 'run-001' });
     expect(result.valid).toBe(false);
   });
+
+  it('rejects invalid taxonomy values in result classifications', () => {
+    const result = validateEvalRun({
+      run_id: 'run-002',
+      runner_type: 'issue_level',
+      dataset_manifest_id: 'mf-001',
+      taxonomy_version: '1.1.0',
+      schema_version: '1.0.0',
+      cue_dict_version: '1.0.0',
+      prompt_version: 'v1',
+      model_id: 'claude-3-haiku',
+      started_at: NOW,
+      completed_at: NOW,
+      results: [
+        {
+          example_id: 'ex-001',
+          status: 'ok',
+          classification: {
+            Category: 'BOGUS_CATEGORY',
+            Location: 'suite',
+          },
+        },
+      ],
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes('BOGUS_CATEGORY'))).toBe(true);
+  });
+
+  it('skips domain validation for non-ok results', () => {
+    const result = validateEvalRun({
+      run_id: 'run-003',
+      runner_type: 'issue_level',
+      dataset_manifest_id: 'mf-001',
+      taxonomy_version: '1.1.0',
+      schema_version: '1.0.0',
+      cue_dict_version: '1.0.0',
+      prompt_version: 'v1',
+      model_id: 'claude-3-haiku',
+      started_at: NOW,
+      completed_at: NOW,
+      results: [
+        {
+          example_id: 'ex-001',
+          status: 'taxonomy_fail',
+          classification: {
+            Category: 'BOGUS_CATEGORY',
+          },
+        },
+      ],
+    });
+    expect(result.valid).toBe(true);
+  });
 });
 
 // --- EvalReport ---
