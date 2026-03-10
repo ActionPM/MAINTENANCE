@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { computeCueScores, computeCueStrengthForField } from '../../classifier/cue-scoring.js';
 import type { CueDictionary } from '@wo-agent/schemas';
+import { readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const schemasDir = resolve(__dirname, '../../../../schemas');
 
 const MINI_CUES: CueDictionary = {
   version: '1.0.0',
@@ -263,5 +269,21 @@ describe('computeCueScores', () => {
     // plumbing: leak(1) + pipe(1) = 2 * 0.6 = 1.0 (clamped)
     // electrical: outlet(1) + sparks(1) = 2 * 0.6 = 1.0 (clamped)
     expect(result.Maintenance_Category.ambiguity).toBeGreaterThan(0);
+  });
+});
+
+describe('bathtub vs shower cue disambiguation (v1.2)', () => {
+  const realCues: CueDictionary = JSON.parse(readFileSync(resolve(schemasDir, 'classification_cues.json'), 'utf-8'));
+
+  it('scores bathtub higher than shower for tub-specific text', () => {
+    const text = "bathtub drain is clogged and water won't drain";
+    const result = computeCueStrengthForField(text, 'Maintenance_Object', realCues);
+    expect(result.topLabel).toBe('bathtub');
+  });
+
+  it('scores shower higher than bathtub for shower-specific text', () => {
+    const text = 'shower head is leaking water all over the floor';
+    const result = computeCueStrengthForField(text, 'Maintenance_Object', realCues);
+    expect(result.topLabel).toBe('shower');
   });
 });

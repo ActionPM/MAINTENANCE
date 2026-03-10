@@ -45,21 +45,21 @@ const HIGH_CONFIDENCE_OUTPUT: IssueClassifierOutput = {
 
 /**
  * Cue dictionary covering all fields in HIGH_CONFIDENCE_OUTPUT so that
- * cue_strength > 0 for every field, pushing confidence into the medium band
- * (>= 0.65) which is accepted without follow-up.
+ * cue_strength > 0 for every field, pushing confidence into the high band
+ * (>= 0.85) which is accepted without follow-up.
  */
 const FULL_CUES: CueDictionary = {
   version: '1.0.0',
   fields: {
-    Category: { maintenance: { keywords: ['leak'], regex: [] } },
-    Location: { suite: { keywords: ['toilet'], regex: [] } },
-    Sub_Location: { bathroom: { keywords: ['toilet'], regex: [] } },
+    Category: { maintenance: { keywords: ['leak', 'leaking'], regex: [] } },
+    Location: { suite: { keywords: ['toilet', 'my'], regex: [] } },
+    Sub_Location: { bathroom: { keywords: ['toilet', 'leaking'], regex: [] } },
     Maintenance_Category: { plumbing: { keywords: ['leak', 'toilet'], regex: [] } },
-    Maintenance_Object: { toilet: { keywords: ['toilet'], regex: [] } },
-    Maintenance_Problem: { leak: { keywords: ['leak'], regex: [] } },
-    Management_Category: { other_mgmt_cat: { keywords: ['toilet'], regex: [] } },
-    Management_Object: { other_mgmt_obj: { keywords: ['toilet'], regex: [] } },
-    Priority: { normal: { keywords: ['leak'], regex: [] } },
+    Maintenance_Object: { toilet: { keywords: ['toilet', 'leaking'], regex: [] } },
+    Maintenance_Problem: { leak: { keywords: ['leak', 'leaking'], regex: [] } },
+    Management_Category: { other_mgmt_cat: { keywords: ['toilet', 'my'], regex: [] } },
+    Management_Object: { other_mgmt_obj: { keywords: ['toilet', 'my'], regex: [] } },
+    Priority: { normal: { keywords: ['leak', 'toilet'], regex: [] } },
   },
 };
 

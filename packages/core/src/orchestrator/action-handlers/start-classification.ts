@@ -97,12 +97,14 @@ export async function handleStartClassification(
       cue_scores: cueScoresForInput,
     };
 
+    const taxonomyVersion = session.pinned_versions.taxonomy_version;
     let classifierResult;
     try {
       classifierResult = await callIssueClassifier(
         classifierInput,
         deps.issueClassifier,
         taxonomy,
+        taxonomyVersion,
       );
     } catch (err) {
       anyLlmError = true;
@@ -132,7 +134,7 @@ export async function handleStartClassification(
 
     // Step A: Validate hierarchical constraints (I7)
     if (!output.needs_human_triage) {
-      const hierarchyResult = validateHierarchicalConstraints(output.classification, taxonomyConstraints);
+      const hierarchyResult = validateHierarchicalConstraints(output.classification, taxonomyConstraints, taxonomyVersion);
       if (!hierarchyResult.valid) {
         // One constrained retry with constraint hint
         const constraintHint = `Hierarchical violations: ${hierarchyResult.violations.join('; ')}`;
@@ -141,9 +143,9 @@ export async function handleStartClassification(
             ...classifierInput,
             retry_context: constraintHint,
           };
-          const retryResult = await callIssueClassifier(retryInput, deps.issueClassifier, taxonomy);
+          const retryResult = await callIssueClassifier(retryInput, deps.issueClassifier, taxonomy, taxonomyVersion);
           if (retryResult.status === 'ok' && retryResult.output) {
-            const retryHierarchy = validateHierarchicalConstraints(retryResult.output.classification, taxonomyConstraints);
+            const retryHierarchy = validateHierarchicalConstraints(retryResult.output.classification, taxonomyConstraints, taxonomyVersion);
             if (retryHierarchy.valid) {
               output = retryResult.output;
             }
@@ -152,7 +154,7 @@ export async function handleStartClassification(
           // Retry failed, continue with original output
         }
         // If still invalid after retry, log violation and escalate
-        const postRetryCheck = validateHierarchicalConstraints(output.classification, taxonomyConstraints);
+        const postRetryCheck = validateHierarchicalConstraints(output.classification, taxonomyConstraints, taxonomyVersion);
         if (!postRetryCheck.valid) {
           output = { ...output, needs_human_triage: true };
           await deps.eventRepo.insert({
@@ -170,7 +172,7 @@ export async function handleStartClassification(
     // Step B: Resolve implied fields (C1 — only missing/vague, logged)
     const impliedFields = output.needs_human_triage
       ? {}
-      : resolveConstraintImpliedFields(output.classification, taxonomyConstraints);
+      : resolveConstraintImpliedFields(output.classification, taxonomyConstraints, taxonomyVersion);
     if (Object.keys(impliedFields).length > 0) {
       output = { ...output, classification: { ...output.classification, ...impliedFields } };
       await deps.eventRepo.insert({
@@ -194,7 +196,12 @@ export async function handleStartClassification(
 
     let fieldsNeedingInput = output.needs_human_triage
       ? []
-      : determineFieldsNeedingInput(computedConfidence, confidenceConfig, output.missing_fields, output.classification);
+      : determineFieldsNeedingInput({
+          confidenceByField: computedConfidence,
+          config: confidenceConfig,
+          missingFields: output.missing_fields,
+          classificationOutput: output.classification,
+        });
 
     // Short-circuit: remove constraint-implied fields — deterministically resolved.
     if (Object.keys(impliedFields).length > 0) {

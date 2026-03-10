@@ -227,12 +227,18 @@ describe('e2e toilet leak scenario', () => {
 
     const result2 = await handleAnswerFollowups(ctx2);
 
-    // Should transition to tenant_confirmation_pending (no second follow-up round)
+    // With the updated confidence policy (spec §14.3), medium-confidence
+    // required/risk-relevant fields that weren't directly answered by the tenant
+    // (e.g., Category, Maintenance_Problem) still need input. The handler calls
+    // the follow-up generator a second time, but the mock returns questions
+    // targeting already-answered fields, which are filtered out. The empty
+    // filtered result triggers the escape hatch → tenant_confirmation_pending
+    // with needs_human_triage for remaining uncertain fields.
     expect(result2.newState).toBe(ConversationState.TENANT_CONFIRMATION_PENDING);
 
-    // Follow-up generator should NOT be called again — all fields resolved
-    // (answered by tenant + Sub_Location implied by constraints)
-    expect(followUpCallCount).toBe(1);
+    // Follow-up generator is called a second time for the remaining fields,
+    // but its questions are filtered out (targeting already-resolved fields).
+    expect(followUpCallCount).toBe(2);
 
     // ── Verify constraint resolution ──
     const finalSession = result2.session;

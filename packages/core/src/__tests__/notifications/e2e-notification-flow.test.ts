@@ -16,15 +16,15 @@ const taxonomy = loadTaxonomy();
 const FULL_CUES: CueDictionary = {
   version: '1.0.0',
   fields: {
-    Category: { maintenance: { keywords: ['faucet', 'leak'], regex: [] } },
-    Location: { suite: { keywords: ['kitchen'], regex: [] } },
-    Sub_Location: { kitchen: { keywords: ['kitchen'], regex: [] } },
-    Maintenance_Category: { plumbing: { keywords: ['faucet', 'leak'], regex: [] } },
-    Maintenance_Object: { faucet: { keywords: ['faucet'], regex: [] } },
-    Maintenance_Problem: { leak: { keywords: ['leak'], regex: [] } },
-    Management_Category: { other_mgmt_cat: { keywords: ['other'], regex: [] } },
-    Management_Object: { other_mgmt_obj: { keywords: ['other'], regex: [] } },
-    Priority: { normal: { keywords: ['faucet'], regex: [] } },
+    Category: { maintenance: { keywords: ['faucet', 'leaky'], regex: [] } },
+    Location: { suite: { keywords: ['kitchen', 'faucet'], regex: [] } },
+    Sub_Location: { kitchen: { keywords: ['kitchen', 'light'], regex: [] } },
+    Maintenance_Category: { plumbing: { keywords: ['faucet', 'leaky'], regex: [] } },
+    Maintenance_Object: { faucet: { keywords: ['faucet', 'leaky'], regex: [] } },
+    Maintenance_Problem: { leak: { keywords: ['leaky', 'broken'], regex: [] } },
+    Management_Category: { other_mgmt_cat: { keywords: ['faucet', 'light'], regex: [] } },
+    Management_Object: { other_mgmt_obj: { keywords: ['faucet', 'broken'], regex: [] } },
+    Priority: { normal: { keywords: ['faucet', 'leaky'], regex: [] } },
   },
 };
 
