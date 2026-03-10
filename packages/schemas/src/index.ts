@@ -5,14 +5,6 @@
 export { loadTaxonomy, isTaxonomyValue, taxonomy, TAXONOMY_FIELD_NAMES, MAINTENANCE_FIELDS, MANAGEMENT_FIELDS } from './taxonomy.js';
 export type { Taxonomy, TaxonomyFieldName } from './taxonomy.js';
 
-// --- Taxonomy Manifest ---
-export { loadTaxonomyManifest, taxonomyManifest } from './taxonomy-manifest.js';
-export type { TaxonomyManifest, AuthoritativeHierarchy, SentinelPolicy } from './taxonomy-manifest.js';
-
-// --- Taxonomy Analytic Classes ---
-export { loadTaxonomyAnalyticClasses, taxonomyAnalyticClasses, isSentinelValue, isDeprecatedValue } from './taxonomy-analytic-classes.js';
-export type { TaxonomyAnalyticClasses, AnalyticClass } from './taxonomy-analytic-classes.js';
-
 // --- Taxonomy Constraints ---
 export {
   loadTaxonomyConstraints,
