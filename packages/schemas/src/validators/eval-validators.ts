@@ -98,9 +98,42 @@ export function validateEvalManifest(data: unknown): EvalValidationResult {
   return structuralValidate(data, 'eval_dataset_manifest.schema.json');
 }
 
-/** Validate an EvalRun (structural only). */
+/**
+ * Validate an EvalRun: structural schema + domain checks.
+ *
+ * Domain checks: every result with status 'ok' must have a classification
+ * containing only valid taxonomy values. This prevents malformed run
+ * artifacts from being promoted as trusted baselines.
+ */
 export function validateEvalRun(data: unknown): EvalValidationResult {
-  return structuralValidate(data, 'eval_run.schema.json');
+  const structural = structuralValidate(data, 'eval_run.schema.json');
+  if (!structural.valid) return structural;
+
+  const run = data as Record<string, unknown>;
+  const results = run.results as Record<string, unknown>[];
+  const taxonomyVersion = run.taxonomy_version as string | undefined;
+  const taxonomy = loadTaxonomy();
+  const errors: string[] = [];
+
+  for (let i = 0; i < results.length; i++) {
+    const classification = results[i].classification as Record<string, string> | undefined;
+    if (classification && results[i].status === 'ok') {
+      const result = validateClassificationAgainstTaxonomy(classification, taxonomy, taxonomyVersion);
+      if (!result.valid) {
+        for (const iv of result.invalidValues) {
+          errors.push(
+            `results[${i}].classification.${iv.field}: "${iv.value}" is not a valid taxonomy value`,
+          );
+        }
+        for (const violation of result.crossDomainViolations) {
+          errors.push(`results[${i}].classification: ${violation}`);
+        }
+      }
+    }
+  }
+
+  if (errors.length > 0) return { valid: false, errors };
+  return { valid: true, errors: [] };
 }
 
 /** Validate an EvalReport (structural only). */

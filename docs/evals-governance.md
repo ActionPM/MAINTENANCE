@@ -17,7 +17,7 @@
 2. **Classify root cause** — categorize as: uncovered (missing cue), difficult (ambiguous input), noisy (conflicting signals), or taxonomy gap
 3. **Propose smallest fix** — target the narrowest change (e.g., add 2 keywords vs. restructure the cue dictionary)
 4. **Run candidate** — execute eval suite against the fixed datasets
-5. **Merge criteria** — merge only if critical slices are flat or better (no regressions on emergency, access, pest, OOD slices)
+5. **Merge criteria** — merge only if critical slices are flat or better (no regressions on emergency, building_access, pest_control, OOD slices)
 6. **Update dataset** — add the regression example to the regression dataset after human review
 
 ## 4. Review requirements
