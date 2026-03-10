@@ -1,0 +1,256 @@
+Scope: 5 of 6 workspace projects
+packages/schemas test$ vitest run
+packages/schemas test: [1m[46m RUN [49m[22m [36mv3.2.4 [39m[90mC:/Users/Owner/Documents/01_ActionPM/03_Agents/03_Work Order Triage/Work Order Agent/packages/schemas[39m
+packages/schemas test:  [32m✓[39m src/__tests__/notification-types.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+packages/schemas test:  [32m✓[39m src/__tests__/risk-types.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+packages/schemas test:  [32m✓[39m src/__tests__/taxonomy-cross-validation-constraints.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+packages/schemas test:  [32m✓[39m src/__tests__/taxonomy-constraints.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 62[2mms[22m[39m
+packages/schemas test:  [32m✓[39m src/__tests__/enums-and-config.test.ts [2m([22m[2m40 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+packages/schemas test:  [32m✓[39m src/__tests__/record-bundle-validator.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+packages/schemas test:  [32m✓[39m src/__tests__/risk-loaders.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+packages/schemas test:  [32m✓[39m src/__tests__/integration.test.ts [2m([22m[2m22 tests[22m[2m)[22m[32m 64[2mms[22m[39m
+packages/schemas test:  [32m✓[39m src/__tests__/validators.test.ts [2m([22m[2m89 tests[22m[2m)[22m[32m 96[2mms[22m[39m
+packages/schemas test: [2m Test Files [22m [1m[32m9 passed[39m[22m[90m (9)[39m
+packages/schemas test: [2m      Tests [22m [1m[32m192 passed[39m[22m[90m (192)[39m
+packages/schemas test: [2m   Start at [22m 10:52:24
+packages/schemas test: [2m   Duration [22m 1.09s[2m (transform 552ms, setup 0ms, collect 2.43s, tests 287ms, environment 2ms, prepare 1.99s)[22m
+packages/schemas test: Done
+packages/core test$ vitest run
+packages/core test: [1m[46m RUN [49m[22m [36mv3.2.4 [39m[90mC:/Users/Owner/Documents/01_ActionPM/03_Agents/03_Work Order Triage/Work Order Agent/packages/core[39m
+packages/core test:  [32m✓[39m src/__tests__/auth/jwt.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/work-order/wo-creator.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/state-machine/transition-matrix.test.ts [2m([22m[2m46 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/classifier/classification-events.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/followup/answer-followups.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/risk/risk-integration.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/work-order/wo-creation-integration.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/work-order/e2e-wo-creation.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/classifier/classification-flow.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 33[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/classifier/integration.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 42[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/orchestrator-integration.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/followup/followup-integration.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 43[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/followup/classification-followup.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/notifications/e2e-notification-flow.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 26[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/classifier/reclassification.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 30[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/confirmation/confirmation-integration.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/notifications/notification-service.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/risk/emergency-router.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/classifier/start-classification.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/record-bundle/e2e-record-bundle.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 20[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/record-bundle/assembler.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/followup/e2e-toilet-leak.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 24[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/orchestrator/action-handlers/submit-initial-message.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/classifier/cue-scoring.test.ts [2m([22m[2m24 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/orchestrator/action-handlers/remaining-handlers.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/confirmation/payload-builder.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/work-order/wo-status-update.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/notifications/notification-store.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/integration.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/analytics/analytics-integration.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/orchestrator/response-builder.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/classifier/cue-location-inference.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/classifier/issue-classifier.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/risk/submit-risk-scan.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/analytics/analytics-taxonomy.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/session/draft-discovery.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/classifier/session-classification.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/state-machine/transition.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/followup/event-builder.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/idempotency/idempotency-store.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/followup/followup-generator.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 30[2mms[22m[39m
+packages/core test:  [32m✓[39m src/llm/__tests__/splitter-adapter.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/auth/middleware.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 82[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/followup/constraint-filtered-followup.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/splitter/issue-splitter.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/work-order/idempotent-retry.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 9[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/events/in-memory-event-store.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 20[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/unit-resolver/select-unit-scope.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/events/event-repository.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/session/session.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/classifier/confidence-integration.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/orchestrator/action-handlers/split-actions.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/classifier/response-builder.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/erp/erp-types.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/analytics/analytics-types.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/orchestrator/action-handlers/select-unit.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/confirmation/classification-confirmation.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/orchestrator/action-handlers/create-conversation.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/risk/wo-risk-flags.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/risk/event-builder.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/erp/erp-event-builder.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+packages/core test:  [32m✓[39m src/llm/__tests__/anthropic-client.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/record-bundle/sla-calculator.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/risk/mitigation.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/classifier/confidence.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+packages/core test:  [32m✓[39m src/llm/__tests__/classifier-adapter.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/classifier/classifier-prompt-constraints.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/confirmation/session-confirmation.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/classifier/constraint-pipeline-integration.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/confirmation/confirm-submission.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/risk/trigger-scanner.test.ts [2m([22m[2m10 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/orchestrator/dispatcher.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/risk/session-risk.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/unit-resolver/session-scope.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/confirmation/staleness.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 32[2mms[22m[39m
+packages/core test:  [32m✓[39m src/llm/__tests__/create-llm-deps.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/work-order/wo-creator-conversation-id.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 9[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/notifications/event-repo-integration.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/classifier/constraint-resolver.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/analytics/wo-list-all.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/erp/erp-sync-service.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/risk/barrel-export.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 5[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/followup/caps.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/followup/followup-prompt-rules.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 4[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/work-order/response-wo-ids.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/erp/erp-integration.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/classifier/constraint-implied-confidence.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/analytics/analytics-sla.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+packages/core test:  [32m✓[39m src/llm/__tests__/followup-adapter.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/notifications/confirm-submission-notifications.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/analytics/analytics-overview.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 14[2mms[22m[39m
+packages/core test:  [32m✓[39m src/llm/__tests__/parse-response.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 18[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/work-order/wo-store.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 19[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/analytics/analytics-notifications.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/followup/session-followup.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/notifications/mock-sms-sender.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/erp/erp-barrel.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 6[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/analytics/notif-list-all.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/notifications/deps-wiring.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 3[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/splitter/input-sanitizer.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/state-machine/guards.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/confirmation/response-confirmation.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/confirmation/event-builder.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/notifications/preference-service.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/notifications/event-builder.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/work-order/wo-event-builder.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 4[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/risk/response-risk.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+packages/core test:  [32m✓[39m src/__tests__/analytics/analytics-barrel.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 3[2mms[22m[39m
+packages/core test: [2m Test Files [22m [1m[32m108 passed[39m[22m[90m (108)[39m
+packages/core test: [2m      Tests [22m [1m[32m638 passed[39m[22m[90m (638)[39m
+packages/core test: [2m   Start at [22m 10:52:25
+packages/core test: [2m   Duration [22m 13.73s[2m (transform 6.46s, setup 0ms, collect 43.71s, tests 1.61s, environment 53ms, prepare 38.28s)[22m
+packages/core test: Done
+packages/adapters/mock test$ vitest run
+packages/db test$ vitest run
+packages/db test: [1m[46m RUN [49m[22m [36mv3.2.4 [39m[90mC:/Users/Owner/Documents/01_ActionPM/03_Agents/03_Work Order Triage/Work Order Agent/packages/db[39m
+packages/adapters/mock test: [1m[46m RUN [49m[22m [36mv3.2.4 [39m[90mC:/Users/Owner/Documents/01_ActionPM/03_Agents/03_Work Order Triage/Work Order Agent/packages/adapters/mock[39m
+packages/db test:  [32m✓[39m src/__tests__/pg-wo-store.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+packages/db test:  [32m✓[39m src/__tests__/pg-notification-store.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+packages/db test:  [32m✓[39m src/__tests__/pg-session-store.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+packages/db test:  [32m✓[39m src/__tests__/pg-idempotency-store.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+packages/db test:  [32m✓[39m src/__tests__/pg-event-store.test.ts [2m([22m[2m9 tests[22m[2m)[22m[32m 16[2mms[22m[39m
+packages/db test:  [32m✓[39m src/__tests__/pool.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 10[2mms[22m[39m
+packages/db test:  [32m✓[39m src/__tests__/barrel.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+packages/adapters/mock test:  [32m✓[39m src/__tests__/mock-erp-adapter.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+packages/adapters/mock test: [2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+packages/adapters/mock test: [2m      Tests [22m [1m[32m16 passed[39m[22m[90m (16)[39m
+packages/adapters/mock test: [2m   Start at [22m 10:52:40
+packages/adapters/mock test: [2m   Duration [22m 2.54s[2m (transform 456ms, setup 0ms, collect 1.13s, tests 22ms, environment 1ms, prepare 572ms)[22m
+packages/adapters/mock test: Done
+packages/db test:  [32m✓[39m src/__tests__/imports.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 3012[2mms[22m[39m
+packages/db test:    [33m[2m✓[22m[39m core type imports used by @wo-agent/db[2m > [22mcan import EventRepository and related types [33m 3008[2mms[22m[39m
+packages/db test: [2m Test Files [22m [1m[32m8 passed[39m[22m[90m (8)[39m
+packages/db test: [2m      Tests [22m [1m[32m40 passed[39m[22m[90m (40)[39m
+packages/db test: [2m   Start at [22m 10:52:40
+packages/db test: [2m   Duration [22m 4.71s[2m (transform 2.35s, setup 0ms, collect 2.11s, tests 3.10s, environment 4ms, prepare 4.01s)[22m
+packages/db test: Done
+apps/web test$ vitest run
+apps/web test: [1m[46m RUN [49m[22m [36mv3.2.4 [39m[90mC:/Users/Owner/Documents/01_ActionPM/03_Agents/03_Work Order Triage/Work Order Agent/apps/web[39m
+apps/web test:  [32m✓[39m src/lib/__tests__/api-client.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 47[2mms[22m[39m
+apps/web test:  [32m✓[39m src/app/__tests__/page.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 104[2mms[22m[39m
+apps/web test:  [31m❯[39m src/components/__tests__/chat-message.test.tsx [2m([22m[2m5 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 321[2mms[22m[39m
+apps/web test:    [32m✓[39m ChatMessage[2m > [22mrenders message content[32m 265[2mms[22m[39m
+apps/web test:    [32m✓[39m ChatMessage[2m > [22mapplies agent styling[32m 10[2mms[22m[39m
+apps/web test:    [32m✓[39m ChatMessage[2m > [22mapplies tenant styling[32m 7[2mms[22m[39m
+apps/web test:    [32m✓[39m ChatMessage[2m > [22mapplies system styling[32m 7[2mms[22m[39m
+apps/web test: [31m   [31m×[31m ChatMessage[2m > [22mdisplays formatted time[39m[32m 28[2mms[22m[39m
+apps/web test: [31m     → Unable to find an element with the text: /10:30/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+apps/web test: Ignored nodes: comments, script, style
+apps/web test: [36m<body>[31m
+apps/web test:   [36m<div>[31m
+apps/web test:     [36m<div[31m
+apps/web test:       [33mclass[31m=[32m"message"[31m
+apps/web test:       [33mdata-role[31m=[32m"agent"[31m
+apps/web test:     [36m>[31m
+apps/web test:       [36m<span[31m
+apps/web test:         [33mclass[31m=[32m"content"[31m
+apps/web test:       [36m>[31m
+apps/web test:         [0mHi[0m
+apps/web test:       [36m</span>[31m
+apps/web test:       [36m<span[31m
+apps/web test:         [33mclass[31m=[32m"time"[31m
+apps/web test:       [36m>[31m
+apps/web test:         [0m05:30 a.m.[0m
+apps/web test:       [36m</span>[31m
+apps/web test:     [36m</div>[31m
+apps/web test:   [36m</div>[31m
+apps/web test: [36m</body>[31m[39m
+apps/web test:  [32m✓[39m src/components/__tests__/quick-replies.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 992[2mms[22m[39m
+apps/web test:    [33m[2m✓[22m[39m QuickReplies[2m > [22mcalls onSelect with value when clicked [33m 688[2mms[22m[39m
+apps/web test:  [32m✓[39m src/components/__tests__/confirmation-panel.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 1121[2mms[22m[39m
+apps/web test:    [33m[2m✓[22m[39m ConfirmationPanel[2m > [22mcalls onConfirm when confirmed [33m 850[2mms[22m[39m
+apps/web test:  [32m✓[39m src/components/__tests__/unit-selector.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 1163[2mms[22m[39m
+apps/web test:    [33m[2m✓[22m[39m UnitSelector[2m > [22mcalls onSelect with the chosen unit id [33m 926[2mms[22m[39m
+apps/web test:  [32m✓[39m src/components/__tests__/status-indicator.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 1163[2mms[22m[39m
+apps/web test:    [33m[2m✓[22m[39m StatusIndicator[2m > [22mrenders processing message for split_in_progress [33m 670[2mms[22m[39m
+apps/web test:  [32m✓[39m src/components/__tests__/followup-form.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[33m 1968[2mms[22m[39m
+apps/web test:    [33m[2m✓[22m[39m FollowupForm[2m > [22mrenders text input for text type [33m 834[2mms[22m[39m
+apps/web test:    [33m[2m✓[22m[39m FollowupForm[2m > [22msubmits all answers [33m 937[2mms[22m[39m
+apps/web test:  [32m✓[39m src/components/__tests__/chat-shell.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[33m 2075[2mms[22m[39m
+apps/web test:    [33m[2m✓[22m[39m ChatShell[2m > [22mrenders start button before conversation begins [33m 842[2mms[22m[39m
+apps/web test:    [33m[2m✓[22m[39m ChatShell[2m > [22mstarts conversation and shows message input after unit_selected [33m 364[2mms[22m[39m
+apps/web test:  [32m✓[39m src/components/__tests__/split-review.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[33m 3118[2mms[22m[39m
+apps/web test:    [33m[2m✓[22m[39m SplitReview[2m > [22mcalls onConfirm when confirm button clicked [33m 1036[2mms[22m[39m
+apps/web test:    [33m[2m✓[22m[39m SplitReview[2m > [22mallows editing an issue summary inline [33m 937[2mms[22m[39m
+apps/web test:    [33m[2m✓[22m[39m SplitReview[2m > [22mallows adding a new issue [33m 679[2mms[22m[39m
+apps/web test:  [32m✓[39m src/components/__tests__/message-input.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 3216[2mms[22m[39m
+apps/web test:    [33m[2m✓[22m[39m MessageInput[2m > [22mrenders textarea and send button [33m 801[2mms[22m[39m
+apps/web test:    [33m[2m✓[22m[39m MessageInput[2m > [22mcalls onSend with trimmed message and clears input [33m 724[2mms[22m[39m
+apps/web test:    [33m[2m✓[22m[39m MessageInput[2m > [22mshows character count approaching limit [33m 1481[2mms[22m[39m
+apps/web test:  [32m✓[39m src/hooks/__tests__/use-conversation.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 56[2mms[22m[39m
+apps/web test:  [32m✓[39m src/lib/__tests__/orchestrator-factory-llm.test.ts [2m([22m[2m2 tests[22m[2m)[22m[33m 2564[2mms[22m[39m
+apps/web test:    [33m[2m✓[22m[39m orchestrator-factory LLM wiring[2m > [22minitializes with stubs when ANTHROPIC_API_KEY is not set [33m 2560[2mms[22m[39m
+apps/web test:  [32m✓[39m src/app/api/analytics/__tests__/analytics-route.test.ts [2m([22m[2m3 tests[22m[2m)[22m[32m 36[2mms[22m[39m
+apps/web test: [31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+apps/web test: [41m[1m FAIL [22m[49m src/components/__tests__/chat-message.test.tsx[2m > [22mChatMessage[2m > [22mdisplays formatted time
+apps/web test: [31m[1mTestingLibraryElementError[22m: Unable to find an element with the text: /10:30/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+apps/web test: Ignored nodes: comments, script, style
+apps/web test: [36m<body>[31m
+apps/web test:   [36m<div>[31m
+apps/web test:     [36m<div[31m
+apps/web test:       [33mclass[31m=[32m"message"[31m
+apps/web test:       [33mdata-role[31m=[32m"agent"[31m
+apps/web test:     [36m>[31m
+apps/web test:       [36m<span[31m
+apps/web test:         [33mclass[31m=[32m"content"[31m
+apps/web test:       [36m>[31m
+apps/web test:         [0mHi[0m
+apps/web test:       [36m</span>[31m
+apps/web test:       [36m<span[31m
+apps/web test:         [33mclass[31m=[32m"time"[31m
+apps/web test:       [36m>[31m
+apps/web test:         [0m05:30 a.m.[0m
+apps/web test:       [36m</span>[31m
+apps/web test:     [36m</div>[31m
+apps/web test:   [36m</div>[31m
+apps/web test: [36m</body>[31m[39m
+apps/web test: [90m [2m❯[22m Object.getElementError ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/config.js:[2m37:19[22m[39m
+apps/web test: [90m [2m❯[22m ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:[2m76:38[22m[39m
+apps/web test: [90m [2m❯[22m ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:[2m52:17[22m[39m
+apps/web test: [90m [2m❯[22m ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:[2m95:19[22m[39m
+apps/web test: [36m [2m❯[22m src/components/__tests__/chat-message.test.tsx:[2m42:19[22m[39m
+apps/web test:     [90m 40| [39m      <ChatMessage role="agent" content="Hi" timestamp="2026-03-04T10:…
+apps/web test:     [90m 41| [39m    )[33m;[39m
+apps/web test:     [90m 42| [39m    [34mexpect[39m(screen[33m.[39m[34mgetByText[39m([36m/10:30/[39m))[33m.[39m[34mtoBeInTheDocument[39m()[33m;[39m
+apps/web test:     [90m   | [39m                  [31m^[39m
+apps/web test:     [90m 43| [39m  })[33m;[39m
+apps/web test:     [90m 44| [39m})[33m;[39m
+apps/web test: [2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m13 passed[39m[22m[90m (14)[39m
+apps/web test: [2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m69 passed[39m[22m[90m (70)[39m
+apps/web test: [2m   Start at [22m 10:52:46
+apps/web test: [31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+apps/web test: [2m   Duration [22m 17.93s[2m (transform 4.24s, setup 9.81s, collect 22.47s, tests 17.94s, environment 85.27s, prepare 12.15s)[22m
+apps/web test: Failed
+C:\Users\Owner\Documents\01_ActionPM\03_Agents\03_Work Order Triage\Work Order Agent\apps\web:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @wo-agent/web@0.1.0 test: `vitest run`
+Exit status 1

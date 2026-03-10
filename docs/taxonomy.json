@@ -27,7 +27,8 @@
     "drywall_plaster", "paint", "pest_control", "general_maintenance",
     "locksmith", "appliance", "roofing", "tile",
     "other_issue",
-    "other_maintenance_category"
+    "other_maintenance_category",
+    "not_applicable"
   ],
 
   "Maintenance_Object": [
@@ -40,20 +41,23 @@
     "oven", "microwave", "stove", "washer", "dryer", "range_hood",
     "roof", "grout",
     "other_object", "no_object", "needs_object",
-    "other_maintenance_object"
+    "other_maintenance_object",
+    "not_applicable"
   ],
 
   "Maintenance_Problem": [
     "leak", "drain", "clog", "not_working", "no_water",
     "no_heat", "flood", "infestation", "broken_damaged",
     "safety_risk", "smell", "low_pressure",
-    "other_problem"
-],
+    "other_problem",
+    "not_applicable"
+  ],
   
   "Management_Category": [
     "accounting", "lease", "general",
     "other_mgmt_cat",
-    "other_management_category"
+    "other_management_category",
+    "not_applicable"
   ],
 
   "Management_Object": [
@@ -64,7 +68,8 @@
     "technical_issues", "accommodations", "chargebacks",
     "general_feedback", "questions", "parking", "intercom",
     "other_mgmt_obj", "no_object", "needs_object",
-    "other_management_object"
+    "other_management_object",
+    "not_applicable"
   ],
 
   "Priority": [

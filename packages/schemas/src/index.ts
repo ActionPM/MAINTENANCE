@@ -149,3 +149,7 @@ export { validateClassificationAgainstTaxonomy, validateHierarchicalConstraints 
 export type { DomainValidationResult, HierarchicalValidationResult } from './validators/taxonomy-cross-validator.js';
 export { validateCueDictionary } from './validators/cue-dictionary-validator.js';
 export type { CueDictionary } from './validators/cue-dictionary-validator.js';
+export { validateOrchestratorActionDomain, SIDE_EFFECT_ACTIONS } from './validators/orchestrator-action-domain.js';
+export type { ActionDomainValidationResult } from './validators/orchestrator-action-domain.js';
+export { validateIssueSplitDomain } from './validators/issue-split-domain.js';
+export type { IssueSplitDomainValidationResult } from './validators/issue-split-domain.js';

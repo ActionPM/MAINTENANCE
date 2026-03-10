@@ -6,7 +6,7 @@
       "type": "object",
       "properties": {
         "field_target": { "type": "string" },
-        "times_asked": { "type": "integer", "minimum": 0 }
+        "times_asked": { "type": "integer", "minimum": 0, "maximum": 2 }
       },
       "required": ["field_target", "times_asked"],
       "additionalProperties": false
@@ -35,8 +35,8 @@
           "type": "array",
           "items": { "$ref": "#/definitions/PreviousQuestion" }
         },
-        "turn_number": { "type": "integer", "minimum": 1 },
-        "total_questions_asked": { "type": "integer", "minimum": 0 },
+        "turn_number": { "type": "integer", "minimum": 1, "maximum": 8 },
+        "total_questions_asked": { "type": "integer", "minimum": 0, "maximum": 8 },
         "taxonomy_version": { "type": "string" },
         "prompt_version": { "type": "string" },
         "original_text": { "type": "string" }

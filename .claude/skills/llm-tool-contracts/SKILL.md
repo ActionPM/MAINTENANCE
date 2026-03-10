@@ -441,7 +441,7 @@ This is the most nuanced domain validation. Get it right.
 3. **If contradictory:**
    a. This is a **classification validation failure** — not a schema failure
    b. Run ONE targeted retry with hard constraint:
-      - Inject instruction: "The top-level category is [X]. Set all [other domain] fields to their not-applicable equivalents."
+      - Inject instruction: "The top-level category is [X]. Set all [other domain] fields to `not_applicable`."
    c. Validate the retry output (full pipeline: parse → schema → domain)
    d. **If still contradictory after retry:**
       - Set `needs_human_triage = true`
@@ -450,9 +450,11 @@ This is the most nuanced domain validation. Get it right.
       - Do NOT block the tenant — they get their WO, it just needs human review
 
 ### What "not-applicable equivalents" means:
-- Depends on your taxonomy structure
-- Typically a `"not_applicable"` or `"n/a"` enum value for each field
-- These values MUST exist in `taxonomy.json` — do not use null or empty string as N/A
+- Use the literal value `"not_applicable"` for each irrelevant domain field
+- This value MUST exist in `taxonomy.json` for every domain-specific field
+- Do NOT use `"other_*"` values as N/A — those mean "this domain applies but doesn't fit a named category"
+- Do NOT use null, empty string, or omission as N/A
+- This is enforced by the domain validator (taxonomy-cross-validator), NOT by JSON Schema — classifier output schemas type values as generic strings
 
 ---
 
