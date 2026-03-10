@@ -40,6 +40,19 @@
           "errors": { "type": "array", "items": { "type": "string" } }
         }
       }
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Computed top-level metrics (field_accuracy, schema_invalid_rate, etc.)",
+      "additionalProperties": { "type": "number" }
+    },
+    "slice_metrics": {
+      "type": "object",
+      "description": "Per-slice metrics keyed by slice name",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": { "type": "number" }
+      }
     }
   },
   "additionalProperties": false

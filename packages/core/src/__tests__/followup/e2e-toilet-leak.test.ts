@@ -69,6 +69,7 @@ describe('e2e toilet leak scenario', () => {
       authorized_unit_ids: ['u1'],
       pinned_versions: {
         taxonomy_version: '1.0.0',
+        schema_version: '1.0.0',
         model_id: 'test-model',
         prompt_version: '1.0.0',
       },
@@ -190,7 +191,7 @@ describe('e2e toilet leak scenario', () => {
     const session1 = makeSession();
     const ctx1: ActionHandlerContext = {
       session: session1,
-      request: { action: 'START_CLASSIFICATION' as any, actor: 'system' as any },
+      request: { action_type: 'START_CLASSIFICATION', actor: 'system' } as any,
       deps: deps as any,
     };
 
@@ -218,10 +219,10 @@ describe('e2e toilet leak scenario', () => {
     const ctx2: ActionHandlerContext = {
       session: sessionForAnswer,
       request: {
-        action: 'ANSWER_FOLLOWUPS' as any,
-        actor: 'tenant' as any,
+        action_type: 'ANSWER_FOLLOWUPS',
+        actor: 'tenant',
         tenant_input: { answers },
-      },
+      } as any,
       deps: deps as any,
     };
 
@@ -262,7 +263,7 @@ describe('e2e toilet leak scenario', () => {
       (e: any) => e.event_type === 'classification_constraint_resolution',
     );
     expect(resolutionEvents.length).toBe(1);
-    expect((resolutionEvents[0] as any).resolved_fields.Sub_Location).toBe('bathroom');
+    expect((resolutionEvents[0] as any).payload.resolved_fields.Sub_Location).toBe('bathroom');
 
     // No hierarchy violations
     const violationEvents = events.filter(

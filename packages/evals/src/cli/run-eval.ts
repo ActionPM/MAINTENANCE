@@ -15,10 +15,10 @@ import type { IssueReplayResult } from '../runners/issue-replay.js';
 import { FixtureClassifierAdapter } from '../runners/classifier-adapters.js';
 import type { ClassifierAdapterOutput } from '../runners/classifier-adapters.js';
 import {
-  computePerFieldAccuracy,
   computeOverallFieldAccuracy,
   computeSchemaInvalidRate,
   computeTaxonomyInvalidRate,
+  computeContradictionAfterRetryRate,
 } from '../metrics/field-metrics.js';
 import { CRITICAL_SLICES, TAXONOMY_SLICES, INPUT_QUALITY_SLICES, filterBySlice } from '../metrics/slices.js';
 import type { SliceDefinition } from '../metrics/slices.js';
@@ -113,6 +113,7 @@ function computeSliceMetrics(
       field_accuracy: fieldPairs.length > 0 ? computeOverallFieldAccuracy(fieldPairs) : 0,
       schema_invalid_rate: computeSchemaInvalidRate(statuses),
       taxonomy_invalid_rate: computeTaxonomyInvalidRate(statuses),
+      contradiction_after_retry_rate: computeContradictionAfterRetryRate(sliceResults),
       example_count: sliceResults.length,
     };
   }
@@ -185,6 +186,7 @@ async function main() {
     field_accuracy: computeOverallFieldAccuracy(fieldPairs),
     schema_invalid_rate: computeSchemaInvalidRate(statuses),
     taxonomy_invalid_rate: computeTaxonomyInvalidRate(statuses),
+    contradiction_after_retry_rate: computeContradictionAfterRetryRate(allResults),
     needs_human_triage_rate: statuses.filter((s) => s === 'needs_human_triage').length / Math.max(statuses.length, 1),
     total_examples: examples.length,
     total_results: allResults.length,

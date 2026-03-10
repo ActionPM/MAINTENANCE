@@ -29,11 +29,9 @@ async function main() {
 
   const raw = JSON.parse(fs.readFileSync(runFilePath, 'utf-8'));
 
-  // Validate the core EvalRun structure (metrics/slice_metrics are extra
-  // fields that the schema allows via additionalProperties, or we strip
-  // them for validation and re-attach after).
-  const { metrics, slice_metrics, ...coreRun } = raw;
-  const result = validateEvalRun(coreRun);
+  // Validate the full EvalRun structure (metrics/slice_metrics are now
+  // declared in the schema as optional properties).
+  const result = validateEvalRun(raw);
   if (!result.valid) {
     console.error('Run file failed EvalRun validation:');
     for (const err of result.errors) {
@@ -43,7 +41,7 @@ async function main() {
   }
 
   // Require metrics to be present for a promotable baseline
-  if (!metrics || typeof metrics !== 'object') {
+  if (!raw.metrics || typeof raw.metrics !== 'object') {
     console.error('Run file is missing computed metrics. Re-run eval:run to produce a complete run file.');
     process.exit(1);
   }
@@ -58,7 +56,7 @@ async function main() {
   console.log(`Baseline promoted: ${destPath}`);
   console.log(`  run_id: ${raw.run_id}`);
   console.log(`  dataset: ${datasetId}`);
-  console.log(`  field_accuracy: ${metrics.field_accuracy?.toFixed(4) ?? 'N/A'}`);
+  console.log(`  field_accuracy: ${raw.metrics.field_accuracy?.toFixed(4) ?? 'N/A'}`);
 }
 
 main().catch((err) => {

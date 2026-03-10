@@ -61,8 +61,12 @@ function classifyDelta(
   threshold: number,
 ): 'regression' | 'improvement' | 'neutral' {
   const inverted = INVERTED_METRICS.has(metric);
+
+  // Blocking rate metrics use zero tolerance: any increase is a regression
+  // per governance doc §6 ("any increase blocks merge").
+  const effectiveThreshold = BLOCKING_RATE_METRICS.has(metric) ? 0 : threshold;
   const absDelta = Math.abs(delta);
-  if (absDelta <= threshold) return 'neutral';
+  if (absDelta <= effectiveThreshold) return 'neutral';
 
   if (inverted) {
     // Higher = worse: positive delta = regression, negative delta = improvement

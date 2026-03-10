@@ -153,6 +153,21 @@ describe('compareRuns', () => {
     expect(report.regressions.some((r) => r.metric === 'contradiction_after_retry_rate')).toBe(true);
   });
 
+  it('blocks on any increase in blocking rate metrics, even below 2% threshold', () => {
+    const baseline = {
+      metrics: { schema_invalid_rate: 0.02 },
+      slice_metrics: {},
+    };
+    const candidate = {
+      metrics: { schema_invalid_rate: 0.021 }, // +0.1% — below normal threshold but still blocks
+      slice_metrics: {},
+    };
+
+    const report = compareRuns(baseline, candidate);
+    expect(report.gate_passed).toBe(false);
+    expect(report.regressions.some((r) => r.metric === 'schema_invalid_rate')).toBe(true);
+  });
+
   it('passes when blocking rate metrics stay flat or improve', () => {
     const baseline = {
       metrics: { schema_invalid_rate: 0.05, taxonomy_invalid_rate: 0.03 },

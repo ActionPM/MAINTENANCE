@@ -162,7 +162,7 @@ export async function handleStartClassification(
             event_type: 'classification_hierarchy_violation_unresolved',
             conversation_id: session.conversation_id,
             issue_id: issue.issue_id,
-            violations: postRetryCheck.violations,
+            payload: { violations: postRetryCheck.violations },
             created_at: deps.clock(),
           });
         }
@@ -180,7 +180,7 @@ export async function handleStartClassification(
         event_type: 'classification_constraint_resolution',
         conversation_id: session.conversation_id,
         issue_id: issue.issue_id,
-        resolved_fields: impliedFields,
+        payload: { resolved_fields: impliedFields },
         created_at: deps.clock(),
       });
     }

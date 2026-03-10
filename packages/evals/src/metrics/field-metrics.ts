@@ -64,3 +64,17 @@ export function computeTaxonomyInvalidRate(
   const invalid = statuses.filter(s => s === 'taxonomy_fail').length;
   return invalid / statuses.length;
 }
+
+/**
+ * Contradiction-after-retry rate: proportion of results where hierarchy
+ * validation failed (hierarchyValid === false). In the full pipeline this
+ * means the classifier's output contradicted taxonomy constraints and the
+ * retry (if attempted) did not resolve it.
+ */
+export function computeContradictionAfterRetryRate(
+  results: readonly { hierarchyValid: boolean }[],
+): number {
+  if (results.length === 0) return 0;
+  const contradictions = results.filter(r => !r.hierarchyValid).length;
+  return contradictions / results.length;
+}

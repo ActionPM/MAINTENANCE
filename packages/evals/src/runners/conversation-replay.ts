@@ -1,5 +1,6 @@
 import type { ClassifierAdapter } from './classifier-adapters.js';
 import { runOrchestratorHarness } from './orchestrator-harness.js';
+import type { IssueReplayResult } from './issue-replay.js';
 
 export interface ConversationReplayOptions {
   readonly example_id: string;
@@ -14,7 +15,7 @@ export interface ConversationReplayResult {
   readonly example_id: string;
   readonly terminal_state: string;
   readonly event_trace: readonly Record<string, unknown>[];
-  readonly issue_results: readonly Record<string, unknown>[];
+  readonly issue_results: readonly IssueReplayResult[];
   readonly needs_human_triage: boolean;
   readonly escape_hatch_triggered: boolean;
 }
