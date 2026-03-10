@@ -1,0 +1,23 @@
+{
+  "manifest_id": "gold-v0.1",
+  "dataset_type": "gold",
+  "taxonomy_version": "2.0.0",
+  "schema_version": "1.0.0",
+  "example_count": 50,
+  "slice_coverage": {
+    "plumbing": 8,
+    "electrical": 6,
+    "hvac": 5,
+    "pest_control": 4,
+    "building_access": 3,
+    "accounting": 4,
+    "lease": 4,
+    "noise_vibration": 3,
+    "parking": 3,
+    "appliance": 4,
+    "carpentry": 3,
+    "flooring": 3
+  },
+  "created_at": "2026-03-10T00:00:00Z",
+  "description": "v0 gold set — straightforward maintenance and management issues seeded from test fixtures"
+}
