@@ -102,6 +102,8 @@ export {
   callIssueClassifier,
   ClassifierError,
   ClassifierErrorCode,
+  resolveConstraintImpliedFields,
+  resolveValidOptions,
 } from './classifier/index.js';
 export type {
   CueFieldResult,
@@ -109,6 +111,7 @@ export type {
   ConfidenceBand,
   FieldConfidenceInput,
   ComputeAllInput,
+  DetermineFieldsOptions,
   ClassifierResult,
 } from './classifier/index.js';
 
