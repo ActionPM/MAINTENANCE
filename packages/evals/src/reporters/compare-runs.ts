@@ -76,6 +76,8 @@ function classifyDelta(
   return delta < 0 ? 'regression' : 'improvement';
 }
 
+const CRITICAL_SLICE_SET = new Set<string>(CRITICAL_SLICES);
+
 function compareMetricSet(
   baseMetrics: Record<string, number>,
   candMetrics: Record<string, number>,
@@ -83,6 +85,10 @@ function compareMetricSet(
   regressions: RegressionItem[],
   improvements: ImprovementItem[],
 ): void {
+  // Critical slices use zero threshold: any regression blocks merge
+  // per governance doc §6 ("any regression on critical slices blocks merge").
+  const threshold = CRITICAL_SLICE_SET.has(slice) ? 0 : REGRESSION_THRESHOLD;
+
   const allMetrics = new Set([
     ...Object.keys(baseMetrics),
     ...Object.keys(candMetrics),
@@ -92,7 +98,7 @@ function compareMetricSet(
     const baseValue = baseMetrics[metric] ?? 0;
     const candValue = candMetrics[metric] ?? 0;
     const delta = candValue - baseValue;
-    const kind = classifyDelta(metric, delta, REGRESSION_THRESHOLD);
+    const kind = classifyDelta(metric, delta, threshold);
 
     if (kind === 'regression') {
       regressions.push({ metric, slice, baseline_value: baseValue, candidate_value: candValue, delta });

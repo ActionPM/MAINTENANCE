@@ -54,7 +54,7 @@ describe('compareRuns', () => {
     expect(report.gate_passed).toBe(true);
   });
 
-  it('flags regression only when drop exceeds threshold', () => {
+  it('blocks even a tiny drop on a critical slice (zero threshold)', () => {
     const baseline = {
       metrics: { field_accuracy: 0.85 },
       slice_metrics: { emergency: { field_accuracy: 0.90 } },
@@ -62,6 +62,21 @@ describe('compareRuns', () => {
     const candidate = {
       metrics: { field_accuracy: 0.85 },
       slice_metrics: { emergency: { field_accuracy: 0.89 } }, // only 1% drop
+    };
+
+    const report = compareRuns(baseline, candidate);
+    expect(report.regressions.some((r) => r.slice === 'emergency')).toBe(true);
+    expect(report.gate_passed).toBe(false);
+  });
+
+  it('applies normal threshold on non-critical slices', () => {
+    const baseline = {
+      metrics: { field_accuracy: 0.85 },
+      slice_metrics: { plumbing: { field_accuracy: 0.90 } },
+    };
+    const candidate = {
+      metrics: { field_accuracy: 0.85 },
+      slice_metrics: { plumbing: { field_accuracy: 0.89 } }, // 1% drop, below 2% threshold
     };
 
     const report = compareRuns(baseline, candidate);
