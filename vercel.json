@@ -1,6 +1,0 @@
-{
-  "framework": "nextjs",
-  "buildCommand": "pnpm --filter @wo-agent/web build",
-  "installCommand": "pnpm install",
-  "outputDirectory": "apps/web/.next"
-}
