@@ -17,7 +17,7 @@ export function computeSlaMetadata(input: ComputeSlaInput): SlaMetadata {
 
   // 1. Check taxonomy-path overrides
   const taxonomyPath = buildTaxonomyPath(classification);
-  const override = slaPolicies.overrides.find(o => taxonomyPath.startsWith(o.taxonomy_path));
+  const override = slaPolicies.overrides.find((o) => taxonomyPath.startsWith(o.taxonomy_path));
 
   let responseHours: number;
   let resolutionHours: number;

@@ -41,9 +41,7 @@ beforeEach(() => {
 describe('api-client', () => {
   it('createConversation posts to /api/conversations', async () => {
     const mockFetch = vi.mocked(fetch);
-    mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify(mockResponse), { status: 201 }),
-    );
+    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify(mockResponse), { status: 201 }));
 
     const result = await createConversation('token-123');
     expect(mockFetch).toHaveBeenCalledWith('/api/conversations', {
@@ -59,9 +57,7 @@ describe('api-client', () => {
 
   it('selectUnit posts unit_id', async () => {
     const mockFetch = vi.mocked(fetch);
-    mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify(mockResponse), { status: 200 }),
-    );
+    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify(mockResponse), { status: 200 }));
 
     await selectUnit('token-123', 'conv-1', 'unit-a');
     expect(mockFetch).toHaveBeenCalledWith(
@@ -75,9 +71,7 @@ describe('api-client', () => {
 
   it('submitInitialMessage posts message', async () => {
     const mockFetch = vi.mocked(fetch);
-    mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify(mockResponse), { status: 200 }),
-    );
+    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify(mockResponse), { status: 200 }));
 
     await submitInitialMessage('token-123', 'conv-1', 'Sink is leaking');
     expect(mockFetch).toHaveBeenCalledWith(
@@ -102,9 +96,7 @@ describe('api-client', () => {
 
   it('confirmSplit posts empty body', async () => {
     const mockFetch = vi.mocked(fetch);
-    mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify(mockResponse), { status: 200 }),
-    );
+    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify(mockResponse), { status: 200 }));
 
     await confirmSplit('token-123', 'conv-1');
     expect(mockFetch).toHaveBeenCalledWith(
@@ -115,9 +107,7 @@ describe('api-client', () => {
 
   it('answerFollowups posts answers array', async () => {
     const mockFetch = vi.mocked(fetch);
-    mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify(mockResponse), { status: 200 }),
-    );
+    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify(mockResponse), { status: 200 }));
 
     const answers = [{ question_id: 'q1', answer: 'kitchen' }];
     await answerFollowups('token-123', 'conv-1', answers);
@@ -131,9 +121,7 @@ describe('api-client', () => {
 
   it('fetchDrafts returns drafts array', async () => {
     const mockFetch = vi.mocked(fetch);
-    mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify({ drafts: [] }), { status: 200 }),
-    );
+    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({ drafts: [] }), { status: 200 }));
 
     const result = await fetchDrafts('token-123');
     expect(result).toEqual({ drafts: [] });

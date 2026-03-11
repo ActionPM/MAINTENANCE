@@ -25,9 +25,7 @@ export function ConfirmationPanel({
 }: ConfirmationPanelProps) {
   return (
     <div className={styles.container}>
-      <p className={styles.heading}>
-        Please review before submitting:
-      </p>
+      <p className={styles.heading}>Please review before submitting:</p>
 
       {payload.issues.map((issue) => (
         <div key={issue.issue_id} className={styles.issueCard}>
@@ -41,24 +39,16 @@ export function ConfirmationPanel({
             ))}
           </div>
 
-          {issue.needs_human_triage && (
-            <span className={styles.triageBadge}>Review needed</span>
-          )}
+          {issue.needs_human_triage && <span className={styles.triageBadge}>Review needed</span>}
 
           {issue.missing_fields.length > 0 && (
-            <p className={styles.missingFields}>
-              Missing: {issue.missing_fields.join(', ')}
-            </p>
+            <p className={styles.missingFields}>Missing: {issue.missing_fields.join(', ')}</p>
           )}
         </div>
       ))}
 
       <div className={styles.actions}>
-        <button
-          className={styles.submitBtn}
-          onClick={onConfirm}
-          disabled={disabled}
-        >
+        <button className={styles.submitBtn} onClick={onConfirm} disabled={disabled}>
           Submit work order{payload.issues.length !== 1 ? 's' : ''}
         </button>
       </div>

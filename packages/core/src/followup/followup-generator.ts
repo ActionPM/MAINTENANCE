@@ -1,4 +1,8 @@
-import type { FollowUpGeneratorInput, FollowUpGeneratorOutput, FollowUpQuestion } from '@wo-agent/schemas';
+import type {
+  FollowUpGeneratorInput,
+  FollowUpGeneratorOutput,
+  FollowUpQuestion,
+} from '@wo-agent/schemas';
 import { validateFollowUpOutput, taxonomyConstraints } from '@wo-agent/schemas';
 import { resolveValidOptions } from '../classifier/constraint-resolver.js';
 import { truncateQuestions } from './caps.js';
@@ -53,10 +57,7 @@ export async function callFollowUpGenerator(
   for (let attempt = 0; attempt < 2; attempt++) {
     let raw: unknown;
     try {
-      raw = await llmCall(
-        input,
-        attempt > 0 ? { retryHint: 'schema_errors' } : undefined,
-      );
+      raw = await llmCall(input, attempt > 0 ? { retryHint: 'schema_errors' } : undefined);
     } catch (err) {
       throw new FollowUpGeneratorError(
         FollowUpGeneratorErrorCode.LLM_CALL_FAILED,
@@ -83,15 +84,13 @@ export async function callFollowUpGenerator(
   }
 
   // Filter out questions targeting fields not in fields_needing_input
-  const filteredQuestions = validated.questions.filter(
-    (q) => eligibleFields.has(q.field_target),
-  );
+  const filteredQuestions = validated.questions.filter((q) => eligibleFields.has(q.field_target));
 
   // Filter question options by hierarchical constraints
-  const constraintFiltered = filteredQuestions.map(q => {
+  const constraintFiltered = filteredQuestions.map((q) => {
     const valid = resolveValidOptions(q.field_target, input.classification, taxonomyConstraints);
     if (valid === null) return q;
-    const opts = q.options.filter(opt => valid.includes(opt));
+    const opts = q.options.filter((opt) => valid.includes(opt));
     return { ...q, options: opts.length > 0 ? opts : q.options };
   });
 

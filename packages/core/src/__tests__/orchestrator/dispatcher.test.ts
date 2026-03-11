@@ -22,17 +22,26 @@ const MINI_CUES: CueDictionary = {
 class InMemorySessionStore implements SessionStore {
   private sessions = new Map<string, ConversationSession>();
 
-  async get(id: string) { return this.sessions.get(id) ?? null; }
+  async get(id: string) {
+    return this.sessions.get(id) ?? null;
+  }
   async getByTenantUser(userId: string) {
     return [...this.sessions.values()].filter((s) => s.tenant_user_id === userId);
   }
-  async save(session: ConversationSession) { this.sessions.set(session.conversation_id, session); }
+  async save(session: ConversationSession) {
+    this.sessions.set(session.conversation_id, session);
+  }
 
   // Test helper
-  seed(session: ConversationSession) { this.sessions.set(session.conversation_id, session); }
+  seed(session: ConversationSession) {
+    this.sessions.set(session.conversation_id, session);
+  }
 }
 
-function makeDeps(): OrchestratorDependencies & { sessionStore: InMemorySessionStore; eventRepo: InMemoryEventStore } {
+function makeDeps(): OrchestratorDependencies & {
+  sessionStore: InMemorySessionStore;
+  eventRepo: InMemoryEventStore;
+} {
   let counter = 0;
   return {
     eventRepo: new InMemoryEventStore(),

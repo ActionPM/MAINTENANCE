@@ -10,7 +10,14 @@ import {
   resolveRetryLlm,
   resolveAbandonResume,
 } from '../state-machine/guards.js';
-import { createSession, updateSessionState, markAbandoned, markExpired, isExpired, setSessionUnit } from '../session/session.js';
+import {
+  createSession,
+  updateSessionState,
+  markAbandoned,
+  markExpired,
+  isExpired,
+  setSessionUnit,
+} from '../session/session.js';
 import { filterResumableDrafts } from '../session/draft-discovery.js';
 import { createTokenPair, verifyAccessToken } from '../auth/jwt.js';
 import { extractAuthFromHeader } from '../auth/middleware.js';
@@ -33,13 +40,21 @@ describe('Integration: full happy-path lifecycle', () => {
       tenant_user_id: 'user-1',
       tenant_account_id: 'acct-1',
       authorized_unit_ids: ['u1'],
-      pinned_versions: { taxonomy_version: '1.0', schema_version: '1.0', model_id: 'gpt-4', prompt_version: '1.0' },
+      pinned_versions: {
+        taxonomy_version: '1.0',
+        schema_version: '1.0',
+        model_id: 'gpt-4',
+        prompt_version: '1.0',
+      },
     });
     expect(session.state).toBe(ConversationState.INTAKE_STARTED);
 
     // 2. SELECT_UNIT (single unit → auto-select)
     expect(isValidTransition(session.state, ActionType.SELECT_UNIT)).toBe(true);
-    const unitTarget = resolveSelectUnit(session.state, { authorized_unit_ids: ['u1'], selected_unit_id: null });
+    const unitTarget = resolveSelectUnit(session.state, {
+      authorized_unit_ids: ['u1'],
+      selected_unit_id: null,
+    });
     expect(unitTarget).toBe(ConversationState.UNIT_SELECTED);
     session = updateSessionState(session, unitTarget!);
     session = setSessionUnit(session, 'u1');
@@ -82,7 +97,12 @@ describe('Integration: error recovery with retry', () => {
       tenant_user_id: 'user-1',
       tenant_account_id: 'acct-1',
       authorized_unit_ids: ['u1'],
-      pinned_versions: { taxonomy_version: '1.0', schema_version: '1.0', model_id: 'gpt-4', prompt_version: '1.0' },
+      pinned_versions: {
+        taxonomy_version: '1.0',
+        schema_version: '1.0',
+        model_id: 'gpt-4',
+        prompt_version: '1.0',
+      },
     });
 
     session = updateSessionState(session, ConversationState.UNIT_SELECTED);
@@ -109,7 +129,12 @@ describe('Integration: abandon and resume', () => {
       tenant_user_id: 'user-1',
       tenant_account_id: 'acct-1',
       authorized_unit_ids: ['u1'],
-      pinned_versions: { taxonomy_version: '1.0', schema_version: '1.0', model_id: 'gpt-4', prompt_version: '1.0' },
+      pinned_versions: {
+        taxonomy_version: '1.0',
+        schema_version: '1.0',
+        model_id: 'gpt-4',
+        prompt_version: '1.0',
+      },
     });
 
     session = updateSessionState(session, ConversationState.NEEDS_TENANT_INPUT);
@@ -140,9 +165,54 @@ describe('Integration: draft discovery with auth', () => {
 
     // Create sessions in various states
     const sessions = [
-      { ...createSession({ conversation_id: 'c1', tenant_user_id, tenant_account_id: 'acct-1', authorized_unit_ids: ['u1'], pinned_versions: { taxonomy_version: '1.0', schema_version: '1.0', model_id: 'gpt-4', prompt_version: '1.0' } }), state: ConversationState.NEEDS_TENANT_INPUT as ConversationState, last_activity_at: '2026-01-02T00:00:00Z' },
-      { ...createSession({ conversation_id: 'c2', tenant_user_id, tenant_account_id: 'acct-1', authorized_unit_ids: ['u1'], pinned_versions: { taxonomy_version: '1.0', schema_version: '1.0', model_id: 'gpt-4', prompt_version: '1.0' } }), state: ConversationState.SUBMITTED as ConversationState, last_activity_at: '2026-01-03T00:00:00Z' },
-      { ...createSession({ conversation_id: 'c3', tenant_user_id, tenant_account_id: 'acct-1', authorized_unit_ids: ['u1'], pinned_versions: { taxonomy_version: '1.0', schema_version: '1.0', model_id: 'gpt-4', prompt_version: '1.0' } }), state: ConversationState.SPLIT_PROPOSED as ConversationState, last_activity_at: '2026-01-01T00:00:00Z' },
+      {
+        ...createSession({
+          conversation_id: 'c1',
+          tenant_user_id,
+          tenant_account_id: 'acct-1',
+          authorized_unit_ids: ['u1'],
+          pinned_versions: {
+            taxonomy_version: '1.0',
+            schema_version: '1.0',
+            model_id: 'gpt-4',
+            prompt_version: '1.0',
+          },
+        }),
+        state: ConversationState.NEEDS_TENANT_INPUT as ConversationState,
+        last_activity_at: '2026-01-02T00:00:00Z',
+      },
+      {
+        ...createSession({
+          conversation_id: 'c2',
+          tenant_user_id,
+          tenant_account_id: 'acct-1',
+          authorized_unit_ids: ['u1'],
+          pinned_versions: {
+            taxonomy_version: '1.0',
+            schema_version: '1.0',
+            model_id: 'gpt-4',
+            prompt_version: '1.0',
+          },
+        }),
+        state: ConversationState.SUBMITTED as ConversationState,
+        last_activity_at: '2026-01-03T00:00:00Z',
+      },
+      {
+        ...createSession({
+          conversation_id: 'c3',
+          tenant_user_id,
+          tenant_account_id: 'acct-1',
+          authorized_unit_ids: ['u1'],
+          pinned_versions: {
+            taxonomy_version: '1.0',
+            schema_version: '1.0',
+            model_id: 'gpt-4',
+            prompt_version: '1.0',
+          },
+        }),
+        state: ConversationState.SPLIT_PROPOSED as ConversationState,
+        last_activity_at: '2026-01-01T00:00:00Z',
+      },
     ];
 
     const drafts = filterResumableDrafts(sessions, tenant_user_id);
@@ -171,7 +241,12 @@ describe('Integration: follow-up loop', () => {
       tenant_user_id: 'user-1',
       tenant_account_id: 'acct-1',
       authorized_unit_ids: ['u1'],
-      pinned_versions: { taxonomy_version: '1.0', schema_version: '1.0', model_id: 'gpt-4', prompt_version: '1.0' },
+      pinned_versions: {
+        taxonomy_version: '1.0',
+        schema_version: '1.0',
+        model_id: 'gpt-4',
+        prompt_version: '1.0',
+      },
     });
 
     // Fast-forward to classification

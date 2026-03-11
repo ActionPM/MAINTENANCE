@@ -13,16 +13,16 @@ const MAX_ISSUES_PER_CONVERSATION = 10;
 export function sanitizeIssueText(text: string, maxLength = MAX_ISSUE_TEXT_CHARS): string {
   let sanitized = text
     // Strip control characters (U+0000–U+001F, U+007F–U+009F) except space (0x20)
-    .replace(/[\x00-\x1f\x7f-\x9f]/g, (ch) => (ch === '\n' || ch === '\t' || ch === '\r' ? ' ' : ''))
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\x00-\x1f\x7f-\x9f]/g, (ch) =>
+      ch === '\n' || ch === '\t' || ch === '\r' ? ' ' : '',
+    )
     // Normalize consecutive whitespace
     .replace(/\s+/g, ' ')
     .trim();
 
   // Escape HTML entities
-  sanitized = sanitized
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  sanitized = sanitized.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
   // Truncate
   if (sanitized.length > maxLength) {
@@ -55,7 +55,10 @@ export function validateIssueConstraints(
     return { valid: false, error: `Issue text must not exceed ${MAX_ISSUE_TEXT_CHARS} characters` };
   }
   if ((options?.checkCount ?? true) && currentIssueCount >= MAX_ISSUES_PER_CONVERSATION) {
-    return { valid: false, error: `Cannot exceed ${MAX_ISSUES_PER_CONVERSATION} issues per conversation` };
+    return {
+      valid: false,
+      error: `Cannot exceed ${MAX_ISSUES_PER_CONVERSATION} issues per conversation`,
+    };
   }
   return { valid: true };
 }

@@ -6,11 +6,10 @@ export class PostgresSessionStore implements SessionStore {
   constructor(private readonly pool: Pool) {}
 
   async get(conversationId: string): Promise<ConversationSession | null> {
-    const result = await this.pool.query(
-      'SELECT data FROM sessions WHERE conversation_id = $1',
-      [conversationId],
-    );
-    return result.rows.length > 0 ? result.rows[0].data as ConversationSession : null;
+    const result = await this.pool.query('SELECT data FROM sessions WHERE conversation_id = $1', [
+      conversationId,
+    ]);
+    return result.rows.length > 0 ? (result.rows[0].data as ConversationSession) : null;
   }
 
   async getByTenantUser(tenantUserId: string): Promise<readonly ConversationSession[]> {
@@ -18,7 +17,7 @@ export class PostgresSessionStore implements SessionStore {
       'SELECT data FROM sessions WHERE tenant_user_id = $1 ORDER BY last_activity_at DESC',
       [tenantUserId],
     );
-    return result.rows.map(row => row.data as ConversationSession);
+    return result.rows.map((row) => row.data as ConversationSession);
   }
 
   async save(session: ConversationSession): Promise<void> {

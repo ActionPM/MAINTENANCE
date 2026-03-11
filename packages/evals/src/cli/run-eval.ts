@@ -20,7 +20,12 @@ import {
   computeTaxonomyInvalidRate,
   computeContradictionAfterRetryRate,
 } from '../metrics/field-metrics.js';
-import { CRITICAL_SLICES, TAXONOMY_SLICES, INPUT_QUALITY_SLICES, filterBySlice } from '../metrics/slices.js';
+import {
+  CRITICAL_SLICES,
+  TAXONOMY_SLICES,
+  INPUT_QUALITY_SLICES,
+  filterBySlice,
+} from '../metrics/slices.js';
 import type { SliceDefinition } from '../metrics/slices.js';
 import { compareRuns } from '../reporters/compare-runs.js';
 import type { RunMetrics } from '../reporters/compare-runs.js';
@@ -28,7 +33,11 @@ import { generateMarkdownReport } from '../reporters/markdown-report.js';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-function parseArgs(argv: string[]): { dataset: string; adapter: string; baseline: string | undefined } {
+function parseArgs(argv: string[]): {
+  dataset: string;
+  adapter: string;
+  baseline: string | undefined;
+} {
   const datasetIdx = argv.indexOf('--dataset');
   const adapterIdx = argv.indexOf('--adapter');
   const baselineIdx = argv.indexOf('--baseline');
@@ -48,9 +57,7 @@ function parseArgs(argv: string[]): { dataset: string; adapter: string; baseline
 /**
  * Compute all metrics for a subset of results matched to examples.
  */
-function computeMetricsForResults(
-  results: readonly IssueReplayResult[],
-): Record<string, number> {
+function _computeMetricsForResults(results: readonly IssueReplayResult[]): Record<string, number> {
   const fieldPairs = results
     .filter((r) => r.status === 'ok' && r.classification)
     .map((r) => ({ predicted: r.classification!, expected: {} as Record<string, string> }));
@@ -61,7 +68,8 @@ function computeMetricsForResults(
     field_accuracy: fieldPairs.length > 0 ? computeOverallFieldAccuracy(fieldPairs) : 0,
     schema_invalid_rate: computeSchemaInvalidRate(statuses),
     taxonomy_invalid_rate: computeTaxonomyInvalidRate(statuses),
-    needs_human_triage_rate: statuses.filter((s) => s === 'needs_human_triage').length / Math.max(statuses.length, 1),
+    needs_human_triage_rate:
+      statuses.filter((s) => s === 'needs_human_triage').length / Math.max(statuses.length, 1),
     example_count: results.length,
   };
 }
@@ -82,7 +90,10 @@ function computeSliceMetrics(
   const sliceMetrics: Record<string, Record<string, number>> = {};
 
   for (const slice of allSlices) {
-    const matchedExamples = filterBySlice(examples as (NormalizedExample & { slice_tags: readonly string[] })[], slice);
+    const matchedExamples = filterBySlice(
+      examples as (NormalizedExample & { slice_tags: readonly string[] })[],
+      slice,
+    );
     if (matchedExamples.length === 0) continue;
 
     const sliceResults: IssueReplayResult[] = [];
@@ -94,7 +105,8 @@ function computeSliceMetrics(
     if (sliceResults.length === 0) continue;
 
     // Compute field accuracy using expected classifications from the matched examples
-    const fieldPairs: { predicted: Record<string, string>; expected: Record<string, string> }[] = [];
+    const fieldPairs: { predicted: Record<string, string>; expected: Record<string, string> }[] =
+      [];
     for (const ex of matchedExamples) {
       const results = resultsByExampleId.get(ex.example_id);
       if (!results) continue;
@@ -130,8 +142,9 @@ async function main() {
   console.log(`Loading dataset from ${datasetDir}...`);
   const { manifest, examples } = await loadDataset(datasetDir);
 
-  const taxonomyVersion = (manifest as Record<string, unknown>).taxonomy_version as string ?? '2.0.0';
-  const manifestId = (manifest as Record<string, unknown>).manifest_id as string ?? args.dataset;
+  const taxonomyVersion =
+    ((manifest as Record<string, unknown>).taxonomy_version as string) ?? '2.0.0';
+  const manifestId = ((manifest as Record<string, unknown>).manifest_id as string) ?? args.dataset;
 
   // Build fixture map if using fixture adapter
   const fixtureMap: Record<string, ClassifierAdapterOutput> = {};
@@ -187,7 +200,8 @@ async function main() {
     schema_invalid_rate: computeSchemaInvalidRate(statuses),
     taxonomy_invalid_rate: computeTaxonomyInvalidRate(statuses),
     contradiction_after_retry_rate: computeContradictionAfterRetryRate(allResults),
-    needs_human_triage_rate: statuses.filter((s) => s === 'needs_human_triage').length / Math.max(statuses.length, 1),
+    needs_human_triage_rate:
+      statuses.filter((s) => s === 'needs_human_triage').length / Math.max(statuses.length, 1),
     total_examples: examples.length,
     total_results: allResults.length,
   };
@@ -260,7 +274,9 @@ async function main() {
     fs.writeFileSync(reportPath, markdown);
     console.log(`Comparison report written to ${reportPath}`);
   } else {
-    console.log('No baseline found — skipping comparison. Run eval:update-baseline to promote this run.');
+    console.log(
+      'No baseline found — skipping comparison. Run eval:update-baseline to promote this run.',
+    );
   }
 
   // Summary

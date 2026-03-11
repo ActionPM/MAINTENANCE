@@ -44,7 +44,12 @@ describe('PostgresEventStore', () => {
       action_type: 'SUBMIT_INITIAL_MESSAGE',
       actor: 'tenant' as const,
       payload: { text: 'hello' },
-      pinned_versions: { taxonomy_version: '1.0', schema_version: '1.0', model_id: 'm1', prompt_version: '1.0' },
+      pinned_versions: {
+        taxonomy_version: '1.0',
+        schema_version: '1.0',
+        model_id: 'm1',
+        prompt_version: '1.0',
+      },
       created_at: '2026-03-04T00:00:00Z',
     };
 
@@ -114,7 +119,15 @@ describe('PostgresEventStore', () => {
       conversation_id: 'c-1',
       issue_id: 'iss-1',
       turn_number: 1,
-      questions_asked: [{ question_id: 'q1', field_target: 'color', prompt: 'What color?', options: [] as string[], answer_type: 'text' as const }],
+      questions_asked: [
+        {
+          question_id: 'q1',
+          field_target: 'color',
+          prompt: 'What color?',
+          options: [] as string[],
+          answer_type: 'text' as const,
+        },
+      ],
       answers_received: null,
       created_at: '2026-03-04T00:00:00Z',
     };
@@ -137,8 +150,18 @@ describe('PostgresEventStore', () => {
       conversation_id: 'c-1',
       issue_id: 'iss-1',
       turn_number: 1,
-      questions_asked: [{ question_id: 'q1', field_target: 'color', prompt: 'What color?', options: [] as string[], answer_type: 'text' as const }],
-      answers_received: [{ question_id: 'q1', answer: 'blue', received_at: '2026-03-04T00:01:00Z' }],
+      questions_asked: [
+        {
+          question_id: 'q1',
+          field_target: 'color',
+          prompt: 'What color?',
+          options: [] as string[],
+          answer_type: 'text' as const,
+        },
+      ],
+      answers_received: [
+        { question_id: 'q1', answer: 'blue', received_at: '2026-03-04T00:01:00Z' },
+      ],
       created_at: '2026-03-04T00:00:00Z',
     };
 

@@ -1,6 +1,9 @@
 import type { IssueClassifierInput, Taxonomy } from '@wo-agent/schemas';
 import type { LlmClient } from '../anthropic-client.js';
-import { buildClassifierSystemPrompt, buildClassifierUserMessage } from '../prompts/classifier-prompt.js';
+import {
+  buildClassifierSystemPrompt,
+  buildClassifierUserMessage,
+} from '../prompts/classifier-prompt.js';
 import { extractJsonFromResponse } from '../parse-response.js';
 
 /**

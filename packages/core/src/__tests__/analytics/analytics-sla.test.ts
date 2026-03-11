@@ -34,7 +34,12 @@ function makeWO(overrides: Partial<WorkOrder> & { work_order_id: string }): Work
     missing_fields: [],
     pets_present: 'unknown',
     needs_human_triage: false,
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'test', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'test',
+      prompt_version: '1.0.0',
+    },
     created_at: '2026-03-01T10:00:00Z',
     updated_at: '2026-03-01T10:00:00Z',
     row_version: 0,
@@ -46,7 +51,12 @@ describe('AnalyticsService.computeSlaMetrics (Phase 13)', () => {
   it('returns zeroes when no WOs exist', async () => {
     const woRepo = new InMemoryWorkOrderStore();
     const notifRepo = new InMemoryNotificationStore();
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
 
     const result = await svc.compute({});
     expect(result.sla.total_with_sla).toBe(0);
@@ -70,7 +80,12 @@ describe('AnalyticsService.computeSlaMetrics (Phase 13)', () => {
       }),
     ]);
 
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
     const result = await svc.compute({});
 
     expect(result.sla.total_with_sla).toBe(1);
@@ -95,7 +110,12 @@ describe('AnalyticsService.computeSlaMetrics (Phase 13)', () => {
       }),
     ]);
 
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
     const result = await svc.compute({});
 
     expect(result.sla.response_adherence_pct).toBe(100);
@@ -120,7 +140,12 @@ describe('AnalyticsService.computeSlaMetrics (Phase 13)', () => {
       }),
     ]);
 
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
     const result = await svc.compute({});
 
     expect(result.sla.response_adherence_pct).toBe(0);

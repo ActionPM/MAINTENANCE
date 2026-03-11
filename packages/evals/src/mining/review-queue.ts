@@ -33,11 +33,11 @@ export class ReviewQueue {
   }
 
   getPending(): readonly ReviewedCandidate[] {
-    return this.items.filter(i => i.status === 'pending_review');
+    return this.items.filter((i) => i.status === 'pending_review');
   }
 
   getApproved(): readonly ReviewedCandidate[] {
-    return this.items.filter(i => i.status === 'approved');
+    return this.items.filter((i) => i.status === 'approved');
   }
 
   getAll(): readonly ReviewedCandidate[] {

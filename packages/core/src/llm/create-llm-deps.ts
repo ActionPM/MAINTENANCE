@@ -1,4 +1,10 @@
-import type { IssueSplitterInput, IssueSplitterOutput, IssueClassifierInput, FollowUpGeneratorInput, Taxonomy } from '@wo-agent/schemas';
+import type {
+  IssueSplitterInput,
+  IssueSplitterOutput,
+  IssueClassifierInput,
+  FollowUpGeneratorInput,
+  Taxonomy,
+} from '@wo-agent/schemas';
 import { createAnthropicClient } from './anthropic-client.js';
 import { createSplitterAdapter } from './adapters/splitter-adapter.js';
 import { createClassifierAdapter } from './adapters/classifier-adapter.js';

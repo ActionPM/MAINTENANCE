@@ -1,6 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { createWorkOrders } from '../../work-order/wo-creator.js';
-import { createSession, setRiskTriggers, setClassificationResults, setSplitIssues, setSessionScope, setSessionUnit } from '../../session/session.js';
+import {
+  createSession,
+  setRiskTriggers,
+  setClassificationResults,
+  setSplitIssues,
+  setSessionScope,
+  setSessionUnit,
+} from '../../session/session.js';
 import type { MatchedTrigger } from '@wo-agent/schemas';
 
 describe('WO creation with risk flags', () => {
@@ -9,7 +16,12 @@ describe('WO creation with risk flags', () => {
     tenant_user_id: 'user-1',
     tenant_account_id: 'acct-1',
     authorized_unit_ids: ['unit-1'],
-    pinned_versions: { taxonomy_version: '1', schema_version: '1', model_id: 'm', prompt_version: '1' },
+    pinned_versions: {
+      taxonomy_version: '1',
+      schema_version: '1',
+      model_id: 'm',
+      prompt_version: '1',
+    },
   });
 
   function makeSession(withRisk: boolean) {
@@ -18,24 +30,37 @@ describe('WO creation with risk flags', () => {
     session = setSplitIssues(session, [
       { issue_id: 'iss-1', summary: 'Fire in kitchen', raw_excerpt: 'There is fire' },
     ]);
-    session = setClassificationResults(session, [{
-      issue_id: 'iss-1',
-      classifierOutput: { issue_id: 'iss-1', classification: {}, model_confidence: {}, missing_fields: [], needs_human_triage: false },
-      computedConfidence: {},
-      fieldsNeedingInput: [],
-    }]);
+    session = setClassificationResults(session, [
+      {
+        issue_id: 'iss-1',
+        classifierOutput: {
+          issue_id: 'iss-1',
+          classification: {},
+          model_confidence: {},
+          missing_fields: [],
+          needs_human_triage: false,
+        },
+        computedConfidence: {},
+        fieldsNeedingInput: [],
+      },
+    ]);
 
     if (withRisk) {
-      const triggers: MatchedTrigger[] = [{
-        trigger: {
-          trigger_id: 'fire-001', name: 'Fire',
-          grammar: { keyword_any: [], regex_any: [], taxonomy_path_any: [] },
-          requires_confirmation: true, severity: 'emergency', mitigation_template_id: 'mit-fire',
+      const triggers: MatchedTrigger[] = [
+        {
+          trigger: {
+            trigger_id: 'fire-001',
+            name: 'Fire',
+            grammar: { keyword_any: [], regex_any: [], taxonomy_path_any: [] },
+            requires_confirmation: true,
+            severity: 'emergency',
+            mitigation_template_id: 'mit-fire',
+          },
+          matched_keywords: ['fire'],
+          matched_regex: [],
+          matched_taxonomy_paths: [],
         },
-        matched_keywords: ['fire'],
-        matched_regex: [],
-        matched_taxonomy_paths: [],
-      }];
+      ];
       session = setRiskTriggers(session, triggers);
     }
 
@@ -45,7 +70,9 @@ describe('WO creation with risk flags', () => {
   it('populates risk_flags when risk triggers present', () => {
     const session = makeSession(true);
     const wos = createWorkOrders({
-      session, idGenerator: () => `id-${Math.random()}`, clock: () => '2026-03-03T00:00:00Z',
+      session,
+      idGenerator: () => `id-${Math.random()}`,
+      clock: () => '2026-03-03T00:00:00Z',
     });
 
     expect(wos).toHaveLength(1);
@@ -58,7 +85,9 @@ describe('WO creation with risk flags', () => {
   it('omits risk_flags when no risk triggers', () => {
     const session = makeSession(false);
     const wos = createWorkOrders({
-      session, idGenerator: () => `id-${Math.random()}`, clock: () => '2026-03-03T00:00:00Z',
+      session,
+      idGenerator: () => `id-${Math.random()}`,
+      clock: () => '2026-03-03T00:00:00Z',
     });
 
     expect(wos[0].risk_flags).toBeUndefined();

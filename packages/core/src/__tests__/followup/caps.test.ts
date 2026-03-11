@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  checkFollowUpCaps,
-  filterEligibleFields,
-  truncateQuestions,
-} from '../../followup/caps.js';
+import { checkFollowUpCaps, filterEligibleFields, truncateQuestions } from '../../followup/caps.js';
 import { DEFAULT_FOLLOWUP_CAPS } from '@wo-agent/schemas';
 import type { FollowUpQuestion, PreviousQuestion, FollowUpCaps } from '@wo-agent/schemas';
 
@@ -104,11 +100,7 @@ describe('filterEligibleFields', () => {
   });
 
   it('includes fields not yet asked', () => {
-    const result = filterEligibleFields(
-      ['Priority', 'Location'],
-      [],
-      caps,
-    );
+    const result = filterEligibleFields(['Priority', 'Location'], [], caps);
     expect(result).toEqual(['Priority', 'Location']);
   });
 
@@ -126,7 +118,13 @@ describe('filterEligibleFields', () => {
 describe('truncateQuestions', () => {
   it('passes through when under budget', () => {
     const questions: FollowUpQuestion[] = [
-      { question_id: 'q1', field_target: 'Priority', prompt: 'What priority?', options: ['low', 'normal', 'high'], answer_type: 'enum' },
+      {
+        question_id: 'q1',
+        field_target: 'Priority',
+        prompt: 'What priority?',
+        options: ['low', 'normal', 'high'],
+        answer_type: 'enum',
+      },
     ];
     const result = truncateQuestions(questions, 3);
     expect(result).toHaveLength(1);

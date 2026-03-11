@@ -7,7 +7,10 @@ import type { ConversationSession } from '../../session/types.js';
 import { InMemoryEventStore } from '../../events/in-memory-event-store.js';
 import { InMemoryWorkOrderStore } from '../../work-order/in-memory-wo-store.js';
 import { InMemoryIdempotencyStore } from '../../idempotency/in-memory-idempotency-store.js';
-import { InMemoryNotificationStore, InMemoryNotificationPreferenceStore } from '../../notifications/in-memory-notification-store.js';
+import {
+  InMemoryNotificationStore,
+  InMemoryNotificationPreferenceStore,
+} from '../../notifications/in-memory-notification-store.js';
 import { NotificationService } from '../../notifications/notification-service.js';
 import { MockSmsSender } from '../../notifications/mock-sms-sender.js';
 
@@ -27,23 +30,27 @@ function makeSession(): ConversationSession {
     unit_id: 'unit-1',
     authorized_unit_ids: ['unit-1'],
     pinned_versions: VERSIONS,
-    split_issues: [{
-      issue_id: 'issue-1',
-      raw_excerpt: 'Leaky faucet',
-      summary: 'Leaky faucet in kitchen',
-    }],
-    classification_results: [{
-      issue_id: 'issue-1',
-      classifierOutput: {
+    split_issues: [
+      {
         issue_id: 'issue-1',
-        classification: { maintenance_category: 'plumbing' },
-        model_confidence: { maintenance_category: 0.9 },
-        missing_fields: [],
-        needs_human_triage: false,
+        raw_excerpt: 'Leaky faucet',
+        summary: 'Leaky faucet in kitchen',
       },
-      computedConfidence: { maintenance_category: 0.9 },
-      fieldsNeedingInput: [],
-    }],
+    ],
+    classification_results: [
+      {
+        issue_id: 'issue-1',
+        classifierOutput: {
+          issue_id: 'issue-1',
+          classification: { maintenance_category: 'plumbing' },
+          model_confidence: { maintenance_category: 0.9 },
+          missing_fields: [],
+          needs_human_triage: false,
+        },
+        computedConfidence: { maintenance_category: 0.9 },
+        fieldsNeedingInput: [],
+      },
+    ],
     prior_state_before_error: null,
     followup_turn_number: 0,
     total_questions_asked: 0,
@@ -85,7 +92,11 @@ describe('confirm-submission notification integration', () => {
     let mainCounter = 0;
     return {
       eventRepo: new InMemoryEventStore(),
-      sessionStore: { get: async () => null, getByTenantUser: async () => [], save: async () => {} },
+      sessionStore: {
+        get: async () => null,
+        getByTenantUser: async () => [],
+        save: async () => {},
+      },
       idGenerator: () => `id-${++mainCounter}`,
       clock: () => '2026-03-03T12:00:00Z',
       issueSplitter: async () => ({ issues: [], issue_count: 0 }),
@@ -101,7 +112,9 @@ describe('confirm-submission notification integration', () => {
       taxonomy: { version: '1.0.0', fields: {} } as any,
       confidenceConfig: undefined,
       followUpCaps: undefined,
-      unitResolver: { resolve: async () => ({ unit_id: 'unit-1', property_id: 'prop-1', client_id: 'client-1' }) },
+      unitResolver: {
+        resolve: async () => ({ unit_id: 'unit-1', property_id: 'prop-1', client_id: 'client-1' }),
+      },
       workOrderRepo: new InMemoryWorkOrderStore(),
       idempotencyStore: new InMemoryIdempotencyStore(),
       riskProtocols: { version: '1.0.0', triggers: [], mitigation_templates: [] },
@@ -121,7 +134,11 @@ describe('confirm-submission notification integration', () => {
         actor: 'tenant',
         tenant_input: {},
         idempotency_key: 'submit-1',
-        auth_context: { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['unit-1'] },
+        auth_context: {
+          tenant_user_id: 'user-1',
+          tenant_account_id: 'acct-1',
+          authorized_unit_ids: ['unit-1'],
+        },
       } as OrchestratorActionRequest,
       deps,
     };
@@ -146,13 +163,17 @@ describe('confirm-submission notification integration', () => {
         actor: 'tenant',
         tenant_input: {},
         idempotency_key: 'submit-2',
-        auth_context: { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['unit-1'] },
+        auth_context: {
+          tenant_user_id: 'user-1',
+          tenant_account_id: 'acct-1',
+          authorized_unit_ids: ['unit-1'],
+        },
       } as OrchestratorActionRequest,
       deps,
     };
 
     const result = await handleConfirmSubmission(ctx);
-    const notifEffect = result.sideEffects?.find(e => e.effect_type === 'send_notifications');
+    const notifEffect = result.sideEffects?.find((e) => e.effect_type === 'send_notifications');
     expect(notifEffect).toBeDefined();
     expect(notifEffect?.status).toBe('completed');
   });
@@ -170,7 +191,11 @@ describe('confirm-submission notification integration', () => {
         actor: 'tenant',
         tenant_input: {},
         idempotency_key: 'submit-3',
-        auth_context: { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['unit-1'] },
+        auth_context: {
+          tenant_user_id: 'user-1',
+          tenant_account_id: 'acct-1',
+          authorized_unit_ids: ['unit-1'],
+        },
       } as OrchestratorActionRequest,
       deps,
     };

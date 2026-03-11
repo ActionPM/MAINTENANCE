@@ -25,9 +25,9 @@ export function buildConfirmationPayload(
   splitIssues: readonly SplitIssue[],
   classificationResults: readonly IssueClassificationResult[],
 ): ConfirmationPayload {
-  const resultMap = new Map(classificationResults.map(r => [r.issue_id, r]));
+  const resultMap = new Map(classificationResults.map((r) => [r.issue_id, r]));
 
-  const issues: ConfirmationIssue[] = splitIssues.map(issue => {
+  const issues: ConfirmationIssue[] = splitIssues.map((issue) => {
     const result = resultMap.get(issue.issue_id);
     if (!result) {
       return {

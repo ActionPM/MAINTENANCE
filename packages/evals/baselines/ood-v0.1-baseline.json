@@ -1,0 +1,194 @@
+{
+  "run_id": "run-1773238009430",
+  "runner_type": "issue_level",
+  "dataset_manifest_id": "ood-v0.1",
+  "taxonomy_version": "2.0.0",
+  "schema_version": "1.0.0",
+  "cue_dict_version": "1.2.0",
+  "prompt_version": "fixture-replay",
+  "model_id": "fixture",
+  "started_at": "2026-03-11T14:06:49.430Z",
+  "completed_at": "2026-03-11T14:06:49.430Z",
+  "results": [
+    {
+      "example_id": "ood-001",
+      "status": "needs_human_triage",
+      "classification": {
+        "Category": "other_category",
+        "Priority": "other_priority"
+      },
+      "hierarchyValid": true,
+      "errors": ["Classifier flagged needs_human_triage"]
+    },
+    {
+      "example_id": "ood-002",
+      "status": "needs_human_triage",
+      "classification": {
+        "Category": "other_category",
+        "Priority": "other_priority"
+      },
+      "hierarchyValid": true,
+      "errors": ["Classifier flagged needs_human_triage"]
+    },
+    {
+      "example_id": "ood-003",
+      "status": "needs_human_triage",
+      "classification": {
+        "Category": "other_category",
+        "Priority": "other_priority"
+      },
+      "hierarchyValid": true,
+      "errors": ["Classifier flagged needs_human_triage"]
+    },
+    {
+      "example_id": "ood-004",
+      "status": "needs_human_triage",
+      "classification": {
+        "Category": "other_category",
+        "Priority": "other_priority"
+      },
+      "hierarchyValid": true,
+      "errors": ["Classifier flagged needs_human_triage"]
+    },
+    {
+      "example_id": "ood-005",
+      "status": "needs_human_triage",
+      "classification": {
+        "Category": "other_category",
+        "Priority": "other_priority"
+      },
+      "hierarchyValid": true,
+      "errors": ["Classifier flagged needs_human_triage"]
+    },
+    {
+      "example_id": "ood-006",
+      "status": "needs_human_triage",
+      "classification": {
+        "Category": "other_category",
+        "Priority": "other_priority"
+      },
+      "hierarchyValid": true,
+      "errors": ["Classifier flagged needs_human_triage"]
+    },
+    {
+      "example_id": "ood-007",
+      "status": "needs_human_triage",
+      "classification": {
+        "Category": "other_category",
+        "Priority": "other_priority"
+      },
+      "hierarchyValid": true,
+      "errors": ["Classifier flagged needs_human_triage"]
+    },
+    {
+      "example_id": "ood-008",
+      "status": "needs_human_triage",
+      "classification": {
+        "Category": "other_category",
+        "Priority": "other_priority"
+      },
+      "hierarchyValid": true,
+      "errors": ["Classifier flagged needs_human_triage"]
+    },
+    {
+      "example_id": "ood-009",
+      "status": "needs_human_triage",
+      "classification": {
+        "Category": "management",
+        "Location": "suite",
+        "Sub_Location": "other_sub_location",
+        "Management_Category": "general",
+        "Management_Object": "legal_matters",
+        "Priority": "high"
+      },
+      "hierarchyValid": true,
+      "errors": ["Classifier flagged needs_human_triage"]
+    },
+    {
+      "example_id": "ood-010",
+      "status": "needs_human_triage",
+      "classification": {
+        "Category": "other_category",
+        "Priority": "other_priority"
+      },
+      "hierarchyValid": true,
+      "errors": ["Classifier flagged needs_human_triage"]
+    },
+    {
+      "example_id": "ood-011",
+      "status": "needs_human_triage",
+      "classification": {
+        "Category": "other_category",
+        "Priority": "other_priority"
+      },
+      "hierarchyValid": true,
+      "errors": ["Classifier flagged needs_human_triage"]
+    },
+    {
+      "example_id": "ood-012",
+      "status": "needs_human_triage",
+      "classification": {
+        "Category": "other_category",
+        "Priority": "other_priority"
+      },
+      "hierarchyValid": true,
+      "errors": ["Classifier flagged needs_human_triage"]
+    },
+    {
+      "example_id": "ood-013",
+      "status": "needs_human_triage",
+      "classification": {
+        "Category": "management",
+        "Location": "building_interior",
+        "Sub_Location": "parking_garage",
+        "Management_Category": "general",
+        "Management_Object": "complaint",
+        "Priority": "high"
+      },
+      "hierarchyValid": true,
+      "errors": ["Classifier flagged needs_human_triage"]
+    },
+    {
+      "example_id": "ood-014",
+      "status": "needs_human_triage",
+      "classification": {
+        "Category": "management",
+        "Location": "suite",
+        "Sub_Location": "other_sub_location",
+        "Management_Category": "general",
+        "Management_Object": "complaint",
+        "Priority": "high"
+      },
+      "hierarchyValid": true,
+      "errors": ["Classifier flagged needs_human_triage"]
+    },
+    {
+      "example_id": "ood-015",
+      "status": "needs_human_triage",
+      "classification": {
+        "Category": "other_category",
+        "Priority": "other_priority"
+      },
+      "hierarchyValid": true,
+      "errors": ["Classifier flagged needs_human_triage"]
+    }
+  ],
+  "metrics": {
+    "field_accuracy": 1,
+    "schema_invalid_rate": 0,
+    "taxonomy_invalid_rate": 0,
+    "contradiction_after_retry_rate": 0,
+    "needs_human_triage_rate": 1,
+    "total_examples": 15,
+    "total_results": 15
+  },
+  "slice_metrics": {
+    "ood": {
+      "field_accuracy": 0,
+      "schema_invalid_rate": 0,
+      "taxonomy_invalid_rate": 0,
+      "contradiction_after_retry_rate": 0,
+      "example_count": 15
+    }
+  }
+}

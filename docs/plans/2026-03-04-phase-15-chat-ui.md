@@ -25,6 +25,7 @@
 ## Task 0: Install React Testing Library
 
 **Files:**
+
 - Modify: `apps/web/package.json`
 
 **Step 1: Add dev dependencies**
@@ -80,6 +81,7 @@ git commit -m "chore: add React Testing Library + jsdom for UI tests"
 ## Task 1: API Client Module
 
 **Files:**
+
 - Create: `apps/web/src/lib/api-client.ts`
 - Test: `apps/web/src/lib/__tests__/api-client.test.ts`
 
@@ -133,9 +135,7 @@ beforeEach(() => {
 describe('api-client', () => {
   it('createConversation posts to /api/conversations', async () => {
     const mockFetch = vi.mocked(fetch);
-    mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify(mockResponse), { status: 201 }),
-    );
+    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify(mockResponse), { status: 201 }));
 
     const result = await createConversation('token-123');
     expect(mockFetch).toHaveBeenCalledWith('/api/conversations', {
@@ -151,9 +151,7 @@ describe('api-client', () => {
 
   it('selectUnit posts unit_id', async () => {
     const mockFetch = vi.mocked(fetch);
-    mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify(mockResponse), { status: 200 }),
-    );
+    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify(mockResponse), { status: 200 }));
 
     await selectUnit('token-123', 'conv-1', 'unit-a');
     expect(mockFetch).toHaveBeenCalledWith(
@@ -167,9 +165,7 @@ describe('api-client', () => {
 
   it('submitInitialMessage posts message', async () => {
     const mockFetch = vi.mocked(fetch);
-    mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify(mockResponse), { status: 200 }),
-    );
+    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify(mockResponse), { status: 200 }));
 
     await submitInitialMessage('token-123', 'conv-1', 'Sink is leaking');
     expect(mockFetch).toHaveBeenCalledWith(
@@ -194,9 +190,7 @@ describe('api-client', () => {
 
   it('confirmSplit posts empty body', async () => {
     const mockFetch = vi.mocked(fetch);
-    mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify(mockResponse), { status: 200 }),
-    );
+    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify(mockResponse), { status: 200 }));
 
     await confirmSplit('token-123', 'conv-1');
     expect(mockFetch).toHaveBeenCalledWith(
@@ -207,9 +201,7 @@ describe('api-client', () => {
 
   it('answerFollowups posts answers array', async () => {
     const mockFetch = vi.mocked(fetch);
-    mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify(mockResponse), { status: 200 }),
-    );
+    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify(mockResponse), { status: 200 }));
 
     const answers = [{ question_id: 'q1', answer: 'kitchen' }];
     await answerFollowups('token-123', 'conv-1', answers);
@@ -223,9 +215,7 @@ describe('api-client', () => {
 
   it('fetchDrafts returns drafts array', async () => {
     const mockFetch = vi.mocked(fetch);
-    mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify({ drafts: [] }), { status: 200 }),
-    );
+    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({ drafts: [] }), { status: 200 }));
 
     const result = await fetchDrafts('token-123');
     expect(result).toEqual({ drafts: [] });
@@ -476,6 +466,7 @@ git commit -m "feat(ui): add API client module wrapping all conversation endpoin
 ## Task 2: useConversation Hook
 
 **Files:**
+
 - Create: `apps/web/src/hooks/use-conversation.ts`
 - Test: `apps/web/src/hooks/__tests__/use-conversation.test.ts`
 
@@ -554,7 +545,9 @@ describe('useConversation', () => {
 
   it('sets loading status during API call', async () => {
     let resolve: (v: any) => void;
-    const pending = new Promise((r) => { resolve = r; });
+    const pending = new Promise((r) => {
+      resolve = r;
+    });
     vi.mocked(api.createConversation).mockReturnValueOnce(pending as any);
 
     const { result } = renderHook(() => useConversation('token'));
@@ -634,10 +627,7 @@ export function useConversation(token: string) {
     }
   }
 
-  const startConversation = useCallback(
-    () => dispatch(api.createConversation, token),
-    [token],
-  );
+  const startConversation = useCallback(() => dispatch(api.createConversation, token), [token]);
 
   const selectUnit = useCallback(
     (unitId: string) => {
@@ -663,21 +653,15 @@ export function useConversation(token: string) {
     [token, conversationId],
   );
 
-  const confirmSplit = useCallback(
-    () => {
-      if (!conversationId) return Promise.resolve();
-      return dispatch(api.confirmSplit, token, conversationId);
-    },
-    [token, conversationId],
-  );
+  const confirmSplit = useCallback(() => {
+    if (!conversationId) return Promise.resolve();
+    return dispatch(api.confirmSplit, token, conversationId);
+  }, [token, conversationId]);
 
-  const rejectSplit = useCallback(
-    () => {
-      if (!conversationId) return Promise.resolve();
-      return dispatch(api.rejectSplit, token, conversationId);
-    },
-    [token, conversationId],
-  );
+  const rejectSplit = useCallback(() => {
+    if (!conversationId) return Promise.resolve();
+    return dispatch(api.rejectSplit, token, conversationId);
+  }, [token, conversationId]);
 
   const mergeIssues = useCallback(
     (issueIds: readonly string[]) => {
@@ -711,13 +695,10 @@ export function useConversation(token: string) {
     [token, conversationId],
   );
 
-  const confirmSubmission = useCallback(
-    () => {
-      if (!conversationId) return Promise.resolve();
-      return dispatch(api.confirmSubmission, token, conversationId);
-    },
-    [token, conversationId],
-  );
+  const confirmSubmission = useCallback(() => {
+    if (!conversationId) return Promise.resolve();
+    return dispatch(api.confirmSubmission, token, conversationId);
+  }, [token, conversationId]);
 
   const resumeConversation = useCallback(
     (id: string) => dispatch(api.resumeConversation, token, id),
@@ -762,6 +743,7 @@ git commit -m "feat(ui): add useConversation hook managing conversation state an
 ## Task 3: ChatMessage Component
 
 **Files:**
+
 - Create: `apps/web/src/components/chat-message.tsx`
 - Create: `apps/web/src/components/chat-message.module.css`
 - Test: `apps/web/src/components/__tests__/chat-message.test.tsx`
@@ -921,6 +903,7 @@ git commit -m "feat(ui): add ChatMessage component with role-based styling"
 ## Task 4: MessageInput Component
 
 **Files:**
+
 - Create: `apps/web/src/components/message-input.tsx`
 - Create: `apps/web/src/components/message-input.module.css`
 - Test: `apps/web/src/components/__tests__/message-input.test.tsx`
@@ -1144,6 +1127,7 @@ git commit -m "feat(ui): add MessageInput component with char limit and send"
 ## Task 5: UnitSelector Component
 
 **Files:**
+
 - Create: `apps/web/src/components/unit-selector.tsx`
 - Create: `apps/web/src/components/unit-selector.module.css`
 - Test: `apps/web/src/components/__tests__/unit-selector.test.tsx`
@@ -1293,6 +1277,7 @@ git commit -m "feat(ui): add UnitSelector component for multi-unit tenants"
 ## Task 6: SplitReview Component
 
 **Files:**
+
 - Create: `apps/web/src/components/split-review.tsx`
 - Create: `apps/web/src/components/split-review.module.css`
 - Test: `apps/web/src/components/__tests__/split-review.test.tsx`
@@ -1737,6 +1722,7 @@ git commit -m "feat(ui): add SplitReview component for issue split confirmation"
 ## Task 7: FollowupForm Component
 
 **Files:**
+
 - Create: `apps/web/src/components/followup-form.tsx`
 - Create: `apps/web/src/components/followup-form.module.css`
 - Test: `apps/web/src/components/__tests__/followup-form.test.tsx`
@@ -1991,6 +1977,7 @@ git commit -m "feat(ui): add FollowupForm component for classifier follow-up que
 ## Task 8: ConfirmationPanel Component
 
 **Files:**
+
 - Create: `apps/web/src/components/confirmation-panel.tsx`
 - Create: `apps/web/src/components/confirmation-panel.module.css`
 - Test: `apps/web/src/components/__tests__/confirmation-panel.test.tsx`
@@ -2250,6 +2237,7 @@ git commit -m "feat(ui): add ConfirmationPanel component for pre-submission revi
 ## Task 9: StatusIndicator Component
 
 **Files:**
+
 - Create: `apps/web/src/components/status-indicator.tsx`
 - Create: `apps/web/src/components/status-indicator.module.css`
 - Test: `apps/web/src/components/__tests__/status-indicator.test.tsx`
@@ -2343,7 +2331,9 @@ Create `apps/web/src/components/status-indicator.module.css`:
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .message {
@@ -2495,6 +2485,7 @@ git commit -m "feat(ui): add StatusIndicator for processing, success, and error 
 ## Task 10: QuickReplies Component
 
 **Files:**
+
 - Create: `apps/web/src/components/quick-replies.tsx`
 - Create: `apps/web/src/components/quick-replies.module.css`
 - Test: `apps/web/src/components/__tests__/quick-replies.test.tsx`
@@ -2641,6 +2632,7 @@ git commit -m "feat(ui): add QuickReplies component for server-driven action but
 ## Task 11: ChatShell — Main Conversation Container
 
 **Files:**
+
 - Create: `apps/web/src/components/chat-shell.tsx`
 - Create: `apps/web/src/components/chat-shell.module.css`
 - Test: `apps/web/src/components/__tests__/chat-shell.test.tsx`
@@ -3047,6 +3039,7 @@ git commit -m "feat(ui): add ChatShell orchestration component wiring state mach
 ## Task 12: Wire ChatShell into Page
 
 **Files:**
+
 - Modify: `apps/web/src/app/page.tsx`
 - Modify: `apps/web/src/app/layout.tsx`
 
@@ -3172,6 +3165,7 @@ git commit -m "feat(ui): wire ChatShell into main page with query param auth (MV
 ## Task 13: Smoke Test — Full Flow Verification
 
 **Files:**
+
 - No new files. Verification only.
 
 **Step 1: Run full test suite across all packages**
@@ -3197,19 +3191,19 @@ If any fixes were applied, commit them with an appropriate message.
 
 ## Summary
 
-| Task | Component | What it does |
-|------|-----------|-------------|
-| 0 | Test setup | React Testing Library + jsdom |
-| 1 | `api-client` | Typed fetch wrappers for all endpoints |
-| 2 | `useConversation` | Hook managing state + dispatch |
-| 3 | `ChatMessage` | Single message bubble |
-| 4 | `MessageInput` | Text input with send button |
-| 5 | `UnitSelector` | Multi-unit selection |
-| 6 | `SplitReview` | Issue split confirmation/editing |
-| 7 | `FollowupForm` | Follow-up question answers |
-| 8 | `ConfirmationPanel` | Pre-submission review |
-| 9 | `StatusIndicator` | Loading/error/success states |
-| 10 | `QuickReplies` | Server-driven action buttons |
-| 11 | `ChatShell` | Top-level orchestration |
-| 12 | Page wiring | Connect to Next.js page |
-| 13 | Smoke test | Full verification |
+| Task | Component           | What it does                           |
+| ---- | ------------------- | -------------------------------------- |
+| 0    | Test setup          | React Testing Library + jsdom          |
+| 1    | `api-client`        | Typed fetch wrappers for all endpoints |
+| 2    | `useConversation`   | Hook managing state + dispatch         |
+| 3    | `ChatMessage`       | Single message bubble                  |
+| 4    | `MessageInput`      | Text input with send button            |
+| 5    | `UnitSelector`      | Multi-unit selection                   |
+| 6    | `SplitReview`       | Issue split confirmation/editing       |
+| 7    | `FollowupForm`      | Follow-up question answers             |
+| 8    | `ConfirmationPanel` | Pre-submission review                  |
+| 9    | `StatusIndicator`   | Loading/error/success states           |
+| 10   | `QuickReplies`      | Server-driven action buttons           |
+| 11   | `ChatShell`         | Top-level orchestration                |
+| 12   | Page wiring         | Connect to Next.js page                |
+| 13   | Smoke test          | Full verification                      |

@@ -4,10 +4,7 @@ export {
   mergeRiskScanResults,
 } from './trigger-scanner.js';
 
-export {
-  resolveMitigationTemplate,
-  renderMitigationMessages,
-} from './mitigation.js';
+export { resolveMitigationTemplate, renderMitigationMessages } from './mitigation.js';
 
 export {
   buildRiskDetectedEvent,

@@ -8,7 +8,7 @@ export function resolveMitigationTemplate(
   templateId: string,
   protocols: RiskProtocols,
 ): MitigationTemplate | null {
-  return protocols.mitigation_templates.find(t => t.template_id === templateId) ?? null;
+  return protocols.mitigation_templates.find((t) => t.template_id === templateId) ?? null;
 }
 
 /**
@@ -25,13 +25,9 @@ export function renderMitigationMessages(
     const template = resolveMitigationTemplate(match.trigger.mitigation_template_id, protocols);
     if (!template) continue;
 
-    const instructions = template.safety_instructions
-      .map(s => `- ${s}`)
-      .join('\n');
+    const instructions = template.safety_instructions.map((s) => `- ${s}`).join('\n');
 
-    messages.push(
-      `**${template.name}**\n\n${template.message_template}\n\n${instructions}`,
-    );
+    messages.push(`**${template.name}**\n\n${template.message_template}\n\n${instructions}`);
   }
 
   return messages;

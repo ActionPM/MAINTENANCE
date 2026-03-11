@@ -18,12 +18,15 @@ export interface WoCreatedNotificationInput {
  * Batches: one notification for all WOs in an issue group.
  * In-app: immediately sent. SMS: pending until sender processes.
  */
-export function buildWoCreatedNotificationEvent(input: WoCreatedNotificationInput): NotificationEvent {
+export function buildWoCreatedNotificationEvent(
+  input: WoCreatedNotificationInput,
+): NotificationEvent {
   const isSms = input.channel === 'sms';
   const count = input.workOrderIds.length;
-  const message = count === 1
-    ? 'Your service request has been submitted.'
-    : 'Your service requests have been submitted.';
+  const message =
+    count === 1
+      ? 'Your service request has been submitted.'
+      : 'Your service requests have been submitted.';
 
   return {
     event_id: input.eventId,

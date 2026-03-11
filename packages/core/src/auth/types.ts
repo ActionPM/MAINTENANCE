@@ -5,9 +5,9 @@ import type { AuthContext } from '@wo-agent/schemas';
  * Maps to AuthContext fields for server-side extraction.
  */
 export interface JwtPayload {
-  readonly sub: string;          // tenant_user_id
-  readonly account_id: string;   // tenant_account_id
-  readonly unit_ids: readonly string[];  // authorized_unit_ids
+  readonly sub: string; // tenant_user_id
+  readonly account_id: string; // tenant_account_id
+  readonly unit_ids: readonly string[]; // authorized_unit_ids
   readonly iat?: number;
   readonly exp?: number;
   readonly iss?: string;
@@ -20,8 +20,8 @@ export interface JwtPayload {
 export interface JwtConfig {
   readonly accessTokenSecret: Uint8Array;
   readonly refreshTokenSecret: Uint8Array;
-  readonly accessTokenExpiry: string;   // e.g., '15m'
-  readonly refreshTokenExpiry: string;  // e.g., '7d'
+  readonly accessTokenExpiry: string; // e.g., '15m'
+  readonly refreshTokenExpiry: string; // e.g., '7d'
   readonly issuer: string;
   readonly audience: string;
 }

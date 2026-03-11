@@ -8,7 +8,7 @@ describe('loadRiskProtocols', () => {
     expect(protocols.triggers.length).toBeGreaterThan(0);
     expect(protocols.mitigation_templates.length).toBeGreaterThan(0);
 
-    const fire = protocols.triggers.find(t => t.trigger_id === 'fire-001');
+    const fire = protocols.triggers.find((t) => t.trigger_id === 'fire-001');
     expect(fire).toBeDefined();
     expect(fire!.severity).toBe('emergency');
     expect(fire!.grammar.keyword_any).toContain('fire');
@@ -17,7 +17,7 @@ describe('loadRiskProtocols', () => {
 
   it('every trigger references an existing mitigation template', () => {
     const protocols = loadRiskProtocols();
-    const templateIds = new Set(protocols.mitigation_templates.map(t => t.template_id));
+    const templateIds = new Set(protocols.mitigation_templates.map((t) => t.template_id));
     for (const trigger of protocols.triggers) {
       expect(templateIds.has(trigger.mitigation_template_id)).toBe(true);
     }

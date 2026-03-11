@@ -32,6 +32,7 @@ If you cannot answer all four, stop and resolve before writing code.
 - New event → confirm the event schema exists and the append-only event table is defined.
 
 Checklist before writing implementation:
+
 - [ ] JSON Schema file exists in `packages/schemas/`
 - [ ] A TypeScript type is generated from or aligned to that schema
 - [ ] A validator function exists that calls `validate(data, schema)` and returns typed errors
@@ -44,15 +45,18 @@ Checklist before writing implementation:
 Every module, endpoint, and data structure must satisfy ALL seven. Violations are build-blocking.
 
 ### 1. Taxonomy is authoritative
+
 - Category values MUST come from `packages/schemas/taxonomy.json`.
 - Never define category enums inline. Import them from the taxonomy.
 - If you need a new category, that is a taxonomy RFC (`docs/rfcs/`), not a code change.
 
 ### 2. Split first — never classify until split is finalized
+
 - The orchestrator MUST reject `START_CLASSIFICATION` unless conversation state === `split_finalized`.
 - No shortcut paths. No "simple single-issue skip." Split always runs.
 
 ### 3. Schema-lock all model outputs
+
 - Every LLM response follows this pipeline:
 
 ```
@@ -67,21 +71,25 @@ LLM call → JSON.parse() → schemaValidate() → domainValidate() → accept
 - **Never accept unvalidated output. Never skip validation for "simple" responses.**
 
 ### 4. No side effects without tenant confirmation
+
 - Work order creation, notifications, and escalation triggers happen ONLY after `CONFIRM_SUBMISSION`.
 - If you are writing a side-effect function, it MUST check that the conversation state is `submitted` or that the action is `CONFIRM_SUBMISSION`.
 
 ### 5. Unit/property derived from membership
+
 - Server derives authorized units from `auth_context.tenant_user_id`.
 - `unit_id` and `property_id` are NEVER accepted from request bodies as truth.
 - If the tenant has multiple units, force `unit_selection_required` state.
 
 ### 6. Append-only events
+
 - Event tables: `conversation_events`, `classification_events`, `followup_events`, `work_order_events`, `risk_events`, `notification_events`, `human_override_events`.
 - App role: INSERT + SELECT only. No UPDATE, no DELETE.
 - Corrections append a new event; the effective value is the latest approved event.
 - If you find yourself writing an UPDATE on an event table, STOP — you are violating immutability.
 
 ### 7. Emergency escalation is deterministic
+
 - The LLM may suggest risk; deterministic code confirms and routes.
 - Emergency triggers use a grammar: `keyword_any`, `regex_any`, `taxonomy_path_any`, `requires_confirmation`.
 - Confirm emergency via yes/no before routing.
@@ -92,6 +100,7 @@ LLM call → JSON.parse() → schemaValidate() → domainValidate() → accept
 ## Gate 3 — Orchestrator is the only controller (spec §10)
 
 No other component may:
+
 - Transition conversation state
 - Call LLM tools (IssueSplitter, IssueClassifier, FollowUpGenerator)
 - Create work orders
@@ -102,6 +111,7 @@ No other component may:
 If you are building a module that does any of the above, it MUST be called by the orchestrator — never invoked directly by an endpoint handler or UI component.
 
 ### Orchestrator action types (MVP)
+
 ```
 CREATE_CONVERSATION    SELECT_UNIT             SUBMIT_INITIAL_MESSAGE
 SUBMIT_ADDITIONAL_MESSAGE   CONFIRM_SPLIT      MERGE_ISSUES
@@ -111,6 +121,7 @@ UPLOAD_PHOTO_COMPLETE  RESUME                  ABANDON
 ```
 
 ### Endpoint → Action mapping rule
+
 Every endpoint request body maps directly to `OrchestratorActionRequest.tenant_input` for its action type. Every endpoint returns `OrchestratorActionResponse`. No exceptions.
 
 ---
@@ -118,12 +129,14 @@ Every endpoint request body maps directly to `OrchestratorActionRequest.tenant_i
 ## Gate 4 — Validate transitions against the state machine (spec §11.2)
 
 Before implementing any action handler:
+
 1. Open the transition matrix in spec §11.2.
 2. Confirm the action is valid for the current state.
 3. Confirm the target state is correct.
 4. Write a test for the valid transition AND a test that rejects the action from an invalid state.
 
 Key rules to remember:
+
 - `SUBMIT_INITIAL_MESSAGE` requires unit already resolved.
 - `ANSWER_FOLLOWUPS` returns to `classification_in_progress` (re-classifies with new info).
 - `REJECT_SPLIT` goes to `split_finalized` (treats original as single issue).
@@ -135,16 +148,20 @@ Key rules to remember:
 ## Gate 5 — Version pinning and idempotency
 
 ### Version pinning
+
 Every conversation pins on creation: `taxonomy_version`, `schema_version`, `model_id`, `prompt_version`.
 Resumed conversations retain their pinned versions. Never silently upgrade mid-conversation.
 
 ### Idempotency
+
 Every side-effect action requires an `idempotency_key` in the request. The orchestrator must:
+
 - Check for duplicate key before executing
 - Return the cached response for duplicates
 - Store the key with the result
 
 ### Optimistic locking
+
 Mutable tables use `row_version`. On update: `WHERE row_version = expected` → if 0 rows affected, return conflict error.
 
 ---

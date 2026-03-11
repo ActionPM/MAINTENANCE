@@ -2,16 +2,66 @@
   "planPath": "docs/plans/2026-03-03-phase-07-tenant-confirmation-staleness.md",
   "tasks": [
     { "id": 0, "subject": "Task 0: Create worktree and branch from main", "status": "completed" },
-    { "id": 1, "subject": "Task 1: Implement staleness checker (pure function)", "status": "completed", "blockedBy": [0] },
-    { "id": 2, "subject": "Task 2: Implement confirmation payload builder", "status": "completed", "blockedBy": [0] },
-    { "id": 3, "subject": "Task 3: Add confirmation tracking fields to ConversationSession", "status": "completed", "blockedBy": [0] },
-    { "id": 4, "subject": "Task 4: Build confirmation event builder (append-only)", "status": "completed", "blockedBy": [1, 2] },
-    { "id": 5, "subject": "Task 5: Create confirmation barrel export", "status": "completed", "blockedBy": [1, 2, 4] },
-    { "id": 6, "subject": "Task 6: Implement CONFIRM_SUBMISSION handler with staleness check", "status": "completed", "blockedBy": [3, 5] },
-    { "id": 7, "subject": "Task 7: Wire confirmation tracking into start-classification handler", "status": "completed", "blockedBy": [3, 5] },
-    { "id": 8, "subject": "Task 8: Add confirmation payload to response snapshot", "status": "completed", "blockedBy": [5] },
-    { "id": 9, "subject": "Task 9: Integration tests — full confirmation flow with staleness", "status": "pending", "blockedBy": [6, 7, 8] },
-    { "id": 10, "subject": "Task 10: Final cleanup — update barrel exports and run full validation", "status": "pending", "blockedBy": [9] }
+    {
+      "id": 1,
+      "subject": "Task 1: Implement staleness checker (pure function)",
+      "status": "completed",
+      "blockedBy": [0]
+    },
+    {
+      "id": 2,
+      "subject": "Task 2: Implement confirmation payload builder",
+      "status": "completed",
+      "blockedBy": [0]
+    },
+    {
+      "id": 3,
+      "subject": "Task 3: Add confirmation tracking fields to ConversationSession",
+      "status": "completed",
+      "blockedBy": [0]
+    },
+    {
+      "id": 4,
+      "subject": "Task 4: Build confirmation event builder (append-only)",
+      "status": "completed",
+      "blockedBy": [1, 2]
+    },
+    {
+      "id": 5,
+      "subject": "Task 5: Create confirmation barrel export",
+      "status": "completed",
+      "blockedBy": [1, 2, 4]
+    },
+    {
+      "id": 6,
+      "subject": "Task 6: Implement CONFIRM_SUBMISSION handler with staleness check",
+      "status": "completed",
+      "blockedBy": [3, 5]
+    },
+    {
+      "id": 7,
+      "subject": "Task 7: Wire confirmation tracking into start-classification handler",
+      "status": "completed",
+      "blockedBy": [3, 5]
+    },
+    {
+      "id": 8,
+      "subject": "Task 8: Add confirmation payload to response snapshot",
+      "status": "completed",
+      "blockedBy": [5]
+    },
+    {
+      "id": 9,
+      "subject": "Task 9: Integration tests — full confirmation flow with staleness",
+      "status": "pending",
+      "blockedBy": [6, 7, 8]
+    },
+    {
+      "id": 10,
+      "subject": "Task 10: Final cleanup — update barrel exports and run full validation",
+      "status": "pending",
+      "blockedBy": [9]
+    }
   ],
   "lastUpdated": "2026-03-03T19:00:00Z"
 }

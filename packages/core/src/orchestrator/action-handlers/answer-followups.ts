@@ -1,4 +1,10 @@
-import { ConversationState, DEFAULT_CONFIDENCE_CONFIG, DEFAULT_FOLLOWUP_CAPS, taxonomyConstraints, validateHierarchicalConstraints } from '@wo-agent/schemas';
+import {
+  ConversationState,
+  DEFAULT_CONFIDENCE_CONFIG,
+  DEFAULT_FOLLOWUP_CAPS,
+  taxonomyConstraints,
+  validateHierarchicalConstraints,
+} from '@wo-agent/schemas';
 import { resolveConstraintImpliedFields } from '../../classifier/constraint-resolver.js';
 import type {
   IssueClassifierInput,
@@ -10,7 +16,10 @@ import type {
 import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
 import { callIssueClassifier } from '../../classifier/issue-classifier.js';
 import { computeCueScores } from '../../classifier/cue-scoring.js';
-import { computeAllFieldConfidences, determineFieldsNeedingInput } from '../../classifier/confidence.js';
+import {
+  computeAllFieldConfidences,
+  determineFieldsNeedingInput,
+} from '../../classifier/confidence.js';
 import {
   setClassificationResults,
   updateFollowUpTracking,
@@ -18,10 +27,12 @@ import {
 } from '../../session/session.js';
 import type { IssueClassificationResult } from '../../session/types.js';
 import { SystemEvent } from '../../state-machine/system-events.js';
-import { resolveLlmClassifySuccess } from '../../state-machine/guards.js';
 import { checkFollowUpCaps } from '../../followup/caps.js';
 import { callFollowUpGenerator } from '../../followup/followup-generator.js';
-import { buildFollowUpAnswersEvent, buildFollowUpQuestionsEvent } from '../../followup/event-builder.js';
+import {
+  buildFollowUpAnswersEvent,
+  buildFollowUpQuestionsEvent,
+} from '../../followup/event-builder.js';
 
 /**
  * Handle ANSWER_FOLLOWUPS action (spec §11.2, §15).
@@ -32,7 +43,9 @@ export async function handleAnswerFollowups(
   ctx: ActionHandlerContext,
 ): Promise<ActionHandlerResult> {
   const { session, request, deps } = ctx;
-  const tenantInput = request.tenant_input as { answers: Array<{ question_id: string; answer: unknown; received_at?: string }> };
+  const tenantInput = request.tenant_input as {
+    answers: Array<{ question_id: string; answer: unknown; received_at?: string }>;
+  };
   const pendingQuestions = session.pending_followup_questions;
   const issues = session.split_issues;
 
@@ -42,7 +55,9 @@ export async function handleAnswerFollowups(
       newState: session.state,
       session,
       uiMessages: [],
-      errors: [{ code: 'NO_PENDING_QUESTIONS', message: 'No pending follow-up questions to answer' }],
+      errors: [
+        { code: 'NO_PENDING_QUESTIONS', message: 'No pending follow-up questions to answer' },
+      ],
     };
   }
 
@@ -57,16 +72,16 @@ export async function handleAnswerFollowups(
   }
 
   // Step 1: Record followup_event with questions + answers (append-only)
-  const answersReceived = tenantInput.answers.map(a => ({
+  const answersReceived = tenantInput.answers.map((a) => ({
     question_id: a.question_id,
     answer: a.answer,
     received_at: a.received_at ?? deps.clock(),
   }));
 
   // Determine which issue this follow-up relates to
-  const targetIssueId = session.classification_results?.find(
-    r => r.fieldsNeedingInput.length > 0,
-  )?.issue_id ?? issues[0].issue_id;
+  const targetIssueId =
+    session.classification_results?.find((r) => r.fieldsNeedingInput.length > 0)?.issue_id ??
+    issues[0].issue_id;
 
   let answersEvent;
   try {
@@ -86,10 +101,12 @@ export async function handleAnswerFollowups(
       newState: session.state,
       session,
       uiMessages: [],
-      errors: [{
-        code: 'INVALID_ANSWER_QUESTION_ID',
-        message: err instanceof Error ? err.message : 'Answer references unknown question_id',
-      }],
+      errors: [
+        {
+          code: 'INVALID_ANSWER_QUESTION_ID',
+          message: err instanceof Error ? err.message : 'Answer references unknown question_id',
+        },
+      ],
     };
   }
   await deps.eventRepo.insert(answersEvent);
@@ -98,13 +115,15 @@ export async function handleAnswerFollowups(
   let updatedSession = setPendingFollowUpQuestions(session, null);
 
   // Step 3: Convert answers to followup_answers for classifier
-  const followupAnswers = tenantInput.answers.map(a => {
-    const question = pendingQuestions.find(q => q.question_id === a.question_id);
-    return {
-      field_target: question?.field_target ?? '',
-      answer: a.answer as string | boolean,
-    };
-  }).filter(a => a.field_target);
+  const followupAnswers = tenantInput.answers
+    .map((a) => {
+      const question = pendingQuestions.find((q) => q.question_id === a.question_id);
+      return {
+        field_target: question?.field_target ?? '',
+        answer: a.answer as string | boolean,
+      };
+    })
+    .filter((a) => a.field_target);
 
   // Intermediate step: needs_tenant_input → classification_in_progress
   const intermediateStep = {
@@ -143,7 +162,12 @@ export async function handleAnswerFollowups(
     const taxonomyVersion = session.pinned_versions.taxonomy_version;
     let classifierResult;
     try {
-      classifierResult = await callIssueClassifier(classifierInput, deps.issueClassifier, taxonomy, taxonomyVersion);
+      classifierResult = await callIssueClassifier(
+        classifierInput,
+        deps.issueClassifier,
+        taxonomy,
+        taxonomyVersion,
+      );
     } catch {
       return {
         newState: ConversationState.LLM_ERROR_RETRYABLE,
@@ -184,14 +208,30 @@ export async function handleAnswerFollowups(
 
     // Step A: Validate hierarchical constraints (I7)
     if (!output.needs_human_triage) {
-      const hierarchyResult = validateHierarchicalConstraints(output.classification, taxonomyConstraints, taxonomyVersion);
+      const hierarchyResult = validateHierarchicalConstraints(
+        output.classification,
+        taxonomyConstraints,
+        taxonomyVersion,
+      );
       if (!hierarchyResult.valid) {
         const constraintHint = `Hierarchical violations: ${hierarchyResult.violations.join('; ')}`;
         try {
-          const retryInput: IssueClassifierInput = { ...classifierInput, retry_context: constraintHint };
-          const retryResult = await callIssueClassifier(retryInput, deps.issueClassifier, taxonomy, taxonomyVersion);
+          const retryInput: IssueClassifierInput = {
+            ...classifierInput,
+            retry_context: constraintHint,
+          };
+          const retryResult = await callIssueClassifier(
+            retryInput,
+            deps.issueClassifier,
+            taxonomy,
+            taxonomyVersion,
+          );
           if (retryResult.status === 'ok' && retryResult.output) {
-            const retryHierarchy = validateHierarchicalConstraints(retryResult.output.classification, taxonomyConstraints, taxonomyVersion);
+            const retryHierarchy = validateHierarchicalConstraints(
+              retryResult.output.classification,
+              taxonomyConstraints,
+              taxonomyVersion,
+            );
             if (retryHierarchy.valid) {
               output = retryResult.output;
             }
@@ -200,7 +240,11 @@ export async function handleAnswerFollowups(
           // Retry failed, continue with original output
         }
         // If still invalid after retry, log violation and escalate
-        const postRetryCheck = validateHierarchicalConstraints(output.classification, taxonomyConstraints, taxonomyVersion);
+        const postRetryCheck = validateHierarchicalConstraints(
+          output.classification,
+          taxonomyConstraints,
+          taxonomyVersion,
+        );
         if (!postRetryCheck.valid) {
           output = { ...output, needs_human_triage: true };
           await deps.eventRepo.insert({
@@ -252,13 +296,13 @@ export async function handleAnswerFollowups(
     // Short-circuit: remove fields the tenant directly answered this round.
     // A tenant explicitly answering a field resolves it regardless of confidence.
     if (issue.issue_id === targetIssueId && followupAnswers.length > 0) {
-      const answeredFields = new Set(followupAnswers.map(a => a.field_target));
-      fieldsNeedingInput = fieldsNeedingInput.filter(f => !answeredFields.has(f));
+      const answeredFields = new Set(followupAnswers.map((a) => a.field_target));
+      fieldsNeedingInput = fieldsNeedingInput.filter((f) => !answeredFields.has(f));
     }
 
     // Short-circuit: remove constraint-implied fields — deterministically resolved.
     if (Object.keys(impliedFields).length > 0) {
-      fieldsNeedingInput = fieldsNeedingInput.filter(f => !(f in impliedFields));
+      fieldsNeedingInput = fieldsNeedingInput.filter((f) => !(f in impliedFields));
     }
 
     if (fieldsNeedingInput.length > 0) anyFieldsNeedInput = true;
@@ -275,7 +319,7 @@ export async function handleAnswerFollowups(
 
   // Step 5: If fields still need input, check caps and generate follow-ups
   if (anyFieldsNeedInput) {
-    const allFieldsNeedingInput = classificationResults.flatMap(r => [...r.fieldsNeedingInput]);
+    const allFieldsNeedingInput = classificationResults.flatMap((r) => [...r.fieldsNeedingInput]);
 
     const capsCheck = checkFollowUpCaps({
       turnNumber: updatedSession.followup_turn_number + 1,
@@ -287,7 +331,7 @@ export async function handleAnswerFollowups(
 
     if (capsCheck.escapeHatch) {
       // Escape hatch: mark needs_human_triage
-      const triageResults = classificationResults.map(r => ({
+      const triageResults = classificationResults.map((r) => ({
         ...r,
         classifierOutput: { ...r.classifierOutput, needs_human_triage: true },
         fieldsNeedingInput: [] as string[],
@@ -299,18 +343,21 @@ export async function handleAnswerFollowups(
         session: updatedSession,
         intermediateSteps: [intermediateStep],
         finalSystemAction: SystemEvent.LLM_CLASSIFY_SUCCESS,
-        uiMessages: [{
-          role: 'agent',
-          content: 'Thank you for your answers. Some details still need review — a human will follow up.',
-        }],
+        uiMessages: [
+          {
+            role: 'agent',
+            content:
+              'Thank you for your answers. Some details still need review — a human will follow up.',
+          },
+        ],
         eventPayload: { escape_hatch: true, reason: capsCheck.reason },
         eventType: 'state_transition',
       };
     }
 
     // Generate next round of follow-up questions
-    const targetResult = classificationResults.find(r => r.fieldsNeedingInput.length > 0)!;
-    const targetIssueData = issues.find(i => i.issue_id === targetResult.issue_id);
+    const targetResult = classificationResults.find((r) => r.fieldsNeedingInput.length > 0)!;
+    const targetIssueData = issues.find((i) => i.issue_id === targetResult.issue_id);
     const followUpInput: FollowUpGeneratorInput = {
       issue_id: targetResult.issue_id,
       classification: targetResult.classifierOutput.classification,
@@ -341,7 +388,7 @@ export async function handleAnswerFollowups(
 
     if (!nextQuestions || nextQuestions.length === 0) {
       // Escape hatch
-      const triageResults = classificationResults.map(r => ({
+      const triageResults = classificationResults.map((r) => ({
         ...r,
         classifierOutput: { ...r.classifierOutput, needs_human_triage: true },
         fieldsNeedingInput: [] as string[],
@@ -353,7 +400,9 @@ export async function handleAnswerFollowups(
         session: updatedSession,
         intermediateSteps: [intermediateStep],
         finalSystemAction: SystemEvent.LLM_CLASSIFY_SUCCESS,
-        uiMessages: [{ role: 'agent', content: 'Thank you. A human will review the remaining details.' }],
+        uiMessages: [
+          { role: 'agent', content: 'Thank you. A human will review the remaining details.' },
+        ],
         eventPayload: { escape_hatch: true },
         eventType: 'state_transition',
       };
@@ -379,10 +428,12 @@ export async function handleAnswerFollowups(
       session: updatedSession,
       intermediateSteps: [intermediateStep],
       finalSystemAction: SystemEvent.LLM_CLASSIFY_SUCCESS,
-      uiMessages: [{
-        role: 'agent',
-        content: 'Thanks for that info. I still need a few more details.',
-      }],
+      uiMessages: [
+        {
+          role: 'agent',
+          content: 'Thanks for that info. I still need a few more details.',
+        },
+      ],
       eventPayload: {
         reclassification: true,
         new_followup_turn: updatedSession.followup_turn_number,
@@ -397,10 +448,12 @@ export async function handleAnswerFollowups(
     session: updatedSession,
     intermediateSteps: [intermediateStep],
     finalSystemAction: SystemEvent.LLM_CLASSIFY_SUCCESS,
-    uiMessages: [{
-      role: 'agent',
-      content: 'Thank you! I\'ve updated the classification. Please review and confirm.',
-    }],
+    uiMessages: [
+      {
+        role: 'agent',
+        content: "Thank you! I've updated the classification. Please review and confirm.",
+      },
+    ],
     eventPayload: {
       reclassification: true,
       all_fields_resolved: true,

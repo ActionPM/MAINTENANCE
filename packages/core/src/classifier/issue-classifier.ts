@@ -1,8 +1,5 @@
 import type { IssueClassifierInput, IssueClassifierOutput, Taxonomy } from '@wo-agent/schemas';
-import {
-  validateClassifierOutput,
-  validateClassificationAgainstTaxonomy,
-} from '@wo-agent/schemas';
+import { validateClassifierOutput, validateClassificationAgainstTaxonomy } from '@wo-agent/schemas';
 
 export enum ClassifierErrorCode {
   SCHEMA_VALIDATION_FAILED = 'SCHEMA_VALIDATION_FAILED',
@@ -48,6 +45,7 @@ export async function callIssueClassifier(
   input: IssueClassifierInput,
   llmCall: LlmClassifierFn,
   taxonomy: Taxonomy,
+  taxonomyVersion?: string,
 ): Promise<ClassifierResult> {
   // --- Phase 1: Schema + taxonomy value validation with one retry ---
   let validated: IssueClassifierOutput | null = null;
@@ -56,10 +54,7 @@ export async function callIssueClassifier(
   for (let attempt = 0; attempt < 2; attempt++) {
     let raw: unknown;
     try {
-      raw = await llmCall(
-        input,
-        attempt > 0 ? { retryHint: 'schema_errors' } : undefined,
-      );
+      raw = await llmCall(input, attempt > 0 ? { retryHint: 'schema_errors' } : undefined);
     } catch (err) {
       throw new ClassifierError(
         ClassifierErrorCode.LLM_CALL_FAILED,
@@ -79,6 +74,7 @@ export async function callIssueClassifier(
     const domainResult = validateClassificationAgainstTaxonomy(
       schemaResult.data!.classification,
       taxonomy,
+      taxonomyVersion,
     );
     if (domainResult.invalidValues.length > 0) {
       lastSchemaError = domainResult.invalidValues;
@@ -100,6 +96,7 @@ export async function callIssueClassifier(
   const gatingResult = validateClassificationAgainstTaxonomy(
     validated.classification,
     taxonomy,
+    taxonomyVersion,
   );
 
   if (!gatingResult.contradictory) {
@@ -141,6 +138,7 @@ export async function callIssueClassifier(
   const retryTaxonomy = validateClassificationAgainstTaxonomy(
     retrySchema.data!.classification,
     taxonomy,
+    taxonomyVersion,
   );
   if (retryTaxonomy.invalidValues.length > 0 || retryTaxonomy.contradictory) {
     // Still contradictory after retry -- needs human triage (spec 5.3 step 3)

@@ -2,7 +2,12 @@ import { ActionType, ActorType, ConversationState } from '@wo-agent/schemas';
 import type { OrchestratorActionRequest } from '@wo-agent/schemas';
 import { isValidTransition, isPhotoAction, ALL_SYSTEM_EVENTS } from '../state-machine/index.js';
 import { SystemEvent } from '../state-machine/system-events.js';
-import { updateSessionState, touchActivity, createSession, markConfirmationPresented } from '../session/session.js';
+import {
+  updateSessionState,
+  touchActivity,
+  createSession,
+  markConfirmationPresented,
+} from '../session/session.js';
 import type { ConversationEvent } from '../events/types.js';
 import { buildResponse } from './response-builder.js';
 import { getActionHandler } from './action-handlers/index.js';
@@ -35,14 +40,24 @@ export function createDispatcher(deps: OrchestratorDependencies) {
         tenant_user_id: auth_context.tenant_user_id,
         tenant_account_id: auth_context.tenant_account_id,
         authorized_unit_ids: auth_context.authorized_unit_ids,
-        pinned_versions: { taxonomy_version: '', schema_version: '', model_id: '', prompt_version: '' },
+        pinned_versions: {
+          taxonomy_version: '',
+          schema_version: '',
+          model_id: '',
+          prompt_version: '',
+        },
       });
       return {
         response: buildResponse({
           newState: errorSession.state,
           session: errorSession,
           uiMessages: [],
-          errors: [{ code: 'SYSTEM_EVENT_REJECTED', message: 'System events cannot be submitted by clients' }],
+          errors: [
+            {
+              code: 'SYSTEM_EVENT_REJECTED',
+              message: 'System events cannot be submitted by clients',
+            },
+          ],
         }),
         session: errorSession,
       };
@@ -102,7 +117,12 @@ export function createDispatcher(deps: OrchestratorDependencies) {
         tenant_user_id: auth_context.tenant_user_id,
         tenant_account_id: auth_context.tenant_account_id,
         authorized_unit_ids: auth_context.authorized_unit_ids,
-        pinned_versions: { taxonomy_version: '', schema_version: '', model_id: '', prompt_version: '' },
+        pinned_versions: {
+          taxonomy_version: '',
+          schema_version: '',
+          model_id: '',
+          prompt_version: '',
+        },
       });
       return {
         response: buildResponse({
@@ -150,10 +170,12 @@ export function createDispatcher(deps: OrchestratorDependencies) {
           newState: session.state,
           session,
           uiMessages: [],
-          errors: [{
-            code: 'INVALID_TRANSITION',
-            message: `Action ${action_type} is not valid from state ${session.state}`,
-          }],
+          errors: [
+            {
+              code: 'INVALID_TRANSITION',
+              message: `Action ${action_type} is not valid from state ${session.state}`,
+            },
+          ],
         }),
         session,
       };
@@ -165,7 +187,7 @@ export function createDispatcher(deps: OrchestratorDependencies) {
 
     // Write events and apply state for the initial handler result
     let currentResult = handlerResult;
-    let currentSession = session;
+    const currentSession = session;
     let latestUpdatedSession = writeHandlerEvents(
       currentResult,
       currentSession,

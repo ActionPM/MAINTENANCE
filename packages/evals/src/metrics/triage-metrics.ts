@@ -4,7 +4,8 @@ export interface TriageComparisonInput {
 }
 
 export function computeTriagePrecision(pairs: readonly TriageComparisonInput[]): number {
-  let tp = 0, fp = 0;
+  let tp = 0,
+    fp = 0;
   for (const { predicted_needs_human_triage, expected_needs_human_triage } of pairs) {
     if (predicted_needs_human_triage) {
       if (expected_needs_human_triage) tp++;
@@ -15,7 +16,8 @@ export function computeTriagePrecision(pairs: readonly TriageComparisonInput[]):
 }
 
 export function computeTriageRecall(pairs: readonly TriageComparisonInput[]): number {
-  let tp = 0, fn = 0;
+  let tp = 0,
+    fn = 0;
   for (const { predicted_needs_human_triage, expected_needs_human_triage } of pairs) {
     if (expected_needs_human_triage) {
       if (predicted_needs_human_triage) tp++;

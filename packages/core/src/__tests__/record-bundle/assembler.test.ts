@@ -48,7 +48,11 @@ describe('assembleRecordBundle', () => {
       tenant_account_id: 'account-1',
       status: WorkOrderStatus.CREATED,
       status_history: [
-        { status: WorkOrderStatus.CREATED, changed_at: '2026-03-04T00:00:00.000Z', actor: ActorType.SYSTEM },
+        {
+          status: WorkOrderStatus.CREATED,
+          changed_at: '2026-03-04T00:00:00.000Z',
+          actor: ActorType.SYSTEM,
+        },
       ],
       raw_text: 'My faucet leaks',
       summary_confirmed: 'Leaky faucet in kitchen',
@@ -58,7 +62,12 @@ describe('assembleRecordBundle', () => {
       missing_fields: [],
       pets_present: 'unknown',
       needs_human_triage: false,
-      pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'test', prompt_version: '1.0.0' },
+      pinned_versions: {
+        taxonomy_version: '1.0.0',
+        schema_version: '1.0.0',
+        model_id: 'test',
+        prompt_version: '1.0.0',
+      },
       created_at: '2026-03-04T00:00:00.000Z',
       updated_at: '2026-03-04T00:00:00.000Z',
       row_version: 1,
@@ -109,14 +118,22 @@ describe('assembleRecordBundle', () => {
     expect(bundle!.unit_id).toBe('unit-1');
     expect(bundle!.summary).toBe('Leaky faucet in kitchen');
     expect(bundle!.classification).toEqual({ Category: 'maintenance', Priority: 'normal' });
-    expect(bundle!.urgency_basis).toEqual({ has_emergency: false, highest_severity: null, trigger_ids: [] });
+    expect(bundle!.urgency_basis).toEqual({
+      has_emergency: false,
+      highest_severity: null,
+      trigger_ids: [],
+    });
     expect(bundle!.status_history).toEqual(wo.status_history);
     expect(bundle!.communications).toHaveLength(1);
     expect(bundle!.communications[0].notification_id).toBe('notif-1');
     expect(bundle!.communications[0].channel).toBe('in_app');
     expect(bundle!.schedule.priority).toBe('normal');
     expect(bundle!.schedule.response_hours).toBe(24);
-    expect(bundle!.resolution).toEqual({ resolved: false, final_status: 'created', resolved_at: null });
+    expect(bundle!.resolution).toEqual({
+      resolved: false,
+      final_status: 'created',
+      resolved_at: null,
+    });
     expect(bundle!.exported_at).toBe(NOW);
   });
 
@@ -141,9 +158,21 @@ describe('assembleRecordBundle', () => {
     const wo = makeWorkOrder({
       status: WorkOrderStatus.RESOLVED,
       status_history: [
-        { status: WorkOrderStatus.CREATED, changed_at: '2026-03-04T00:00:00.000Z', actor: ActorType.SYSTEM },
-        { status: WorkOrderStatus.ACTION_REQUIRED, changed_at: '2026-03-04T01:00:00.000Z', actor: ActorType.SYSTEM },
-        { status: WorkOrderStatus.RESOLVED, changed_at: '2026-03-04T10:00:00.000Z', actor: ActorType.PM_USER },
+        {
+          status: WorkOrderStatus.CREATED,
+          changed_at: '2026-03-04T00:00:00.000Z',
+          actor: ActorType.SYSTEM,
+        },
+        {
+          status: WorkOrderStatus.ACTION_REQUIRED,
+          changed_at: '2026-03-04T01:00:00.000Z',
+          actor: ActorType.SYSTEM,
+        },
+        {
+          status: WorkOrderStatus.RESOLVED,
+          changed_at: '2026-03-04T10:00:00.000Z',
+          actor: ActorType.PM_USER,
+        },
       ],
     });
     await workOrderRepo.insertBatch([wo]);
@@ -176,10 +205,12 @@ describe('assembleRecordBundle', () => {
       tenant_account_id: '00000000-0000-0000-0000-000000000009',
     });
     await workOrderRepo.insertBatch([uuidWo]);
-    await notificationRepo.insert(makeNotification({
-      conversation_id: '00000000-0000-0000-0000-000000000002',
-      work_order_ids: ['00000000-0000-0000-0000-000000000001'],
-    }));
+    await notificationRepo.insert(
+      makeNotification({
+        conversation_id: '00000000-0000-0000-0000-000000000002',
+        work_order_ids: ['00000000-0000-0000-0000-000000000001'],
+      }),
+    );
 
     const bundle = await assembleRecordBundle('00000000-0000-0000-0000-000000000001', deps);
 

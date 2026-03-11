@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import type { NotificationPreference } from '@wo-agent/schemas';
 import { NotificationService } from '../../notifications/notification-service.js';
-import { InMemoryNotificationStore, InMemoryNotificationPreferenceStore } from '../../notifications/in-memory-notification-store.js';
+import {
+  InMemoryNotificationStore,
+  InMemoryNotificationPreferenceStore,
+} from '../../notifications/in-memory-notification-store.js';
 import type { SmsSender } from '../../notifications/types.js';
 
 function makePrefs(overrides: Partial<NotificationPreference> = {}): NotificationPreference {
@@ -113,7 +116,10 @@ describe('NotificationService', () => {
   it('sends SMS when consent given and sms_enabled', async () => {
     const smsCalls: string[] = [];
     const trackingSender: SmsSender = {
-      send: async (phone, msg) => { smsCalls.push(phone); return { success: true }; },
+      send: async (phone, msg) => {
+        smsCalls.push(phone);
+        return { success: true };
+      },
     };
     service = new NotificationService({
       notificationRepo: notifStore,
@@ -123,14 +129,16 @@ describe('NotificationService', () => {
       clock: () => '2026-03-03T12:00:00Z',
     });
 
-    await prefStore.save(makePrefs({
-      sms_enabled: true,
-      sms_consent: {
-        phone_number: '+14165551234',
-        consent_given_at: '2026-01-01T00:00:00Z',
-        consent_revoked_at: null,
-      },
-    }));
+    await prefStore.save(
+      makePrefs({
+        sms_enabled: true,
+        sms_consent: {
+          phone_number: '+14165551234',
+          consent_given_at: '2026-01-01T00:00:00Z',
+          consent_revoked_at: null,
+        },
+      }),
+    );
 
     const result = await service.notifyWorkOrdersCreated({
       conversationId: 'conv-1',
@@ -148,14 +156,16 @@ describe('NotificationService', () => {
   });
 
   it('does NOT send SMS when consent revoked', async () => {
-    await prefStore.save(makePrefs({
-      sms_enabled: true,
-      sms_consent: {
-        phone_number: '+14165551234',
-        consent_given_at: '2026-01-01T00:00:00Z',
-        consent_revoked_at: '2026-02-01T00:00:00Z',
-      },
-    }));
+    await prefStore.save(
+      makePrefs({
+        sms_enabled: true,
+        sms_consent: {
+          phone_number: '+14165551234',
+          consent_given_at: '2026-01-01T00:00:00Z',
+          consent_revoked_at: '2026-02-01T00:00:00Z',
+        },
+      }),
+    );
 
     const result = await service.notifyWorkOrdersCreated({
       conversationId: 'conv-1',
@@ -213,15 +223,17 @@ describe('NotificationService', () => {
       clock: () => '2026-03-03T12:00:00Z',
     });
 
-    await prefStore.save(makePrefs({
-      in_app_enabled: false,
-      sms_enabled: true,
-      sms_consent: {
-        phone_number: '+14165551234',
-        consent_given_at: '2026-01-01T00:00:00Z',
-        consent_revoked_at: null,
-      },
-    }));
+    await prefStore.save(
+      makePrefs({
+        in_app_enabled: false,
+        sms_enabled: true,
+        sms_consent: {
+          phone_number: '+14165551234',
+          consent_given_at: '2026-01-01T00:00:00Z',
+          consent_revoked_at: null,
+        },
+      }),
+    );
 
     await service.notifyWorkOrdersCreated({
       conversationId: 'conv-1',
@@ -248,10 +260,12 @@ describe('NotificationService', () => {
   });
 
   it('respects notification_type_overrides disabling work_order_created', async () => {
-    await prefStore.save(makePrefs({
-      in_app_enabled: true,
-      notification_type_overrides: { work_order_created: false },
-    }));
+    await prefStore.save(
+      makePrefs({
+        in_app_enabled: true,
+        notification_type_overrides: { work_order_created: false },
+      }),
+    );
 
     const result = await service.notifyWorkOrdersCreated({
       conversationId: 'conv-1',
@@ -271,7 +285,10 @@ describe('NotificationService', () => {
   it('notification_type_overrides disables SMS too', async () => {
     const smsCalls: string[] = [];
     const trackingSender: SmsSender = {
-      send: async (phone) => { smsCalls.push(phone); return { success: true }; },
+      send: async (phone) => {
+        smsCalls.push(phone);
+        return { success: true };
+      },
     };
     service = new NotificationService({
       notificationRepo: notifStore,
@@ -281,15 +298,17 @@ describe('NotificationService', () => {
       clock: () => '2026-03-03T12:00:00Z',
     });
 
-    await prefStore.save(makePrefs({
-      sms_enabled: true,
-      sms_consent: {
-        phone_number: '+14165551234',
-        consent_given_at: '2026-01-01T00:00:00Z',
-        consent_revoked_at: null,
-      },
-      notification_type_overrides: { work_order_created: false },
-    }));
+    await prefStore.save(
+      makePrefs({
+        sms_enabled: true,
+        sms_consent: {
+          phone_number: '+14165551234',
+          consent_given_at: '2026-01-01T00:00:00Z',
+          consent_revoked_at: null,
+        },
+        notification_type_overrides: { work_order_created: false },
+      }),
+    );
 
     const result = await service.notifyWorkOrdersCreated({
       conversationId: 'conv-1',
@@ -316,14 +335,16 @@ describe('NotificationService', () => {
       clock: () => '2026-03-03T12:00:00Z',
     });
 
-    await prefStore.save(makePrefs({
-      sms_enabled: true,
-      sms_consent: {
-        phone_number: '+14165551234',
-        consent_given_at: '2026-01-01T00:00:00Z',
-        consent_revoked_at: null,
-      },
-    }));
+    await prefStore.save(
+      makePrefs({
+        sms_enabled: true,
+        sms_consent: {
+          phone_number: '+14165551234',
+          consent_given_at: '2026-01-01T00:00:00Z',
+          consent_revoked_at: null,
+        },
+      }),
+    );
 
     const result = await service.notifyWorkOrdersCreated({
       conversationId: 'conv-1',
@@ -338,7 +359,7 @@ describe('NotificationService', () => {
     expect(result.sms_failed).toBe(true);
 
     const stored = await notifStore.queryByTenantUser('user-1');
-    const smsEvent = stored.find(e => e.channel === 'sms');
+    const smsEvent = stored.find((e) => e.channel === 'sms');
     expect(smsEvent?.status).toBe('failed');
     expect(smsEvent?.failure_reason).toBe('Network timeout');
   });

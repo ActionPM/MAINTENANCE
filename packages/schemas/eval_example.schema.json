@@ -4,17 +4,30 @@
   "title": "EvalExample",
   "type": "object",
   "required": [
-    "example_id", "dataset_type", "source_type", "conversation_text",
-    "split_issues_expected", "expected_classification_by_issue",
-    "expected_missing_fields", "expected_followup_fields",
-    "expected_needs_human_triage", "expected_risk_flags",
-    "slice_tags", "taxonomy_version", "schema_version",
-    "review_status", "reviewed_by", "created_at"
+    "example_id",
+    "dataset_type",
+    "source_type",
+    "conversation_text",
+    "split_issues_expected",
+    "expected_classification_by_issue",
+    "expected_missing_fields",
+    "expected_followup_fields",
+    "expected_needs_human_triage",
+    "expected_risk_flags",
+    "slice_tags",
+    "taxonomy_version",
+    "schema_version",
+    "review_status",
+    "reviewed_by",
+    "created_at"
   ],
   "properties": {
     "example_id": { "type": "string", "minLength": 1 },
     "dataset_type": { "type": "string", "enum": ["gold", "hard", "ood", "regression"] },
-    "source_type": { "type": "string", "enum": ["fixture", "production_reviewed", "synthetic_reviewed"] },
+    "source_type": {
+      "type": "string",
+      "enum": ["fixture", "production_reviewed", "synthetic_reviewed"]
+    },
     "conversation_text": { "type": "string", "minLength": 1 },
     "split_issues_expected": {
       "type": "array",

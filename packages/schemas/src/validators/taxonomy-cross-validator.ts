@@ -12,20 +12,27 @@ export interface DomainValidationResult {
 
 // N/A values accepted under taxonomy < 1.1.0 (legacy behavior)
 const LEGACY_MAINTENANCE_NA = [
-  'other_issue', 'other_maintenance_category', 'other_object',
-  'other_maintenance_object', 'no_object', 'other_problem',
+  'other_issue',
+  'other_maintenance_category',
+  'other_object',
+  'other_maintenance_object',
+  'no_object',
+  'other_problem',
 ] as const;
 
 const LEGACY_MANAGEMENT_NA = [
-  'other_mgmt_cat', 'other_management_category',
-  'other_mgmt_obj', 'other_management_object', 'no_object',
+  'other_mgmt_cat',
+  'other_management_category',
+  'other_mgmt_obj',
+  'other_management_object',
+  'no_object',
 ] as const;
 
 // N/A value for taxonomy >= 1.1.0
 const CURRENT_NA = 'not_applicable';
 
 /** Returns true if semver string a < b. Compares numeric segments only. */
-function semverLt(a: string, b: string): boolean {
+export function semverLt(a: string, b: string): boolean {
   const pa = a.split('.').map(Number);
   const pb = b.split('.').map(Number);
   for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
@@ -40,8 +47,10 @@ function semverLt(a: string, b: string): boolean {
 function isAcceptableNA(val: string, taxonomyVersion?: string): boolean {
   if (!taxonomyVersion || semverLt(taxonomyVersion, '1.1.0')) {
     // Legacy: accept old other_* values
-    return (LEGACY_MAINTENANCE_NA as readonly string[]).includes(val)
-        || (LEGACY_MANAGEMENT_NA as readonly string[]).includes(val);
+    return (
+      (LEGACY_MAINTENANCE_NA as readonly string[]).includes(val) ||
+      (LEGACY_MANAGEMENT_NA as readonly string[]).includes(val)
+    );
   }
   return val === CURRENT_NA;
 }
@@ -83,9 +92,7 @@ export function validateClassificationAgainstTaxonomy(
       for (const mField of MAINTENANCE_FIELDS) {
         const val = classification[mField as string];
         if (val && !isAcceptableNA(val, taxonomyVersion)) {
-          crossDomainViolations.push(
-            `Management category with populated ${mField}: "${val}"`,
-          );
+          crossDomainViolations.push(`Management category with populated ${mField}: "${val}"`);
         }
       }
     } else if (category === 'maintenance') {
@@ -93,9 +100,7 @@ export function validateClassificationAgainstTaxonomy(
       for (const mField of MANAGEMENT_FIELDS) {
         const val = classification[mField as string];
         if (val && !isAcceptableNA(val, taxonomyVersion)) {
-          crossDomainViolations.push(
-            `Maintenance category with populated ${mField}: "${val}"`,
-          );
+          crossDomainViolations.push(`Maintenance category with populated ${mField}: "${val}"`);
         }
       }
     }
@@ -115,20 +120,33 @@ export interface HierarchicalValidationResult {
 }
 
 const SKIP_VALUES = new Set([
-  'other_object', 'no_object', 'needs_object', 'other_maintenance_object',
-  'other_problem', 'other_maintenance_category', 'other_issue',
-  'other_mgmt_cat', 'other_management_category', 'other_mgmt_obj', 'other_management_object',
-  'other_sub_location', 'other_category', 'other_priority', 'general',
+  'other_object',
+  'no_object',
+  'needs_object',
+  'other_maintenance_object',
+  'other_problem',
+  'other_maintenance_category',
+  'other_issue',
+  'other_mgmt_cat',
+  'other_management_category',
+  'other_mgmt_obj',
+  'other_management_object',
+  'other_sub_location',
+  'other_category',
+  'other_priority',
+  'general',
 ]);
 
 export function validateHierarchicalConstraints(
   classification: Record<string, string>,
   constraints: TaxonomyConstraints,
+  _taxonomyVersion?: string,
 ): HierarchicalValidationResult {
   const category = classification['Category'];
-  const edgesToCheck = category === 'management'
-    ? CONSTRAINT_EDGES.filter(e => e.mapKey === 'Location_to_Sub_Location')
-    : CONSTRAINT_EDGES;
+  const edgesToCheck =
+    category === 'management'
+      ? CONSTRAINT_EDGES.filter((e) => e.mapKey === 'Location_to_Sub_Location')
+      : CONSTRAINT_EDGES;
 
   const violations: string[] = [];
 

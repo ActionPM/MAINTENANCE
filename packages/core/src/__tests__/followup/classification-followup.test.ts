@@ -1,8 +1,18 @@
 import { describe, it, expect, vi } from 'vitest';
 import { handleStartClassification } from '../../orchestrator/action-handlers/start-classification.js';
 import { createSession, updateSessionState, setSplitIssues } from '../../session/session.js';
-import { ConversationState, ActorType, DEFAULT_FOLLOWUP_CAPS, loadTaxonomy } from '@wo-agent/schemas';
-import type { SplitIssue, IssueClassifierOutput, FollowUpGeneratorOutput, CueDictionary } from '@wo-agent/schemas';
+import {
+  ConversationState,
+  ActorType,
+  DEFAULT_FOLLOWUP_CAPS,
+  loadTaxonomy,
+} from '@wo-agent/schemas';
+import type {
+  SplitIssue,
+  IssueClassifierOutput,
+  FollowUpGeneratorOutput,
+  CueDictionary,
+} from '@wo-agent/schemas';
 
 const taxonomy = loadTaxonomy();
 
@@ -99,7 +109,8 @@ function makeContext(overrides?: {
       idGenerator: () => `id-${++counter}`,
       clock: () => '2026-02-25T12:00:00.000Z',
       issueSplitter: vi.fn(),
-      issueClassifier: overrides?.classifierFn ?? vi.fn().mockResolvedValue(LOW_CONF_CLASSIFICATION),
+      issueClassifier:
+        overrides?.classifierFn ?? vi.fn().mockResolvedValue(LOW_CONF_CLASSIFICATION),
       followUpGenerator: overrides?.followUpFn ?? vi.fn().mockResolvedValue(FOLLOWUP_OUTPUT),
       cueDict: MINI_CUES,
       taxonomy,
@@ -145,7 +156,9 @@ describe('handleStartClassification with follow-up generation', () => {
     const result = await handleStartClassification(ctx);
 
     // Should still transition but mark for human triage
-    expect(result.session.classification_results![0].classifierOutput.needs_human_triage).toBe(true);
+    expect(result.session.classification_results![0].classifierOutput.needs_human_triage).toBe(
+      true,
+    );
     expect(result.newState).toBe(ConversationState.TENANT_CONFIRMATION_PENDING);
   });
 });

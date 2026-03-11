@@ -2,7 +2,14 @@
 // Phase 1: Schemas + Validators + Config Objects
 
 // --- Taxonomy ---
-export { loadTaxonomy, isTaxonomyValue, taxonomy, TAXONOMY_FIELD_NAMES, MAINTENANCE_FIELDS, MANAGEMENT_FIELDS } from './taxonomy.js';
+export {
+  loadTaxonomy,
+  isTaxonomyValue,
+  taxonomy,
+  TAXONOMY_FIELD_NAMES,
+  MAINTENANCE_FIELDS,
+  MANAGEMENT_FIELDS,
+} from './taxonomy.js';
 export type { Taxonomy, TaxonomyFieldName } from './taxonomy.js';
 
 // --- Taxonomy Constraints ---
@@ -19,7 +26,11 @@ export type {
 } from './taxonomy-constraints.js';
 
 // --- Enums ---
-export { ConversationState, ALL_CONVERSATION_STATES, RESUMABLE_STATES } from './conversation-states.js';
+export {
+  ConversationState,
+  ALL_CONVERSATION_STATES,
+  RESUMABLE_STATES,
+} from './conversation-states.js';
 export { WorkOrderStatus, ALL_WORK_ORDER_STATUSES } from './work-order-status.js';
 export { ActionType, ALL_ACTION_TYPES, ActorType, ALL_ACTOR_TYPES } from './action-types.js';
 
@@ -60,11 +71,7 @@ export type {
   ActionError,
 } from './types/orchestrator-action.js';
 
-export type {
-  IssueSplitterInput,
-  IssueSplitterOutput,
-  SplitIssue,
-} from './types/issue-split.js';
+export type { IssueSplitterInput, IssueSplitterOutput, SplitIssue } from './types/issue-split.js';
 
 export type {
   IssueClassifierInput,
@@ -89,11 +96,7 @@ export type {
   PetsPresent,
 } from './types/work-order.js';
 
-export type {
-  Photo,
-  PhotoContentType,
-  ScannedStatus,
-} from './types/photo.js';
+export type { Photo, PhotoContentType, ScannedStatus } from './types/photo.js';
 
 export type {
   RecordBundle,
@@ -136,20 +139,40 @@ export { validate } from './validator.js';
 export type { ValidationResult, ValidationError } from './validator.js';
 
 // --- Per-schema validators ---
-export { validateOrchestratorActionRequest, validateOrchestratorActionResponse } from './validators/orchestrator-action.js';
-export { validateIssueSplitterInput, validateIssueSplitterOutput } from './validators/issue-split.js';
+export {
+  validateOrchestratorActionRequest,
+  validateOrchestratorActionResponse,
+} from './validators/orchestrator-action.js';
+export {
+  validateIssueSplitterInput,
+  validateIssueSplitterOutput,
+} from './validators/issue-split.js';
 export { validateClassifierInput, validateClassifierOutput } from './validators/classification.js';
-export { validateFollowUpInput, validateFollowUpOutput, validateFollowUpEvent } from './validators/followups.js';
+export {
+  validateFollowUpInput,
+  validateFollowUpOutput,
+  validateFollowUpEvent,
+} from './validators/followups.js';
 export { validateWorkOrder } from './validators/work-order.js';
 export { validateRecordBundle } from './validators/record-bundle.js';
 export { validatePhoto } from './validators/photo.js';
 
 // --- Domain validators ---
-export { validateClassificationAgainstTaxonomy, validateHierarchicalConstraints, semverLt } from './validators/taxonomy-cross-validator.js';
-export type { DomainValidationResult, HierarchicalValidationResult } from './validators/taxonomy-cross-validator.js';
+export {
+  validateClassificationAgainstTaxonomy,
+  validateHierarchicalConstraints,
+  semverLt,
+} from './validators/taxonomy-cross-validator.js';
+export type {
+  DomainValidationResult,
+  HierarchicalValidationResult,
+} from './validators/taxonomy-cross-validator.js';
 export { validateCueDictionary } from './validators/cue-dictionary-validator.js';
 export type { CueDictionary } from './validators/cue-dictionary-validator.js';
-export { validateOrchestratorActionDomain, SIDE_EFFECT_ACTIONS } from './validators/orchestrator-action-domain.js';
+export {
+  validateOrchestratorActionDomain,
+  SIDE_EFFECT_ACTIONS,
+} from './validators/orchestrator-action-domain.js';
 export type { ActionDomainValidationResult } from './validators/orchestrator-action-domain.js';
 export { validateIssueSplitDomain } from './validators/issue-split-domain.js';
 export type { IssueSplitDomainValidationResult } from './validators/issue-split-domain.js';

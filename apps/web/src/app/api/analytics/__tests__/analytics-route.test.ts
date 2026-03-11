@@ -57,7 +57,9 @@ describe('GET /api/analytics (Phase 13)', () => {
       authorized_unit_ids: ['u-1', 'u-2'],
     });
 
-    const req = new Request('http://localhost:3000/api/analytics?from=2026-01-01T00:00:00Z&to=2026-03-01T00:00:00Z');
+    const req = new Request(
+      'http://localhost:3000/api/analytics?from=2026-01-01T00:00:00Z&to=2026-03-01T00:00:00Z',
+    );
     const res = await GET(req as any);
 
     expect(res.status).toBe(200);

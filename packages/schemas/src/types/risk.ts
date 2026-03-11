@@ -78,7 +78,12 @@ export interface EscalationPlans {
 }
 
 /** Escalation state tracked on the session. */
-export type EscalationState = 'none' | 'pending_confirmation' | 'routing' | 'completed' | 'exhausted';
+export type EscalationState =
+  | 'none'
+  | 'pending_confirmation'
+  | 'routing'
+  | 'completed'
+  | 'exhausted';
 
 /** Result of an escalation attempt on one contact. */
 export interface EscalationAttempt {

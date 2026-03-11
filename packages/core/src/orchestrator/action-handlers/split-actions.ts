@@ -58,7 +58,9 @@ function handleConfirmSplit(
   return {
     newState: ConversationState.SPLIT_FINALIZED,
     session: ctx.session,
-    uiMessages: [{ role: 'agent', content: `Split confirmed with ${issues.length} issue(s). Classifying...` }],
+    uiMessages: [
+      { role: 'agent', content: `Split confirmed with ${issues.length} issue(s). Classifying...` },
+    ],
     eventPayload: { split_action: 'confirm', issue_count: issues.length },
   };
 }
@@ -68,8 +70,8 @@ function handleRejectSplit(
   issues: readonly SplitIssue[],
 ): ActionHandlerResult {
   // Collapse all issues into a single issue
-  const combinedSummary = issues.map(i => i.summary).join('; ');
-  const combinedExcerpt = issues.map(i => i.raw_excerpt).join(' ');
+  const combinedSummary = issues.map((i) => i.summary).join('; ');
+  const combinedExcerpt = issues.map((i) => i.raw_excerpt).join(' ');
   const singleIssue: SplitIssue = {
     issue_id: issues[0]?.issue_id ?? ctx.deps.idGenerator(),
     summary: combinedSummary || 'Single issue',
@@ -103,7 +105,7 @@ function handleMergeIssues(
   }
 
   // Validate all IDs exist
-  const issueMap = new Map(issues.map(i => [i.issue_id, i]));
+  const issueMap = new Map(issues.map((i) => [i.issue_id, i]));
   for (const id of idsToMerge) {
     if (!issueMap.has(id)) {
       return {
@@ -116,10 +118,10 @@ function handleMergeIssues(
   }
 
   const mergeSet = new Set(idsToMerge);
-  const toMerge = issues.filter(i => mergeSet.has(i.issue_id));
-  const remaining = issues.filter(i => !mergeSet.has(i.issue_id));
+  const toMerge = issues.filter((i) => mergeSet.has(i.issue_id));
+  const remaining = issues.filter((i) => !mergeSet.has(i.issue_id));
 
-  const mergedSummary = toMerge.map(i => i.summary).join('; ');
+  const mergedSummary = toMerge.map((i) => i.summary).join('; ');
 
   // Validate merged summary against text constraints (no count check — merge reduces count)
   const validation = validateIssueConstraints(mergedSummary, 0, { checkCount: false });
@@ -135,7 +137,7 @@ function handleMergeIssues(
   const merged: SplitIssue = {
     issue_id: toMerge[0].issue_id,
     summary: mergedSummary,
-    raw_excerpt: toMerge.map(i => i.raw_excerpt).join(' '),
+    raw_excerpt: toMerge.map((i) => i.raw_excerpt).join(' '),
   };
 
   const newIssues = [...remaining, merged];
@@ -156,7 +158,7 @@ function handleEditIssue(
 ): ActionHandlerResult {
   const input = ctx.request.tenant_input as TenantInputEditIssue;
 
-  const idx = issues.findIndex(i => i.issue_id === input.issue_id);
+  const idx = issues.findIndex((i) => i.issue_id === input.issue_id);
   if (idx === -1) {
     return {
       newState: ctx.session.state,

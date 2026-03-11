@@ -69,11 +69,15 @@ const AUTH = {
 
 class InMemorySessionStore implements SessionStore {
   private sessions = new Map<string, ConversationSession>();
-  async get(id: string) { return this.sessions.get(id) ?? null; }
+  async get(id: string) {
+    return this.sessions.get(id) ?? null;
+  }
   async getByTenantUser(userId: string) {
     return [...this.sessions.values()].filter((s) => s.tenant_user_id === userId);
   }
-  async save(session: ConversationSession) { this.sessions.set(session.conversation_id, session); }
+  async save(session: ConversationSession) {
+    this.sessions.set(session.conversation_id, session);
+  }
 }
 
 function makeDeps(overrides?: {
@@ -87,13 +91,25 @@ function makeDeps(overrides?: {
     sessionStore: new InMemorySessionStore(),
     idGenerator: () => `id-${++counter}`,
     clock: () => '2026-02-24T12:00:00Z',
-    issueSplitter: overrides?.splitterFn ?? vi.fn().mockResolvedValue({
-      issues: [{ issue_id: 'i1', summary: 'Toilet leaking', raw_excerpt: 'My toilet is leaking' }],
-      issue_count: 1,
-    }),
+    issueSplitter:
+      overrides?.splitterFn ??
+      vi.fn().mockResolvedValue({
+        issues: [
+          { issue_id: 'i1', summary: 'Toilet leaking', raw_excerpt: 'My toilet is leaking' },
+        ],
+        issue_count: 1,
+      }),
     issueClassifier: overrides?.classifierFn ?? vi.fn().mockResolvedValue(VALID_CLASSIFICATION),
     followUpGenerator: vi.fn().mockResolvedValue({
-      questions: [{ question_id: 'q1', field_target: 'Priority', prompt: 'How urgent?', options: ['low', 'high'], answer_type: 'enum' }],
+      questions: [
+        {
+          question_id: 'q1',
+          field_target: 'Priority',
+          prompt: 'How urgent?',
+          options: ['low', 'high'],
+          answer_type: 'enum',
+        },
+      ],
     }),
     cueDict: overrides?.cueDict ?? FULL_CUES,
     taxonomy,
@@ -116,10 +132,7 @@ function makeDeps(overrides?: {
  * Walk the conversation from creation through to split confirmed (which auto-chains
  * to classification via the dispatcher's AUTO_FIRE_MAP).
  */
-async function walkToClassified(
-  dispatch: ReturnType<typeof createDispatcher>,
-  auth = AUTH,
-) {
+async function walkToClassified(dispatch: ReturnType<typeof createDispatcher>, auth = AUTH) {
   const r1 = await dispatch({
     conversation_id: null,
     action_type: ActionType.CREATE_CONVERSATION,
@@ -157,7 +170,6 @@ async function walkToClassified(
 }
 
 describe('Classification integration', () => {
-
   // ---------------------------------------------------------------
   // 1. Happy path: single issue, medium-confidence required fields trigger follow-up
   // ---------------------------------------------------------------
@@ -169,9 +181,7 @@ describe('Classification integration', () => {
 
     // Confidence formula max WITHOUT constraint_implied is 0.84 (< high_threshold 0.85),
     // so required/risk-relevant fields are medium-confidence and trigger needs_tenant_input (spec §14.3).
-    expect(result.response.conversation_snapshot.state).toBe(
-      ConversationState.NEEDS_TENANT_INPUT,
-    );
+    expect(result.response.conversation_snapshot.state).toBe(ConversationState.NEEDS_TENANT_INPUT);
     expect(result.response.conversation_snapshot.classification_results).toBeDefined();
     expect(result.response.conversation_snapshot.classification_results!.length).toBe(1);
 
@@ -189,7 +199,11 @@ describe('Classification integration', () => {
     const multiIssueSplitter = vi.fn().mockResolvedValue({
       issues: [
         { issue_id: 'i1', summary: 'Toilet leaking', raw_excerpt: 'My toilet is leaking' },
-        { issue_id: 'i2', summary: 'Toilet clogged', raw_excerpt: 'My toilet is clogged and leaking' },
+        {
+          issue_id: 'i2',
+          summary: 'Toilet clogged',
+          raw_excerpt: 'My toilet is clogged and leaking',
+        },
       ],
       issue_count: 2,
     });
@@ -211,9 +225,7 @@ describe('Classification integration', () => {
     const { result } = await walkToClassified(dispatch);
 
     // Medium-confidence required fields trigger needs_tenant_input (spec §14.3)
-    expect(result.response.conversation_snapshot.state).toBe(
-      ConversationState.NEEDS_TENANT_INPUT,
-    );
+    expect(result.response.conversation_snapshot.state).toBe(ConversationState.NEEDS_TENANT_INPUT);
 
     const classResults = result.response.conversation_snapshot.classification_results!;
     expect(classResults.length).toBe(2);
@@ -239,9 +251,7 @@ describe('Classification integration', () => {
 
     const { result } = await walkToClassified(dispatch);
 
-    expect(result.response.conversation_snapshot.state).toBe(
-      ConversationState.NEEDS_TENANT_INPUT,
-    );
+    expect(result.response.conversation_snapshot.state).toBe(ConversationState.NEEDS_TENANT_INPUT);
 
     const classResults = result.response.conversation_snapshot.classification_results! as any[];
     expect(classResults.length).toBe(1);
@@ -263,8 +273,8 @@ describe('Classification integration', () => {
       classification: {
         ...VALID_CLASSIFICATION.classification,
         Category: 'maintenance',
-        Management_Category: 'accounting',     // valid value but contradicts maintenance category
-        Management_Object: 'rent_charges',     // valid value but contradicts maintenance category
+        Management_Category: 'accounting', // valid value but contradicts maintenance category
+        Management_Object: 'rent_charges', // valid value but contradicts maintenance category
       },
     };
 
@@ -273,12 +283,14 @@ describe('Classification integration', () => {
     };
 
     let callCount = 0;
-    const classifierFn = vi.fn().mockImplementation(async (_input: unknown, _retryCtx?: unknown) => {
-      callCount++;
-      // First call: contradictory; gating retry: clean
-      if (callCount === 1) return contradictoryOutput;
-      return cleanOutput;
-    });
+    const classifierFn = vi
+      .fn()
+      .mockImplementation(async (_input: unknown, _retryCtx?: unknown) => {
+        callCount++;
+        // First call: contradictory; gating retry: clean
+        if (callCount === 1) return contradictoryOutput;
+        return cleanOutput;
+      });
 
     const deps = makeDeps({ classifierFn });
     const dispatch = createDispatcher(deps as any);
@@ -287,9 +299,7 @@ describe('Classification integration', () => {
 
     // After retry, fields are still medium-confidence (no constraint_implied),
     // so required/risk-relevant fields trigger needs_tenant_input (spec §14.3).
-    expect(result.response.conversation_snapshot.state).toBe(
-      ConversationState.NEEDS_TENANT_INPUT,
-    );
+    expect(result.response.conversation_snapshot.state).toBe(ConversationState.NEEDS_TENANT_INPUT);
 
     // The classifier should have been called twice: original + gating retry
     expect(classifierFn).toHaveBeenCalledTimes(2);
@@ -311,9 +321,7 @@ describe('Classification integration', () => {
 
     const { result } = await walkToClassified(dispatch);
 
-    expect(result.response.conversation_snapshot.state).toBe(
-      ConversationState.LLM_ERROR_RETRYABLE,
-    );
+    expect(result.response.conversation_snapshot.state).toBe(ConversationState.LLM_ERROR_RETRYABLE);
     expect(result.response.errors.length).toBeGreaterThan(0);
     expect(result.response.errors[0].code).toBe('CLASSIFIER_FAILED');
   });
@@ -344,8 +352,20 @@ describe('Classification integration', () => {
     // Override followUpGenerator to return questions matching the missing fields
     deps.followUpGenerator = vi.fn().mockResolvedValue({
       questions: [
-        { question_id: 'q-priority', field_target: 'Priority', prompt: 'How urgent?', options: ['low', 'normal', 'high'], answer_type: 'enum' },
-        { question_id: 'q-location', field_target: 'Location', prompt: 'Where?', options: ['suite', 'common_area'], answer_type: 'enum' },
+        {
+          question_id: 'q-priority',
+          field_target: 'Priority',
+          prompt: 'How urgent?',
+          options: ['low', 'normal', 'high'],
+          answer_type: 'enum',
+        },
+        {
+          question_id: 'q-location',
+          field_target: 'Location',
+          prompt: 'Where?',
+          options: ['suite', 'common_area'],
+          answer_type: 'enum',
+        },
       ],
     });
     const dispatch = createDispatcher(deps as any);

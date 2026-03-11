@@ -29,7 +29,14 @@
           "additionalProperties": { "type": "number", "minimum": 0, "maximum": 1 }
         }
       },
-      "required": ["issue_id", "issue_summary", "raw_excerpt", "taxonomy_version", "model_id", "prompt_version"],
+      "required": [
+        "issue_id",
+        "issue_summary",
+        "raw_excerpt",
+        "taxonomy_version",
+        "model_id",
+        "prompt_version"
+      ],
       "additionalProperties": false
     },
     "IssueClassifierOutput": {
@@ -50,7 +57,13 @@
         },
         "needs_human_triage": { "type": "boolean", "default": false }
       },
-      "required": ["issue_id", "classification", "model_confidence", "missing_fields", "needs_human_triage"],
+      "required": [
+        "issue_id",
+        "classification",
+        "model_confidence",
+        "missing_fields",
+        "needs_human_triage"
+      ],
       "additionalProperties": false
     }
   }

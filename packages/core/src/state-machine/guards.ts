@@ -61,9 +61,7 @@ export function resolveSubmitInitialMessage(
 /**
  * Resolve LLM_FAIL target — retryable on first failure, terminal after.
  */
-export function resolveLlmFailure(
-  ctx: Pick<TransitionContext, 'retry_count'>,
-): ConversationState {
+export function resolveLlmFailure(ctx: Pick<TransitionContext, 'retry_count'>): ConversationState {
   return (ctx.retry_count ?? 0) < 1
     ? ConversationState.LLM_ERROR_RETRYABLE
     : ConversationState.LLM_ERROR_TERMINAL;

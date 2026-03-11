@@ -35,9 +35,7 @@ describe('Risk types', () => {
     const plan: EscalationPlan = {
       plan_id: 'plan-001',
       building_id: 'bldg-001',
-      contact_chain: [
-        { role: 'building_manager', contact_id: 'c-1', name: 'BM', phone: '+1234' },
-      ],
+      contact_chain: [{ role: 'building_manager', contact_id: 'c-1', name: 'BM', phone: '+1234' }],
       exhaustion_behavior: {
         internal_alert: true,
         tenant_message_template: 'Unable to reach management.',
@@ -57,7 +55,13 @@ describe('Risk types', () => {
   });
 
   it('EscalationState values are correct', () => {
-    const states: EscalationState[] = ['none', 'pending_confirmation', 'routing', 'completed', 'exhausted'];
+    const states: EscalationState[] = [
+      'none',
+      'pending_confirmation',
+      'routing',
+      'completed',
+      'exhausted',
+    ];
     expect(states).toHaveLength(5);
   });
 });

@@ -57,9 +57,7 @@ describe('callIssueClassifier', () => {
 
   it('retries once on schema validation failure then succeeds', async () => {
     const badOutput = { ...VALID_OUTPUT, issue_id: undefined }; // missing required field
-    const llmCall = vi.fn()
-      .mockResolvedValueOnce(badOutput)
-      .mockResolvedValueOnce(VALID_OUTPUT);
+    const llmCall = vi.fn().mockResolvedValueOnce(badOutput).mockResolvedValueOnce(VALID_OUTPUT);
     const result = await callIssueClassifier(VALID_INPUT, llmCall, taxonomy);
     expect(result.status).toBe('ok');
     expect(llmCall).toHaveBeenCalledTimes(2);
@@ -75,7 +73,9 @@ describe('callIssueClassifier', () => {
 
   it('throws ClassifierError on LLM call exception', async () => {
     const llmCall = vi.fn().mockRejectedValue(new Error('LLM timeout'));
-    await expect(callIssueClassifier(VALID_INPUT, llmCall, taxonomy)).rejects.toThrow(ClassifierError);
+    await expect(callIssueClassifier(VALID_INPUT, llmCall, taxonomy)).rejects.toThrow(
+      ClassifierError,
+    );
   });
 
   it('detects category gating contradiction and retries with constraint', async () => {
@@ -101,9 +101,7 @@ describe('callIssueClassifier', () => {
         Management_Object: 'rent_charges',
       },
     };
-    const llmCall = vi.fn()
-      .mockResolvedValueOnce(contradictory)
-      .mockResolvedValueOnce(fixed);
+    const llmCall = vi.fn().mockResolvedValueOnce(contradictory).mockResolvedValueOnce(fixed);
     const result = await callIssueClassifier(VALID_INPUT, llmCall, taxonomy);
     expect(result.status).toBe('ok');
     expect(llmCall).toHaveBeenCalledTimes(2);

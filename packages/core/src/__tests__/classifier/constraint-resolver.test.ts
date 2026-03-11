@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { resolveValidOptions, resolveConstraintImpliedFields } from '../../classifier/constraint-resolver.js';
+import {
+  resolveValidOptions,
+  resolveConstraintImpliedFields,
+} from '../../classifier/constraint-resolver.js';
 import { loadTaxonomyConstraints } from '@wo-agent/schemas';
 
 const constraints = loadTaxonomyConstraints();

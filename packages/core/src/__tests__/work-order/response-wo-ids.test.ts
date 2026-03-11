@@ -30,10 +30,7 @@ describe('buildResponse — work_order_ids in snapshot', () => {
 
     const response = buildResponse(result);
 
-    expect(response.conversation_snapshot.work_order_ids).toEqual([
-      'wo-001',
-      'wo-002',
-    ]);
+    expect(response.conversation_snapshot.work_order_ids).toEqual(['wo-001', 'wo-002']);
   });
 
   it('does not include work_order_ids for non-submitted states', () => {

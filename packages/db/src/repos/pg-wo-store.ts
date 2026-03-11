@@ -17,14 +17,30 @@ export class PostgresWorkOrderStore implements WorkOrderRepository {
              risk_flags, needs_human_triage, pinned_versions, created_at, updated_at, row_version)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)`,
           [
-            wo.work_order_id, wo.issue_group_id, wo.issue_id, wo.conversation_id,
-            wo.client_id, wo.property_id, wo.unit_id, wo.tenant_user_id, wo.tenant_account_id,
-            wo.status, JSON.stringify(wo.status_history), wo.raw_text, wo.summary_confirmed,
-            JSON.stringify(wo.photos), JSON.stringify(wo.classification),
-            JSON.stringify(wo.confidence_by_field), JSON.stringify(wo.missing_fields),
-            wo.pets_present, wo.risk_flags ? JSON.stringify(wo.risk_flags) : null,
-            wo.needs_human_triage, JSON.stringify(wo.pinned_versions),
-            wo.created_at, wo.updated_at, wo.row_version,
+            wo.work_order_id,
+            wo.issue_group_id,
+            wo.issue_id,
+            wo.conversation_id,
+            wo.client_id,
+            wo.property_id,
+            wo.unit_id,
+            wo.tenant_user_id,
+            wo.tenant_account_id,
+            wo.status,
+            JSON.stringify(wo.status_history),
+            wo.raw_text,
+            wo.summary_confirmed,
+            JSON.stringify(wo.photos),
+            JSON.stringify(wo.classification),
+            JSON.stringify(wo.confidence_by_field),
+            JSON.stringify(wo.missing_fields),
+            wo.pets_present,
+            wo.risk_flags ? JSON.stringify(wo.risk_flags) : null,
+            wo.needs_human_triage,
+            JSON.stringify(wo.pinned_versions),
+            wo.created_at,
+            wo.updated_at,
+            wo.row_version,
           ],
         );
       }
@@ -36,18 +52,16 @@ export class PostgresWorkOrderStore implements WorkOrderRepository {
   }
 
   async getById(workOrderId: string): Promise<WorkOrder | null> {
-    const result = await this.pool.query(
-      'SELECT * FROM work_orders WHERE work_order_id = $1',
-      [workOrderId],
-    );
+    const result = await this.pool.query('SELECT * FROM work_orders WHERE work_order_id = $1', [
+      workOrderId,
+    ]);
     return result.rows.length > 0 ? mapRowToWorkOrder(result.rows[0]) : null;
   }
 
   async getByIssueGroup(issueGroupId: string): Promise<readonly WorkOrder[]> {
-    const result = await this.pool.query(
-      'SELECT * FROM work_orders WHERE issue_group_id = $1',
-      [issueGroupId],
-    );
+    const result = await this.pool.query('SELECT * FROM work_orders WHERE issue_group_id = $1', [
+      issueGroupId,
+    ]);
     return result.rows.map(mapRowToWorkOrder);
   }
 
@@ -145,8 +159,10 @@ function mapRowToWorkOrder(row: Record<string, unknown>): WorkOrder {
     risk_flags: row.risk_flags as Record<string, unknown> | undefined,
     needs_human_triage: row.needs_human_triage as boolean,
     pinned_versions: row.pinned_versions as WorkOrder['pinned_versions'],
-    created_at: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at as string,
-    updated_at: row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at as string,
+    created_at:
+      row.created_at instanceof Date ? row.created_at.toISOString() : (row.created_at as string),
+    updated_at:
+      row.updated_at instanceof Date ? row.updated_at.toISOString() : (row.updated_at as string),
     row_version: row.row_version as number,
   };
 }

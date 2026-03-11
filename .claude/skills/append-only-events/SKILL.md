@@ -13,10 +13,10 @@ You are writing database code for the **Service Request Intake & Triage Agent**.
 
 This project has two categories of database tables with different rules:
 
-| Category | Allowed operations | Locking | Examples |
-|----------|-------------------|---------|----------|
-| **Event tables** (append-only) | INSERT + SELECT only | None (immutable rows) | All 7 event tables below |
-| **Mutable tables** | INSERT + SELECT + UPDATE | Optimistic (`row_version`) | `conversations`, `work_orders`, `tenants`, `units` |
+| Category                       | Allowed operations       | Locking                    | Examples                                           |
+| ------------------------------ | ------------------------ | -------------------------- | -------------------------------------------------- |
+| **Event tables** (append-only) | INSERT + SELECT only     | None (immutable rows)      | All 7 event tables below                           |
+| **Mutable tables**             | INSERT + SELECT + UPDATE | Optimistic (`row_version`) | `conversations`, `work_orders`, `tenants`, `units` |
 
 **If you are unsure which category a table belongs to: if it ends in `_events`, it is append-only. No exceptions.**
 
@@ -43,6 +43,7 @@ These are the ONLY event tables defined in the spec. Do not invent additional ev
 ### What this means in practice:
 
 **In migrations:**
+
 - Create a dedicated database role (e.g., `app_events_role`) with only INSERT + SELECT grants on event tables
 - Never grant UPDATE or DELETE on any event table
 - Add trigger guards as an extra safety net
@@ -61,6 +62,7 @@ GRANT INSERT, SELECT ON human_override_events TO app_role;
 ```
 
 **Trigger guard (recommended):**
+
 ```sql
 -- Add to each event table as extra protection
 CREATE OR REPLACE FUNCTION prevent_event_mutation()
@@ -79,11 +81,13 @@ CREATE TRIGGER guard_conversation_events_update
 ```
 
 **In application code:**
+
 - Repository/DAO layer for event tables exposes only two methods: `insert(event)` and `query(filters)`
 - No `update()`, `delete()`, `upsert()`, or `save()` methods
 - If you find yourself writing an UPDATE on an event table, STOP — you are violating immutability
 
 **In query builders / ORMs:**
+
 - If using an ORM, configure event table entities as insert-only (no update/delete hooks)
 - Disable cascading deletes on any FK pointing to event tables
 - Never use `ON DELETE CASCADE` or `ON UPDATE CASCADE` on event table references
@@ -143,11 +147,11 @@ Reason codes must be from a defined set (not free text). Define them in a schema
 
 Every event table MUST include these columns:
 
-| Column | Type | Notes |
-|--------|------|-------|
-| `event_id` | UUID (PK) | Generated server-side, never client-supplied |
-| `conversation_id` | UUID (FK) | Links event to conversation |
-| `created_at` | TIMESTAMPTZ | Set server-side on INSERT, never client-supplied |
+| Column            | Type        | Notes                                            |
+| ----------------- | ----------- | ------------------------------------------------ |
+| `event_id`        | UUID (PK)   | Generated server-side, never client-supplied     |
+| `conversation_id` | UUID (FK)   | Links event to conversation                      |
+| `created_at`      | TIMESTAMPTZ | Set server-side on INSERT, never client-supplied |
 
 Additional common fields (include where applicable):
 | Column | Type | Notes |
@@ -165,7 +169,9 @@ Additional common fields (include where applicable):
 ## Rule 6 — Event table schemas
 
 ### `conversation_events`
+
 Tracks every state transition, message, and action in a conversation.
+
 ```
 event_id            UUID PK
 conversation_id     UUID FK NOT NULL
@@ -180,7 +186,9 @@ created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 ```
 
 ### `classification_events`
+
 Tracks every classification attempt and result.
+
 ```
 event_id            UUID PK
 conversation_id     UUID FK NOT NULL
@@ -198,6 +206,7 @@ created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 ```
 
 ### `followup_events` (spec §7.1 — minimum schema is authoritative)
+
 ```
 event_id            UUID PK
 conversation_id     UUID FK NOT NULL
@@ -213,6 +222,7 @@ created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 ```
 
 Structure of `questions_asked` (each element):
+
 ```json
 {
   "question_id": "string (UUID)",
@@ -224,6 +234,7 @@ Structure of `questions_asked` (each element):
 ```
 
 Structure of `answers_received` (each element):
+
 ```json
 {
   "question_id": "string (matches questions_asked.question_id)",
@@ -233,7 +244,9 @@ Structure of `answers_received` (each element):
 ```
 
 ### `work_order_events`
+
 Tracks WO creation, status changes, and updates.
+
 ```
 event_id            UUID PK
 work_order_id       UUID FK NOT NULL
@@ -248,7 +261,9 @@ created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 ```
 
 ### `risk_events`
+
 Tracks risk detection, mitigation display, and escalation attempts.
+
 ```
 event_id            UUID PK
 conversation_id     UUID FK NOT NULL
@@ -264,7 +279,9 @@ created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 ```
 
 ### `notification_events`
+
 Tracks every notification sent or attempted.
+
 ```
 event_id            UUID PK
 conversation_id     UUID FK
@@ -279,7 +296,9 @@ created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 ```
 
 ### `human_override_events`
+
 Tracks PM/admin corrections with mandatory reason codes.
+
 ```
 event_id            UUID PK
 conversation_id     UUID FK NOT NULL
@@ -305,6 +324,7 @@ row_version INTEGER NOT NULL DEFAULT 1
 ```
 
 ### Update pattern:
+
 ```sql
 UPDATE work_orders
 SET status = $1, row_version = row_version + 1
@@ -314,11 +334,12 @@ RETURNING row_version;
 ```
 
 ### In application code:
+
 ```typescript
 const result = await db.query(
   `UPDATE work_orders SET status = $1, row_version = row_version + 1
    WHERE work_order_id = $2 AND row_version = $3 RETURNING row_version`,
-  [newStatus, workOrderId, expectedRowVersion]
+  [newStatus, workOrderId, expectedRowVersion],
 );
 if (result.rowCount === 0) {
   throw new ConflictError('Work order was modified by another request');
@@ -352,6 +373,7 @@ async function writeEventIdempotent(table: string, event: EventWithKey): Promise
 ```
 
 Side-effect events that require idempotency keys:
+
 - `work_order_events` with `event_type = 'created'` or `'status_changed'`
 - `notification_events` (all sends)
 - `risk_events` with `event_type = 'escalation_attempted'`

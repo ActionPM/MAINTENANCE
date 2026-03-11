@@ -36,9 +36,7 @@ describe('ChatMessage', () => {
   });
 
   it('displays formatted time', () => {
-    render(
-      <ChatMessage role="agent" content="Hi" timestamp="2026-03-04T10:30:00Z" />,
-    );
+    render(<ChatMessage role="agent" content="Hi" timestamp="2026-03-04T10:30:00Z" />);
     expect(screen.getByText(/10:30/)).toBeInTheDocument();
   });
 });

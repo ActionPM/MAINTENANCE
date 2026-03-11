@@ -7,9 +7,11 @@ getting-started: true
 # Project Conventions
 
 ## Stack
+
 TypeScript, Next.js (UI + API routes), PostgreSQL, pnpm workspaces, JSON Schema validation.
 
 ## Repo layout
+
 ```
 AGENTS.md                        # Agent guardrails (read first)
 docs/
@@ -29,6 +31,7 @@ packages/
 ```
 
 ## Naming
+
 - Files: `kebab-case.ts` (e.g., `issue-splitter.ts`, `work-order.schema.json`)
 - Types/interfaces: `PascalCase` (e.g., `WorkOrder`, `OrchestratorActionRequest`)
 - Functions/variables: `camelCase`
@@ -39,6 +42,7 @@ packages/
 - Tests: colocated as `<name>.test.ts`
 
 ## Commands
+
 ```bash
 pnpm install                     # Install all workspace deps
 pnpm --filter @wo-agent/schemas test   # Test schemas package
@@ -50,15 +54,17 @@ pnpm typecheck                   # tsc --noEmit across workspaces
 ```
 
 ## Workspace packages
-| Package | Name | Purpose |
-|---------|------|---------|
-| `packages/schemas` | `@wo-agent/schemas` | JSON Schemas, taxonomy, validators |
-| `packages/core` | `@wo-agent/core` | Orchestrator, state machine, LLM tools, services |
-| `packages/evals` | `@wo-agent/evals` | Gold sets, evaluation harness |
-| `packages/adapters/mock` | `@wo-agent/mock-erp` | Mock ERP adapter |
-| `apps/web` | `@wo-agent/web` | Next.js frontend + API routes |
+
+| Package                  | Name                 | Purpose                                          |
+| ------------------------ | -------------------- | ------------------------------------------------ |
+| `packages/schemas`       | `@wo-agent/schemas`  | JSON Schemas, taxonomy, validators               |
+| `packages/core`          | `@wo-agent/core`     | Orchestrator, state machine, LLM tools, services |
+| `packages/evals`         | `@wo-agent/evals`    | Gold sets, evaluation harness                    |
+| `packages/adapters/mock` | `@wo-agent/mock-erp` | Mock ERP adapter                                 |
+| `apps/web`               | `@wo-agent/web`      | Next.js frontend + API routes                    |
 
 ## Key rules (see AGENTS.md for full list)
+
 - Read `AGENTS.md` before any implementation work
 - Use domain skills: `/schema-first-development`, `/state-machine-implementation`, `/append-only-events`, `/llm-tool-contracts`
 - Follow build sequence in `docs/spec.md` §28 — do not skip phases

@@ -109,7 +109,15 @@ function makeContext(overrides?: {
       issueSplitter: vi.fn(),
       issueClassifier: overrides?.classifierFn ?? vi.fn().mockResolvedValue(VALID_CLASSIFICATION),
       followUpGenerator: vi.fn().mockResolvedValue({
-        questions: [{ question_id: 'q1', field_target: 'Priority', prompt: 'How urgent?', options: ['low', 'high'], answer_type: 'enum' }],
+        questions: [
+          {
+            question_id: 'q1',
+            field_target: 'Priority',
+            prompt: 'How urgent?',
+            options: ['low', 'high'],
+            answer_type: 'enum',
+          },
+        ],
       }),
       cueDict: overrides?.cueDict ?? FULL_CUES,
       taxonomy,
@@ -180,7 +188,9 @@ describe('handleStartClassification', () => {
       classifierFn: vi.fn().mockResolvedValue(contradictory),
     });
     const result = await handleStartClassification(ctx);
-    expect(result.session.classification_results![0].classifierOutput.needs_human_triage).toBe(true);
+    expect(result.session.classification_results![0].classifierOutput.needs_human_triage).toBe(
+      true,
+    );
   });
 
   it('handles LLM failure gracefully', async () => {
@@ -208,7 +218,15 @@ describe('handleStartClassification', () => {
     // Override followUpGenerator to target the actual missing field (Location)
     // so the question isn't filtered out by callFollowUpGenerator's eligible-fields filter.
     (ctx.deps as any).followUpGenerator = vi.fn().mockResolvedValue({
-      questions: [{ question_id: 'q1', field_target: 'Location', prompt: 'Where is the issue?', options: ['kitchen', 'bathroom'], answer_type: 'enum' }],
+      questions: [
+        {
+          question_id: 'q1',
+          field_target: 'Location',
+          prompt: 'Where is the issue?',
+          options: ['kitchen', 'bathroom'],
+          answer_type: 'enum',
+        },
+      ],
     });
     const result = await handleStartClassification(ctx);
     expect(result.newState).toBe(ConversationState.NEEDS_TENANT_INPUT);

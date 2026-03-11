@@ -72,23 +72,40 @@ export type { UnitInfo, UnitResolver } from './unit-resolver/index.js';
 
 // --- Idempotency (Phase 8) ---
 export { InMemoryIdempotencyStore } from './idempotency/index.js';
-export type { IdempotencyRecord, IdempotencyStore, ReservationResult } from './idempotency/index.js';
+export type {
+  IdempotencyRecord,
+  IdempotencyStore,
+  ReservationResult,
+} from './idempotency/index.js';
 
 // --- Work Order (Phase 8) ---
-export { InMemoryWorkOrderStore, createWorkOrders, buildWorkOrderCreatedEvent, buildWorkOrderStatusChangedEvent } from './work-order/index.js';
-export type { WorkOrderEvent, WorkOrderRepository, WorkOrderListFilters, CreateWorkOrdersInput, WOCreatedEventInput, WOStatusChangedEventInput } from './work-order/index.js';
+export {
+  InMemoryWorkOrderStore,
+  createWorkOrders,
+  buildWorkOrderCreatedEvent,
+  buildWorkOrderStatusChangedEvent,
+} from './work-order/index.js';
+export type {
+  WorkOrderEvent,
+  WorkOrderRepository,
+  WorkOrderListFilters,
+  CreateWorkOrdersInput,
+  WOCreatedEventInput,
+  WOStatusChangedEventInput,
+} from './work-order/index.js';
 
 // --- Events (Phase 3) ---
 export { InMemoryEventStore } from './events/index.js';
-export type {
-  ConversationEvent,
-  EventType,
-  EventQuery,
-  EventRepository,
-} from './events/index.js';
+export type { ConversationEvent, EventType, EventQuery, EventRepository } from './events/index.js';
 
 // --- Splitter (Phase 4) ---
-export { sanitizeIssueText, validateIssueConstraints, callIssueSplitter, SplitterError, SplitterErrorCode } from './splitter/index.js';
+export {
+  sanitizeIssueText,
+  validateIssueConstraints,
+  callIssueSplitter,
+  SplitterError,
+  SplitterErrorCode,
+} from './splitter/index.js';
 export type { IssueConstraintResult } from './splitter/index.js';
 
 // --- Classifier (Phase 5) ---
@@ -176,12 +193,31 @@ export type {
 } from './risk/index.js';
 
 // --- Notifications (Phase 10) ---
-export { InMemoryNotificationStore, InMemoryNotificationPreferenceStore, MockSmsSender, NotificationService } from './notifications/index.js';
-export type { NotificationRepository, NotificationPreferenceStore, SmsSender, NotificationListFilters, NotificationServiceDeps, NotifyWoCreatedInput, NotifyResult } from './notifications/index.js';
+export {
+  InMemoryNotificationStore,
+  InMemoryNotificationPreferenceStore,
+  MockSmsSender,
+  NotificationService,
+} from './notifications/index.js';
+export type {
+  NotificationRepository,
+  NotificationPreferenceStore,
+  SmsSender,
+  NotificationListFilters,
+  NotificationServiceDeps,
+  NotifyWoCreatedInput,
+  NotifyResult,
+} from './notifications/index.js';
 
 // --- Record Bundle (Phase 11) ---
 export { assembleRecordBundle, computeSlaMetadata } from './record-bundle/index.js';
-export type { RecordBundleDeps, SlaPolicies, SlaPolicyEntry, SlaOverride, ComputeSlaInput } from './record-bundle/index.js';
+export type {
+  RecordBundleDeps,
+  SlaPolicies,
+  SlaPolicyEntry,
+  SlaOverride,
+  ComputeSlaInput,
+} from './record-bundle/index.js';
 
 // --- ERP Adapter (Phase 12) ---
 export type {
@@ -192,11 +228,7 @@ export type {
   ERPHealthResult,
   ERPSyncEvent,
 } from './erp/index.js';
-export {
-  buildERPCreateEvent,
-  buildERPStatusPollEvent,
-  buildERPSyncEvent,
-} from './erp/index.js';
+export { buildERPCreateEvent, buildERPStatusPollEvent, buildERPSyncEvent } from './erp/index.js';
 export type {
   ERPCreateEventInput,
   ERPStatusPollEventInput,

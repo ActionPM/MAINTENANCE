@@ -9,7 +9,9 @@ describe('follow-up prompt redundancy-prevention rules', () => {
   });
 
   it('has a rule about not asking what the tenant already answered', () => {
-    expect(prompt).toMatch(/already.*(answer|impl|said|mention)|tenant.*(said|words|description).*answer/i);
+    expect(prompt).toMatch(
+      /already.*(answer|impl|said|mention)|tenant.*(said|words|description).*answer/i,
+    );
   });
 
   it('has a rule about using only constraint-valid options', () => {

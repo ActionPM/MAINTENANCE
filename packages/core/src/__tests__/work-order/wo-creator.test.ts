@@ -1,6 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createWorkOrders } from '../../work-order/wo-creator.js';
-import { createSession, setSessionUnit, setSplitIssues, setClassificationResults, setSessionScope } from '../../session/session.js';
+import {
+  createSession,
+  setSessionUnit,
+  setSplitIssues,
+  setClassificationResults,
+  setSessionScope,
+} from '../../session/session.js';
 import type { ConversationSession } from '../../session/types.js';
 
 const baseSession = (): ConversationSession => {
@@ -9,7 +15,12 @@ const baseSession = (): ConversationSession => {
     tenant_user_id: 'tu-1',
     tenant_account_id: 'ta-1',
     authorized_unit_ids: ['unit-1'],
-    pinned_versions: { taxonomy_version: '1.0', schema_version: '1.0', model_id: 'gpt-test', prompt_version: '1.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0',
+      schema_version: '1.0',
+      model_id: 'gpt-test',
+      prompt_version: '1.0',
+    },
   });
   s = setSessionUnit(s, 'unit-1');
   s = setSessionScope(s, { property_id: 'prop-1', client_id: 'client-1' });
@@ -51,7 +62,9 @@ describe('createWorkOrders', () => {
   const idGen = () => `gen-${++idCounter}`;
   const clock = () => '2026-03-03T14:00:00Z';
 
-  beforeEach(() => { idCounter = 0; });
+  beforeEach(() => {
+    idCounter = 0;
+  });
 
   it('creates one WO per split issue', () => {
     const session = baseSession();
@@ -64,20 +77,20 @@ describe('createWorkOrders', () => {
     const wos = createWorkOrders({ session, idGenerator: idGen, clock });
     const groupId = wos[0].issue_group_id;
     expect(groupId).toBeTruthy();
-    expect(wos.every(wo => wo.issue_group_id === groupId)).toBe(true);
+    expect(wos.every((wo) => wo.issue_group_id === groupId)).toBe(true);
   });
 
   it('each WO has a unique work_order_id', () => {
     const session = baseSession();
     const wos = createWorkOrders({ session, idGenerator: idGen, clock });
-    const ids = new Set(wos.map(wo => wo.work_order_id));
+    const ids = new Set(wos.map((wo) => wo.work_order_id));
     expect(ids.size).toBe(2);
   });
 
   it('maps issue_id correctly', () => {
     const session = baseSession();
     const wos = createWorkOrders({ session, idGenerator: idGen, clock });
-    expect(wos.map(wo => wo.issue_id).sort()).toEqual(['iss-1', 'iss-2']);
+    expect(wos.map((wo) => wo.issue_id).sort()).toEqual(['iss-1', 'iss-2']);
   });
 
   it('populates scope fields from session', () => {
@@ -109,7 +122,7 @@ describe('createWorkOrders', () => {
   it('maps classification and confidence from results', () => {
     const session = baseSession();
     const wos = createWorkOrders({ session, idGenerator: idGen, clock });
-    const wo1 = wos.find(wo => wo.issue_id === 'iss-1')!;
+    const wo1 = wos.find((wo) => wo.issue_id === 'iss-1')!;
     expect(wo1.classification).toEqual({ category: 'plumbing', subcategory: 'faucet' });
     expect(wo1.confidence_by_field).toEqual({ category: 0.92, subcategory: 0.85 });
   });
@@ -117,7 +130,7 @@ describe('createWorkOrders', () => {
   it('uses raw_excerpt as raw_text and summary as summary_confirmed', () => {
     const session = baseSession();
     const wos = createWorkOrders({ session, idGenerator: idGen, clock });
-    const wo1 = wos.find(wo => wo.issue_id === 'iss-1')!;
+    const wo1 = wos.find((wo) => wo.issue_id === 'iss-1')!;
     expect(wo1.raw_text).toBe('My kitchen faucet is leaking');
     expect(wo1.summary_confirmed).toBe('Leaky faucet');
   });
@@ -183,14 +196,12 @@ describe('createWorkOrders', () => {
   it('throws if session has no unit_id', () => {
     let session = baseSession();
     session = { ...session, unit_id: null };
-    expect(() => createWorkOrders({ session, idGenerator: idGen, clock }))
-      .toThrow(/unit_id/);
+    expect(() => createWorkOrders({ session, idGenerator: idGen, clock })).toThrow(/unit_id/);
   });
 
   it('throws if session has no property_id or client_id', () => {
     let session = baseSession();
     session = { ...session, property_id: null };
-    expect(() => createWorkOrders({ session, idGenerator: idGen, clock }))
-      .toThrow(/property_id/);
+    expect(() => createWorkOrders({ session, idGenerator: idGen, clock })).toThrow(/property_id/);
   });
 });

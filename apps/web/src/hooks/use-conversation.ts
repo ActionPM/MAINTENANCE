@@ -29,10 +29,7 @@ export function useConversation(token: string) {
     }
   }
 
-  const startConversation = useCallback(
-    () => dispatch(api.createConversation, token),
-    [token],
-  );
+  const startConversation = useCallback(() => dispatch(api.createConversation, token), [token]);
 
   const selectUnit = useCallback(
     (unitId: string) => {
@@ -58,21 +55,15 @@ export function useConversation(token: string) {
     [token, conversationId],
   );
 
-  const confirmSplit = useCallback(
-    () => {
-      if (!conversationId) return Promise.resolve();
-      return dispatch(api.confirmSplit, token, conversationId);
-    },
-    [token, conversationId],
-  );
+  const confirmSplit = useCallback(() => {
+    if (!conversationId) return Promise.resolve();
+    return dispatch(api.confirmSplit, token, conversationId);
+  }, [token, conversationId]);
 
-  const rejectSplit = useCallback(
-    () => {
-      if (!conversationId) return Promise.resolve();
-      return dispatch(api.rejectSplit, token, conversationId);
-    },
-    [token, conversationId],
-  );
+  const rejectSplit = useCallback(() => {
+    if (!conversationId) return Promise.resolve();
+    return dispatch(api.rejectSplit, token, conversationId);
+  }, [token, conversationId]);
 
   const mergeIssues = useCallback(
     (issueIds: readonly string[]) => {
@@ -106,13 +97,10 @@ export function useConversation(token: string) {
     [token, conversationId],
   );
 
-  const confirmSubmission = useCallback(
-    () => {
-      if (!conversationId) return Promise.resolve();
-      return dispatch(api.confirmSubmission, token, conversationId);
-    },
-    [token, conversationId],
-  );
+  const confirmSubmission = useCallback(() => {
+    if (!conversationId) return Promise.resolve();
+    return dispatch(api.confirmSubmission, token, conversationId);
+  }, [token, conversationId]);
 
   const resumeConversation = useCallback(
     (id: string) => dispatch(api.resumeConversation, token, id),

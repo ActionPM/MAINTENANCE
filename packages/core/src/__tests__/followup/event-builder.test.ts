@@ -49,9 +49,7 @@ describe('buildFollowUpAnswersEvent', () => {
       issueId: 'issue-1',
       turnNumber: 1,
       questions: QUESTIONS,
-      answers: [
-        { question_id: 'q1', answer: 'normal', received_at: '2026-02-25T12:05:00.000Z' },
-      ],
+      answers: [{ question_id: 'q1', answer: 'normal', received_at: '2026-02-25T12:05:00.000Z' }],
       createdAt: '2026-02-25T12:05:00.000Z',
     });
 

@@ -211,7 +211,9 @@ describe('Integration — round-trip: build valid data, validate, access typed r
       tenant_user_id: uuid(),
       tenant_account_id: uuid(),
       status: WorkOrderStatus.CREATED,
-      status_history: [{ status: WorkOrderStatus.CREATED, changed_at: NOW, actor: ActorType.SYSTEM }],
+      status_history: [
+        { status: WorkOrderStatus.CREATED, changed_at: NOW, actor: ActorType.SYSTEM },
+      ],
       raw_text: 'My toilet is leaking badly',
       summary_confirmed: 'Leaking toilet in bathroom',
       photos: [],
@@ -283,7 +285,9 @@ describe('Integration — config JSON content validation', () => {
   });
 
   it('emergency_escalation_plans.json has valid contact chain', () => {
-    const raw = JSON.parse(readFileSync(resolve(schemasDir, 'emergency_escalation_plans.json'), 'utf-8'));
+    const raw = JSON.parse(
+      readFileSync(resolve(schemasDir, 'emergency_escalation_plans.json'), 'utf-8'),
+    );
     expect(raw.version).toBe('1.0.0');
     expect(raw.plans.length).toBeGreaterThan(0);
     const plan = raw.plans[0];

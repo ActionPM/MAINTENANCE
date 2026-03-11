@@ -13,6 +13,7 @@
 **Spec references:** §2 (non-negotiables), §10 (orchestrator contract), §11.2 (transition matrix), §13 (splitting), §8 (payload caps)
 
 **Skills that apply during execution:**
+
 - `@test-driven-development` — every task follows red-green-refactor
 - `@state-machine-implementation` — any state transition changes
 - `@schema-first-development` — all model outputs validated
@@ -25,6 +26,7 @@
 ## Task 0: Create worktree and branch from Phase 3
 
 **Files:**
+
 - N/A (git operations only)
 
 **Step 1: Create worktree branching from Phase 3 orchestrator**
@@ -65,6 +67,7 @@ No commit needed — branch created from Phase 3 HEAD.
 ## Task 1: Extend ConversationSession with split issues storage
 
 **Files:**
+
 - Modify: `packages/core/src/session/types.ts`
 - Modify: `packages/core/src/session/session.ts`
 - Test: `packages/core/src/__tests__/session/session.test.ts`
@@ -85,7 +88,12 @@ describe('setSplitIssues', () => {
       tenant_user_id: 'user-1',
       tenant_account_id: 'acct-1',
       authorized_unit_ids: ['u1'],
-      pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'gpt-4', prompt_version: '1.0.0' },
+      pinned_versions: {
+        taxonomy_version: '1.0.0',
+        schema_version: '1.0.0',
+        model_id: 'gpt-4',
+        prompt_version: '1.0.0',
+      },
     });
     expect(session.split_issues).toBeNull();
 
@@ -105,7 +113,12 @@ describe('setSplitIssues', () => {
       tenant_user_id: 'user-1',
       tenant_account_id: 'acct-1',
       authorized_unit_ids: ['u1'],
-      pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'gpt-4', prompt_version: '1.0.0' },
+      pinned_versions: {
+        taxonomy_version: '1.0.0',
+        schema_version: '1.0.0',
+        model_id: 'gpt-4',
+        prompt_version: '1.0.0',
+      },
     });
     session = setSplitIssues(session, [{ issue_id: 'i1', summary: 'Test', raw_excerpt: 'test' }]);
     const cleared = setSplitIssues(session, null);
@@ -195,6 +208,7 @@ git commit -m "feat(core): add split_issues field to ConversationSession"
 ## Task 2: Add IssueSplitter port to OrchestratorDependencies
 
 **Files:**
+
 - Modify: `packages/core/src/orchestrator/types.ts`
 - Modify: `packages/core/src/__tests__/orchestrator-integration.test.ts` (update deps)
 - Modify: All test files that create `OrchestratorDependencies` fixtures
@@ -229,6 +243,7 @@ issueSplitter: async () => ({ issues: [], issue_count: 0 }),
 ```
 
 Files to update (search for `OrchestratorDependencies` or `makeDeps` or `deps:` in test files):
+
 - `packages/core/src/__tests__/orchestrator-integration.test.ts`
 - `packages/core/src/__tests__/orchestrator/dispatcher.test.ts`
 - `packages/core/src/__tests__/orchestrator/action-handlers/submit-initial-message.test.ts`
@@ -253,6 +268,7 @@ git commit -m "feat(core): add issueSplitter port to OrchestratorDependencies"
 ## Task 3: Input sanitization utility
 
 **Files:**
+
 - Create: `packages/core/src/splitter/input-sanitizer.ts`
 - Create: `packages/core/src/splitter/index.ts`
 - Test: `packages/core/src/__tests__/splitter/input-sanitizer.test.ts`
@@ -289,7 +305,9 @@ describe('sanitizeIssueText', () => {
   });
 
   it('escapes HTML angle brackets', () => {
-    expect(sanitizeIssueText('<script>alert("xss")</script>')).toBe('&lt;script&gt;alert("xss")&lt;/script&gt;');
+    expect(sanitizeIssueText('<script>alert("xss")</script>')).toBe(
+      '&lt;script&gt;alert("xss")&lt;/script&gt;',
+    );
   });
 
   it('escapes ampersands', () => {
@@ -362,16 +380,15 @@ const MAX_ISSUES_PER_CONVERSATION = 10;
 export function sanitizeIssueText(text: string, maxLength = MAX_ISSUE_TEXT_CHARS): string {
   let sanitized = text
     // Strip control characters (U+0000–U+001F, U+007F–U+009F) except space (0x20)
-    .replace(/[\x00-\x1f\x7f-\x9f]/g, (ch) => (ch === '\n' || ch === '\t' || ch === '\r' ? ' ' : ''))
+    .replace(/[\x00-\x1f\x7f-\x9f]/g, (ch) =>
+      ch === '\n' || ch === '\t' || ch === '\r' ? ' ' : '',
+    )
     // Normalize consecutive whitespace
     .replace(/\s+/g, ' ')
     .trim();
 
   // Escape HTML entities
-  sanitized = sanitized
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  sanitized = sanitized.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
   // Truncate
   if (sanitized.length > maxLength) {
@@ -403,7 +420,10 @@ export function validateIssueConstraints(
     return { valid: false, error: `Issue text must not exceed ${MAX_ISSUE_TEXT_CHARS} characters` };
   }
   if (currentIssueCount >= MAX_ISSUES_PER_CONVERSATION) {
-    return { valid: false, error: `Cannot exceed ${MAX_ISSUES_PER_CONVERSATION} issues per conversation` };
+    return {
+      valid: false,
+      error: `Cannot exceed ${MAX_ISSUES_PER_CONVERSATION} issues per conversation`,
+    };
   }
   return { valid: true };
 }
@@ -445,6 +465,7 @@ git commit -m "feat(core): add input sanitization for tenant issue edits"
 ## Task 4: Implement IssueSplitter tool wrapper with schema validation and retry
 
 **Files:**
+
 - Create: `packages/core/src/splitter/issue-splitter.ts`
 - Modify: `packages/core/src/splitter/index.ts`
 - Test: `packages/core/src/__tests__/splitter/issue-splitter.test.ts`
@@ -457,7 +478,11 @@ Create `packages/core/src/__tests__/splitter/issue-splitter.test.ts`:
 
 ```typescript
 import { describe, it, expect, vi } from 'vitest';
-import { callIssueSplitter, SplitterError, SplitterErrorCode } from '../../splitter/issue-splitter.js';
+import {
+  callIssueSplitter,
+  SplitterError,
+  SplitterErrorCode,
+} from '../../splitter/issue-splitter.js';
 import type { IssueSplitterInput, IssueSplitterOutput } from '@wo-agent/schemas';
 
 const VALID_INPUT: IssueSplitterInput = {
@@ -486,7 +511,8 @@ describe('callIssueSplitter', () => {
 
   it('retries once on schema validation failure then succeeds', async () => {
     const invalidOutput = { issues: [{ summary: 'no id' }], issue_count: 1 };
-    const llmCall = vi.fn()
+    const llmCall = vi
+      .fn()
       .mockResolvedValueOnce(invalidOutput)
       .mockResolvedValueOnce(VALID_OUTPUT);
     const result = await callIssueSplitter(VALID_INPUT, llmCall);
@@ -652,6 +678,7 @@ git commit -m "feat(core): add IssueSplitter wrapper with schema validation and 
 ## Task 5: Wire splitter into submit-initial-message handler
 
 **Files:**
+
 - Modify: `packages/core/src/orchestrator/action-handlers/submit-initial-message.ts`
 - Modify: `packages/core/src/__tests__/orchestrator/action-handlers/submit-initial-message.test.ts`
 
@@ -690,16 +717,22 @@ function makeContext(
     tenant_user_id: 'user-1',
     tenant_account_id: 'acct-1',
     authorized_unit_ids: ['u1'],
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'gpt-4', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'gpt-4',
+      prompt_version: '1.0.0',
+    },
   });
   if (unitResolved) {
     session = updateSessionState(session, ConversationState.UNIT_SELECTED);
     session = setSessionUnit(session, 'u1');
   }
 
-  const issueSplitter = splitterResult instanceof Error
-    ? vi.fn().mockRejectedValue(splitterResult)
-    : vi.fn().mockResolvedValue(splitterResult ?? VALID_SPLIT);
+  const issueSplitter =
+    splitterResult instanceof Error
+      ? vi.fn().mockRejectedValue(splitterResult)
+      : vi.fn().mockResolvedValue(splitterResult ?? VALID_SPLIT);
 
   return {
     session,
@@ -708,11 +741,19 @@ function makeContext(
       action_type: ActionType.SUBMIT_INITIAL_MESSAGE,
       actor: ActorType.TENANT,
       tenant_input: { message: 'My toilet is leaking and kitchen light is broken' },
-      auth_context: { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['u1'] },
+      auth_context: {
+        tenant_user_id: 'user-1',
+        tenant_account_id: 'acct-1',
+        authorized_unit_ids: ['u1'],
+      },
     },
     deps: {
       eventRepo: new InMemoryEventStore(),
-      sessionStore: { get: async () => null, getByTenantUser: async () => [], save: async () => {} },
+      sessionStore: {
+        get: async () => null,
+        getByTenantUser: async () => [],
+        save: async () => {},
+      },
       idGenerator: () => `id-${++counter}`,
       clock: () => '2026-01-15T12:00:00Z',
       issueSplitter,
@@ -770,7 +811,7 @@ describe('handleSubmitInitialMessage', () => {
     const result = await handleSubmitInitialMessage(ctx);
     expect(result.uiMessages.length).toBeGreaterThan(0);
     // Should describe the split to the tenant
-    const content = result.uiMessages.map(m => m.content).join(' ');
+    const content = result.uiMessages.map((m) => m.content).join(' ');
     expect(content).toContain('2'); // issue count
   });
 
@@ -810,7 +851,9 @@ import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
  * 3. On success: store issues on session, return SPLIT_PROPOSED
  * 4. On failure: return LLM_ERROR_RETRYABLE with error details
  */
-export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Promise<ActionHandlerResult> {
+export async function handleSubmitInitialMessage(
+  ctx: ActionHandlerContext,
+): Promise<ActionHandlerResult> {
   const { session, deps } = ctx;
   const input = ctx.request.tenant_input as TenantInputSubmitInitialMessage;
 
@@ -819,8 +862,15 @@ export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Pro
     return {
       newState: session.state,
       session,
-      uiMessages: [{ role: 'agent', content: 'Please select a unit before submitting your request.' }],
-      errors: [{ code: 'UNIT_NOT_RESOLVED', message: 'A unit must be selected before submitting a message' }],
+      uiMessages: [
+        { role: 'agent', content: 'Please select a unit before submitting your request.' },
+      ],
+      errors: [
+        {
+          code: 'UNIT_NOT_RESOLVED',
+          message: 'A unit must be selected before submitting a message',
+        },
+      ],
     };
   }
 
@@ -837,9 +887,7 @@ export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Pro
     const splitResult = await callIssueSplitter(splitterInput, deps.issueSplitter);
     const updatedSession = setSplitIssues(session, splitResult.issues);
 
-    const issueList = splitResult.issues
-      .map((issue, i) => `${i + 1}. ${issue.summary}`)
-      .join('\n');
+    const issueList = splitResult.issues.map((issue, i) => `${i + 1}. ${issue.summary}`).join('\n');
 
     return {
       newState: ConversationState.SPLIT_PROPOSED,
@@ -847,9 +895,10 @@ export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Pro
       uiMessages: [
         {
           role: 'agent',
-          content: splitResult.issue_count === 1
-            ? `I identified 1 issue:\n\n1. ${splitResult.issues[0].summary}\n\nPlease confirm or edit this issue.`
-            : `I identified ${splitResult.issue_count} issues:\n\n${issueList}\n\nPlease confirm, edit, or merge these issues.`,
+          content:
+            splitResult.issue_count === 1
+              ? `I identified 1 issue:\n\n1. ${splitResult.issues[0].summary}\n\nPlease confirm or edit this issue.`
+              : `I identified ${splitResult.issue_count} issues:\n\n${issueList}\n\nPlease confirm, edit, or merge these issues.`,
         },
       ],
       quickReplies: [
@@ -860,11 +909,14 @@ export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Pro
       eventType: 'message_received',
     };
   } catch (err) {
-    const errorMessage = err instanceof SplitterError ? err.message : 'Unexpected error analyzing your request';
+    const errorMessage =
+      err instanceof SplitterError ? err.message : 'Unexpected error analyzing your request';
     return {
       newState: ConversationState.LLM_ERROR_RETRYABLE,
       session,
-      uiMessages: [{ role: 'agent', content: 'I had trouble analyzing your request. Please try again.' }],
+      uiMessages: [
+        { role: 'agent', content: 'I had trouble analyzing your request. Please try again.' },
+      ],
       errors: [{ code: 'SPLITTER_FAILED', message: errorMessage }],
       transitionContext: { prior_state: session.state },
       eventPayload: { message: input.message, error: errorMessage },
@@ -896,6 +948,7 @@ git commit -m "feat(core): wire IssueSplitter into submit-initial-message handle
 ## Task 6: Enhance split confirmation actions — MERGE, EDIT, ADD, REJECT, CONFIRM
 
 **Files:**
+
 - Modify: `packages/core/src/orchestrator/action-handlers/split-actions.ts`
 - Modify: `packages/core/src/__tests__/orchestrator/action-handlers/split-actions.test.ts`
 
@@ -931,7 +984,12 @@ function makeContext(
     tenant_user_id: 'user-1',
     tenant_account_id: 'acct-1',
     authorized_unit_ids: ['u1'],
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'gpt-4', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'gpt-4',
+      prompt_version: '1.0.0',
+    },
   });
   session = updateSessionState(session, ConversationState.SPLIT_PROPOSED);
   session = setSplitIssues(session, issues);
@@ -943,11 +1001,19 @@ function makeContext(
       action_type: actionType as any,
       actor: ActorType.TENANT,
       tenant_input: tenantInput as any,
-      auth_context: { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['u1'] },
+      auth_context: {
+        tenant_user_id: 'user-1',
+        tenant_account_id: 'acct-1',
+        authorized_unit_ids: ['u1'],
+      },
     },
     deps: {
       eventRepo: new InMemoryEventStore(),
-      sessionStore: { get: async () => null, getByTenantUser: async () => [], save: async () => {} },
+      sessionStore: {
+        get: async () => null,
+        getByTenantUser: async () => [],
+        save: async () => {},
+      },
       idGenerator: () => `id-${++counter}`,
       clock: () => '2026-01-15T12:00:00Z',
       issueSplitter: async () => ({ issues: [], issue_count: 0 }),
@@ -988,8 +1054,8 @@ describe('MERGE_ISSUES', () => {
     const result = await handleSplitAction(ctx);
     expect(result.newState).toBe(ConversationState.SPLIT_PROPOSED);
     expect(result.session.split_issues!.length).toBe(2); // 3 - 2 merged + 1 new = 2
-    const mergedIssue = result.session.split_issues!.find(i =>
-      i.summary.includes('Toilet leaking') && i.summary.includes('Light broken')
+    const mergedIssue = result.session.split_issues!.find(
+      (i) => i.summary.includes('Toilet leaking') && i.summary.includes('Light broken'),
     );
     expect(mergedIssue).toBeDefined();
   });
@@ -1011,17 +1077,23 @@ describe('MERGE_ISSUES', () => {
 
 describe('EDIT_ISSUE', () => {
   it('updates issue summary', async () => {
-    const ctx = makeContext(ActionType.EDIT_ISSUE, { issue_id: 'i1', summary: 'Bathroom faucet dripping' });
+    const ctx = makeContext(ActionType.EDIT_ISSUE, {
+      issue_id: 'i1',
+      summary: 'Bathroom faucet dripping',
+    });
     const result = await handleSplitAction(ctx);
     expect(result.newState).toBe(ConversationState.SPLIT_PROPOSED);
-    const edited = result.session.split_issues!.find(i => i.issue_id === 'i1');
+    const edited = result.session.split_issues!.find((i) => i.issue_id === 'i1');
     expect(edited!.summary).toBe('Bathroom faucet dripping');
   });
 
   it('sanitizes edited text', async () => {
-    const ctx = makeContext(ActionType.EDIT_ISSUE, { issue_id: 'i1', summary: 'Has <script>  extra   spaces' });
+    const ctx = makeContext(ActionType.EDIT_ISSUE, {
+      issue_id: 'i1',
+      summary: 'Has <script>  extra   spaces',
+    });
     const result = await handleSplitAction(ctx);
-    const edited = result.session.split_issues!.find(i => i.issue_id === 'i1');
+    const edited = result.session.split_issues!.find((i) => i.issue_id === 'i1');
     expect(edited!.summary).toBe('Has &lt;script&gt; extra spaces');
   });
 
@@ -1053,7 +1125,7 @@ describe('ADD_ISSUE', () => {
     const result = await handleSplitAction(ctx);
     expect(result.newState).toBe(ConversationState.SPLIT_PROPOSED);
     expect(result.session.split_issues!.length).toBe(4);
-    const added = result.session.split_issues!.find(i => i.summary === 'Window cracked');
+    const added = result.session.split_issues!.find((i) => i.summary === 'Window cracked');
     expect(added).toBeDefined();
     expect(added!.issue_id).toBeDefined();
   });
@@ -1067,7 +1139,9 @@ describe('ADD_ISSUE', () => {
 
   it('rejects when at 10 issues', async () => {
     const tenIssues = Array.from({ length: 10 }, (_, i) => ({
-      issue_id: `i${i}`, summary: `Issue ${i}`, raw_excerpt: `excerpt ${i}`,
+      issue_id: `i${i}`,
+      summary: `Issue ${i}`,
+      raw_excerpt: `excerpt ${i}`,
     }));
     const ctx = makeContext(ActionType.ADD_ISSUE, { summary: 'One too many' }, tenIssues);
     const result = await handleSplitAction(ctx);
@@ -1153,7 +1227,9 @@ function handleConfirmSplit(
   return {
     newState: ConversationState.SPLIT_FINALIZED,
     session: ctx.session,
-    uiMessages: [{ role: 'agent', content: `Split confirmed with ${issues.length} issue(s). Classifying...` }],
+    uiMessages: [
+      { role: 'agent', content: `Split confirmed with ${issues.length} issue(s). Classifying...` },
+    ],
     eventPayload: { split_action: 'confirm', issue_count: issues.length },
   };
 }
@@ -1163,8 +1239,8 @@ function handleRejectSplit(
   issues: readonly SplitIssue[],
 ): ActionHandlerResult {
   // Collapse all issues into a single issue
-  const combinedSummary = issues.map(i => i.summary).join('; ');
-  const combinedExcerpt = issues.map(i => i.raw_excerpt).join(' ');
+  const combinedSummary = issues.map((i) => i.summary).join('; ');
+  const combinedExcerpt = issues.map((i) => i.raw_excerpt).join(' ');
   const singleIssue: SplitIssue = {
     issue_id: issues[0]?.issue_id ?? ctx.deps.idGenerator(),
     summary: combinedSummary || 'Single issue',
@@ -1198,7 +1274,7 @@ function handleMergeIssues(
   }
 
   // Validate all IDs exist
-  const issueMap = new Map(issues.map(i => [i.issue_id, i]));
+  const issueMap = new Map(issues.map((i) => [i.issue_id, i]));
   for (const id of idsToMerge) {
     if (!issueMap.has(id)) {
       return {
@@ -1211,13 +1287,13 @@ function handleMergeIssues(
   }
 
   const mergeSet = new Set(idsToMerge);
-  const toMerge = issues.filter(i => mergeSet.has(i.issue_id));
-  const remaining = issues.filter(i => !mergeSet.has(i.issue_id));
+  const toMerge = issues.filter((i) => mergeSet.has(i.issue_id));
+  const remaining = issues.filter((i) => !mergeSet.has(i.issue_id));
 
   const merged: SplitIssue = {
     issue_id: toMerge[0].issue_id,
-    summary: toMerge.map(i => i.summary).join('; '),
-    raw_excerpt: toMerge.map(i => i.raw_excerpt).join(' '),
+    summary: toMerge.map((i) => i.summary).join('; '),
+    raw_excerpt: toMerge.map((i) => i.raw_excerpt).join(' '),
   };
 
   const newIssues = [...remaining, merged];
@@ -1238,7 +1314,7 @@ function handleEditIssue(
 ): ActionHandlerResult {
   const input = ctx.request.tenant_input as TenantInputEditIssue;
 
-  const idx = issues.findIndex(i => i.issue_id === input.issue_id);
+  const idx = issues.findIndex((i) => i.issue_id === input.issue_id);
   if (idx === -1) {
     return {
       newState: ctx.session.state,
@@ -1342,6 +1418,7 @@ git commit -m "feat(core): implement split confirmation actions (merge/edit/add/
 ## Task 7: Update response builder to include issues in snapshot
 
 **Files:**
+
 - Modify: `packages/core/src/orchestrator/response-builder.ts`
 - Test: `packages/core/src/__tests__/orchestrator/response-builder.test.ts`
 
@@ -1353,15 +1430,18 @@ Add to `packages/core/src/__tests__/orchestrator/response-builder.test.ts`:
 
 ```typescript
 it('includes split_issues in snapshot when present', () => {
-  const issues = [
-    { issue_id: 'i1', summary: 'Toilet leaking', raw_excerpt: 'toilet is leaking' },
-  ];
+  const issues = [{ issue_id: 'i1', summary: 'Toilet leaking', raw_excerpt: 'toilet is leaking' }];
   let session = createSession({
     conversation_id: 'conv-1',
     tenant_user_id: 'user-1',
     tenant_account_id: 'acct-1',
     authorized_unit_ids: ['u1'],
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'gpt-4', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'gpt-4',
+      prompt_version: '1.0.0',
+    },
   });
   session = setSplitIssues(session, issues);
 
@@ -1380,7 +1460,12 @@ it('omits issues from snapshot when null', () => {
     tenant_user_id: 'user-1',
     tenant_account_id: 'acct-1',
     authorized_unit_ids: ['u1'],
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'gpt-4', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'gpt-4',
+      prompt_version: '1.0.0',
+    },
   });
 
   const response = buildResponse({
@@ -1431,6 +1516,7 @@ git commit -m "feat(core): include split_issues in ConversationSnapshot response
 ## Task 8: Update orchestrator integration test for full splitter flow
 
 **Files:**
+
 - Modify: `packages/core/src/__tests__/orchestrator-integration.test.ts`
 
 **Context:** The existing integration test expects `split_in_progress` after `SUBMIT_INITIAL_MESSAGE`. With the splitter wired in, it should now reach `split_proposed`. We also add new integration tests covering the full split confirmation flow.
@@ -1455,7 +1541,11 @@ function makeDeps() {
     clock: () => new Date().toISOString(),
     issueSplitter: async (input: any) => ({
       issues: [
-        { issue_id: `issue-${++counter}`, summary: 'Issue from input', raw_excerpt: input.raw_text },
+        {
+          issue_id: `issue-${++counter}`,
+          summary: 'Issue from input',
+          raw_excerpt: input.raw_text,
+        },
       ],
       issue_count: 1,
     }),
@@ -1556,7 +1646,9 @@ describe('Orchestrator integration: split confirmation flow', () => {
 
   it('handles splitter failure gracefully', async () => {
     // Override splitter to fail
-    deps.issueSplitter = async () => { throw new Error('LLM down'); };
+    deps.issueSplitter = async () => {
+      throw new Error('LLM down');
+    };
     dispatch = createDispatcher(deps);
 
     const r1 = await dispatch({
@@ -1630,9 +1722,10 @@ Expected: No errors (or fix any that appear)
 **Step 4: Verify event count in integration tests**
 
 The event store should have the correct number of events after each flow:
+
 - CREATE + SELECT_UNIT + SUBMIT_INITIAL_MESSAGE = 3 events
-- + CONFIRM_SPLIT = 4 events
-- + ADD_ISSUE + CONFIRM_SPLIT = 5 events
+- - CONFIRM_SPLIT = 4 events
+- - ADD_ISSUE + CONFIRM_SPLIT = 5 events
 
 **Step 5: Commit any lint/type fixes**
 
@@ -1645,16 +1738,16 @@ git commit -m "chore: fix lint and type issues from Phase 4"
 
 ## Summary of deliverables
 
-| Component | Status | Spec reference |
-|-----------|--------|---------------|
-| ConversationSession.split_issues | New field | §13 |
-| OrchestratorDependencies.issueSplitter | New port | §10, §3 |
-| sanitizeIssueText / validateIssueConstraints | New utility | §13, §8 |
-| callIssueSplitter (schema validation + retry) | New wrapper | §2.3, §3 |
-| handleSubmitInitialMessage (wired to splitter) | Enhanced | §11.2, §13 |
-| handleSplitAction (merge/edit/add/reject/confirm) | Enhanced | §13 |
-| Response builder (issues in snapshot) | Enhanced | §10.2 |
-| Integration tests (full split flow) | New | — |
+| Component                                         | Status      | Spec reference |
+| ------------------------------------------------- | ----------- | -------------- |
+| ConversationSession.split_issues                  | New field   | §13            |
+| OrchestratorDependencies.issueSplitter            | New port    | §10, §3        |
+| sanitizeIssueText / validateIssueConstraints      | New utility | §13, §8        |
+| callIssueSplitter (schema validation + retry)     | New wrapper | §2.3, §3       |
+| handleSubmitInitialMessage (wired to splitter)    | Enhanced    | §11.2, §13     |
+| handleSplitAction (merge/edit/add/reject/confirm) | Enhanced    | §13            |
+| Response builder (issues in snapshot)             | Enhanced    | §10.2          |
+| Integration tests (full split flow)               | New         | —              |
 
 ## Non-negotiable checklist (spec §2)
 

@@ -35,11 +35,13 @@ describe('createAnthropicClient', () => {
   it('throws if no text content in response', async () => {
     mockCreate.mockResolvedValueOnce({ content: [] });
     const client = createAnthropicClient({ apiKey: 'test-key' });
-    await expect(client.complete({
-      system: 'test',
-      userMessage: 'test',
-      model: 'claude-sonnet-4-20250514',
-      maxTokens: 1024,
-    })).rejects.toThrow('No text content');
+    await expect(
+      client.complete({
+        system: 'test',
+        userMessage: 'test',
+        model: 'claude-sonnet-4-20250514',
+        maxTokens: 1024,
+      }),
+    ).rejects.toThrow('No text content');
   });
 });

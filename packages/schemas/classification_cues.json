@@ -27,7 +27,16 @@
     },
     "Sub_Location": {
       "kitchen": {
-        "keywords": ["kitchen", "stove", "oven", "fridge", "dishwasher", "microwave", "range hood", "refrigerator"],
+        "keywords": [
+          "kitchen",
+          "stove",
+          "oven",
+          "fridge",
+          "dishwasher",
+          "microwave",
+          "range hood",
+          "refrigerator"
+        ],
         "regex": []
       },
       "bathroom": {
@@ -74,19 +83,125 @@
       }
     },
     "Maintenance_Category": {
-      "plumbing": { "keywords": ["leak", "toilet", "sink", "drain", "pipe", "water", "faucet", "shower", "clog", "plumbing"], "regex": [] },
-      "electrical": { "keywords": ["breaker", "outlet", "switch", "sparks", "power", "light", "fuse", "electrical", "wiring"], "regex": [] },
-      "hvac": { "keywords": ["heat", "ac", "furnace", "thermostat", "vent", "air conditioning", "heating", "hvac", "radiator"], "regex": [] },
-      "carpentry": { "keywords": ["door", "cabinet", "shelf", "baseboard", "wood", "frame", "hinge", "carpentry"], "regex": [] },
-      "flooring": { "keywords": ["floor", "tile", "carpet", "wood", "laminate", "flooring", "cracked floor"], "regex": [] },
-      "drywall_plaster": { "keywords": ["wall", "drywall", "plaster", "hole in wall", "crack in wall", "ceiling damage"], "regex": [] },
-      "paint": { "keywords": ["paint", "peeling", "chipping", "discolored", "stain", "mold"], "regex": [] },
-      "pest_control": { "keywords": ["pest", "cockroach", "ant", "bedbug", "rodent", "mouse", "rat", "bugs", "infestation"], "regex": [] },
-      "general_maintenance": { "keywords": ["maintenance", "repair", "fix", "broken", "damaged", "not working"], "regex": [] },
-      "locksmith": { "keywords": ["lock", "key", "locked out", "deadbolt", "latch", "locksmith"], "regex": [] },
-      "appliance": { "keywords": ["fridge", "dishwasher", "oven", "microwave", "stove", "washer", "dryer", "range hood", "appliance"], "regex": [] },
-      "roofing": { "keywords": ["roof", "roofing", "shingle", "leak from ceiling", "rain coming in"], "regex": [] },
-      "tile": { "keywords": ["tile", "grout", "cracked tile", "loose tile", "bathroom tile"], "regex": [] }
+      "plumbing": {
+        "keywords": [
+          "leak",
+          "toilet",
+          "sink",
+          "drain",
+          "pipe",
+          "water",
+          "faucet",
+          "shower",
+          "clog",
+          "plumbing"
+        ],
+        "regex": []
+      },
+      "electrical": {
+        "keywords": [
+          "breaker",
+          "outlet",
+          "switch",
+          "sparks",
+          "power",
+          "light",
+          "fuse",
+          "electrical",
+          "wiring"
+        ],
+        "regex": []
+      },
+      "hvac": {
+        "keywords": [
+          "heat",
+          "ac",
+          "furnace",
+          "thermostat",
+          "vent",
+          "air conditioning",
+          "heating",
+          "hvac",
+          "radiator"
+        ],
+        "regex": []
+      },
+      "carpentry": {
+        "keywords": [
+          "door",
+          "cabinet",
+          "shelf",
+          "baseboard",
+          "wood",
+          "frame",
+          "hinge",
+          "carpentry"
+        ],
+        "regex": []
+      },
+      "flooring": {
+        "keywords": ["floor", "tile", "carpet", "wood", "laminate", "flooring", "cracked floor"],
+        "regex": []
+      },
+      "drywall_plaster": {
+        "keywords": [
+          "wall",
+          "drywall",
+          "plaster",
+          "hole in wall",
+          "crack in wall",
+          "ceiling damage"
+        ],
+        "regex": []
+      },
+      "paint": {
+        "keywords": ["paint", "peeling", "chipping", "discolored", "stain", "mold"],
+        "regex": []
+      },
+      "pest_control": {
+        "keywords": [
+          "pest",
+          "cockroach",
+          "ant",
+          "bedbug",
+          "rodent",
+          "mouse",
+          "rat",
+          "bugs",
+          "infestation"
+        ],
+        "regex": []
+      },
+      "general_maintenance": {
+        "keywords": ["maintenance", "repair", "fix", "broken", "damaged", "not working"],
+        "regex": []
+      },
+      "locksmith": {
+        "keywords": ["lock", "key", "locked out", "deadbolt", "latch", "locksmith"],
+        "regex": []
+      },
+      "appliance": {
+        "keywords": [
+          "fridge",
+          "dishwasher",
+          "oven",
+          "microwave",
+          "stove",
+          "washer",
+          "dryer",
+          "range hood",
+          "appliance"
+        ],
+        "regex": []
+      },
+      "roofing": {
+        "keywords": ["roof", "roofing", "shingle", "leak from ceiling", "rain coming in"],
+        "regex": []
+      },
+      "tile": {
+        "keywords": ["tile", "grout", "cracked tile", "loose tile", "bathroom tile"],
+        "regex": []
+      }
     },
     "Maintenance_Object": {
       "toilet": { "keywords": ["toilet", "wc", "commode", "bowl"], "regex": [] },
@@ -95,11 +210,26 @@
       "drain": { "keywords": ["drain", "drainage", "clogged drain", "slow drain"], "regex": [] },
       "pipe": { "keywords": ["pipe", "piping", "plumbing pipe", "water pipe"], "regex": [] },
       "shower": { "keywords": ["shower", "shower head", "shower door"], "regex": [] },
-      "breaker": { "keywords": ["breaker", "circuit breaker", "electrical panel", "panel"], "regex": [] },
-      "outlet": { "keywords": ["outlet", "plug", "socket", "electrical outlet", "power outlet"], "regex": [] },
-      "light": { "keywords": ["light", "bulb", "fixture", "lamp", "lighting", "light fixture"], "regex": [] },
-      "thermostat": { "keywords": ["thermostat", "temperature control", "temp control"], "regex": [] },
-      "door": { "keywords": ["door", "front door", "closet door", "bedroom door", "entrance"], "regex": [] },
+      "breaker": {
+        "keywords": ["breaker", "circuit breaker", "electrical panel", "panel"],
+        "regex": []
+      },
+      "outlet": {
+        "keywords": ["outlet", "plug", "socket", "electrical outlet", "power outlet"],
+        "regex": []
+      },
+      "light": {
+        "keywords": ["light", "bulb", "fixture", "lamp", "lighting", "light fixture"],
+        "regex": []
+      },
+      "thermostat": {
+        "keywords": ["thermostat", "temperature control", "temp control"],
+        "regex": []
+      },
+      "door": {
+        "keywords": ["door", "front door", "closet door", "bedroom door", "entrance"],
+        "regex": []
+      },
       "lock": { "keywords": ["lock", "deadbolt", "latch", "door lock"], "regex": [] },
       "key": { "keywords": ["key", "keys", "fob", "key card"], "regex": [] },
       "fridge": { "keywords": ["fridge", "refrigerator", "freezer"], "regex": [] },
@@ -110,15 +240,50 @@
       "dryer": { "keywords": ["dryer", "clothes dryer", "tumble dryer"], "regex": [] },
       "radiator": { "keywords": ["radiator", "baseboard heater", "heating unit"], "regex": [] },
       "bathtub": {
-        "keywords": ["bathtub", "bath tub", "tub drain", "tub faucet", "tub leak", "tub is", "soaker", "jacuzzi"],
-        "regex": ["\\b(bathtub|bath\\s*tub|soaker|jacuzzi)\\b", "\\btub\\s+(drain|faucet|leak|is|not|crack|peel|chip|overflow|clog|stopper)"]
+        "keywords": [
+          "bathtub",
+          "bath tub",
+          "tub drain",
+          "tub faucet",
+          "tub leak",
+          "tub is",
+          "soaker",
+          "jacuzzi"
+        ],
+        "regex": [
+          "\\b(bathtub|bath\\s*tub|soaker|jacuzzi)\\b",
+          "\\btub\\s+(drain|faucet|leak|is|not|crack|peel|chip|overflow|clog|stopper)"
+        ]
       },
       "window": {
-        "keywords": ["window pane", "window glass", "window frame", "windowsill", "window sill", "window seal", "window won't", "window is", "window not", "window leak", "window crack", "window broken"],
-        "regex": ["\\bwindow(s)?\\s+(pane|glass|frame|sill|seal|won|is|not|leak|crack|broken|stuck|draft|screen|blind|latch)\\b"]
+        "keywords": [
+          "window pane",
+          "window glass",
+          "window frame",
+          "windowsill",
+          "window sill",
+          "window seal",
+          "window won't",
+          "window is",
+          "window not",
+          "window leak",
+          "window crack",
+          "window broken"
+        ],
+        "regex": [
+          "\\bwindow(s)?\\s+(pane|glass|frame|sill|seal|won|is|not|leak|crack|broken|stuck|draft|screen|blind|latch)\\b"
+        ]
       },
       "smoke_detector": {
-        "keywords": ["smoke detector", "smoke alarm", "fire alarm", "fire detector", "co detector", "carbon monoxide detector", "carbon monoxide alarm"],
+        "keywords": [
+          "smoke detector",
+          "smoke alarm",
+          "fire alarm",
+          "fire detector",
+          "co detector",
+          "carbon monoxide detector",
+          "carbon monoxide alarm"
+        ],
         "regex": ["\\b(smoke|fire|co|carbon\\s*monoxide)\\s*(detector|alarm)\\b"]
       },
       "exhaust_fan": {
@@ -126,55 +291,187 @@
         "regex": ["\\b(exhaust|vent(ilation)?|bathroom|bath)\\s*fan\\b"]
       },
       "screen": {
-        "keywords": ["window screen", "screen door", "mesh screen", "bug screen", "screen is ripped", "screen is broken", "screen is missing", "screen torn"],
-        "regex": ["\\b(window|door|bug|mesh)\\s*screen\\b", "\\bscreen\\s+(is|ripped|broken|missing|torn|damaged|fell|came)\\b"]
+        "keywords": [
+          "window screen",
+          "screen door",
+          "mesh screen",
+          "bug screen",
+          "screen is ripped",
+          "screen is broken",
+          "screen is missing",
+          "screen torn"
+        ],
+        "regex": [
+          "\\b(window|door|bug|mesh)\\s*screen\\b",
+          "\\bscreen\\s+(is|ripped|broken|missing|torn|damaged|fell|came)\\b"
+        ]
       },
       "blind": {
-        "keywords": ["blinds", "window blind", "venetian blind", "roller blind", "vertical blind", "blind is", "blind not"],
-        "regex": ["\\b(venetian|roller|vertical|window)\\s*blinds?\\b", "\\bblinds?\\s+(is|are|not|broken|stuck|fell|won)\\b"]
+        "keywords": [
+          "blinds",
+          "window blind",
+          "venetian blind",
+          "roller blind",
+          "vertical blind",
+          "blind is",
+          "blind not"
+        ],
+        "regex": [
+          "\\b(venetian|roller|vertical|window)\\s*blinds?\\b",
+          "\\bblinds?\\s+(is|are|not|broken|stuck|fell|won)\\b"
+        ]
       }
     },
     "Maintenance_Problem": {
-      "leak": { "keywords": ["leak", "leaking", "drip", "dripping", "water coming from"], "regex": [] },
+      "leak": {
+        "keywords": ["leak", "leaking", "drip", "dripping", "water coming from"],
+        "regex": []
+      },
       "drain": { "keywords": ["drain", "slow drain", "won't drain", "drainage"], "regex": [] },
       "clog": { "keywords": ["clog", "clogged", "blocked", "backup", "backed up"], "regex": [] },
-      "not_working": { "keywords": ["not working", "doesn't work", "stopped working", "won't turn on", "broken"], "regex": [] },
-      "no_water": { "keywords": ["no water", "no hot water", "no cold water", "water stopped"], "regex": [] },
-      "no_heat": { "keywords": ["no heat", "no heating", "cold", "freezing", "heater not working"], "regex": [] },
-      "flood": { "keywords": ["flood", "flooding", "flooded", "water everywhere", "burst"], "regex": [] },
-      "infestation": { "keywords": ["infestation", "infested", "bugs everywhere", "roach", "mice", "rats"], "regex": [] },
-      "broken_damaged": { "keywords": ["broken", "damaged", "cracked", "shattered", "bent", "dented"], "regex": [] },
-      "safety_risk": { "keywords": ["unsafe", "dangerous", "hazard", "risk", "sparks", "exposed wire"], "regex": [] },
-      "smell": { "keywords": ["smell", "odor", "stink", "stench", "foul", "musty", "mold"], "regex": [] },
-      "low_pressure": { "keywords": ["low pressure", "weak flow", "trickle", "barely any water"], "regex": [] },
+      "not_working": {
+        "keywords": ["not working", "doesn't work", "stopped working", "won't turn on", "broken"],
+        "regex": []
+      },
+      "no_water": {
+        "keywords": ["no water", "no hot water", "no cold water", "water stopped"],
+        "regex": []
+      },
+      "no_heat": {
+        "keywords": ["no heat", "no heating", "cold", "freezing", "heater not working"],
+        "regex": []
+      },
+      "flood": {
+        "keywords": ["flood", "flooding", "flooded", "water everywhere", "burst"],
+        "regex": []
+      },
+      "infestation": {
+        "keywords": ["infestation", "infested", "bugs everywhere", "roach", "mice", "rats"],
+        "regex": []
+      },
+      "broken_damaged": {
+        "keywords": ["broken", "damaged", "cracked", "shattered", "bent", "dented"],
+        "regex": []
+      },
+      "safety_risk": {
+        "keywords": ["unsafe", "dangerous", "hazard", "risk", "sparks", "exposed wire"],
+        "regex": []
+      },
+      "smell": {
+        "keywords": ["smell", "odor", "stink", "stench", "foul", "musty", "mold"],
+        "regex": []
+      },
+      "low_pressure": {
+        "keywords": ["low pressure", "weak flow", "trickle", "barely any water"],
+        "regex": []
+      },
       "noise_vibration": {
-        "keywords": ["noisy", "loud noise", "vibration", "vibrating", "humming", "buzzing sound", "banging", "rattling", "squeaking", "beeping", "chirping", "grinding noise", "making noise", "makes noise", "strange sound"],
-        "regex": ["\\b(making|makes|strange|loud)\\s*(noise|sound)\\b", "\\b(vibrat|humming|buzzing|banging|rattl|squeak|beep|chirp|grinding)\\b"]
+        "keywords": [
+          "noisy",
+          "loud noise",
+          "vibration",
+          "vibrating",
+          "humming",
+          "buzzing sound",
+          "banging",
+          "rattling",
+          "squeaking",
+          "beeping",
+          "chirping",
+          "grinding noise",
+          "making noise",
+          "makes noise",
+          "strange sound"
+        ],
+        "regex": [
+          "\\b(making|makes|strange|loud)\\s*(noise|sound)\\b",
+          "\\b(vibrat|humming|buzzing|banging|rattl|squeak|beep|chirp|grinding)\\b"
+        ]
       },
       "missing": {
-        "keywords": ["missing", "is gone", "not there", "was removed", "no screen", "no blind", "no smoke detector", "no detector"],
-        "regex": ["\\bmissing\\b", "\\bno\\s+(screen|blind|detector|smoke\\s*alarm|knob|handle|rod)\\b"]
+        "keywords": [
+          "missing",
+          "is gone",
+          "not there",
+          "was removed",
+          "no screen",
+          "no blind",
+          "no smoke detector",
+          "no detector"
+        ],
+        "regex": [
+          "\\bmissing\\b",
+          "\\bno\\s+(screen|blind|detector|smoke\\s*alarm|knob|handle|rod)\\b"
+        ]
       }
     },
     "Management_Category": {
-      "accounting": { "keywords": ["rent", "payment", "charge", "bill", "receipt", "banking", "money", "fee"], "regex": [] },
-      "lease": { "keywords": ["lease", "move out", "move in", "sublet", "assign", "tenant", "contract"], "regex": [] },
-      "general": { "keywords": ["complaint", "question", "feedback", "booking", "schedule", "parking", "intercom"], "regex": [] }
+      "accounting": {
+        "keywords": ["rent", "payment", "charge", "bill", "receipt", "banking", "money", "fee"],
+        "regex": []
+      },
+      "lease": {
+        "keywords": ["lease", "move out", "move in", "sublet", "assign", "tenant", "contract"],
+        "regex": []
+      },
+      "general": {
+        "keywords": [
+          "complaint",
+          "question",
+          "feedback",
+          "booking",
+          "schedule",
+          "parking",
+          "intercom"
+        ],
+        "regex": []
+      }
     },
     "Management_Object": {
       "rent_increases": { "keywords": ["rent increase", "rent hike", "raised rent"], "regex": [] },
-      "rent_charges": { "keywords": ["rent charge", "extra charge", "fee", "rent bill"], "regex": [] },
-      "banking": { "keywords": ["banking", "bank", "direct deposit", "payment method"], "regex": [] },
+      "rent_charges": {
+        "keywords": ["rent charge", "extra charge", "fee", "rent bill"],
+        "regex": []
+      },
+      "banking": {
+        "keywords": ["banking", "bank", "direct deposit", "payment method"],
+        "regex": []
+      },
       "rent_receipt": { "keywords": ["receipt", "rent receipt", "proof of payment"], "regex": [] },
       "move_out": { "keywords": ["move out", "moving out", "vacate", "leaving"], "regex": [] },
       "move_in": { "keywords": ["move in", "moving in", "new unit"], "regex": [] },
-      "lease_inquiry": { "keywords": ["lease", "lease question", "lease terms", "renewal"], "regex": [] },
-      "complaint": { "keywords": ["complaint", "complain", "noise", "neighbor", "nuisance"], "regex": [] },
+      "lease_inquiry": {
+        "keywords": ["lease", "lease question", "lease terms", "renewal"],
+        "regex": []
+      },
+      "complaint": {
+        "keywords": ["complaint", "complain", "noise", "neighbor", "nuisance"],
+        "regex": []
+      },
       "parking": { "keywords": ["parking", "parking spot", "parking pass", "garage"], "regex": [] },
-      "intercom": { "keywords": ["intercom", "buzzer", "door entry", "visitor access"], "regex": [] },
+      "intercom": {
+        "keywords": ["intercom", "buzzer", "door entry", "visitor access"],
+        "regex": []
+      },
       "building_access": {
-        "keywords": ["key fob", "fob not working", "fob programming", "locked out", "lockout", "room access", "gym access", "pool access", "cable room access", "electrical room access", "need access to"],
-        "regex": ["\\b(locked?\\s*out|need(s|ing)?\\s*access)\\b", "\\b(gym|pool|cable|electrical|phone|billiard|mechanical)\\s*room\\s*(access)?\\b", "\\bfob\\s+(not|is|program|replace|need)\\b"]
+        "keywords": [
+          "key fob",
+          "fob not working",
+          "fob programming",
+          "locked out",
+          "lockout",
+          "room access",
+          "gym access",
+          "pool access",
+          "cable room access",
+          "electrical room access",
+          "need access to"
+        ],
+        "regex": [
+          "\\b(locked?\\s*out|need(s|ing)?\\s*access)\\b",
+          "\\b(gym|pool|cable|electrical|phone|billiard|mechanical)\\s*room\\s*(access)?\\b",
+          "\\bfob\\s+(not|is|program|replace|need)\\b"
+        ]
       }
     }
   }

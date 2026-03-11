@@ -74,7 +74,7 @@ describe('computeFieldConfidence', () => {
       ambiguityPenalty: 0,
       config,
     });
-    expect(withDisagree).toBeCloseTo(noDisagree - 0.10);
+    expect(withDisagree).toBeCloseTo(noDisagree - 0.1);
   });
 
   it('subtracts ambiguity penalty', () => {
@@ -176,9 +176,9 @@ describe('determineFieldsNeedingInput', () => {
   it('returns medium-confidence required fields as needing input', () => {
     const result = determineFieldsNeedingInput({
       confidenceByField: {
-        Category: 0.72,           // medium — required field
-        Location: 0.90,           // high
-        Maintenance_Category: 0.70, // medium — risk-relevant field
+        Category: 0.72, // medium — required field
+        Location: 0.9, // high
+        Maintenance_Category: 0.7, // medium — risk-relevant field
       },
       missingFields: [],
       classificationOutput: {
@@ -186,7 +186,10 @@ describe('determineFieldsNeedingInput', () => {
         Location: 'suite',
         Maintenance_Category: 'plumbing',
       },
-      fieldPolicy: { requiredFields: ['Category', 'Location', 'Maintenance_Category'], riskRelevantFields: [] },
+      fieldPolicy: {
+        requiredFields: ['Category', 'Location', 'Maintenance_Category'],
+        riskRelevantFields: [],
+      },
       config: DEFAULT_CONFIDENCE_CONFIG,
     });
 
@@ -198,8 +201,8 @@ describe('determineFieldsNeedingInput', () => {
   it('returns medium-confidence risk-relevant fields as needing input', () => {
     const result = determineFieldsNeedingInput({
       confidenceByField: {
-        Category: 0.90,
-        Priority: 0.72,           // medium — risk-relevant
+        Category: 0.9,
+        Priority: 0.72, // medium — risk-relevant
         Location: 0.88,
       },
       missingFields: [],
@@ -243,15 +246,15 @@ describe('determineFieldsNeedingInput', () => {
 describe('category gating', () => {
   it('excludes Management fields when Category=maintenance and Category is confident', () => {
     const confidences: Record<string, number> = {
-      Category: 0.90,
-      Location: 0.90,
-      Sub_Location: 0.30,
-      Maintenance_Category: 0.90,
-      Maintenance_Object: 0.30,
-      Maintenance_Problem: 0.90,
+      Category: 0.9,
+      Location: 0.9,
+      Sub_Location: 0.3,
+      Maintenance_Category: 0.9,
+      Maintenance_Object: 0.3,
+      Maintenance_Problem: 0.9,
       Management_Category: 0.25,
       Management_Object: 0.25,
-      Priority: 0.30,
+      Priority: 0.3,
     };
     const classification = {
       Category: 'maintenance',
@@ -273,15 +276,15 @@ describe('category gating', () => {
 
   it('excludes Maintenance fields when Category=management and Category is confident', () => {
     const confidences: Record<string, number> = {
-      Category: 0.90,
-      Location: 0.90,
-      Sub_Location: 0.30,
+      Category: 0.9,
+      Location: 0.9,
+      Sub_Location: 0.3,
       Maintenance_Category: 0.25,
       Maintenance_Object: 0.25,
       Maintenance_Problem: 0.25,
-      Management_Category: 0.90,
-      Management_Object: 0.30,
-      Priority: 0.30,
+      Management_Category: 0.9,
+      Management_Object: 0.3,
+      Priority: 0.3,
     };
     const classification = {
       Category: 'management',
@@ -305,7 +308,7 @@ describe('category gating', () => {
 
   it('does NOT gate when Category itself is low confidence', () => {
     const confidences: Record<string, number> = {
-      Category: 0.30,
+      Category: 0.3,
       Management_Category: 0.25,
       Management_Object: 0.25,
     };
@@ -323,7 +326,7 @@ describe('category gating', () => {
 
   it('does NOT gate when classification is not provided (backward compat)', () => {
     const confidences: Record<string, number> = {
-      Category: 0.70,
+      Category: 0.7,
       Management_Category: 0.25,
     };
     const result = determineFieldsNeedingInput({

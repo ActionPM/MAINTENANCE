@@ -1,9 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import { validate } from '../validator.js';
-import { validateOrchestratorActionRequest, validateOrchestratorActionResponse } from '../validators/orchestrator-action.js';
+import {
+  validateOrchestratorActionRequest,
+  validateOrchestratorActionResponse,
+} from '../validators/orchestrator-action.js';
 import { validateIssueSplitterOutput } from '../validators/issue-split.js';
 import { validateClassifierOutput } from '../validators/classification.js';
-import { validateFollowUpInput, validateFollowUpOutput, validateFollowUpEvent } from '../validators/followups.js';
+import {
+  validateFollowUpInput,
+  validateFollowUpOutput,
+  validateFollowUpEvent,
+} from '../validators/followups.js';
 import { validateWorkOrder } from '../validators/work-order.js';
 import { validatePhoto } from '../validators/photo.js';
 import { validateClassificationAgainstTaxonomy } from '../validators/taxonomy-cross-validator.js';
@@ -85,7 +92,7 @@ describe('validateOrchestratorActionRequest', () => {
     const { action_type, ...noAction } = baseRequest;
     const result = validateOrchestratorActionRequest(noAction);
     expect(result.valid).toBe(false);
-    expect(result.errors?.some(e => e.keyword === 'required')).toBe(true);
+    expect(result.errors?.some((e) => e.keyword === 'required')).toBe(true);
   });
 
   it('rejects invalid action_type', () => {
@@ -94,7 +101,7 @@ describe('validateOrchestratorActionRequest', () => {
       action_type: 'INVALID_ACTION',
     });
     expect(result.valid).toBe(false);
-    expect(result.errors?.some(e => e.keyword === 'enum')).toBe(true);
+    expect(result.errors?.some((e) => e.keyword === 'enum')).toBe(true);
   });
 
   it('rejects missing auth_context', () => {
@@ -244,9 +251,9 @@ describe('validateOrchestratorActionResponse', () => {
   // --- Task 5d: state enum sync guard ---
 
   it('schema ConversationSnapshot state enum matches ConversationState values', () => {
-    const schema = JSON.parse(readFileSync(
-      resolve(schemasDir, 'orchestrator_action.schema.json'), 'utf-8',
-    ));
+    const schema = JSON.parse(
+      readFileSync(resolve(schemasDir, 'orchestrator_action.schema.json'), 'utf-8'),
+    );
     const schemaStates = schema.definitions.ConversationSnapshot.properties.state.enum;
     const codeStates = ALL_CONVERSATION_STATES;
     expect(new Set(schemaStates)).toEqual(new Set(codeStates));
@@ -435,7 +442,7 @@ describe('validateIssueSplitDomain', () => {
       issue_count: 5,
     };
     const schemaResult = validateIssueSplitterOutput(payload);
-    expect(schemaResult.valid).toBe(true);  // schema does not catch mismatch
+    expect(schemaResult.valid).toBe(true); // schema does not catch mismatch
 
     const domainResult = validateIssueSplitDomain(schemaResult.data!);
     expect(domainResult.valid).toBe(false); // domain layer catches it
@@ -557,13 +564,15 @@ describe('validateFollowUpOutput', () => {
 
   it('rejects invalid answer_type', () => {
     const result = validateFollowUpOutput({
-      questions: [{
-        question_id: 'q-1',
-        field_target: 'field',
-        prompt: 'Question?',
-        options: [],
-        answer_type: 'number',
-      }],
+      questions: [
+        {
+          question_id: 'q-1',
+          field_target: 'field',
+          prompt: 'Question?',
+          options: [],
+          answer_type: 'number',
+        },
+      ],
     });
     expect(result.valid).toBe(false);
   });
@@ -578,13 +587,15 @@ describe('validateFollowUpEvent', () => {
       conversation_id: uuid(),
       issue_id: uuid(),
       turn_number: 1,
-      questions_asked: [{
-        question_id: 'q-1',
-        field_target: 'Maintenance_Object',
-        prompt: 'What is leaking?',
-        options: ['toilet', 'sink'],
-        answer_type: 'enum',
-      }],
+      questions_asked: [
+        {
+          question_id: 'q-1',
+          field_target: 'Maintenance_Object',
+          prompt: 'What is leaking?',
+          options: ['toilet', 'sink'],
+          answer_type: 'enum',
+        },
+      ],
       answers_received: null,
       created_at: NOW,
     });
@@ -597,13 +608,15 @@ describe('validateFollowUpEvent', () => {
       conversation_id: uuid(),
       issue_id: uuid(),
       turn_number: 9,
-      questions_asked: [{
-        question_id: 'q-1',
-        field_target: 'field',
-        prompt: 'Question?',
-        options: ['a'],
-        answer_type: 'enum',
-      }],
+      questions_asked: [
+        {
+          question_id: 'q-1',
+          field_target: 'field',
+          prompt: 'Question?',
+          options: ['a'],
+          answer_type: 'enum',
+        },
+      ],
       created_at: NOW,
     });
     expect(result.valid).toBe(false);
@@ -639,13 +652,15 @@ describe('validateFollowUpEvent', () => {
       conversation_id: uuid(),
       issue_id: uuid(),
       turn_number: 1,
-      questions_asked: [{
-        question_id: 'q-1',
-        field_target: 'field',
-        prompt: 'Question?',
-        options: ['a'],
-        answer_type: 'enum',
-      }],
+      questions_asked: [
+        {
+          question_id: 'q-1',
+          field_target: 'field',
+          prompt: 'Question?',
+          options: ['a'],
+          answer_type: 'enum',
+        },
+      ],
       answers_received: answers,
       created_at: NOW,
     });
@@ -771,7 +786,11 @@ describe('validateClassificationAgainstTaxonomy', () => {
 
   it('passes valid management classification', () => {
     const result = validateClassificationAgainstTaxonomy(
-      { Category: 'management', Management_Category: 'accounting', Management_Object: 'rent_charges' },
+      {
+        Category: 'management',
+        Management_Category: 'accounting',
+        Management_Object: 'rent_charges',
+      },
       taxonomy,
     );
     expect(result.valid).toBe(true);
@@ -789,7 +808,11 @@ describe('validateClassificationAgainstTaxonomy', () => {
 
   it('detects management category with maintenance fields (contradictory)', () => {
     const result = validateClassificationAgainstTaxonomy(
-      { Category: 'management', Maintenance_Category: 'plumbing', Management_Category: 'accounting' },
+      {
+        Category: 'management',
+        Maintenance_Category: 'plumbing',
+        Management_Category: 'accounting',
+      },
       taxonomy,
     );
     expect(result.contradictory).toBe(true);
@@ -798,7 +821,11 @@ describe('validateClassificationAgainstTaxonomy', () => {
 
   it('detects maintenance category with management fields (contradictory)', () => {
     const result = validateClassificationAgainstTaxonomy(
-      { Category: 'maintenance', Management_Category: 'accounting', Maintenance_Category: 'plumbing' },
+      {
+        Category: 'maintenance',
+        Management_Category: 'accounting',
+        Maintenance_Category: 'plumbing',
+      },
       taxonomy,
     );
     expect(result.contradictory).toBe(true);
@@ -905,12 +932,15 @@ describe('validateClassificationAgainstTaxonomy', () => {
   // --- not_applicable enum validity ---
 
   it('recognizes not_applicable as valid taxonomy value for domain-specific fields', () => {
-    for (const field of ['Maintenance_Category', 'Maintenance_Object', 'Maintenance_Problem', 'Management_Category', 'Management_Object']) {
-      const result = validateClassificationAgainstTaxonomy(
-        { [field]: 'not_applicable' },
-        taxonomy,
-      );
-      expect(result.invalidValues.filter(iv => iv.field === field)).toHaveLength(0);
+    for (const field of [
+      'Maintenance_Category',
+      'Maintenance_Object',
+      'Maintenance_Problem',
+      'Management_Category',
+      'Management_Object',
+    ]) {
+      const result = validateClassificationAgainstTaxonomy({ [field]: 'not_applicable' }, taxonomy);
+      expect(result.invalidValues.filter((iv) => iv.field === field)).toHaveLength(0);
     }
   });
 });
@@ -943,7 +973,7 @@ describe('validateCueDictionary', () => {
     };
     const result = validateCueDictionary(cues, taxonomy);
     expect(result.valid).toBe(false);
-    expect(result.errors?.some(e => e.message.includes('teleportation'))).toBe(true);
+    expect(result.errors?.some((e) => e.message.includes('teleportation'))).toBe(true);
   });
 
   it('detects field name not in taxonomy', () => {
@@ -957,7 +987,7 @@ describe('validateCueDictionary', () => {
     };
     const result = validateCueDictionary(cues, taxonomy);
     expect(result.valid).toBe(false);
-    expect(result.errors?.some(e => e.message.includes('Nonexistent_Field'))).toBe(true);
+    expect(result.errors?.some((e) => e.message.includes('Nonexistent_Field'))).toBe(true);
   });
 
   // --- Field-level label map guards ---
@@ -971,9 +1001,11 @@ describe('validateCueDictionary', () => {
     };
     const result = validateCueDictionary(cues as any, taxonomy);
     expect(result.valid).toBe(false);
-    expect(result.errors?.some(e =>
-      e.path === '/fields/Maintenance_Category' && e.message.includes('non-null object')
-    )).toBe(true);
+    expect(
+      result.errors?.some(
+        (e) => e.path === '/fields/Maintenance_Category' && e.message.includes('non-null object'),
+      ),
+    ).toBe(true);
   });
 
   it('rejects field labels container that is a string', () => {
@@ -985,9 +1017,9 @@ describe('validateCueDictionary', () => {
     };
     const result = validateCueDictionary(cues as any, taxonomy);
     expect(result.valid).toBe(false);
-    expect(result.errors?.some(e =>
-      e.path === '/fields/Maintenance_Category' && e.keyword === 'type'
-    )).toBe(true);
+    expect(
+      result.errors?.some((e) => e.path === '/fields/Maintenance_Category' && e.keyword === 'type'),
+    ).toBe(true);
   });
 
   // --- Entry-level shape checks ---
@@ -1003,7 +1035,7 @@ describe('validateCueDictionary', () => {
     };
     const result = validateCueDictionary(cues as any, taxonomy);
     expect(result.valid).toBe(false);
-    expect(result.errors?.some(e => e.path.includes('keywords'))).toBe(true);
+    expect(result.errors?.some((e) => e.path.includes('keywords'))).toBe(true);
   });
 
   it('rejects cue entry where regex is missing', () => {
@@ -1017,7 +1049,7 @@ describe('validateCueDictionary', () => {
     };
     const result = validateCueDictionary(cues as any, taxonomy);
     expect(result.valid).toBe(false);
-    expect(result.errors?.some(e => e.path.includes('regex'))).toBe(true);
+    expect(result.errors?.some((e) => e.path.includes('regex'))).toBe(true);
   });
 
   it('rejects cue entry where keywords contains a non-string', () => {
@@ -1031,7 +1063,7 @@ describe('validateCueDictionary', () => {
     };
     const result = validateCueDictionary(cues as any, taxonomy);
     expect(result.valid).toBe(false);
-    expect(result.errors?.some(e => e.message.includes('keywords[1]'))).toBe(true);
+    expect(result.errors?.some((e) => e.message.includes('keywords[1]'))).toBe(true);
   });
 
   it('rejects cue entry where regex contains an invalid RegExp', () => {
@@ -1045,7 +1077,7 @@ describe('validateCueDictionary', () => {
     };
     const result = validateCueDictionary(cues as any, taxonomy);
     expect(result.valid).toBe(false);
-    expect(result.errors?.some(e => e.keyword === 'pattern')).toBe(true);
+    expect(result.errors?.some((e) => e.keyword === 'pattern')).toBe(true);
   });
 
   it('rejects cue entry that is null instead of an object', () => {
@@ -1059,7 +1091,7 @@ describe('validateCueDictionary', () => {
     };
     const result = validateCueDictionary(cues as any, taxonomy);
     expect(result.valid).toBe(false);
-    expect(result.errors?.some(e => e.message.includes('must be an object'))).toBe(true);
+    expect(result.errors?.some((e) => e.message.includes('must be an object'))).toBe(true);
   });
 
   it('accepts cue entry with valid regex patterns', () => {

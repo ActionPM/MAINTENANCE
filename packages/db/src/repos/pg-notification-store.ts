@@ -1,6 +1,10 @@
 import type { Pool } from '@neondatabase/serverless';
 import type { NotificationEvent, NotificationPreference } from '@wo-agent/schemas';
-import type { NotificationRepository, NotificationListFilters, NotificationPreferenceStore } from '@wo-agent/core';
+import type {
+  NotificationRepository,
+  NotificationListFilters,
+  NotificationPreferenceStore,
+} from '@wo-agent/core';
 
 export class PostgresNotificationStore implements NotificationRepository {
   constructor(private readonly pool: Pool) {}
@@ -15,12 +19,24 @@ export class PostgresNotificationStore implements NotificationRepository {
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
          ON CONFLICT (event_id) DO NOTHING`,
         [
-          event.event_id, event.notification_id, event.conversation_id,
-          event.tenant_user_id, event.tenant_account_id, event.channel,
-          event.notification_type, event.work_order_ids,
-          event.issue_group_id, event.template_id, event.status, event.idempotency_key,
-          JSON.stringify(event.payload), event.created_at,
-          event.sent_at, event.delivered_at, event.failed_at, event.failure_reason,
+          event.event_id,
+          event.notification_id,
+          event.conversation_id,
+          event.tenant_user_id,
+          event.tenant_account_id,
+          event.channel,
+          event.notification_type,
+          event.work_order_ids,
+          event.issue_group_id,
+          event.template_id,
+          event.status,
+          event.idempotency_key,
+          JSON.stringify(event.payload),
+          event.created_at,
+          event.sent_at,
+          event.delivered_at,
+          event.failed_at,
+          event.failure_reason,
         ],
       );
     } catch (err: unknown) {
@@ -30,8 +46,12 @@ export class PostgresNotificationStore implements NotificationRepository {
     }
   }
 
-  async queryByTenantUser(tenantUserId: string, limit?: number): Promise<readonly NotificationEvent[]> {
-    let sql = 'SELECT * FROM notification_events WHERE tenant_user_id = $1 ORDER BY created_at DESC';
+  async queryByTenantUser(
+    tenantUserId: string,
+    limit?: number,
+  ): Promise<readonly NotificationEvent[]> {
+    let sql =
+      'SELECT * FROM notification_events WHERE tenant_user_id = $1 ORDER BY created_at DESC';
     const values: unknown[] = [tenantUserId];
     if (limit !== undefined) {
       sql += ' LIMIT $2';
@@ -120,9 +140,14 @@ export class PostgresNotificationPreferenceStore implements NotificationPreferen
        DO UPDATE SET in_app_enabled = $3, sms_enabled = $4, sms_consent = $5,
                      notification_type_overrides = $6, cooldown_minutes = $7, updated_at = $8`,
       [
-        pref.preference_id, pref.tenant_account_id, pref.in_app_enabled, pref.sms_enabled,
+        pref.preference_id,
+        pref.tenant_account_id,
+        pref.in_app_enabled,
+        pref.sms_enabled,
         pref.sms_consent ? JSON.stringify(pref.sms_consent) : null,
-        JSON.stringify(pref.notification_type_overrides), pref.cooldown_minutes, pref.updated_at,
+        JSON.stringify(pref.notification_type_overrides),
+        pref.cooldown_minutes,
+        pref.updated_at,
       ],
     );
   }
@@ -143,10 +168,23 @@ function mapRowToNotification(row: Record<string, unknown>): NotificationEvent {
     status: row.status as NotificationEvent['status'],
     idempotency_key: row.idempotency_key as string,
     payload: (row.payload as Record<string, unknown>) ?? {},
-    created_at: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at as string,
-    sent_at: row.sent_at ? (row.sent_at instanceof Date ? row.sent_at.toISOString() : row.sent_at as string) : null,
-    delivered_at: row.delivered_at ? (row.delivered_at instanceof Date ? row.delivered_at.toISOString() : row.delivered_at as string) : null,
-    failed_at: row.failed_at ? (row.failed_at instanceof Date ? row.failed_at.toISOString() : row.failed_at as string) : null,
+    created_at:
+      row.created_at instanceof Date ? row.created_at.toISOString() : (row.created_at as string),
+    sent_at: row.sent_at
+      ? row.sent_at instanceof Date
+        ? row.sent_at.toISOString()
+        : (row.sent_at as string)
+      : null,
+    delivered_at: row.delivered_at
+      ? row.delivered_at instanceof Date
+        ? row.delivered_at.toISOString()
+        : (row.delivered_at as string)
+      : null,
+    failed_at: row.failed_at
+      ? row.failed_at instanceof Date
+        ? row.failed_at.toISOString()
+        : (row.failed_at as string)
+      : null,
     failure_reason: (row.failure_reason as string) ?? null,
   };
 }
@@ -160,6 +198,7 @@ function mapRowToPref(row: Record<string, unknown>): NotificationPreference {
     sms_consent: (row.sms_consent as NotificationPreference['sms_consent']) ?? null,
     notification_type_overrides: (row.notification_type_overrides as Record<string, boolean>) ?? {},
     cooldown_minutes: row.cooldown_minutes as number,
-    updated_at: row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at as string,
+    updated_at:
+      row.updated_at instanceof Date ? row.updated_at.toISOString() : (row.updated_at as string),
   };
 }

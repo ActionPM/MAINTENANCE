@@ -12,7 +12,9 @@ function ChatPageContent() {
   if (!token) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center' }}>
-        <p>Token required. Append <code>?token=YOUR_JWT&units=unit1,unit2</code> to the URL.</p>
+        <p>
+          Token required. Append <code>?token=YOUR_JWT&units=unit1,unit2</code> to the URL.
+        </p>
       </div>
     );
   }

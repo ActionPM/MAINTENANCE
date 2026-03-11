@@ -13,6 +13,7 @@
 **Spec references:** §2 (non-negotiables), §7.1 (followup_events schema), §10 (orchestrator contract), §11.2 (transition matrix), §15 (follow-ups, termination caps)
 
 **Skills that apply during execution:**
+
 - `@test-driven-development` — every task follows red-green-refactor
 - `@state-machine-implementation` — any state transition changes
 - `@schema-first-development` — all model outputs validated
@@ -25,6 +26,7 @@
 ## Task 0: Create worktree and branch from Phase 5
 
 **Files:**
+
 - N/A (git operations only)
 
 **Step 1: Create worktree branching from Phase 5 classifier**
@@ -65,6 +67,7 @@ No commit needed — branch created from Phase 5 HEAD.
 ## Task 1: Implement follow-up caps enforcement function
 
 **Files:**
+
 - Create: `packages/core/src/followup/caps.ts`
 - Test: `packages/core/src/__tests__/followup/caps.test.ts`
 
@@ -78,11 +81,7 @@ Create `packages/core/src/__tests__/followup/caps.test.ts`:
 
 ```typescript
 import { describe, it, expect } from 'vitest';
-import {
-  checkFollowUpCaps,
-  filterEligibleFields,
-  truncateQuestions,
-} from '../../followup/caps.js';
+import { checkFollowUpCaps, filterEligibleFields, truncateQuestions } from '../../followup/caps.js';
 import { DEFAULT_FOLLOWUP_CAPS } from '@wo-agent/schemas';
 import type { FollowUpQuestion, PreviousQuestion, FollowUpCaps } from '@wo-agent/schemas';
 
@@ -180,11 +179,7 @@ describe('filterEligibleFields', () => {
   });
 
   it('includes fields not yet asked', () => {
-    const result = filterEligibleFields(
-      ['Priority', 'Location'],
-      [],
-      caps,
-    );
+    const result = filterEligibleFields(['Priority', 'Location'], [], caps);
     expect(result).toEqual(['Priority', 'Location']);
   });
 
@@ -201,7 +196,13 @@ describe('filterEligibleFields', () => {
 describe('truncateQuestions', () => {
   it('passes through when under budget', () => {
     const questions: FollowUpQuestion[] = [
-      { question_id: 'q1', field_target: 'Priority', prompt: 'What priority?', options: ['low', 'normal', 'high'], answer_type: 'enum' },
+      {
+        question_id: 'q1',
+        field_target: 'Priority',
+        prompt: 'What priority?',
+        options: ['low', 'normal', 'high'],
+        answer_type: 'enum',
+      },
     ];
     const result = truncateQuestions(questions, 3);
     expect(result).toHaveLength(1);
@@ -371,6 +372,7 @@ git commit -m "feat(core): add follow-up caps enforcement (spec §15)"
 ## Task 2: Implement FollowUpGenerator LLM tool wrapper with validation pipeline
 
 **Files:**
+
 - Create: `packages/core/src/followup/followup-generator.ts`
 - Test: `packages/core/src/__tests__/followup/followup-generator.test.ts`
 
@@ -389,7 +391,11 @@ import {
   FollowUpGeneratorError,
   FollowUpGeneratorErrorCode,
 } from '../../followup/followup-generator.js';
-import type { FollowUpGeneratorInput, FollowUpGeneratorOutput, FollowUpQuestion } from '@wo-agent/schemas';
+import type {
+  FollowUpGeneratorInput,
+  FollowUpGeneratorOutput,
+  FollowUpQuestion,
+} from '@wo-agent/schemas';
 
 const VALID_INPUT: FollowUpGeneratorInput = {
   issue_id: 'issue-1',
@@ -434,9 +440,7 @@ describe('callFollowUpGenerator', () => {
 
   it('retries once on schema validation failure then succeeds', async () => {
     const badOutput = { questions: [{ question_id: 'q1' }] }; // missing required fields
-    const llmCall = vi.fn()
-      .mockResolvedValueOnce(badOutput)
-      .mockResolvedValueOnce(VALID_OUTPUT);
+    const llmCall = vi.fn().mockResolvedValueOnce(badOutput).mockResolvedValueOnce(VALID_OUTPUT);
     const result = await callFollowUpGenerator(VALID_INPUT, llmCall, 3);
     expect(result.status).toBe('ok');
     expect(llmCall).toHaveBeenCalledTimes(2);
@@ -452,9 +456,9 @@ describe('callFollowUpGenerator', () => {
 
   it('throws FollowUpGeneratorError on LLM call exception', async () => {
     const llmCall = vi.fn().mockRejectedValue(new Error('LLM timeout'));
-    await expect(
-      callFollowUpGenerator(VALID_INPUT, llmCall, 3),
-    ).rejects.toThrow(FollowUpGeneratorError);
+    await expect(callFollowUpGenerator(VALID_INPUT, llmCall, 3)).rejects.toThrow(
+      FollowUpGeneratorError,
+    );
   });
 
   it('truncates questions to remaining budget', async () => {
@@ -478,8 +482,20 @@ describe('callFollowUpGenerator', () => {
     };
     const outputWithExtra: FollowUpGeneratorOutput = {
       questions: [
-        { question_id: 'q1', field_target: 'Maintenance_Category', prompt: 'Category?', options: [], answer_type: 'enum' },
-        { question_id: 'q2', field_target: 'Priority', prompt: 'Priority?', options: ['low', 'high'], answer_type: 'enum' },
+        {
+          question_id: 'q1',
+          field_target: 'Maintenance_Category',
+          prompt: 'Category?',
+          options: [],
+          answer_type: 'enum',
+        },
+        {
+          question_id: 'q2',
+          field_target: 'Priority',
+          prompt: 'Priority?',
+          options: ['low', 'high'],
+          answer_type: 'enum',
+        },
       ],
     };
     const llmCall = vi.fn().mockResolvedValue(outputWithExtra);
@@ -502,7 +518,11 @@ Expected: FAIL — module not found
 Create `packages/core/src/followup/followup-generator.ts`:
 
 ```typescript
-import type { FollowUpGeneratorInput, FollowUpGeneratorOutput, FollowUpQuestion } from '@wo-agent/schemas';
+import type {
+  FollowUpGeneratorInput,
+  FollowUpGeneratorOutput,
+  FollowUpQuestion,
+} from '@wo-agent/schemas';
 import { validateFollowUpOutput } from '@wo-agent/schemas';
 import { truncateQuestions } from './caps.js';
 
@@ -556,10 +576,7 @@ export async function callFollowUpGenerator(
   for (let attempt = 0; attempt < 2; attempt++) {
     let raw: unknown;
     try {
-      raw = await llmCall(
-        input,
-        attempt > 0 ? { retryHint: 'schema_errors' } : undefined,
-      );
+      raw = await llmCall(input, attempt > 0 ? { retryHint: 'schema_errors' } : undefined);
     } catch (err) {
       throw new FollowUpGeneratorError(
         FollowUpGeneratorErrorCode.LLM_CALL_FAILED,
@@ -586,9 +603,7 @@ export async function callFollowUpGenerator(
   }
 
   // Filter out questions targeting fields not in fields_needing_input
-  const filteredQuestions = validated.questions.filter(
-    (q) => eligibleFields.has(q.field_target),
-  );
+  const filteredQuestions = validated.questions.filter((q) => eligibleFields.has(q.field_target));
 
   // Truncate to remaining budget (spec §15: max 3 per turn)
   const finalQuestions = truncateQuestions(filteredQuestions, remainingBudget);
@@ -622,6 +637,7 @@ git commit -m "feat(core): add FollowUpGenerator wrapper with validation pipelin
 ## Task 3: Implement follow-up event builder
 
 **Files:**
+
 - Create: `packages/core/src/followup/event-builder.ts`
 - Test: `packages/core/src/__tests__/followup/event-builder.test.ts`
 
@@ -685,9 +701,7 @@ describe('buildFollowUpAnswersEvent', () => {
       issueId: 'issue-1',
       turnNumber: 1,
       questions: QUESTIONS,
-      answers: [
-        { question_id: 'q1', answer: 'normal', received_at: '2026-02-25T12:05:00.000Z' },
-      ],
+      answers: [{ question_id: 'q1', answer: 'normal', received_at: '2026-02-25T12:05:00.000Z' }],
       createdAt: '2026-02-25T12:05:00.000Z',
     });
 
@@ -816,6 +830,7 @@ git commit -m "feat(core): add follow-up event builder (append-only, spec §7.1)
 ## Task 4: Extend ConversationSession with follow-up tracking fields
 
 **Files:**
+
 - Modify: `packages/core/src/session/types.ts`
 - Modify: `packages/core/src/session/session.ts`
 - Modify: `packages/core/src/session/index.ts`
@@ -830,7 +845,11 @@ Create `packages/core/src/__tests__/followup/session-followup.test.ts`:
 
 ```typescript
 import { describe, it, expect } from 'vitest';
-import { createSession, updateFollowUpTracking, setPendingFollowUpQuestions } from '../../session/session.js';
+import {
+  createSession,
+  updateFollowUpTracking,
+  setPendingFollowUpQuestions,
+} from '../../session/session.js';
 import type { FollowUpQuestion, PreviousQuestion } from '@wo-agent/schemas';
 
 const VERSIONS = {
@@ -868,8 +887,20 @@ describe('updateFollowUpTracking', () => {
     });
 
     const questions: FollowUpQuestion[] = [
-      { question_id: 'q1', field_target: 'Priority', prompt: 'Priority?', options: ['low', 'high'], answer_type: 'enum' },
-      { question_id: 'q2', field_target: 'Location', prompt: 'Location?', options: ['suite', 'common'], answer_type: 'enum' },
+      {
+        question_id: 'q1',
+        field_target: 'Priority',
+        prompt: 'Priority?',
+        options: ['low', 'high'],
+        answer_type: 'enum',
+      },
+      {
+        question_id: 'q2',
+        field_target: 'Location',
+        prompt: 'Location?',
+        options: ['suite', 'common'],
+        answer_type: 'enum',
+      },
     ];
 
     session = updateFollowUpTracking(session, questions);
@@ -893,17 +924,33 @@ describe('updateFollowUpTracking', () => {
 
     // First turn: ask about Priority
     const turn1: FollowUpQuestion[] = [
-      { question_id: 'q1', field_target: 'Priority', prompt: 'Priority?', options: [], answer_type: 'enum' },
+      {
+        question_id: 'q1',
+        field_target: 'Priority',
+        prompt: 'Priority?',
+        options: [],
+        answer_type: 'enum',
+      },
     ];
     session = updateFollowUpTracking(session, turn1);
-    expect(session.previous_questions).toEqual([
-      { field_target: 'Priority', times_asked: 1 },
-    ]);
+    expect(session.previous_questions).toEqual([{ field_target: 'Priority', times_asked: 1 }]);
 
     // Second turn: ask about Priority again + Location
     const turn2: FollowUpQuestion[] = [
-      { question_id: 'q2', field_target: 'Priority', prompt: 'Priority again?', options: [], answer_type: 'enum' },
-      { question_id: 'q3', field_target: 'Location', prompt: 'Location?', options: [], answer_type: 'enum' },
+      {
+        question_id: 'q2',
+        field_target: 'Priority',
+        prompt: 'Priority again?',
+        options: [],
+        answer_type: 'enum',
+      },
+      {
+        question_id: 'q3',
+        field_target: 'Location',
+        prompt: 'Location?',
+        options: [],
+        answer_type: 'enum',
+      },
     ];
     session = updateFollowUpTracking(session, turn2);
     expect(session.followup_turn_number).toBe(2);
@@ -924,7 +971,13 @@ describe('setPendingFollowUpQuestions', () => {
     });
 
     const questions: FollowUpQuestion[] = [
-      { question_id: 'q1', field_target: 'Priority', prompt: 'Priority?', options: ['low', 'high'], answer_type: 'enum' },
+      {
+        question_id: 'q1',
+        field_target: 'Priority',
+        prompt: 'Priority?',
+        options: ['low', 'high'],
+        answer_type: 'enum',
+      },
     ];
 
     session = setPendingFollowUpQuestions(session, questions);
@@ -941,7 +994,13 @@ describe('setPendingFollowUpQuestions', () => {
     });
 
     session = setPendingFollowUpQuestions(session, [
-      { question_id: 'q1', field_target: 'Priority', prompt: '?', options: [], answer_type: 'text' },
+      {
+        question_id: 'q1',
+        field_target: 'Priority',
+        prompt: '?',
+        options: [],
+        answer_type: 'text',
+      },
     ]);
     session = setPendingFollowUpQuestions(session, null);
     expect(session.pending_followup_questions).toBeNull();
@@ -1052,6 +1111,7 @@ Expected: PASS
 Run: `pnpm -r test`
 
 If any existing tests fail due to deep equality on session shape, add the new fields with their defaults:
+
 ```typescript
 followup_turn_number: 0,
 total_questions_asked: 0,
@@ -1072,6 +1132,7 @@ git commit -m "feat(core): add follow-up tracking fields to ConversationSession"
 ## Task 5: Create followup barrel export and add followUpGenerator port to OrchestratorDependencies
 
 **Files:**
+
 - Create: `packages/core/src/followup/index.ts`
 - Modify: `packages/core/src/index.ts`
 - Modify: `packages/core/src/orchestrator/types.ts`
@@ -1171,12 +1232,14 @@ git commit -m "feat(core): add followup barrel export and followUpGenerator port
 ## Task 6: Implement follow-up question generation in classification handler
 
 **Files:**
+
 - Modify: `packages/core/src/orchestrator/action-handlers/start-classification.ts`
 - Test: `packages/core/src/__tests__/followup/classification-followup.test.ts`
 
 **Context:** When classification determines fields need tenant input (target state = `needs_tenant_input`), the handler must call FollowUpGenerator to produce questions, record a followup_event (questions asked, answers null), update session tracking, and include questions in the UI response. This extends the existing `handleStartClassification` from Phase 5 Task 6.
 
 The flow within the handler when `anyFieldsNeedInput` is true:
+
 1. Check caps via `checkFollowUpCaps` — if escape hatch, skip to human triage
 2. Call `callFollowUpGenerator` with eligible fields
 3. Record followup_event (questions asked) via event builder
@@ -1193,8 +1256,18 @@ Create `packages/core/src/__tests__/followup/classification-followup.test.ts`:
 import { describe, it, expect, vi } from 'vitest';
 import { handleStartClassification } from '../../orchestrator/action-handlers/start-classification.js';
 import { createSession, updateSessionState, setSplitIssues } from '../../session/session.js';
-import { ConversationState, ActorType, DEFAULT_FOLLOWUP_CAPS, loadTaxonomy } from '@wo-agent/schemas';
-import type { SplitIssue, IssueClassifierOutput, FollowUpGeneratorOutput, CueDictionary } from '@wo-agent/schemas';
+import {
+  ConversationState,
+  ActorType,
+  DEFAULT_FOLLOWUP_CAPS,
+  loadTaxonomy,
+} from '@wo-agent/schemas';
+import type {
+  SplitIssue,
+  IssueClassifierOutput,
+  FollowUpGeneratorOutput,
+  CueDictionary,
+} from '@wo-agent/schemas';
 
 const taxonomy = loadTaxonomy();
 
@@ -1291,7 +1364,8 @@ function makeContext(overrides?: {
       idGenerator: () => `id-${++counter}`,
       clock: () => '2026-02-25T12:00:00.000Z',
       issueSplitter: vi.fn(),
-      issueClassifier: overrides?.classifierFn ?? vi.fn().mockResolvedValue(LOW_CONF_CLASSIFICATION),
+      issueClassifier:
+        overrides?.classifierFn ?? vi.fn().mockResolvedValue(LOW_CONF_CLASSIFICATION),
       followUpGenerator: overrides?.followUpFn ?? vi.fn().mockResolvedValue(FOLLOWUP_OUTPUT),
       cueDict: MINI_CUES,
       taxonomy,
@@ -1338,7 +1412,9 @@ describe('handleStartClassification with follow-up generation', () => {
     const result = await handleStartClassification(ctx);
 
     // Should still transition but mark for human triage
-    expect(result.session.classification_results![0].classifierOutput.needs_human_triage).toBe(true);
+    expect(result.session.classification_results![0].classifierOutput.needs_human_triage).toBe(
+      true,
+    );
     expect(result.newState).toBe(ConversationState.TENANT_CONFIRMATION_PENDING);
   });
 });
@@ -1357,7 +1433,10 @@ Add imports:
 
 ```typescript
 import { checkFollowUpCaps } from '../../followup/caps.js';
-import { callFollowUpGenerator, FollowUpGeneratorError } from '../../followup/followup-generator.js';
+import {
+  callFollowUpGenerator,
+  FollowUpGeneratorError,
+} from '../../followup/followup-generator.js';
 import { buildFollowUpQuestionsEvent } from '../../followup/event-builder.js';
 import { updateFollowUpTracking, setPendingFollowUpQuestions } from '../../session/session.js';
 import { DEFAULT_FOLLOWUP_CAPS } from '@wo-agent/schemas';
@@ -1370,7 +1449,7 @@ After `setClassificationResults` and before the return when `anyFieldsNeedInput`
 // --- Follow-up generation when fields need input ---
 if (anyFieldsNeedInput) {
   const followUpCaps: FollowUpCaps = (deps as any).followUpCaps ?? DEFAULT_FOLLOWUP_CAPS;
-  const allFieldsNeedingInput = classificationResults.flatMap(r => r.fieldsNeedingInput);
+  const allFieldsNeedingInput = classificationResults.flatMap((r) => r.fieldsNeedingInput);
 
   const capsCheck = checkFollowUpCaps({
     turnNumber: updatedSession.followup_turn_number + 1,
@@ -1382,7 +1461,7 @@ if (anyFieldsNeedInput) {
 
   if (capsCheck.escapeHatch) {
     // Escape hatch: mark all issues as needs_human_triage
-    const triageResults = classificationResults.map(r => ({
+    const triageResults = classificationResults.map((r) => ({
       ...r,
       classifierOutput: { ...r.classifierOutput, needs_human_triage: true },
       fieldsNeedingInput: [],
@@ -1394,17 +1473,20 @@ if (anyFieldsNeedInput) {
       session: updatedSession,
       intermediateSteps: [intermediateStep],
       finalSystemAction: SystemEvent.LLM_CLASSIFY_SUCCESS,
-      uiMessages: [{
-        role: 'agent',
-        content: 'I\'ve classified your issue(s) but couldn\'t resolve all details. A human will review the remaining items.',
-      }],
+      uiMessages: [
+        {
+          role: 'agent',
+          content:
+            "I've classified your issue(s) but couldn't resolve all details. A human will review the remaining items.",
+        },
+      ],
       eventPayload: { escape_hatch: true, reason: capsCheck.reason },
       eventType: 'state_transition',
     };
   }
 
   // Call FollowUpGenerator for the first issue with fields needing input
-  const targetIssue = classificationResults.find(r => r.fieldsNeedingInput.length > 0)!;
+  const targetIssue = classificationResults.find((r) => r.fieldsNeedingInput.length > 0)!;
   const followUpInput: FollowUpGeneratorInput = {
     issue_id: targetIssue.issue_id,
     classification: targetIssue.classifierOutput.classification,
@@ -1428,7 +1510,7 @@ if (anyFieldsNeedInput) {
 
     if (followUpResult.status === 'llm_fail') {
       // FollowUp generation failed — fall through to escape hatch
-      const triageResults = classificationResults.map(r => ({
+      const triageResults = classificationResults.map((r) => ({
         ...r,
         classifierOutput: { ...r.classifierOutput, needs_human_triage: true },
         fieldsNeedingInput: [],
@@ -1440,10 +1522,13 @@ if (anyFieldsNeedInput) {
         session: updatedSession,
         intermediateSteps: [intermediateStep],
         finalSystemAction: SystemEvent.LLM_CLASSIFY_SUCCESS,
-        uiMessages: [{
-          role: 'agent',
-          content: 'I\'ve classified your issue(s) but had trouble generating follow-up questions. A human will review.',
-        }],
+        uiMessages: [
+          {
+            role: 'agent',
+            content:
+              "I've classified your issue(s) but had trouble generating follow-up questions. A human will review.",
+          },
+        ],
         eventPayload: { followup_generation_failed: true },
         eventType: 'state_transition',
       };
@@ -1452,7 +1537,7 @@ if (anyFieldsNeedInput) {
     followUpQuestions = followUpResult.output!.questions;
   } catch {
     // LLM exception — escape hatch
-    const triageResults = classificationResults.map(r => ({
+    const triageResults = classificationResults.map((r) => ({
       ...r,
       classifierOutput: { ...r.classifierOutput, needs_human_triage: true },
       fieldsNeedingInput: [],
@@ -1464,10 +1549,13 @@ if (anyFieldsNeedInput) {
       session: updatedSession,
       intermediateSteps: [intermediateStep],
       finalSystemAction: SystemEvent.LLM_CLASSIFY_SUCCESS,
-      uiMessages: [{
-        role: 'agent',
-        content: 'I\'ve classified your issue(s) but had trouble generating follow-up questions. A human will review.',
-      }],
+      uiMessages: [
+        {
+          role: 'agent',
+          content:
+            "I've classified your issue(s) but had trouble generating follow-up questions. A human will review.",
+        },
+      ],
       eventPayload: { followup_generation_error: true },
       eventType: 'state_transition',
     };
@@ -1513,12 +1601,14 @@ git commit -m "feat(core): generate follow-up questions in classification handle
 ## Task 7: Extend handleAnswerFollowups with event recording, caps check, and re-classification
 
 **Files:**
+
 - Modify: `packages/core/src/orchestrator/action-handlers/answer-followups.ts`
 - Test: `packages/core/src/__tests__/followup/answer-followups.test.ts`
 
 **Context:** The `handleAnswerFollowups` handler (created in Phase 5 Task 9) re-classifies with enriched input when the tenant answers follow-up questions. Phase 6 extends this handler to: (1) record a followup_event with both questions and answers (append-only), (2) convert answers to `followup_answers` for the classifier, (3) re-classify, (4) check caps before generating another round of questions, (5) trigger escape hatch if caps exhausted.
 
 The full flow in this handler:
+
 1. Retrieve pending questions from session
 2. Build followup_event with questions + answers → append to `followup_events`
 3. Build enriched `IssueClassifierInput` with `followup_answers`
@@ -1544,8 +1634,18 @@ import {
   updateFollowUpTracking,
   setPendingFollowUpQuestions,
 } from '../../session/session.js';
-import { ConversationState, ActorType, DEFAULT_FOLLOWUP_CAPS, loadTaxonomy } from '@wo-agent/schemas';
-import type { IssueClassifierOutput, FollowUpGeneratorOutput, FollowUpQuestion, CueDictionary } from '@wo-agent/schemas';
+import {
+  ConversationState,
+  ActorType,
+  DEFAULT_FOLLOWUP_CAPS,
+  loadTaxonomy,
+} from '@wo-agent/schemas';
+import type {
+  IssueClassifierOutput,
+  FollowUpGeneratorOutput,
+  FollowUpQuestion,
+  CueDictionary,
+} from '@wo-agent/schemas';
 import type { IssueClassificationResult } from '../../session/types.js';
 
 const taxonomy = loadTaxonomy();
@@ -1571,9 +1671,15 @@ const HIGH_CONF_OUTPUT: IssueClassifierOutput = {
     Priority: 'normal',
   },
   model_confidence: {
-    Category: 0.95, Location: 0.9, Sub_Location: 0.85,
-    Maintenance_Category: 0.95, Maintenance_Object: 0.95, Maintenance_Problem: 0.95,
-    Management_Category: 0.0, Management_Object: 0.0, Priority: 0.95,
+    Category: 0.95,
+    Location: 0.9,
+    Sub_Location: 0.85,
+    Maintenance_Category: 0.95,
+    Maintenance_Object: 0.95,
+    Maintenance_Problem: 0.95,
+    Management_Category: 0.0,
+    Management_Object: 0.0,
+    Priority: 0.95,
   },
   missing_fields: [],
   needs_human_triage: false,
@@ -1605,15 +1711,17 @@ function makeAnswerContext(overrides?: {
   totalQuestionsAsked?: number;
 }) {
   let counter = 0;
-  const priorResults: IssueClassificationResult[] = [{
-    issue_id: 'i1',
-    classifierOutput: {
-      ...HIGH_CONF_OUTPUT,
-      model_confidence: { ...HIGH_CONF_OUTPUT.model_confidence, Priority: 0.3 },
+  const priorResults: IssueClassificationResult[] = [
+    {
+      issue_id: 'i1',
+      classifierOutput: {
+        ...HIGH_CONF_OUTPUT,
+        model_confidence: { ...HIGH_CONF_OUTPUT.model_confidence, Priority: 0.3 },
+      },
+      computedConfidence: { Category: 0.9, Priority: 0.4 },
+      fieldsNeedingInput: ['Priority'],
     },
-    computedConfidence: { Category: 0.9, Priority: 0.4 },
-    fieldsNeedingInput: ['Priority'],
-  }];
+  ];
 
   let session = createSession({
     conversation_id: 'conv-1',
@@ -1637,9 +1745,7 @@ function makeAnswerContext(overrides?: {
       action_type: 'ANSWER_FOLLOWUPS' as any,
       actor: ActorType.TENANT,
       tenant_input: {
-        answers: [
-          { question_id: 'q1', answer: 'normal', received_at: '2026-02-25T12:05:00.000Z' },
-        ],
+        answers: [{ question_id: 'q1', answer: 'normal', received_at: '2026-02-25T12:05:00.000Z' }],
       },
       auth_context: {
         tenant_user_id: 'user-1',
@@ -1654,12 +1760,19 @@ function makeAnswerContext(overrides?: {
       clock: () => '2026-02-25T12:05:00.000Z',
       issueSplitter: vi.fn(),
       issueClassifier: overrides?.classifierFn ?? vi.fn().mockResolvedValue(HIGH_CONF_OUTPUT),
-      followUpGenerator: overrides?.followUpFn ?? vi.fn().mockResolvedValue({
-        questions: [{
-          question_id: 'q2', field_target: 'Priority',
-          prompt: 'Priority again?', options: ['low', 'high'], answer_type: 'enum',
-        }],
-      }),
+      followUpGenerator:
+        overrides?.followUpFn ??
+        vi.fn().mockResolvedValue({
+          questions: [
+            {
+              question_id: 'q2',
+              field_target: 'Priority',
+              prompt: 'Priority again?',
+              options: ['low', 'high'],
+              answer_type: 'enum',
+            },
+          ],
+        }),
       cueDict: MINI_CUES,
       taxonomy,
       followUpCaps: DEFAULT_FOLLOWUP_CAPS,
@@ -1723,7 +1836,9 @@ describe('handleAnswerFollowups', () => {
     const result = await handleAnswerFollowups(ctx);
     // Should escape hatch → tenant_confirmation_pending with needs_human_triage
     expect(result.newState).toBe(ConversationState.TENANT_CONFIRMATION_PENDING);
-    expect(result.session.classification_results![0].classifierOutput.needs_human_triage).toBe(true);
+    expect(result.session.classification_results![0].classifierOutput.needs_human_triage).toBe(
+      true,
+    );
   });
 
   it('triggers escape hatch when re-ask limit reached for all fields', async () => {
@@ -1742,7 +1857,9 @@ describe('handleAnswerFollowups', () => {
 
     const result = await handleAnswerFollowups(ctx);
     expect(result.newState).toBe(ConversationState.TENANT_CONFIRMATION_PENDING);
-    expect(result.session.classification_results![0].classifierOutput.needs_human_triage).toBe(true);
+    expect(result.session.classification_results![0].classifierOutput.needs_human_triage).toBe(
+      true,
+    );
   });
 
   it('clears pending questions from session on completion', async () => {
@@ -1778,7 +1895,11 @@ Expected: FAIL — handler lacks event recording and caps logic
 In `packages/core/src/orchestrator/action-handlers/answer-followups.ts`, rewrite or extend the handler:
 
 ```typescript
-import { ConversationState, DEFAULT_CONFIDENCE_CONFIG, DEFAULT_FOLLOWUP_CAPS } from '@wo-agent/schemas';
+import {
+  ConversationState,
+  DEFAULT_CONFIDENCE_CONFIG,
+  DEFAULT_FOLLOWUP_CAPS,
+} from '@wo-agent/schemas';
 import type {
   IssueClassifierInput,
   FollowUpGeneratorInput,
@@ -1788,7 +1909,10 @@ import type {
 import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
 import { callIssueClassifier } from '../../classifier/issue-classifier.js';
 import { computeCueScores } from '../../classifier/cue-scoring.js';
-import { computeAllFieldConfidences, determineFieldsNeedingInput } from '../../classifier/confidence.js';
+import {
+  computeAllFieldConfidences,
+  determineFieldsNeedingInput,
+} from '../../classifier/confidence.js';
 import {
   setClassificationResults,
   updateFollowUpTracking,
@@ -1798,8 +1922,14 @@ import type { IssueClassificationResult } from '../../session/types.js';
 import { SystemEvent } from '../../state-machine/system-events.js';
 import { resolveLlmClassifySuccess } from '../../state-machine/guards.js';
 import { checkFollowUpCaps } from '../../followup/caps.js';
-import { callFollowUpGenerator, FollowUpGeneratorError } from '../../followup/followup-generator.js';
-import { buildFollowUpAnswersEvent, buildFollowUpQuestionsEvent } from '../../followup/event-builder.js';
+import {
+  callFollowUpGenerator,
+  FollowUpGeneratorError,
+} from '../../followup/followup-generator.js';
+import {
+  buildFollowUpAnswersEvent,
+  buildFollowUpQuestionsEvent,
+} from '../../followup/event-builder.js';
 
 /**
  * Handle ANSWER_FOLLOWUPS action (spec §11.2, §15).
@@ -1810,7 +1940,9 @@ export async function handleAnswerFollowups(
   ctx: ActionHandlerContext,
 ): Promise<ActionHandlerResult> {
   const { session, request, deps } = ctx;
-  const tenantInput = request.tenant_input as { answers: Array<{ question_id: string; answer: unknown; received_at?: string }> };
+  const tenantInput = request.tenant_input as {
+    answers: Array<{ question_id: string; answer: unknown; received_at?: string }>;
+  };
   const pendingQuestions = session.pending_followup_questions;
   const issues = session.split_issues;
 
@@ -1819,7 +1951,9 @@ export async function handleAnswerFollowups(
     return {
       newState: session.state,
       session,
-      errors: [{ code: 'NO_PENDING_QUESTIONS', message: 'No pending follow-up questions to answer' }],
+      errors: [
+        { code: 'NO_PENDING_QUESTIONS', message: 'No pending follow-up questions to answer' },
+      ],
     };
   }
 
@@ -1833,7 +1967,7 @@ export async function handleAnswerFollowups(
   }
 
   // Step 1: Record followup_event with questions + answers (append-only)
-  const answersReceived = tenantInput.answers.map(a => ({
+  const answersReceived = tenantInput.answers.map((a) => ({
     question_id: a.question_id,
     answer: a.answer,
     received_at: a.received_at ?? deps.clock(),
@@ -1841,9 +1975,8 @@ export async function handleAnswerFollowups(
 
   // Determine which issue this follow-up relates to
   const targetIssueId = pendingQuestions[0]?.field_target
-    ? session.classification_results?.find(
-        r => r.fieldsNeedingInput.length > 0,
-      )?.issue_id ?? issues[0].issue_id
+    ? (session.classification_results?.find((r) => r.fieldsNeedingInput.length > 0)?.issue_id ??
+      issues[0].issue_id)
     : issues[0].issue_id;
 
   const answersEvent = buildFollowUpAnswersEvent({
@@ -1861,13 +1994,15 @@ export async function handleAnswerFollowups(
   let updatedSession = setPendingFollowUpQuestions(session, null);
 
   // Step 3: Convert answers to followup_answers for classifier
-  const followupAnswers = tenantInput.answers.map(a => {
-    const question = pendingQuestions.find(q => q.question_id === a.question_id);
-    return {
-      field_target: question?.field_target ?? '',
-      answer: a.answer as string | boolean,
-    };
-  }).filter(a => a.field_target);
+  const followupAnswers = tenantInput.answers
+    .map((a) => {
+      const question = pendingQuestions.find((q) => q.question_id === a.question_id);
+      return {
+        field_target: question?.field_target ?? '',
+        answer: a.answer as string | boolean,
+      };
+    })
+    .filter((a) => a.field_target);
 
   // Intermediate step: needs_tenant_input → classification_in_progress
   const intermediateStep = {
@@ -1879,7 +2014,8 @@ export async function handleAnswerFollowups(
   // Step 4: Re-classify each issue with enriched input
   const cueDict = (deps as any).cueDict;
   const taxonomy = (deps as any).taxonomy;
-  const confidenceConfig: ConfidenceConfig = (deps as any).confidenceConfig ?? DEFAULT_CONFIDENCE_CONFIG;
+  const confidenceConfig: ConfidenceConfig =
+    (deps as any).confidenceConfig ?? DEFAULT_CONFIDENCE_CONFIG;
   const followUpCaps: FollowUpCaps = (deps as any).followUpCaps ?? DEFAULT_FOLLOWUP_CAPS;
 
   const classificationResults: IssueClassificationResult[] = [];
@@ -1930,9 +2066,19 @@ export async function handleAnswerFollowups(
       };
     }
 
-    let output = classifierResult.status === 'needs_human_triage'
-      ? { ...(classifierResult.conflicting?.[0] ?? { issue_id: issue.issue_id, classification: {}, model_confidence: {}, missing_fields: [], needs_human_triage: true }), needs_human_triage: true }
-      : classifierResult.output!;
+    let output =
+      classifierResult.status === 'needs_human_triage'
+        ? {
+            ...(classifierResult.conflicting?.[0] ?? {
+              issue_id: issue.issue_id,
+              classification: {},
+              model_confidence: {},
+              missing_fields: [],
+              needs_human_triage: true,
+            }),
+            needs_human_triage: true,
+          }
+        : classifierResult.output!;
 
     const computedConfidence = computeAllFieldConfidences({
       classification: output.classification,
@@ -1959,7 +2105,7 @@ export async function handleAnswerFollowups(
 
   // Step 5: If fields still need input, check caps and generate follow-ups
   if (anyFieldsNeedInput) {
-    const allFieldsNeedingInput = classificationResults.flatMap(r => r.fieldsNeedingInput);
+    const allFieldsNeedingInput = classificationResults.flatMap((r) => r.fieldsNeedingInput);
 
     const capsCheck = checkFollowUpCaps({
       turnNumber: updatedSession.followup_turn_number + 1,
@@ -1971,7 +2117,7 @@ export async function handleAnswerFollowups(
 
     if (capsCheck.escapeHatch) {
       // Escape hatch: mark needs_human_triage
-      const triageResults = classificationResults.map(r => ({
+      const triageResults = classificationResults.map((r) => ({
         ...r,
         classifierOutput: { ...r.classifierOutput, needs_human_triage: true },
         fieldsNeedingInput: [],
@@ -1983,17 +2129,20 @@ export async function handleAnswerFollowups(
         session: updatedSession,
         intermediateSteps: [intermediateStep],
         finalSystemAction: SystemEvent.LLM_CLASSIFY_SUCCESS,
-        uiMessages: [{
-          role: 'agent',
-          content: 'Thank you for your answers. Some details still need review — a human will follow up.',
-        }],
+        uiMessages: [
+          {
+            role: 'agent',
+            content:
+              'Thank you for your answers. Some details still need review — a human will follow up.',
+          },
+        ],
         eventPayload: { escape_hatch: true, reason: capsCheck.reason },
         eventType: 'state_transition',
       };
     }
 
     // Generate next round of follow-up questions
-    const targetResult = classificationResults.find(r => r.fieldsNeedingInput.length > 0)!;
+    const targetResult = classificationResults.find((r) => r.fieldsNeedingInput.length > 0)!;
     const followUpInput: FollowUpGeneratorInput = {
       issue_id: targetResult.issue_id,
       classification: targetResult.classifierOutput.classification,
@@ -2023,7 +2172,7 @@ export async function handleAnswerFollowups(
 
     if (!nextQuestions || nextQuestions.length === 0) {
       // Escape hatch
-      const triageResults = classificationResults.map(r => ({
+      const triageResults = classificationResults.map((r) => ({
         ...r,
         classifierOutput: { ...r.classifierOutput, needs_human_triage: true },
         fieldsNeedingInput: [],
@@ -2035,7 +2184,9 @@ export async function handleAnswerFollowups(
         session: updatedSession,
         intermediateSteps: [intermediateStep],
         finalSystemAction: SystemEvent.LLM_CLASSIFY_SUCCESS,
-        uiMessages: [{ role: 'agent', content: 'Thank you. A human will review the remaining details.' }],
+        uiMessages: [
+          { role: 'agent', content: 'Thank you. A human will review the remaining details.' },
+        ],
         eventPayload: { escape_hatch: true },
         eventType: 'state_transition',
       };
@@ -2061,10 +2212,12 @@ export async function handleAnswerFollowups(
       session: updatedSession,
       intermediateSteps: [intermediateStep],
       finalSystemAction: SystemEvent.LLM_CLASSIFY_SUCCESS,
-      uiMessages: [{
-        role: 'agent',
-        content: 'Thanks for that info. I still need a few more details.',
-      }],
+      uiMessages: [
+        {
+          role: 'agent',
+          content: 'Thanks for that info. I still need a few more details.',
+        },
+      ],
       eventPayload: {
         reclassification: true,
         new_followup_turn: updatedSession.followup_turn_number,
@@ -2079,10 +2232,12 @@ export async function handleAnswerFollowups(
     session: updatedSession,
     intermediateSteps: [intermediateStep],
     finalSystemAction: SystemEvent.LLM_CLASSIFY_SUCCESS,
-    uiMessages: [{
-      role: 'agent',
-      content: 'Thank you! I\'ve updated the classification. Please review and confirm.',
-    }],
+    uiMessages: [
+      {
+        role: 'agent',
+        content: "Thank you! I've updated the classification. Please review and confirm.",
+      },
+    ],
     eventPayload: {
       reclassification: true,
       all_fields_resolved: true,
@@ -2114,6 +2269,7 @@ git commit -m "feat(core): extend handleAnswerFollowups with event recording, ca
 ## Task 8: Integration tests — full follow-up loop with termination caps and escape hatch
 
 **Files:**
+
 - Create: `packages/core/src/__tests__/followup/followup-integration.test.ts`
 
 **Context:** End-to-end integration tests that exercise the full classification → follow-up → re-classification loop through the dispatcher. Tests cover: (1) happy path with one round of follow-ups, (2) multi-turn follow-ups converging to confirmation, (3) escape hatch when turn cap exceeded, (4) escape hatch when re-ask limit reached, (5) escape hatch when total questions exhausted, (6) multiple issues with different follow-up needs. Uses the dispatcher directly (not action handlers) to validate the full orchestrator wiring.
@@ -2132,23 +2288,37 @@ import {
   DEFAULT_FOLLOWUP_CAPS,
   loadTaxonomy,
 } from '@wo-agent/schemas';
-import type { IssueClassifierOutput, FollowUpGeneratorOutput, CueDictionary } from '@wo-agent/schemas';
+import type {
+  IssueClassifierOutput,
+  FollowUpGeneratorOutput,
+  CueDictionary,
+} from '@wo-agent/schemas';
 
 const taxonomy = loadTaxonomy();
 
 const HIGH_CONF_CLASSIFICATION: IssueClassifierOutput = {
   issue_id: 'i1',
   classification: {
-    Category: 'maintenance', Location: 'suite', Sub_Location: 'bathroom',
-    Maintenance_Category: 'plumbing', Maintenance_Object: 'toilet',
-    Maintenance_Problem: 'leak', Management_Category: 'other_mgmt_cat',
-    Management_Object: 'other_mgmt_obj', Priority: 'normal',
+    Category: 'maintenance',
+    Location: 'suite',
+    Sub_Location: 'bathroom',
+    Maintenance_Category: 'plumbing',
+    Maintenance_Object: 'toilet',
+    Maintenance_Problem: 'leak',
+    Management_Category: 'other_mgmt_cat',
+    Management_Object: 'other_mgmt_obj',
+    Priority: 'normal',
   },
   model_confidence: {
-    Category: 0.95, Location: 0.9, Sub_Location: 0.85,
-    Maintenance_Category: 0.95, Maintenance_Object: 0.95,
-    Maintenance_Problem: 0.95, Management_Category: 0.0,
-    Management_Object: 0.0, Priority: 0.95,
+    Category: 0.95,
+    Location: 0.9,
+    Sub_Location: 0.85,
+    Maintenance_Category: 0.95,
+    Maintenance_Object: 0.95,
+    Maintenance_Problem: 0.95,
+    Management_Category: 0.0,
+    Management_Object: 0.0,
+    Priority: 0.95,
   },
   missing_fields: [],
   needs_human_triage: false,
@@ -2163,13 +2333,15 @@ const LOW_PRIORITY_CLASSIFICATION: IssueClassifierOutput = {
 };
 
 const FOLLOWUP_QUESTIONS: FollowUpGeneratorOutput = {
-  questions: [{
-    question_id: 'q1',
-    field_target: 'Priority',
-    prompt: 'How urgent is this?',
-    options: ['low', 'normal', 'high', 'emergency'],
-    answer_type: 'enum',
-  }],
+  questions: [
+    {
+      question_id: 'q1',
+      field_target: 'Priority',
+      prompt: 'How urgent is this?',
+      options: ['low', 'normal', 'high', 'emergency'],
+      answer_type: 'enum',
+    },
+  ],
 };
 
 const MINI_CUES: CueDictionary = {
@@ -2187,14 +2359,12 @@ const AUTH = {
   authorized_unit_ids: ['u1'],
 };
 
-function makeDeps(overrides?: {
-  classifierResponses?: IssueClassifierOutput[];
-}) {
+function makeDeps(overrides?: { classifierResponses?: IssueClassifierOutput[] }) {
   let counter = 0;
   let classifierCallCount = 0;
   const classifierResponses = overrides?.classifierResponses ?? [
-    LOW_PRIORITY_CLASSIFICATION,  // First classification: low priority
-    HIGH_CONF_CLASSIFICATION,     // Re-classification after follow-up: high confidence
+    LOW_PRIORITY_CLASSIFICATION, // First classification: low priority
+    HIGH_CONF_CLASSIFICATION, // Re-classification after follow-up: high confidence
   ];
 
   return {
@@ -2204,9 +2374,15 @@ function makeDeps(overrides?: {
     },
     sessionStore: {
       sessions: new Map(),
-      async get(id: string) { return this.sessions.get(id) ?? null; },
-      async getByTenantUser() { return []; },
-      async save(session: any) { this.sessions.set(session.conversation_id, session); },
+      async get(id: string) {
+        return this.sessions.get(id) ?? null;
+      },
+      async getByTenantUser() {
+        return [];
+      },
+      async save(session: any) {
+        this.sessions.set(session.conversation_id, session);
+      },
     },
     idGenerator: () => `id-${++counter}`,
     clock: () => '2026-02-25T12:00:00.000Z',
@@ -2231,27 +2407,39 @@ describe('Follow-up loop integration', () => {
 
     // 1. Create conversation
     const r1 = await dispatch({
-      conversation_id: null, action_type: ActionType.CREATE_CONVERSATION,
-      actor: ActorType.TENANT, tenant_input: {}, auth_context: AUTH,
+      conversation_id: null,
+      action_type: ActionType.CREATE_CONVERSATION,
+      actor: ActorType.TENANT,
+      tenant_input: {},
+      auth_context: AUTH,
     });
     const convId = r1.response.conversation_snapshot.conversation_id;
 
     // 2. Select unit
     await dispatch({
-      conversation_id: convId, action_type: ActionType.SELECT_UNIT,
-      actor: ActorType.TENANT, tenant_input: { unit_id: 'u1' }, auth_context: AUTH,
+      conversation_id: convId,
+      action_type: ActionType.SELECT_UNIT,
+      actor: ActorType.TENANT,
+      tenant_input: { unit_id: 'u1' },
+      auth_context: AUTH,
     });
 
     // 3. Submit initial message → split
     await dispatch({
-      conversation_id: convId, action_type: ActionType.SUBMIT_INITIAL_MESSAGE,
-      actor: ActorType.TENANT, tenant_input: { message: 'My toilet is leaking' }, auth_context: AUTH,
+      conversation_id: convId,
+      action_type: ActionType.SUBMIT_INITIAL_MESSAGE,
+      actor: ActorType.TENANT,
+      tenant_input: { message: 'My toilet is leaking' },
+      auth_context: AUTH,
     });
 
     // 4. Confirm split → classification → needs_tenant_input (low priority confidence)
     const r4 = await dispatch({
-      conversation_id: convId, action_type: ActionType.CONFIRM_SPLIT,
-      actor: ActorType.TENANT, tenant_input: {}, auth_context: AUTH,
+      conversation_id: convId,
+      action_type: ActionType.CONFIRM_SPLIT,
+      actor: ActorType.TENANT,
+      tenant_input: {},
+      auth_context: AUTH,
     });
 
     // Should be in needs_tenant_input with follow-up questions
@@ -2260,7 +2448,8 @@ describe('Follow-up loop integration', () => {
 
     // 5. Answer follow-up → re-classify → tenant_confirmation_pending
     const r5 = await dispatch({
-      conversation_id: convId, action_type: ActionType.ANSWER_FOLLOWUPS,
+      conversation_id: convId,
+      action_type: ActionType.ANSWER_FOLLOWUPS,
       actor: ActorType.TENANT,
       tenant_input: {
         answers: [{ question_id: 'q1', answer: 'normal', received_at: '2026-02-25T12:05:00.000Z' }],
@@ -2268,7 +2457,9 @@ describe('Follow-up loop integration', () => {
       auth_context: AUTH,
     });
 
-    expect(r5.response.conversation_snapshot.state).toBe(ConversationState.TENANT_CONFIRMATION_PENDING);
+    expect(r5.response.conversation_snapshot.state).toBe(
+      ConversationState.TENANT_CONFIRMATION_PENDING,
+    );
 
     // Verify followup_events were recorded
     expect(deps.eventRepo.append).toHaveBeenCalledWith(
@@ -2286,22 +2477,34 @@ describe('Follow-up loop integration', () => {
 
     // Walk through to needs_tenant_input
     const r1 = await dispatch({
-      conversation_id: null, action_type: ActionType.CREATE_CONVERSATION,
-      actor: ActorType.TENANT, tenant_input: {}, auth_context: AUTH,
+      conversation_id: null,
+      action_type: ActionType.CREATE_CONVERSATION,
+      actor: ActorType.TENANT,
+      tenant_input: {},
+      auth_context: AUTH,
     });
     const convId = r1.response.conversation_snapshot.conversation_id;
 
     await dispatch({
-      conversation_id: convId, action_type: ActionType.SELECT_UNIT,
-      actor: ActorType.TENANT, tenant_input: { unit_id: 'u1' }, auth_context: AUTH,
+      conversation_id: convId,
+      action_type: ActionType.SELECT_UNIT,
+      actor: ActorType.TENANT,
+      tenant_input: { unit_id: 'u1' },
+      auth_context: AUTH,
     });
     await dispatch({
-      conversation_id: convId, action_type: ActionType.SUBMIT_INITIAL_MESSAGE,
-      actor: ActorType.TENANT, tenant_input: { message: 'My toilet is leaking' }, auth_context: AUTH,
+      conversation_id: convId,
+      action_type: ActionType.SUBMIT_INITIAL_MESSAGE,
+      actor: ActorType.TENANT,
+      tenant_input: { message: 'My toilet is leaking' },
+      auth_context: AUTH,
     });
     await dispatch({
-      conversation_id: convId, action_type: ActionType.CONFIRM_SPLIT,
-      actor: ActorType.TENANT, tenant_input: {}, auth_context: AUTH,
+      conversation_id: convId,
+      action_type: ActionType.CONFIRM_SPLIT,
+      actor: ActorType.TENANT,
+      tenant_input: {},
+      auth_context: AUTH,
     });
 
     // Keep answering follow-ups until escape hatch triggers
@@ -2311,10 +2514,17 @@ describe('Follow-up loop integration', () => {
 
     while (state === ConversationState.NEEDS_TENANT_INPUT && rounds < maxRounds) {
       const r = await dispatch({
-        conversation_id: convId, action_type: ActionType.ANSWER_FOLLOWUPS,
+        conversation_id: convId,
+        action_type: ActionType.ANSWER_FOLLOWUPS,
         actor: ActorType.TENANT,
         tenant_input: {
-          answers: [{ question_id: `q${rounds + 1}`, answer: 'normal', received_at: '2026-02-25T12:05:00.000Z' }],
+          answers: [
+            {
+              question_id: `q${rounds + 1}`,
+              answer: 'normal',
+              received_at: '2026-02-25T12:05:00.000Z',
+            },
+          ],
         },
         auth_context: AUTH,
       });
@@ -2352,6 +2562,7 @@ git commit -m "test(core): add follow-up loop integration tests with caps and es
 ## Task 9: Final cleanup — update barrel exports and run full validation
 
 **Files:**
+
 - Verify: `packages/core/src/index.ts` (all followup exports present)
 - Verify: `packages/core/src/followup/index.ts` (barrel complete)
 - Verify: All test files pass

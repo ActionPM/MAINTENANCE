@@ -9,6 +9,7 @@
 **Tech Stack:** TypeScript, Vitest, pnpm workspaces, existing in-memory stores
 
 **Prerequisite skills:**
+
 - @append-only-events — event data is SELECT-only, never mutated
 - @schema-first-development — analytics types are the contract
 - @test-driven-development — TDD throughout
@@ -19,6 +20,7 @@
 ### Task 0: Analytics Types (Core)
 
 **Files:**
+
 - Create: `packages/core/src/analytics/types.ts`
 - Test: `packages/core/src/__tests__/analytics/analytics-types.test.ts`
 
@@ -217,6 +219,7 @@ git commit -m "feat(core): add analytics types (phase 13)"
 ### Task 1: Extend WorkOrderRepository with listAll()
 
 **Files:**
+
 - Modify: `packages/core/src/work-order/types.ts:20-35` (add method to interface)
 - Modify: `packages/core/src/work-order/in-memory-wo-store.ts` (implement)
 - Test: `packages/core/src/__tests__/analytics/wo-list-all.test.ts`
@@ -249,7 +252,12 @@ function makeWO(overrides: Partial<WorkOrder> & { work_order_id: string }): Work
     missing_fields: [],
     pets_present: 'unknown',
     needs_human_triage: false,
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'test', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'test',
+      prompt_version: '1.0.0',
+    },
     created_at: '2026-03-01T10:00:00Z',
     updated_at: '2026-03-01T10:00:00Z',
     row_version: 0,
@@ -412,6 +420,7 @@ git commit -m "feat(core): add WorkOrderRepository.listAll with filters (phase 1
 ### Task 2: Extend NotificationRepository with listAll()
 
 **Files:**
+
 - Modify: `packages/core/src/notifications/types.ts:7-23` (add method to interface)
 - Modify: `packages/core/src/notifications/in-memory-notification-store.ts` (implement)
 - Test: `packages/core/src/__tests__/analytics/notif-list-all.test.ts`
@@ -424,7 +433,9 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { InMemoryNotificationStore } from '../../notifications/index.js';
 import type { NotificationEvent } from '@wo-agent/schemas';
 
-function makeNotif(overrides: Partial<NotificationEvent> & { event_id: string; notification_id: string }): NotificationEvent {
+function makeNotif(
+  overrides: Partial<NotificationEvent> & { event_id: string; notification_id: string },
+): NotificationEvent {
   return {
     conversation_id: 'conv-1',
     tenant_user_id: 'tu-1',
@@ -466,9 +477,15 @@ describe('NotificationRepository.listAll (Phase 13)', () => {
   });
 
   it('filters by time range', async () => {
-    await store.insert(makeNotif({ event_id: 'e-1', notification_id: 'n-1', created_at: '2026-01-15T00:00:00Z' }));
-    await store.insert(makeNotif({ event_id: 'e-2', notification_id: 'n-2', created_at: '2026-02-15T00:00:00Z' }));
-    await store.insert(makeNotif({ event_id: 'e-3', notification_id: 'n-3', created_at: '2026-03-15T00:00:00Z' }));
+    await store.insert(
+      makeNotif({ event_id: 'e-1', notification_id: 'n-1', created_at: '2026-01-15T00:00:00Z' }),
+    );
+    await store.insert(
+      makeNotif({ event_id: 'e-2', notification_id: 'n-2', created_at: '2026-02-15T00:00:00Z' }),
+    );
+    await store.insert(
+      makeNotif({ event_id: 'e-3', notification_id: 'n-3', created_at: '2026-03-15T00:00:00Z' }),
+    );
     const result = await store.listAll({
       from: '2026-02-01T00:00:00Z',
       to: '2026-03-01T00:00:00Z',
@@ -478,8 +495,12 @@ describe('NotificationRepository.listAll (Phase 13)', () => {
   });
 
   it('filters by tenant_user_id', async () => {
-    await store.insert(makeNotif({ event_id: 'e-1', notification_id: 'n-1', tenant_user_id: 'tu-1' }));
-    await store.insert(makeNotif({ event_id: 'e-2', notification_id: 'n-2', tenant_user_id: 'tu-2' }));
+    await store.insert(
+      makeNotif({ event_id: 'e-1', notification_id: 'n-1', tenant_user_id: 'tu-1' }),
+    );
+    await store.insert(
+      makeNotif({ event_id: 'e-2', notification_id: 'n-2', tenant_user_id: 'tu-2' }),
+    );
     const result = await store.listAll({ tenant_user_id: 'tu-1' });
     expect(result).toHaveLength(1);
   });
@@ -553,6 +574,7 @@ git commit -m "feat(core): add NotificationRepository.listAll with filters (phas
 ### Task 3: Analytics Service — Overview Computation
 
 **Files:**
+
 - Create: `packages/core/src/analytics/analytics-service.ts`
 - Test: `packages/core/src/__tests__/analytics/analytics-overview.test.ts`
 
@@ -598,7 +620,12 @@ function makeWO(overrides: Partial<WorkOrder> & { work_order_id: string }): Work
     missing_fields: [],
     pets_present: 'unknown',
     needs_human_triage: false,
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'test', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'test',
+      prompt_version: '1.0.0',
+    },
     created_at: '2026-03-01T10:00:00Z',
     updated_at: '2026-03-01T10:00:00Z',
     row_version: 0,
@@ -610,7 +637,12 @@ describe('AnalyticsService.computeOverview (Phase 13)', () => {
   it('returns zeroes when no WOs exist', async () => {
     const woRepo = new InMemoryWorkOrderStore();
     const notifRepo = new InMemoryNotificationStore();
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
 
     const result = await svc.compute({});
     expect(result.overview.total_work_orders).toBe(0);
@@ -628,7 +660,12 @@ describe('AnalyticsService.computeOverview (Phase 13)', () => {
       makeWO({ work_order_id: 'wo-3', status: 'resolved' }),
     ]);
 
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
     const result = await svc.compute({});
 
     expect(result.overview.total_work_orders).toBe(3);
@@ -642,12 +679,21 @@ describe('AnalyticsService.computeOverview (Phase 13)', () => {
       makeWO({ work_order_id: 'wo-1', needs_human_triage: true }),
       makeWO({
         work_order_id: 'wo-2',
-        risk_flags: { has_emergency: true, highest_severity: 'emergency', trigger_ids: ['fire-001'] },
+        risk_flags: {
+          has_emergency: true,
+          highest_severity: 'emergency',
+          trigger_ids: ['fire-001'],
+        },
       }),
       makeWO({ work_order_id: 'wo-3' }),
     ]);
 
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
     const result = await svc.compute({});
 
     expect(result.overview.needs_human_triage).toBe(1);
@@ -662,7 +708,12 @@ describe('AnalyticsService.computeOverview (Phase 13)', () => {
       makeWO({ work_order_id: 'wo-2', client_id: 'c-2' }),
     ]);
 
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
     const result = await svc.compute({ client_id: 'c-1' });
 
     expect(result.overview.total_work_orders).toBe(1);
@@ -755,10 +806,18 @@ export class AnalyticsService {
   }
 
   private computeSlaMetrics(_workOrders: readonly WorkOrder[]): SlaMetrics {
-    return { total_with_sla: 0, response_adherence_pct: 0, resolution_adherence_pct: 0, avg_response_hours: null, avg_resolution_hours: null };
+    return {
+      total_with_sla: 0,
+      response_adherence_pct: 0,
+      resolution_adherence_pct: 0,
+      avg_response_hours: null,
+      avg_resolution_hours: null,
+    };
   }
 
-  private computeNotificationMetrics(_notifications: readonly import('@wo-agent/schemas').NotificationEvent[]): NotificationMetrics {
+  private computeNotificationMetrics(
+    _notifications: readonly import('@wo-agent/schemas').NotificationEvent[],
+  ): NotificationMetrics {
     return { total_sent: 0, by_channel: {}, by_type: {}, delivery_success_pct: 0 };
   }
 }
@@ -781,6 +840,7 @@ git commit -m "feat(core): analytics service with overview metrics (phase 13)"
 ### Task 4: Analytics Service — Taxonomy Breakdown
 
 **Files:**
+
 - Modify: `packages/core/src/analytics/analytics-service.ts` (replace stub)
 - Test: `packages/core/src/__tests__/analytics/analytics-taxonomy.test.ts`
 
@@ -823,7 +883,12 @@ function makeWO(overrides: Partial<WorkOrder> & { work_order_id: string }): Work
     missing_fields: [],
     pets_present: 'unknown',
     needs_human_triage: false,
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'test', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'test',
+      prompt_version: '1.0.0',
+    },
     created_at: '2026-03-01T10:00:00Z',
     updated_at: '2026-03-01T10:00:00Z',
     row_version: 0,
@@ -835,7 +900,12 @@ describe('AnalyticsService.computeTaxonomyBreakdown (Phase 13)', () => {
   it('returns empty object when no WOs exist', async () => {
     const woRepo = new InMemoryWorkOrderStore();
     const notifRepo = new InMemoryNotificationStore();
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
 
     const result = await svc.compute({});
     expect(result.taxonomy_breakdown).toEqual({});
@@ -847,23 +917,43 @@ describe('AnalyticsService.computeTaxonomyBreakdown (Phase 13)', () => {
     await woRepo.insertBatch([
       makeWO({
         work_order_id: 'wo-1',
-        classification: { Category: 'maintenance', Maintenance_Category: 'plumbing', Priority: 'high' },
+        classification: {
+          Category: 'maintenance',
+          Maintenance_Category: 'plumbing',
+          Priority: 'high',
+        },
       }),
       makeWO({
         work_order_id: 'wo-2',
-        classification: { Category: 'maintenance', Maintenance_Category: 'electrical', Priority: 'normal' },
+        classification: {
+          Category: 'maintenance',
+          Maintenance_Category: 'electrical',
+          Priority: 'normal',
+        },
       }),
       makeWO({
         work_order_id: 'wo-3',
-        classification: { Category: 'management', Management_Category: 'lease', Priority: 'normal' },
+        classification: {
+          Category: 'management',
+          Management_Category: 'lease',
+          Priority: 'normal',
+        },
       }),
     ]);
 
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
     const result = await svc.compute({});
 
     expect(result.taxonomy_breakdown['Category']).toEqual({ maintenance: 2, management: 1 });
-    expect(result.taxonomy_breakdown['Maintenance_Category']).toEqual({ plumbing: 1, electrical: 1 });
+    expect(result.taxonomy_breakdown['Maintenance_Category']).toEqual({
+      plumbing: 1,
+      electrical: 1,
+    });
     expect(result.taxonomy_breakdown['Management_Category']).toEqual({ lease: 1 });
     expect(result.taxonomy_breakdown['Priority']).toEqual({ high: 1, normal: 2 });
   });
@@ -878,7 +968,12 @@ describe('AnalyticsService.computeTaxonomyBreakdown (Phase 13)', () => {
       }),
     ]);
 
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
     const result = await svc.compute({});
 
     expect(result.taxonomy_breakdown['Category']).toEqual({ maintenance: 1 });
@@ -928,6 +1023,7 @@ git commit -m "feat(core): analytics taxonomy breakdown (phase 13)"
 ### Task 5: Analytics Service — SLA Metrics
 
 **Files:**
+
 - Modify: `packages/core/src/analytics/analytics-service.ts` (replace stub)
 - Test: `packages/core/src/__tests__/analytics/analytics-sla.test.ts`
 
@@ -971,7 +1067,12 @@ function makeWO(overrides: Partial<WorkOrder> & { work_order_id: string }): Work
     missing_fields: [],
     pets_present: 'unknown',
     needs_human_triage: false,
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'test', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'test',
+      prompt_version: '1.0.0',
+    },
     created_at: '2026-03-01T10:00:00Z',
     updated_at: '2026-03-01T10:00:00Z',
     row_version: 0,
@@ -983,7 +1084,12 @@ describe('AnalyticsService.computeSlaMetrics (Phase 13)', () => {
   it('returns zeroes when no WOs exist', async () => {
     const woRepo = new InMemoryWorkOrderStore();
     const notifRepo = new InMemoryNotificationStore();
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
 
     const result = await svc.compute({});
     expect(result.sla.total_with_sla).toBe(0);
@@ -1007,7 +1113,12 @@ describe('AnalyticsService.computeSlaMetrics (Phase 13)', () => {
       }),
     ]);
 
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
     const result = await svc.compute({});
 
     expect(result.sla.total_with_sla).toBe(1);
@@ -1032,7 +1143,12 @@ describe('AnalyticsService.computeSlaMetrics (Phase 13)', () => {
       }),
     ]);
 
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
     const result = await svc.compute({});
 
     expect(result.sla.response_adherence_pct).toBe(100);
@@ -1057,7 +1173,12 @@ describe('AnalyticsService.computeSlaMetrics (Phase 13)', () => {
       }),
     ]);
 
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
     const result = await svc.compute({});
 
     expect(result.sla.response_adherence_pct).toBe(0);
@@ -1164,6 +1285,7 @@ git commit -m "feat(core): analytics SLA adherence metrics (phase 13)"
 ### Task 6: Analytics Service — Notification Metrics
 
 **Files:**
+
 - Modify: `packages/core/src/analytics/analytics-service.ts` (replace stub)
 - Test: `packages/core/src/__tests__/analytics/analytics-notifications.test.ts`
 
@@ -1184,7 +1306,9 @@ const SLA_POLICIES: SlaPolicies = {
   overrides: [],
 };
 
-function makeNotif(overrides: Partial<NotificationEvent> & { event_id: string; notification_id: string }): NotificationEvent {
+function makeNotif(
+  overrides: Partial<NotificationEvent> & { event_id: string; notification_id: string },
+): NotificationEvent {
   return {
     conversation_id: 'conv-1',
     tenant_user_id: 'tu-1',
@@ -1210,7 +1334,12 @@ describe('AnalyticsService.computeNotificationMetrics (Phase 13)', () => {
   it('returns zeroes when no notifications exist', async () => {
     const woRepo = new InMemoryWorkOrderStore();
     const notifRepo = new InMemoryNotificationStore();
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
 
     const result = await svc.compute({});
     expect(result.notifications.total_sent).toBe(0);
@@ -1221,27 +1350,68 @@ describe('AnalyticsService.computeNotificationMetrics (Phase 13)', () => {
   it('counts by channel and type', async () => {
     const woRepo = new InMemoryWorkOrderStore();
     const notifRepo = new InMemoryNotificationStore();
-    await notifRepo.insert(makeNotif({ event_id: 'e-1', notification_id: 'n-1', channel: 'in_app', notification_type: 'work_order_created' }));
-    await notifRepo.insert(makeNotif({ event_id: 'e-2', notification_id: 'n-2', channel: 'sms', notification_type: 'status_changed' }));
-    await notifRepo.insert(makeNotif({ event_id: 'e-3', notification_id: 'n-3', channel: 'in_app', notification_type: 'needs_input' }));
+    await notifRepo.insert(
+      makeNotif({
+        event_id: 'e-1',
+        notification_id: 'n-1',
+        channel: 'in_app',
+        notification_type: 'work_order_created',
+      }),
+    );
+    await notifRepo.insert(
+      makeNotif({
+        event_id: 'e-2',
+        notification_id: 'n-2',
+        channel: 'sms',
+        notification_type: 'status_changed',
+      }),
+    );
+    await notifRepo.insert(
+      makeNotif({
+        event_id: 'e-3',
+        notification_id: 'n-3',
+        channel: 'in_app',
+        notification_type: 'needs_input',
+      }),
+    );
 
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
     const result = await svc.compute({});
 
     expect(result.notifications.total_sent).toBe(3);
     expect(result.notifications.by_channel).toEqual({ in_app: 2, sms: 1 });
-    expect(result.notifications.by_type).toEqual({ work_order_created: 1, status_changed: 1, needs_input: 1 });
+    expect(result.notifications.by_type).toEqual({
+      work_order_created: 1,
+      status_changed: 1,
+      needs_input: 1,
+    });
   });
 
   it('computes delivery success percentage', async () => {
     const woRepo = new InMemoryWorkOrderStore();
     const notifRepo = new InMemoryNotificationStore();
-    await notifRepo.insert(makeNotif({ event_id: 'e-1', notification_id: 'n-1', status: 'delivered' }));
-    await notifRepo.insert(makeNotif({ event_id: 'e-2', notification_id: 'n-2', status: 'delivered' }));
+    await notifRepo.insert(
+      makeNotif({ event_id: 'e-1', notification_id: 'n-1', status: 'delivered' }),
+    );
+    await notifRepo.insert(
+      makeNotif({ event_id: 'e-2', notification_id: 'n-2', status: 'delivered' }),
+    );
     await notifRepo.insert(makeNotif({ event_id: 'e-3', notification_id: 'n-3', status: 'sent' }));
-    await notifRepo.insert(makeNotif({ event_id: 'e-4', notification_id: 'n-4', status: 'failed' }));
+    await notifRepo.insert(
+      makeNotif({ event_id: 'e-4', notification_id: 'n-4', status: 'failed' }),
+    );
 
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
     const result = await svc.compute({});
 
     expect(result.notifications.total_sent).toBe(4);
@@ -1304,6 +1474,7 @@ git commit -m "feat(core): analytics notification metrics (phase 13)"
 ### Task 7: Analytics Core Barrel + Exports
 
 **Files:**
+
 - Create: `packages/core/src/analytics/index.ts`
 - Modify: `packages/core/src/index.ts` (add analytics exports)
 - Modify: `packages/core/src/work-order/index.ts` (export WorkOrderListFilters)
@@ -1314,9 +1485,7 @@ git commit -m "feat(core): analytics notification metrics (phase 13)"
 ```typescript
 // packages/core/src/__tests__/analytics/analytics-barrel.test.ts
 import { describe, it, expect } from 'vitest';
-import {
-  AnalyticsService,
-} from '@wo-agent/core';
+import { AnalyticsService } from '@wo-agent/core';
 import type {
   AnalyticsServiceDeps,
   AnalyticsQuery,
@@ -1391,21 +1560,25 @@ export type {
 Also export `WorkOrderListFilters` from work-order barrel and `NotificationListFilters` from notifications barrel if not already exported.
 
 Check and update `packages/core/src/work-order/index.ts` to include:
+
 ```typescript
 export type { WorkOrderListFilters } from './types.js';
 ```
 
 Check and update `packages/core/src/notifications/index.ts` to include:
+
 ```typescript
 export type { NotificationListFilters } from './types.js';
 ```
 
 Add to `packages/core/src/index.ts` work-order exports:
+
 ```typescript
 export type { WorkOrderListFilters } from './work-order/index.js';
 ```
 
 Add to `packages/core/src/index.ts` notifications exports:
+
 ```typescript
 export type { NotificationListFilters } from './notifications/index.js';
 ```
@@ -1432,6 +1605,7 @@ git commit -m "feat(core): analytics barrel exports (phase 13)"
 ### Task 8: API Endpoint + Factory Wiring
 
 **Files:**
+
 - Create: `apps/web/src/app/api/analytics/route.ts`
 - Modify: `apps/web/src/lib/orchestrator-factory.ts` (add analytics service)
 - Test: `apps/web/src/app/api/analytics/__tests__/analytics-route.test.ts`
@@ -1459,7 +1633,9 @@ describe('GET /api/analytics (Phase 13)', () => {
   });
 
   it('accepts query parameters for filtering', async () => {
-    const req = new Request('http://localhost:3000/api/analytics?client_id=c-1&from=2026-01-01T00:00:00Z&to=2026-03-01T00:00:00Z');
+    const req = new Request(
+      'http://localhost:3000/api/analytics?client_id=c-1&from=2026-01-01T00:00:00Z&to=2026-03-01T00:00:00Z',
+    );
     const res = await GET(req);
 
     expect(res.status).toBe(200);
@@ -1486,12 +1662,12 @@ import slaPoliciesJson from '@wo-agent/schemas/sla_policies.json' with { type: '
 import type { SlaPolicies } from '@wo-agent/core';
 
 // Inside ensureInitialized(), after erpSyncService creation:
-    const analyticsService = new AnalyticsService({
-      workOrderRepo,
-      notificationRepo,
-      slaPolicies: slaPoliciesJson as SlaPolicies,
-      clock,
-    });
+const analyticsService = new AnalyticsService({
+  workOrderRepo,
+  notificationRepo,
+  slaPolicies: slaPoliciesJson as SlaPolicies,
+  clock,
+});
 
 // Add analyticsService to _deps object
 // Add getter function:
@@ -1541,6 +1717,7 @@ git commit -m "feat(web): wire analytics endpoint GET /api/analytics (phase 13)"
 ### Task 9: Integration Test — Full Analytics Flow
 
 **Files:**
+
 - Create: `packages/core/src/__tests__/analytics/analytics-integration.test.ts`
 
 **Step 1: Write the integration test**
@@ -1567,7 +1744,12 @@ const SLA_POLICIES: SlaPolicies = {
   ],
 };
 
-const PINNED = { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'test', prompt_version: '1.0.0' };
+const PINNED = {
+  taxonomy_version: '1.0.0',
+  schema_version: '1.0.0',
+  model_id: 'test',
+  prompt_version: '1.0.0',
+};
 
 function makeWO(overrides: Partial<WorkOrder> & { work_order_id: string }): WorkOrder {
   return {
@@ -1597,7 +1779,9 @@ function makeWO(overrides: Partial<WorkOrder> & { work_order_id: string }): Work
   };
 }
 
-function makeNotif(overrides: Partial<NotificationEvent> & { event_id: string; notification_id: string }): NotificationEvent {
+function makeNotif(
+  overrides: Partial<NotificationEvent> & { event_id: string; notification_id: string },
+): NotificationEvent {
   return {
     conversation_id: 'conv-1',
     tenant_user_id: 'tu-1',
@@ -1647,8 +1831,16 @@ describe('Analytics integration (Phase 13)', () => {
           { status: 'action_required', changed_at: '2026-02-15T10:30:00Z', actor: 'system' },
           { status: 'resolved', changed_at: '2026-02-15T14:00:00Z', actor: 'system' },
         ],
-        classification: { Category: 'maintenance', Maintenance_Category: 'plumbing', Priority: 'high' },
-        risk_flags: { has_emergency: true, highest_severity: 'emergency', trigger_ids: ['flood-001'] },
+        classification: {
+          Category: 'maintenance',
+          Maintenance_Category: 'plumbing',
+          Priority: 'high',
+        },
+        risk_flags: {
+          has_emergency: true,
+          highest_severity: 'emergency',
+          trigger_ids: ['flood-001'],
+        },
         created_at: '2026-02-15T10:00:00Z',
       }),
       // Electrical, still in progress — client c-1, property p-2
@@ -1661,7 +1853,11 @@ describe('Analytics integration (Phase 13)', () => {
           { status: 'created', changed_at: '2026-02-20T08:00:00Z', actor: 'system' },
           { status: 'action_required', changed_at: '2026-02-20T10:00:00Z', actor: 'system' },
         ],
-        classification: { Category: 'maintenance', Maintenance_Category: 'electrical', Priority: 'normal' },
+        classification: {
+          Category: 'maintenance',
+          Maintenance_Category: 'electrical',
+          Priority: 'normal',
+        },
         created_at: '2026-02-20T08:00:00Z',
       }),
       // Management issue, needs triage — client c-2
@@ -1676,24 +1872,39 @@ describe('Analytics integration (Phase 13)', () => {
       }),
     ]);
 
-    await notifRepo.insert(makeNotif({
-      event_id: 'ne-1', notification_id: 'n-1',
-      channel: 'in_app', notification_type: 'work_order_created',
-      status: 'delivered', work_order_ids: ['wo-1'],
-      created_at: '2026-02-15T10:00:05Z',
-    }));
-    await notifRepo.insert(makeNotif({
-      event_id: 'ne-2', notification_id: 'n-2',
-      channel: 'sms', notification_type: 'status_changed',
-      status: 'sent', work_order_ids: ['wo-1'],
-      created_at: '2026-02-15T14:00:05Z',
-    }));
-    await notifRepo.insert(makeNotif({
-      event_id: 'ne-3', notification_id: 'n-3',
-      channel: 'in_app', notification_type: 'work_order_created',
-      status: 'failed', work_order_ids: ['wo-2'],
-      created_at: '2026-02-20T08:00:05Z',
-    }));
+    await notifRepo.insert(
+      makeNotif({
+        event_id: 'ne-1',
+        notification_id: 'n-1',
+        channel: 'in_app',
+        notification_type: 'work_order_created',
+        status: 'delivered',
+        work_order_ids: ['wo-1'],
+        created_at: '2026-02-15T10:00:05Z',
+      }),
+    );
+    await notifRepo.insert(
+      makeNotif({
+        event_id: 'ne-2',
+        notification_id: 'n-2',
+        channel: 'sms',
+        notification_type: 'status_changed',
+        status: 'sent',
+        work_order_ids: ['wo-1'],
+        created_at: '2026-02-15T14:00:05Z',
+      }),
+    );
+    await notifRepo.insert(
+      makeNotif({
+        event_id: 'ne-3',
+        notification_id: 'n-3',
+        channel: 'in_app',
+        notification_type: 'work_order_created',
+        status: 'failed',
+        work_order_ids: ['wo-2'],
+        created_at: '2026-02-20T08:00:05Z',
+      }),
+    );
   });
 
   it('full analytics response has correct structure', async () => {
@@ -1710,7 +1921,10 @@ describe('Analytics integration (Phase 13)', () => {
 
     // Taxonomy
     expect(result.taxonomy_breakdown['Category']).toEqual({ maintenance: 2, management: 1 });
-    expect(result.taxonomy_breakdown['Maintenance_Category']).toEqual({ plumbing: 1, electrical: 1 });
+    expect(result.taxonomy_breakdown['Maintenance_Category']).toEqual({
+      plumbing: 1,
+      electrical: 1,
+    });
     expect(result.taxonomy_breakdown['Priority']).toEqual({ high: 1, normal: 1, low: 1 });
 
     // Notifications

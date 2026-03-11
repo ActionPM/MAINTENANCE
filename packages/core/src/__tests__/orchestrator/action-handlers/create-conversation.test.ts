@@ -48,7 +48,11 @@ function makeContext(unitIds: string[]): ActionHandlerContext {
     },
     deps: {
       eventRepo: new InMemoryEventStore(),
-      sessionStore: { get: async () => null, getByTenantUser: async () => [], save: async () => {} },
+      sessionStore: {
+        get: async () => null,
+        getByTenantUser: async () => [],
+        save: async () => {},
+      },
       idGenerator: () => `id-${++counter}`,
       clock: () => '2026-01-15T12:00:00Z',
       issueSplitter: async () => ({ issues: [], issue_count: 0 }),

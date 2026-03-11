@@ -7,10 +7,7 @@ import slaPoliciesJson from '@wo-agent/schemas/sla_policies.json' with { type: '
 
 const slaPolicies = slaPoliciesJson as SlaPolicies;
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   // 1. Auth
   const authResult = await authenticateRequest(request);
   if (authResult instanceof NextResponse) return authResult;

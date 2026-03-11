@@ -52,7 +52,9 @@ export function StatusIndicator({
       {isSuccess && workOrderIds && workOrderIds.length > 0 && (
         <ul className={styles.woList}>
           {workOrderIds.map((id) => (
-            <li key={id} className={styles.woItem}>{id}</li>
+            <li key={id} className={styles.woItem}>
+              {id}
+            </li>
           ))}
         </ul>
       )}

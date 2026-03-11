@@ -30,20 +30,29 @@ function makeSession(): ConversationSession {
     state: ConversationState.TENANT_CONFIRMATION_PENDING,
     unit_id: 'unit-1',
     authorized_unit_ids: ['unit-1'],
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'test', prompt_version: '1.0.0' },
-    split_issues: [{ issue_id: 'issue-1', summary: 'Leaky faucet', raw_excerpt: 'My faucet leaks' }],
-    classification_results: [{
-      issue_id: 'issue-1',
-      classifierOutput: {
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'test',
+      prompt_version: '1.0.0',
+    },
+    split_issues: [
+      { issue_id: 'issue-1', summary: 'Leaky faucet', raw_excerpt: 'My faucet leaks' },
+    ],
+    classification_results: [
+      {
         issue_id: 'issue-1',
-        classification: { Category: 'maintenance', Priority: 'normal' },
-        model_confidence: { Category: 0.9, Priority: 0.8 },
-        missing_fields: [],
-        needs_human_triage: false,
+        classifierOutput: {
+          issue_id: 'issue-1',
+          classification: { Category: 'maintenance', Priority: 'normal' },
+          model_confidence: { Category: 0.9, Priority: 0.8 },
+          missing_fields: [],
+          needs_human_triage: false,
+        },
+        computedConfidence: { Category: 0.85, Priority: 0.75 },
+        fieldsNeedingInput: [],
       },
-      computedConfidence: { Category: 0.85, Priority: 0.75 },
-      fieldsNeedingInput: [],
-    }],
+    ],
     prior_state_before_error: null,
     followup_turn_number: 0,
     total_questions_asked: 0,

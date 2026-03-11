@@ -36,7 +36,12 @@ function makeContext(
     tenant_user_id: 'user-1',
     tenant_account_id: 'acct-1',
     authorized_unit_ids: ['u1'],
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'gpt-4', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'gpt-4',
+      prompt_version: '1.0.0',
+    },
   });
   session = updateSessionState(session, ConversationState.SPLIT_PROPOSED);
   session = setSplitIssues(session, issues);
@@ -48,11 +53,19 @@ function makeContext(
       action_type: actionType as any,
       actor: ActorType.TENANT,
       tenant_input: tenantInput as any,
-      auth_context: { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['u1'] },
+      auth_context: {
+        tenant_user_id: 'user-1',
+        tenant_account_id: 'acct-1',
+        authorized_unit_ids: ['u1'],
+      },
     },
     deps: {
       eventRepo: new InMemoryEventStore(),
-      sessionStore: { get: async () => null, getByTenantUser: async () => [], save: async () => {} },
+      sessionStore: {
+        get: async () => null,
+        getByTenantUser: async () => [],
+        save: async () => {},
+      },
       idGenerator: () => `id-${++counter}`,
       clock: () => '2026-01-15T12:00:00Z',
       issueSplitter: async () => ({ issues: [], issue_count: 0 }),
@@ -109,8 +122,8 @@ describe('MERGE_ISSUES', () => {
     const result = await handleSplitAction(ctx);
     expect(result.newState).toBe(ConversationState.SPLIT_PROPOSED);
     expect(result.session.split_issues!.length).toBe(2); // 3 - 2 merged + 1 new = 2
-    const mergedIssue = result.session.split_issues!.find(i =>
-      i.summary.includes('Toilet leaking') && i.summary.includes('Light broken')
+    const mergedIssue = result.session.split_issues!.find(
+      (i) => i.summary.includes('Toilet leaking') && i.summary.includes('Light broken'),
     );
     expect(mergedIssue).toBeDefined();
   });
@@ -145,17 +158,23 @@ describe('MERGE_ISSUES', () => {
 
 describe('EDIT_ISSUE', () => {
   it('updates issue summary', async () => {
-    const ctx = makeContext(ActionType.EDIT_ISSUE, { issue_id: 'i1', summary: 'Bathroom faucet dripping' });
+    const ctx = makeContext(ActionType.EDIT_ISSUE, {
+      issue_id: 'i1',
+      summary: 'Bathroom faucet dripping',
+    });
     const result = await handleSplitAction(ctx);
     expect(result.newState).toBe(ConversationState.SPLIT_PROPOSED);
-    const edited = result.session.split_issues!.find(i => i.issue_id === 'i1');
+    const edited = result.session.split_issues!.find((i) => i.issue_id === 'i1');
     expect(edited!.summary).toBe('Bathroom faucet dripping');
   });
 
   it('sanitizes edited text', async () => {
-    const ctx = makeContext(ActionType.EDIT_ISSUE, { issue_id: 'i1', summary: 'Has <script>  extra   spaces' });
+    const ctx = makeContext(ActionType.EDIT_ISSUE, {
+      issue_id: 'i1',
+      summary: 'Has <script>  extra   spaces',
+    });
     const result = await handleSplitAction(ctx);
-    const edited = result.session.split_issues!.find(i => i.issue_id === 'i1');
+    const edited = result.session.split_issues!.find((i) => i.issue_id === 'i1');
     expect(edited!.summary).toBe('Has &lt;script&gt; extra spaces');
   });
 
@@ -182,13 +201,19 @@ describe('EDIT_ISSUE', () => {
 
   it('allows editing when at 10 issues (count cap does not apply to edits)', async () => {
     const tenIssues = Array.from({ length: 10 }, (_, i) => ({
-      issue_id: `i${i}`, summary: `Issue ${i}`, raw_excerpt: `excerpt ${i}`,
+      issue_id: `i${i}`,
+      summary: `Issue ${i}`,
+      raw_excerpt: `excerpt ${i}`,
     }));
-    const ctx = makeContext(ActionType.EDIT_ISSUE, { issue_id: 'i0', summary: 'Updated issue' }, tenIssues);
+    const ctx = makeContext(
+      ActionType.EDIT_ISSUE,
+      { issue_id: 'i0', summary: 'Updated issue' },
+      tenIssues,
+    );
     const result = await handleSplitAction(ctx);
     expect(result.errors).toBeUndefined();
     expect(result.newState).toBe(ConversationState.SPLIT_PROPOSED);
-    const edited = result.session.split_issues!.find(i => i.issue_id === 'i0');
+    const edited = result.session.split_issues!.find((i) => i.issue_id === 'i0');
     expect(edited!.summary).toBe('Updated issue');
   });
 });
@@ -199,7 +224,7 @@ describe('ADD_ISSUE', () => {
     const result = await handleSplitAction(ctx);
     expect(result.newState).toBe(ConversationState.SPLIT_PROPOSED);
     expect(result.session.split_issues!.length).toBe(4);
-    const added = result.session.split_issues!.find(i => i.summary === 'Window cracked');
+    const added = result.session.split_issues!.find((i) => i.summary === 'Window cracked');
     expect(added).toBeDefined();
     expect(added!.issue_id).toBeDefined();
   });
@@ -213,7 +238,9 @@ describe('ADD_ISSUE', () => {
 
   it('rejects when at 10 issues', async () => {
     const tenIssues = Array.from({ length: 10 }, (_, i) => ({
-      issue_id: `i${i}`, summary: `Issue ${i}`, raw_excerpt: `excerpt ${i}`,
+      issue_id: `i${i}`,
+      summary: `Issue ${i}`,
+      raw_excerpt: `excerpt ${i}`,
     }));
     const ctx = makeContext(ActionType.ADD_ISSUE, { summary: 'One too many' }, tenIssues);
     const result = await handleSplitAction(ctx);

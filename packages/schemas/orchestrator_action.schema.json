@@ -163,10 +163,7 @@
       "type": "object",
       "properties": {
         "conversation_id": {
-          "oneOf": [
-            { "type": "string", "format": "uuid" },
-            { "type": "null" }
-          ]
+          "oneOf": [{ "type": "string", "format": "uuid" }, { "type": "null" }]
         },
         "action_type": { "$ref": "#/definitions/ActionType" },
         "actor": { "$ref": "#/definitions/ActorType" },
@@ -178,64 +175,149 @@
       "additionalProperties": false,
       "allOf": [
         {
-          "if": { "properties": { "action_type": { "const": "CREATE_CONVERSATION" } }, "required": ["action_type"] },
-          "then": { "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputCreateConversation" } } }
+          "if": {
+            "properties": { "action_type": { "const": "CREATE_CONVERSATION" } },
+            "required": ["action_type"]
+          },
+          "then": {
+            "properties": {
+              "tenant_input": { "$ref": "#/definitions/TenantInputCreateConversation" }
+            }
+          }
         },
         {
-          "if": { "properties": { "action_type": { "const": "SELECT_UNIT" } }, "required": ["action_type"] },
-          "then": { "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputSelectUnit" } } }
+          "if": {
+            "properties": { "action_type": { "const": "SELECT_UNIT" } },
+            "required": ["action_type"]
+          },
+          "then": {
+            "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputSelectUnit" } }
+          }
         },
         {
-          "if": { "properties": { "action_type": { "const": "SUBMIT_INITIAL_MESSAGE" } }, "required": ["action_type"] },
-          "then": { "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputSubmitInitialMessage" } } }
+          "if": {
+            "properties": { "action_type": { "const": "SUBMIT_INITIAL_MESSAGE" } },
+            "required": ["action_type"]
+          },
+          "then": {
+            "properties": {
+              "tenant_input": { "$ref": "#/definitions/TenantInputSubmitInitialMessage" }
+            }
+          }
         },
         {
-          "if": { "properties": { "action_type": { "const": "SUBMIT_ADDITIONAL_MESSAGE" } }, "required": ["action_type"] },
-          "then": { "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputSubmitAdditionalMessage" } } }
+          "if": {
+            "properties": { "action_type": { "const": "SUBMIT_ADDITIONAL_MESSAGE" } },
+            "required": ["action_type"]
+          },
+          "then": {
+            "properties": {
+              "tenant_input": { "$ref": "#/definitions/TenantInputSubmitAdditionalMessage" }
+            }
+          }
         },
         {
-          "if": { "properties": { "action_type": { "const": "CONFIRM_SPLIT" } }, "required": ["action_type"] },
-          "then": { "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputConfirmSplit" } } }
+          "if": {
+            "properties": { "action_type": { "const": "CONFIRM_SPLIT" } },
+            "required": ["action_type"]
+          },
+          "then": {
+            "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputConfirmSplit" } }
+          }
         },
         {
-          "if": { "properties": { "action_type": { "const": "MERGE_ISSUES" } }, "required": ["action_type"] },
-          "then": { "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputMergeIssues" } } }
+          "if": {
+            "properties": { "action_type": { "const": "MERGE_ISSUES" } },
+            "required": ["action_type"]
+          },
+          "then": {
+            "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputMergeIssues" } }
+          }
         },
         {
-          "if": { "properties": { "action_type": { "const": "EDIT_ISSUE" } }, "required": ["action_type"] },
-          "then": { "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputEditIssue" } } }
+          "if": {
+            "properties": { "action_type": { "const": "EDIT_ISSUE" } },
+            "required": ["action_type"]
+          },
+          "then": {
+            "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputEditIssue" } }
+          }
         },
         {
-          "if": { "properties": { "action_type": { "const": "ADD_ISSUE" } }, "required": ["action_type"] },
-          "then": { "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputAddIssue" } } }
+          "if": {
+            "properties": { "action_type": { "const": "ADD_ISSUE" } },
+            "required": ["action_type"]
+          },
+          "then": {
+            "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputAddIssue" } }
+          }
         },
         {
-          "if": { "properties": { "action_type": { "const": "REJECT_SPLIT" } }, "required": ["action_type"] },
-          "then": { "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputRejectSplit" } } }
+          "if": {
+            "properties": { "action_type": { "const": "REJECT_SPLIT" } },
+            "required": ["action_type"]
+          },
+          "then": {
+            "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputRejectSplit" } }
+          }
         },
         {
-          "if": { "properties": { "action_type": { "const": "ANSWER_FOLLOWUPS" } }, "required": ["action_type"] },
-          "then": { "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputAnswerFollowups" } } }
+          "if": {
+            "properties": { "action_type": { "const": "ANSWER_FOLLOWUPS" } },
+            "required": ["action_type"]
+          },
+          "then": {
+            "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputAnswerFollowups" } }
+          }
         },
         {
-          "if": { "properties": { "action_type": { "const": "CONFIRM_SUBMISSION" } }, "required": ["action_type"] },
-          "then": { "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputConfirmSubmission" } } }
+          "if": {
+            "properties": { "action_type": { "const": "CONFIRM_SUBMISSION" } },
+            "required": ["action_type"]
+          },
+          "then": {
+            "properties": {
+              "tenant_input": { "$ref": "#/definitions/TenantInputConfirmSubmission" }
+            }
+          }
         },
         {
-          "if": { "properties": { "action_type": { "const": "UPLOAD_PHOTO_INIT" } }, "required": ["action_type"] },
-          "then": { "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputUploadPhotoInit" } } }
+          "if": {
+            "properties": { "action_type": { "const": "UPLOAD_PHOTO_INIT" } },
+            "required": ["action_type"]
+          },
+          "then": {
+            "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputUploadPhotoInit" } }
+          }
         },
         {
-          "if": { "properties": { "action_type": { "const": "UPLOAD_PHOTO_COMPLETE" } }, "required": ["action_type"] },
-          "then": { "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputUploadPhotoComplete" } } }
+          "if": {
+            "properties": { "action_type": { "const": "UPLOAD_PHOTO_COMPLETE" } },
+            "required": ["action_type"]
+          },
+          "then": {
+            "properties": {
+              "tenant_input": { "$ref": "#/definitions/TenantInputUploadPhotoComplete" }
+            }
+          }
         },
         {
-          "if": { "properties": { "action_type": { "const": "RESUME" } }, "required": ["action_type"] },
-          "then": { "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputResume" } } }
+          "if": {
+            "properties": { "action_type": { "const": "RESUME" } },
+            "required": ["action_type"]
+          },
+          "then": {
+            "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputResume" } }
+          }
         },
         {
-          "if": { "properties": { "action_type": { "const": "ABANDON" } }, "required": ["action_type"] },
-          "then": { "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputAbandon" } } }
+          "if": {
+            "properties": { "action_type": { "const": "ABANDON" } },
+            "required": ["action_type"]
+          },
+          "then": {
+            "properties": { "tenant_input": { "$ref": "#/definitions/TenantInputAbandon" } }
+          }
         }
       ]
     },
@@ -282,12 +364,20 @@
         "state": {
           "type": "string",
           "enum": [
-            "intake_started", "unit_selection_required", "unit_selected",
-            "split_in_progress", "split_proposed", "split_finalized",
-            "classification_in_progress", "needs_tenant_input",
-            "tenant_confirmation_pending", "submitted",
-            "llm_error_retryable", "llm_error_terminal",
-            "intake_abandoned", "intake_expired"
+            "intake_started",
+            "unit_selection_required",
+            "unit_selected",
+            "split_in_progress",
+            "split_proposed",
+            "split_finalized",
+            "classification_in_progress",
+            "needs_tenant_input",
+            "tenant_confirmation_pending",
+            "submitted",
+            "llm_error_retryable",
+            "llm_error_terminal",
+            "intake_abandoned",
+            "intake_expired"
           ]
         },
         "unit_id": { "type": ["string", "null"] },
@@ -358,7 +448,13 @@
           "items": { "$ref": "#/definitions/ActionError" }
         }
       },
-      "required": ["conversation_snapshot", "ui_directive", "artifacts", "pending_side_effects", "errors"],
+      "required": [
+        "conversation_snapshot",
+        "ui_directive",
+        "artifacts",
+        "pending_side_effects",
+        "errors"
+      ],
       "additionalProperties": false
     }
   }

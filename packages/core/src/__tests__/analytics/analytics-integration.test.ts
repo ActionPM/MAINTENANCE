@@ -18,7 +18,12 @@ const SLA_POLICIES: SlaPolicies = {
   ],
 };
 
-const PINNED = { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'test', prompt_version: '1.0.0' };
+const PINNED = {
+  taxonomy_version: '1.0.0',
+  schema_version: '1.0.0',
+  model_id: 'test',
+  prompt_version: '1.0.0',
+};
 
 function makeWO(overrides: Partial<WorkOrder> & { work_order_id: string }): WorkOrder {
   return {
@@ -48,7 +53,9 @@ function makeWO(overrides: Partial<WorkOrder> & { work_order_id: string }): Work
   };
 }
 
-function makeNotif(overrides: Partial<NotificationEvent> & { event_id: string; notification_id: string }): NotificationEvent {
+function makeNotif(
+  overrides: Partial<NotificationEvent> & { event_id: string; notification_id: string },
+): NotificationEvent {
   return {
     conversation_id: 'conv-1',
     tenant_user_id: 'tu-1',
@@ -98,8 +105,16 @@ describe('Analytics integration (Phase 13)', () => {
           { status: 'action_required', changed_at: '2026-02-15T10:30:00Z', actor: 'system' },
           { status: 'resolved', changed_at: '2026-02-15T14:00:00Z', actor: 'system' },
         ],
-        classification: { Category: 'maintenance', Maintenance_Category: 'plumbing', Priority: 'high' },
-        risk_flags: { has_emergency: true, highest_severity: 'emergency', trigger_ids: ['flood-001'] },
+        classification: {
+          Category: 'maintenance',
+          Maintenance_Category: 'plumbing',
+          Priority: 'high',
+        },
+        risk_flags: {
+          has_emergency: true,
+          highest_severity: 'emergency',
+          trigger_ids: ['flood-001'],
+        },
         created_at: '2026-02-15T10:00:00Z',
       }),
       // Electrical, still in progress — client c-1, property p-2
@@ -112,7 +127,11 @@ describe('Analytics integration (Phase 13)', () => {
           { status: 'created', changed_at: '2026-02-20T08:00:00Z', actor: 'system' },
           { status: 'action_required', changed_at: '2026-02-20T10:00:00Z', actor: 'system' },
         ],
-        classification: { Category: 'maintenance', Maintenance_Category: 'electrical', Priority: 'normal' },
+        classification: {
+          Category: 'maintenance',
+          Maintenance_Category: 'electrical',
+          Priority: 'normal',
+        },
         created_at: '2026-02-20T08:00:00Z',
       }),
       // Management issue, needs triage — client c-2
@@ -127,24 +146,39 @@ describe('Analytics integration (Phase 13)', () => {
       }),
     ]);
 
-    await notifRepo.insert(makeNotif({
-      event_id: 'ne-1', notification_id: 'n-1',
-      channel: 'in_app', notification_type: 'work_order_created',
-      status: 'delivered', work_order_ids: ['wo-1'],
-      created_at: '2026-02-15T10:00:05Z',
-    }));
-    await notifRepo.insert(makeNotif({
-      event_id: 'ne-2', notification_id: 'n-2',
-      channel: 'sms', notification_type: 'status_changed',
-      status: 'sent', work_order_ids: ['wo-1'],
-      created_at: '2026-02-15T14:00:05Z',
-    }));
-    await notifRepo.insert(makeNotif({
-      event_id: 'ne-3', notification_id: 'n-3',
-      channel: 'in_app', notification_type: 'work_order_created',
-      status: 'failed', work_order_ids: ['wo-2'],
-      created_at: '2026-02-20T08:00:05Z',
-    }));
+    await notifRepo.insert(
+      makeNotif({
+        event_id: 'ne-1',
+        notification_id: 'n-1',
+        channel: 'in_app',
+        notification_type: 'work_order_created',
+        status: 'delivered',
+        work_order_ids: ['wo-1'],
+        created_at: '2026-02-15T10:00:05Z',
+      }),
+    );
+    await notifRepo.insert(
+      makeNotif({
+        event_id: 'ne-2',
+        notification_id: 'n-2',
+        channel: 'sms',
+        notification_type: 'status_changed',
+        status: 'sent',
+        work_order_ids: ['wo-1'],
+        created_at: '2026-02-15T14:00:05Z',
+      }),
+    );
+    await notifRepo.insert(
+      makeNotif({
+        event_id: 'ne-3',
+        notification_id: 'n-3',
+        channel: 'in_app',
+        notification_type: 'work_order_created',
+        status: 'failed',
+        work_order_ids: ['wo-2'],
+        created_at: '2026-02-20T08:00:05Z',
+      }),
+    );
   });
 
   it('full analytics response has correct structure', async () => {
@@ -161,7 +195,10 @@ describe('Analytics integration (Phase 13)', () => {
 
     // Taxonomy
     expect(result.taxonomy_breakdown['Category']).toEqual({ maintenance: 2, management: 1 });
-    expect(result.taxonomy_breakdown['Maintenance_Category']).toEqual({ plumbing: 1, electrical: 1 });
+    expect(result.taxonomy_breakdown['Maintenance_Category']).toEqual({
+      plumbing: 1,
+      electrical: 1,
+    });
     expect(result.taxonomy_breakdown['Priority']).toEqual({ high: 1, normal: 1, low: 1 });
 
     // Notifications

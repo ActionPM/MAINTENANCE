@@ -1,6 +1,16 @@
 import { ConversationState } from '@wo-agent/schemas';
-import type { SplitIssue, FollowUpQuestion, PreviousQuestion, MatchedTrigger, EscalationState } from '@wo-agent/schemas';
-import type { ConversationSession, CreateSessionInput, IssueClassificationResult } from './types.js';
+import type {
+  SplitIssue,
+  FollowUpQuestion,
+  PreviousQuestion,
+  MatchedTrigger,
+  EscalationState,
+} from '@wo-agent/schemas';
+import type {
+  ConversationSession,
+  CreateSessionInput,
+  IssueClassificationResult,
+} from './types.js';
 
 const ERROR_STATES: ReadonlySet<ConversationState> = new Set([
   ConversationState.LLM_ERROR_RETRYABLE,
@@ -73,10 +83,7 @@ export function touchActivity(session: ConversationSession): ConversationSession
 /**
  * Set the resolved unit_id on the session.
  */
-export function setSessionUnit(
-  session: ConversationSession,
-  unitId: string,
-): ConversationSession {
+export function setSessionUnit(session: ConversationSession, unitId: string): ConversationSession {
   return {
     ...session,
     unit_id: unitId,
@@ -124,10 +131,7 @@ export function markExpired(session: ConversationSession): ConversationSession {
 /**
  * Check if an abandoned session has exceeded the expiry window.
  */
-export function isExpired(
-  session: ConversationSession,
-  config: ExpirationConfig,
-): boolean {
+export function isExpired(session: ConversationSession, config: ExpirationConfig): boolean {
   if (session.state !== ConversationState.INTAKE_ABANDONED) return false;
   const elapsed = Date.now() - new Date(session.last_activity_at).getTime();
   return elapsed > config.abandonedExpiryMs;
@@ -220,9 +224,7 @@ export function setConfirmationTracking(
 /**
  * Mark that the confirmation payload has been presented to the tenant.
  */
-export function markConfirmationPresented(
-  session: ConversationSession,
-): ConversationSession {
+export function markConfirmationPresented(session: ConversationSession): ConversationSession {
   return {
     ...session,
     confirmation_presented: true,

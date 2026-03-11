@@ -101,10 +101,10 @@ describe('SplitReview', () => {
 
     await user.click(screen.getByRole('button', { name: /add issue/i }));
     const input = screen.getByPlaceholderText(/describe/i);
-    await user.type(input, 'Window won\'t close');
+    await user.type(input, "Window won't close");
     await user.click(screen.getByRole('button', { name: /save/i }));
 
-    expect(onAdd).toHaveBeenCalledWith('Window won\'t close');
+    expect(onAdd).toHaveBeenCalledWith("Window won't close");
   });
 
   it('disables all actions when disabled', () => {

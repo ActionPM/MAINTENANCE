@@ -29,7 +29,12 @@ function makeContext(
     tenant_user_id: 'user-1',
     tenant_account_id: 'acct-1',
     authorized_unit_ids: unitIds,
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'gpt-4', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'gpt-4',
+      prompt_version: '1.0.0',
+    },
   });
   return {
     session: { ...session, state: state as any },
@@ -38,11 +43,19 @@ function makeContext(
       action_type: ActionType.SELECT_UNIT,
       actor: ActorType.TENANT,
       tenant_input: { unit_id: selectedUnitId },
-      auth_context: { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: unitIds },
+      auth_context: {
+        tenant_user_id: 'user-1',
+        tenant_account_id: 'acct-1',
+        authorized_unit_ids: unitIds,
+      },
     },
     deps: {
       eventRepo: new InMemoryEventStore(),
-      sessionStore: { get: async () => null, getByTenantUser: async () => [], save: async () => {} },
+      sessionStore: {
+        get: async () => null,
+        getByTenantUser: async () => [],
+        save: async () => {},
+      },
       idGenerator: () => `id-${++counter}`,
       clock: () => '2026-01-15T12:00:00Z',
       issueSplitter: async () => ({ issues: [], issue_count: 0 }),

@@ -5,7 +5,13 @@ import type { ConversationEvent, EventQuery } from '@wo-agent/core';
 import type { ConfirmationEvent, StalenessEvent } from '@wo-agent/core';
 import type { RiskEvent } from '@wo-agent/core';
 
-type AnyEvent = ConversationEvent | FollowUpEvent | ConfirmationEvent | StalenessEvent | RiskEvent | NotificationEvent;
+type AnyEvent =
+  | ConversationEvent
+  | FollowUpEvent
+  | ConfirmationEvent
+  | StalenessEvent
+  | RiskEvent
+  | NotificationEvent;
 
 /* ------------------------------------------------------------------ */
 /*  Structural type guards                                            */
@@ -70,19 +76,15 @@ export class PostgresEventStore implements EventRepository {
    * RiskEvent | ConfirmationEvent | StalenessEvent → conversation_events.
    * These have event_type + payload but no actor/state/pinned_versions.
    */
-  private async insertMinimalEvent(e: RiskEvent | ConfirmationEvent | StalenessEvent): Promise<void> {
+  private async insertMinimalEvent(
+    e: RiskEvent | ConfirmationEvent | StalenessEvent,
+  ): Promise<void> {
     await this.pool.query(
       `INSERT INTO conversation_events
         (event_id, conversation_id, event_type, prior_state, new_state, action_type, actor, payload, pinned_versions, created_at)
        VALUES ($1, $2, $3, NULL, NULL, NULL, 'system', $4, NULL, $5)
        ON CONFLICT (event_id) DO NOTHING`,
-      [
-        e.event_id,
-        e.conversation_id,
-        e.event_type,
-        JSON.stringify(e.payload),
-        e.created_at,
-      ],
+      [e.event_id, e.conversation_id, e.event_type, JSON.stringify(e.payload), e.created_at],
     );
   }
 
@@ -103,13 +105,7 @@ export class PostgresEventStore implements EventRepository {
         (event_id, conversation_id, event_type, prior_state, new_state, action_type, actor, payload, pinned_versions, created_at)
        VALUES ($1, $2, $3, NULL, NULL, NULL, 'system', $4, NULL, $5)
        ON CONFLICT (event_id) DO NOTHING`,
-      [
-        e.event_id,
-        e.conversation_id,
-        eventType,
-        JSON.stringify(payload),
-        e.created_at,
-      ],
+      [e.event_id, e.conversation_id, eventType, JSON.stringify(payload), e.created_at],
     );
   }
 
@@ -124,12 +120,24 @@ export class PostgresEventStore implements EventRepository {
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
          ON CONFLICT (event_id) DO NOTHING`,
         [
-          e.event_id, e.notification_id, e.conversation_id,
-          e.tenant_user_id, e.tenant_account_id, e.channel,
-          e.notification_type, e.work_order_ids,
-          e.issue_group_id, e.template_id, e.status, e.idempotency_key,
-          JSON.stringify(e.payload), e.created_at,
-          e.sent_at, e.delivered_at, e.failed_at, e.failure_reason,
+          e.event_id,
+          e.notification_id,
+          e.conversation_id,
+          e.tenant_user_id,
+          e.tenant_account_id,
+          e.channel,
+          e.notification_type,
+          e.work_order_ids,
+          e.issue_group_id,
+          e.template_id,
+          e.status,
+          e.idempotency_key,
+          JSON.stringify(e.payload),
+          e.created_at,
+          e.sent_at,
+          e.delivered_at,
+          e.failed_at,
+          e.failure_reason,
         ],
       );
     } catch (err: unknown) {
@@ -174,6 +182,7 @@ function mapRowToConversationEvent(row: Record<string, unknown>): ConversationEv
     actor: row.actor as ConversationEvent['actor'],
     payload: (row.payload as Record<string, unknown>) ?? null,
     pinned_versions: (row.pinned_versions as ConversationEvent['pinned_versions']) ?? null,
-    created_at: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at as string,
+    created_at:
+      row.created_at instanceof Date ? row.created_at.toISOString() : (row.created_at as string),
   };
 }

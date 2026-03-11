@@ -1,5 +1,9 @@
 import type { NotificationEvent, NotificationPreference } from '@wo-agent/schemas';
-import type { NotificationRepository, NotificationPreferenceStore, NotificationListFilters } from './types.js';
+import type {
+  NotificationRepository,
+  NotificationPreferenceStore,
+  NotificationListFilters,
+} from './types.js';
 
 /**
  * In-memory notification event store for testing (append-only).
@@ -21,35 +25,38 @@ export class InMemoryNotificationStore implements NotificationRepository {
     let results = [...this.events];
 
     if (filters?.tenant_user_id) {
-      results = results.filter(e => e.tenant_user_id === filters.tenant_user_id);
+      results = results.filter((e) => e.tenant_user_id === filters.tenant_user_id);
     }
     if (filters?.from) {
       const fromMs = new Date(filters.from).getTime();
-      results = results.filter(e => new Date(e.created_at).getTime() >= fromMs);
+      results = results.filter((e) => new Date(e.created_at).getTime() >= fromMs);
     }
     if (filters?.to) {
       const toMs = new Date(filters.to).getTime();
-      results = results.filter(e => new Date(e.created_at).getTime() < toMs);
+      results = results.filter((e) => new Date(e.created_at).getTime() < toMs);
     }
 
     return results;
   }
 
-  async queryByTenantUser(tenantUserId: string, limit?: number): Promise<readonly NotificationEvent[]> {
+  async queryByTenantUser(
+    tenantUserId: string,
+    limit?: number,
+  ): Promise<readonly NotificationEvent[]> {
     const results = this.events
-      .filter(e => e.tenant_user_id === tenantUserId)
+      .filter((e) => e.tenant_user_id === tenantUserId)
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     return limit ? results.slice(0, limit) : results;
   }
 
   async queryByConversation(conversationId: string): Promise<readonly NotificationEvent[]> {
     return this.events
-      .filter(e => e.conversation_id === conversationId)
+      .filter((e) => e.conversation_id === conversationId)
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }
 
   async findByIdempotencyKey(key: string): Promise<NotificationEvent | null> {
-    return this.events.find(e => e.idempotency_key === key) ?? null;
+    return this.events.find((e) => e.idempotency_key === key) ?? null;
   }
 
   async findRecentByTenantAndType(
@@ -59,10 +66,11 @@ export class InMemoryNotificationStore implements NotificationRepository {
     now: string,
   ): Promise<readonly NotificationEvent[]> {
     const cutoff = new Date(now).getTime() - cooldownMinutes * 60_000;
-    return this.events.filter(e =>
-      e.tenant_user_id === tenantUserId &&
-      e.notification_type === notificationType &&
-      new Date(e.created_at).getTime() >= cutoff,
+    return this.events.filter(
+      (e) =>
+        e.tenant_user_id === tenantUserId &&
+        e.notification_type === notificationType &&
+        new Date(e.created_at).getTime() >= cutoff,
     );
   }
 }

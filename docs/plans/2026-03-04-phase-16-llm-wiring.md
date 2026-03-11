@@ -13,6 +13,7 @@
 ### Task 0: Install `@anthropic-ai/sdk` dependency
 
 **Files:**
+
 - Modify: `packages/core/package.json`
 
 **Step 1: Add the dependency**
@@ -43,12 +44,13 @@ git commit -m "chore: add @anthropic-ai/sdk dependency to @wo-agent/core"
 ### Task 1: Create JSON response parser
 
 **Files:**
+
 - Create: `packages/core/src/llm/parse-response.ts`
 - Create: `packages/core/src/llm/__tests__/parse-response.test.ts`
 
 **Step 1: Write the failing test**
 
-```typescript
+````typescript
 // packages/core/src/llm/__tests__/parse-response.test.ts
 import { describe, it, expect } from 'vitest';
 import { extractJsonFromResponse } from '../parse-response.js';
@@ -70,7 +72,8 @@ describe('extractJsonFromResponse', () => {
   });
 
   it('extracts the first JSON object when surrounded by text', () => {
-    const input = 'I analyzed the text. {"issue_count": 1, "issues": [{"issue_id": "x", "summary": "leak", "raw_excerpt": "leak"}]} That is my answer.';
+    const input =
+      'I analyzed the text. {"issue_count": 1, "issues": [{"issue_id": "x", "summary": "leak", "raw_excerpt": "leak"}]} That is my answer.';
     const result = extractJsonFromResponse(input);
     expect(result).toHaveProperty('issue_count', 1);
   });
@@ -83,7 +86,7 @@ describe('extractJsonFromResponse', () => {
     expect(() => extractJsonFromResponse('I cannot help with that.')).toThrow('No JSON found');
   });
 });
-```
+````
 
 **Step 2: Run test to verify it fails**
 
@@ -92,7 +95,7 @@ Expected: FAIL — module not found
 
 **Step 3: Write minimal implementation**
 
-```typescript
+````typescript
 // packages/core/src/llm/parse-response.ts
 
 /**
@@ -136,9 +139,18 @@ export function extractJsonFromResponse(text: string): unknown {
     let escape = false;
     for (let i = firstBrace; i < trimmed.length; i++) {
       const ch = trimmed[i];
-      if (escape) { escape = false; continue; }
-      if (ch === '\\' && inString) { escape = true; continue; }
-      if (ch === '"') { inString = !inString; continue; }
+      if (escape) {
+        escape = false;
+        continue;
+      }
+      if (ch === '\\' && inString) {
+        escape = true;
+        continue;
+      }
+      if (ch === '"') {
+        inString = !inString;
+        continue;
+      }
       if (inString) continue;
       if (ch === '{') depth++;
       if (ch === '}') {
@@ -156,7 +168,7 @@ export function extractJsonFromResponse(text: string): unknown {
 
   throw new Error('No JSON found in LLM response');
 }
-```
+````
 
 **Step 4: Run test to verify it passes**
 
@@ -175,6 +187,7 @@ git commit -m "feat(llm): add JSON response parser for LLM output extraction"
 ### Task 2: Create the Anthropic client wrapper
 
 **Files:**
+
 - Create: `packages/core/src/llm/anthropic-client.ts`
 - Create: `packages/core/src/llm/__tests__/anthropic-client.test.ts`
 
@@ -226,12 +239,14 @@ describe('createAnthropicClient', () => {
     const client = createAnthropicClient({ apiKey: 'test-key' });
     // Re-mock for this specific call
     (client as any)._sdk.messages.create = mockCreate;
-    await expect(client.complete({
-      system: 'test',
-      userMessage: 'test',
-      model: 'claude-sonnet-4-20250514',
-      maxTokens: 1024,
-    })).rejects.toThrow('No text content');
+    await expect(
+      client.complete({
+        system: 'test',
+        userMessage: 'test',
+        model: 'claude-sonnet-4-20250514',
+        maxTokens: 1024,
+      }),
+    ).rejects.toThrow('No text content');
   });
 });
 ```
@@ -314,6 +329,7 @@ git commit -m "feat(llm): add Anthropic SDK client wrapper"
 ### Task 3: Create splitter prompt and adapter function
 
 **Files:**
+
 - Create: `packages/core/src/llm/prompts/splitter-prompt.ts`
 - Create: `packages/core/src/llm/adapters/splitter-adapter.ts`
 - Create: `packages/core/src/llm/__tests__/splitter-adapter.test.ts`
@@ -347,7 +363,11 @@ describe('createSplitterAdapter', () => {
     const responseJson = JSON.stringify({
       issues: [
         { issue_id: 'issue-1', summary: 'Toilet leak', raw_excerpt: 'My toilet is leaking' },
-        { issue_id: 'issue-2', summary: 'Kitchen light flickering', raw_excerpt: 'the kitchen light is flickering' },
+        {
+          issue_id: 'issue-2',
+          summary: 'Kitchen light flickering',
+          raw_excerpt: 'the kitchen light is flickering',
+        },
       ],
       issue_count: 2,
     });
@@ -475,6 +495,7 @@ git commit -m "feat(llm): add IssueSplitter prompt and adapter for Anthropic API
 ### Task 4: Create classifier prompt and adapter function
 
 **Files:**
+
 - Create: `packages/core/src/llm/prompts/classifier-prompt.ts`
 - Create: `packages/core/src/llm/adapters/classifier-adapter.ts`
 - Create: `packages/core/src/llm/__tests__/classifier-adapter.test.ts`
@@ -523,10 +544,15 @@ describe('createClassifierAdapter', () => {
         Priority: 'normal',
       },
       model_confidence: {
-        Category: 0.95, Location: 0.85, Sub_Location: 0.9,
-        Maintenance_Category: 0.92, Maintenance_Object: 0.95,
-        Maintenance_Problem: 0.93, Management_Category: 0.0,
-        Management_Object: 0.0, Priority: 0.7,
+        Category: 0.95,
+        Location: 0.85,
+        Sub_Location: 0.9,
+        Maintenance_Category: 0.92,
+        Maintenance_Object: 0.95,
+        Maintenance_Problem: 0.93,
+        Management_Category: 0.0,
+        Management_Object: 0.0,
+        Priority: 0.7,
       },
       missing_fields: [],
       needs_human_triage: false,
@@ -540,9 +566,14 @@ describe('createClassifierAdapter', () => {
   });
 
   it('includes retry context in the prompt when provided', async () => {
-    const client = mockClient('{"issue_id":"issue-1","classification":{},"model_confidence":{},"missing_fields":[],"needs_human_triage":false}');
+    const client = mockClient(
+      '{"issue_id":"issue-1","classification":{},"model_confidence":{},"missing_fields":[],"needs_human_triage":false}',
+    );
     const adapter = createClassifierAdapter(client, taxonomy);
-    await adapter(VALID_INPUT, { retryHint: 'domain_constraint', constraint: 'Set maintenance fields to N/A' });
+    await adapter(VALID_INPUT, {
+      retryHint: 'domain_constraint',
+      constraint: 'Set maintenance fields to N/A',
+    });
 
     const call = vi.mocked(client.complete).mock.calls[0][0];
     expect(call.userMessage).toContain('domain_constraint');
@@ -550,7 +581,9 @@ describe('createClassifierAdapter', () => {
   });
 
   it('includes followup_answers when present', async () => {
-    const client = mockClient('{"issue_id":"issue-1","classification":{},"model_confidence":{},"missing_fields":[],"needs_human_triage":false}');
+    const client = mockClient(
+      '{"issue_id":"issue-1","classification":{},"model_confidence":{},"missing_fields":[],"needs_human_triage":false}',
+    );
     const adapter = createClassifierAdapter(client, taxonomy);
     const inputWithAnswers: IssueClassifierInput = {
       ...VALID_INPUT,
@@ -676,7 +709,10 @@ export function buildClassifierUserMessage(
 // packages/core/src/llm/adapters/classifier-adapter.ts
 import type { IssueClassifierInput, Taxonomy } from '@wo-agent/schemas';
 import type { LlmClient } from '../anthropic-client.js';
-import { buildClassifierSystemPrompt, buildClassifierUserMessage } from '../prompts/classifier-prompt.js';
+import {
+  buildClassifierSystemPrompt,
+  buildClassifierUserMessage,
+} from '../prompts/classifier-prompt.js';
 import { extractJsonFromResponse } from '../parse-response.js';
 
 /**
@@ -724,6 +760,7 @@ git commit -m "feat(llm): add IssueClassifier prompt and adapter for Anthropic A
 ### Task 5: Create follow-up generator prompt and adapter function
 
 **Files:**
+
 - Create: `packages/core/src/llm/prompts/followup-prompt.ts`
 - Create: `packages/core/src/llm/adapters/followup-adapter.ts`
 - Create: `packages/core/src/llm/__tests__/followup-adapter.test.ts`
@@ -855,7 +892,9 @@ export function buildFollowUpUserMessage(
     `\nCurrent classification:`,
     ...Object.entries(input.classification).map(([k, v]) => `  ${k}: ${v}`),
     `\nConfidence by field:`,
-    ...Object.entries(input.confidence_by_field).map(([k, v]) => `  ${k}: ${(v as number).toFixed(2)}`),
+    ...Object.entries(input.confidence_by_field).map(
+      ([k, v]) => `  ${k}: ${(v as number).toFixed(2)}`,
+    ),
     `\nMissing fields: ${input.missing_fields.join(', ') || 'none'}`,
     `\nFields needing input (generate questions for THESE ONLY): ${input.fields_needing_input.join(', ')}`,
     `\nTurn number: ${input.turn_number}`,
@@ -893,10 +932,7 @@ import { extractJsonFromResponse } from '../parse-response.js';
  */
 export function createFollowUpAdapter(
   client: LlmClient,
-): (
-  input: FollowUpGeneratorInput,
-  retryContext?: { retryHint: string },
-) => Promise<unknown> {
+): (input: FollowUpGeneratorInput, retryContext?: { retryHint: string }) => Promise<unknown> {
   const systemPrompt = buildFollowUpSystemPrompt();
 
   return async (
@@ -933,6 +969,7 @@ git commit -m "feat(llm): add FollowUpGenerator prompt and adapter for Anthropic
 ### Task 6: Create LLM adapter factory and barrel exports
 
 **Files:**
+
 - Create: `packages/core/src/llm/create-llm-deps.ts`
 - Create: `packages/core/src/llm/index.ts`
 - Modify: `packages/core/src/index.ts` (add LLM exports)
@@ -990,7 +1027,13 @@ Expected: FAIL — module not found
 
 ```typescript
 // packages/core/src/llm/create-llm-deps.ts
-import type { IssueSplitterInput, IssueSplitterOutput, IssueClassifierInput, FollowUpGeneratorInput, Taxonomy } from '@wo-agent/schemas';
+import type {
+  IssueSplitterInput,
+  IssueSplitterOutput,
+  IssueClassifierInput,
+  FollowUpGeneratorInput,
+  Taxonomy,
+} from '@wo-agent/schemas';
 import { createAnthropicClient } from './anthropic-client.js';
 import { createSplitterAdapter } from './adapters/splitter-adapter.js';
 import { createClassifierAdapter } from './adapters/classifier-adapter.js';
@@ -1088,6 +1131,7 @@ git commit -m "feat(llm): add adapter factory and barrel exports for LLM wiring"
 ### Task 7: Wire real LLM into orchestrator-factory.ts
 
 **Files:**
+
 - Modify: `apps/web/src/lib/orchestrator-factory.ts:97-133`
 
 **Step 1: Write a smoke test for the factory wiring**
@@ -1148,57 +1192,73 @@ Replace the stub LLM functions (lines 102-133) with conditional real/stub wiring
 import { createLlmDependencies, type LlmDependencies } from '@wo-agent/core';
 
 // Inside ensureInitialized(), replace the stub functions with:
-    const taxonomy = loadTaxonomy();
-    const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
+const taxonomy = loadTaxonomy();
+const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
 
-    let llmDeps: LlmDependencies | null = null;
-    if (anthropicApiKey) {
-      llmDeps = createLlmDependencies({
-        apiKey: anthropicApiKey,
-        taxonomy,
-        defaultModel: process.env.LLM_DEFAULT_MODEL,
-      });
-    }
+let llmDeps: LlmDependencies | null = null;
+if (anthropicApiKey) {
+  llmDeps = createLlmDependencies({
+    apiKey: anthropicApiKey,
+    taxonomy,
+    defaultModel: process.env.LLM_DEFAULT_MODEL,
+  });
+}
 
-    const deps: OrchestratorDependencies = {
-      eventRepo: stores.eventRepo,
-      sessionStore: stores.sessionStore,
-      idGenerator,
-      clock,
-      issueSplitter: llmDeps?.issueSplitter ?? (async (input) => ({
-        issues: [{ issue_id: randomUUID(), summary: input.raw_text.slice(0, 200), raw_excerpt: input.raw_text }],
-        issue_count: 1,
-      })),
-      issueClassifier: llmDeps?.issueClassifier ?? (async (input: IssueClassifierInput) => ({
-        issue_id: input.issue_id,
-        classification: {
-          Category: 'maintenance',
-          Location: 'suite',
-          Sub_Location: 'general',
-          Maintenance_Category: 'general_maintenance',
-          Maintenance_Object: 'other_object',
-          Maintenance_Problem: 'not_working',
-          Management_Category: 'other_mgmt_cat',
-          Management_Object: 'other_mgmt_obj',
-          Priority: 'normal',
+const deps: OrchestratorDependencies = {
+  eventRepo: stores.eventRepo,
+  sessionStore: stores.sessionStore,
+  idGenerator,
+  clock,
+  issueSplitter:
+    llmDeps?.issueSplitter ??
+    (async (input) => ({
+      issues: [
+        {
+          issue_id: randomUUID(),
+          summary: input.raw_text.slice(0, 200),
+          raw_excerpt: input.raw_text,
         },
-        model_confidence: {
-          Category: 0.7, Location: 0.5, Sub_Location: 0.5,
-          Maintenance_Category: 0.6, Maintenance_Object: 0.5,
-          Maintenance_Problem: 0.5, Management_Category: 0.0,
-          Management_Object: 0.0, Priority: 0.5,
-        },
-        missing_fields: [],
-        needs_human_triage: false,
-      })),
-      followUpGenerator: llmDeps?.followUpGenerator ?? (async () => ({ questions: [] })),
-      cueDict: classificationCues as CueDictionary,
-      taxonomy,
-      // ... rest of deps unchanged
-    };
+      ],
+      issue_count: 1,
+    })),
+  issueClassifier:
+    llmDeps?.issueClassifier ??
+    (async (input: IssueClassifierInput) => ({
+      issue_id: input.issue_id,
+      classification: {
+        Category: 'maintenance',
+        Location: 'suite',
+        Sub_Location: 'general',
+        Maintenance_Category: 'general_maintenance',
+        Maintenance_Object: 'other_object',
+        Maintenance_Problem: 'not_working',
+        Management_Category: 'other_mgmt_cat',
+        Management_Object: 'other_mgmt_obj',
+        Priority: 'normal',
+      },
+      model_confidence: {
+        Category: 0.7,
+        Location: 0.5,
+        Sub_Location: 0.5,
+        Maintenance_Category: 0.6,
+        Maintenance_Object: 0.5,
+        Maintenance_Problem: 0.5,
+        Management_Category: 0.0,
+        Management_Object: 0.0,
+        Priority: 0.5,
+      },
+      missing_fields: [],
+      needs_human_triage: false,
+    })),
+  followUpGenerator: llmDeps?.followUpGenerator ?? (async () => ({ questions: [] })),
+  cueDict: classificationCues as CueDictionary,
+  taxonomy,
+  // ... rest of deps unchanged
+};
 ```
 
 Key changes:
+
 - Import `createLlmDependencies` from `@wo-agent/core`
 - Read `ANTHROPIC_API_KEY` from env
 - If key present: use real LLM adapters
@@ -1227,6 +1287,7 @@ git commit -m "feat(llm): wire real Anthropic LLM adapters in orchestrator facto
 ### Task 8: Update environment configuration
 
 **Files:**
+
 - Modify: `.env.example`
 
 **Step 1: Add LLM environment variables**
@@ -1286,6 +1347,7 @@ Expected: Build succeeds (stubs used when no API key)
 **Step 4: Manual verification with API key (if available)**
 
 Set `ANTHROPIC_API_KEY` in environment, start dev server, submit a test message through the chat UI, and verify:
+
 - Splitter correctly identifies issues from multi-issue messages
 - Classifier assigns taxonomy values from the real taxonomy
 - Follow-up generator asks relevant questions for low-confidence fields

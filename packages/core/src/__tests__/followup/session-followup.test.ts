@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { createSession, updateFollowUpTracking, setPendingFollowUpQuestions } from '../../session/session.js';
+import {
+  createSession,
+  updateFollowUpTracking,
+  setPendingFollowUpQuestions,
+} from '../../session/session.js';
 import type { FollowUpQuestion, PreviousQuestion } from '@wo-agent/schemas';
 
 const VERSIONS = {
@@ -37,8 +41,20 @@ describe('updateFollowUpTracking', () => {
     });
 
     const questions: FollowUpQuestion[] = [
-      { question_id: 'q1', field_target: 'Priority', prompt: 'Priority?', options: ['low', 'high'], answer_type: 'enum' },
-      { question_id: 'q2', field_target: 'Location', prompt: 'Location?', options: ['suite', 'common'], answer_type: 'enum' },
+      {
+        question_id: 'q1',
+        field_target: 'Priority',
+        prompt: 'Priority?',
+        options: ['low', 'high'],
+        answer_type: 'enum',
+      },
+      {
+        question_id: 'q2',
+        field_target: 'Location',
+        prompt: 'Location?',
+        options: ['suite', 'common'],
+        answer_type: 'enum',
+      },
     ];
 
     session = updateFollowUpTracking(session, questions);
@@ -62,17 +78,33 @@ describe('updateFollowUpTracking', () => {
 
     // First turn: ask about Priority
     const turn1: FollowUpQuestion[] = [
-      { question_id: 'q1', field_target: 'Priority', prompt: 'Priority?', options: [], answer_type: 'enum' },
+      {
+        question_id: 'q1',
+        field_target: 'Priority',
+        prompt: 'Priority?',
+        options: [],
+        answer_type: 'enum',
+      },
     ];
     session = updateFollowUpTracking(session, turn1);
-    expect(session.previous_questions).toEqual([
-      { field_target: 'Priority', times_asked: 1 },
-    ]);
+    expect(session.previous_questions).toEqual([{ field_target: 'Priority', times_asked: 1 }]);
 
     // Second turn: ask about Priority again + Location
     const turn2: FollowUpQuestion[] = [
-      { question_id: 'q2', field_target: 'Priority', prompt: 'Priority again?', options: [], answer_type: 'enum' },
-      { question_id: 'q3', field_target: 'Location', prompt: 'Location?', options: [], answer_type: 'enum' },
+      {
+        question_id: 'q2',
+        field_target: 'Priority',
+        prompt: 'Priority again?',
+        options: [],
+        answer_type: 'enum',
+      },
+      {
+        question_id: 'q3',
+        field_target: 'Location',
+        prompt: 'Location?',
+        options: [],
+        answer_type: 'enum',
+      },
     ];
     session = updateFollowUpTracking(session, turn2);
     expect(session.followup_turn_number).toBe(2);
@@ -93,7 +125,13 @@ describe('setPendingFollowUpQuestions', () => {
     });
 
     const questions: FollowUpQuestion[] = [
-      { question_id: 'q1', field_target: 'Priority', prompt: 'Priority?', options: ['low', 'high'], answer_type: 'enum' },
+      {
+        question_id: 'q1',
+        field_target: 'Priority',
+        prompt: 'Priority?',
+        options: ['low', 'high'],
+        answer_type: 'enum',
+      },
     ];
 
     session = setPendingFollowUpQuestions(session, questions);
@@ -110,7 +148,13 @@ describe('setPendingFollowUpQuestions', () => {
     });
 
     session = setPendingFollowUpQuestions(session, [
-      { question_id: 'q1', field_target: 'Priority', prompt: '?', options: [], answer_type: 'text' },
+      {
+        question_id: 'q1',
+        field_target: 'Priority',
+        prompt: '?',
+        options: [],
+        answer_type: 'text',
+      },
     ]);
     session = setPendingFollowUpQuestions(session, null);
     expect(session.pending_followup_questions).toBeNull();

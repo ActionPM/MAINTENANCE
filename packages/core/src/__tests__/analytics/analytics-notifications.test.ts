@@ -33,14 +33,21 @@ function makeWO(id: string): WorkOrder {
     missing_fields: [],
     pets_present: 'unknown',
     needs_human_triage: false,
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'test', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'test',
+      prompt_version: '1.0.0',
+    },
     created_at: '2026-03-01T10:00:00Z',
     updated_at: '2026-03-01T10:00:00Z',
     row_version: 0,
   };
 }
 
-function makeNotif(overrides: Partial<NotificationEvent> & { event_id: string; notification_id: string }): NotificationEvent {
+function makeNotif(
+  overrides: Partial<NotificationEvent> & { event_id: string; notification_id: string },
+): NotificationEvent {
   return {
     conversation_id: 'conv-1',
     tenant_user_id: 'tu-1',
@@ -66,7 +73,12 @@ describe('AnalyticsService.computeNotificationMetrics (Phase 13)', () => {
   it('returns zeroes when no notifications exist', async () => {
     const woRepo = new InMemoryWorkOrderStore();
     const notifRepo = new InMemoryNotificationStore();
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
 
     const result = await svc.compute({});
     expect(result.notifications.total_sent).toBe(0);
@@ -78,28 +90,69 @@ describe('AnalyticsService.computeNotificationMetrics (Phase 13)', () => {
     const woRepo = new InMemoryWorkOrderStore();
     const notifRepo = new InMemoryNotificationStore();
     await woRepo.insertBatch([makeWO('wo-1')]);
-    await notifRepo.insert(makeNotif({ event_id: 'e-1', notification_id: 'n-1', channel: 'in_app', notification_type: 'work_order_created' }));
-    await notifRepo.insert(makeNotif({ event_id: 'e-2', notification_id: 'n-2', channel: 'sms', notification_type: 'status_changed' }));
-    await notifRepo.insert(makeNotif({ event_id: 'e-3', notification_id: 'n-3', channel: 'in_app', notification_type: 'needs_input' }));
+    await notifRepo.insert(
+      makeNotif({
+        event_id: 'e-1',
+        notification_id: 'n-1',
+        channel: 'in_app',
+        notification_type: 'work_order_created',
+      }),
+    );
+    await notifRepo.insert(
+      makeNotif({
+        event_id: 'e-2',
+        notification_id: 'n-2',
+        channel: 'sms',
+        notification_type: 'status_changed',
+      }),
+    );
+    await notifRepo.insert(
+      makeNotif({
+        event_id: 'e-3',
+        notification_id: 'n-3',
+        channel: 'in_app',
+        notification_type: 'needs_input',
+      }),
+    );
 
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
     const result = await svc.compute({});
 
     expect(result.notifications.total_sent).toBe(3);
     expect(result.notifications.by_channel).toEqual({ in_app: 2, sms: 1 });
-    expect(result.notifications.by_type).toEqual({ work_order_created: 1, status_changed: 1, needs_input: 1 });
+    expect(result.notifications.by_type).toEqual({
+      work_order_created: 1,
+      status_changed: 1,
+      needs_input: 1,
+    });
   });
 
   it('computes delivery success percentage', async () => {
     const woRepo = new InMemoryWorkOrderStore();
     const notifRepo = new InMemoryNotificationStore();
     await woRepo.insertBatch([makeWO('wo-1')]);
-    await notifRepo.insert(makeNotif({ event_id: 'e-1', notification_id: 'n-1', status: 'delivered' }));
-    await notifRepo.insert(makeNotif({ event_id: 'e-2', notification_id: 'n-2', status: 'delivered' }));
+    await notifRepo.insert(
+      makeNotif({ event_id: 'e-1', notification_id: 'n-1', status: 'delivered' }),
+    );
+    await notifRepo.insert(
+      makeNotif({ event_id: 'e-2', notification_id: 'n-2', status: 'delivered' }),
+    );
     await notifRepo.insert(makeNotif({ event_id: 'e-3', notification_id: 'n-3', status: 'sent' }));
-    await notifRepo.insert(makeNotif({ event_id: 'e-4', notification_id: 'n-4', status: 'failed' }));
+    await notifRepo.insert(
+      makeNotif({ event_id: 'e-4', notification_id: 'n-4', status: 'failed' }),
+    );
 
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
     const result = await svc.compute({});
 
     expect(result.notifications.total_sent).toBe(4);

@@ -8,8 +8,18 @@ import {
   updateFollowUpTracking,
   setPendingFollowUpQuestions,
 } from '../../session/session.js';
-import { ConversationState, ActorType, DEFAULT_FOLLOWUP_CAPS, loadTaxonomy } from '@wo-agent/schemas';
-import type { IssueClassifierOutput, FollowUpGeneratorOutput, FollowUpQuestion, CueDictionary } from '@wo-agent/schemas';
+import {
+  ConversationState,
+  ActorType,
+  DEFAULT_FOLLOWUP_CAPS,
+  loadTaxonomy,
+} from '@wo-agent/schemas';
+import type {
+  IssueClassifierOutput,
+  FollowUpGeneratorOutput,
+  FollowUpQuestion,
+  CueDictionary,
+} from '@wo-agent/schemas';
 import type { IssueClassificationResult } from '../../session/types.js';
 
 const taxonomy = loadTaxonomy();
@@ -35,9 +45,15 @@ const HIGH_CONF_OUTPUT: IssueClassifierOutput = {
     Priority: 'normal',
   },
   model_confidence: {
-    Category: 0.95, Location: 0.9, Sub_Location: 0.85,
-    Maintenance_Category: 0.95, Maintenance_Object: 0.95, Maintenance_Problem: 0.95,
-    Management_Category: 0.0, Management_Object: 0.0, Priority: 0.95,
+    Category: 0.95,
+    Location: 0.9,
+    Sub_Location: 0.85,
+    Maintenance_Category: 0.95,
+    Maintenance_Object: 0.95,
+    Maintenance_Problem: 0.95,
+    Management_Category: 0.0,
+    Management_Object: 0.0,
+    Priority: 0.95,
   },
   missing_fields: [],
   needs_human_triage: false,
@@ -87,15 +103,17 @@ function makeAnswerContext(overrides?: {
   cueDict?: CueDictionary;
 }) {
   let counter = 0;
-  const priorResults: IssueClassificationResult[] = [{
-    issue_id: 'i1',
-    classifierOutput: {
-      ...HIGH_CONF_OUTPUT,
-      model_confidence: { ...HIGH_CONF_OUTPUT.model_confidence, Priority: 0.3 },
+  const priorResults: IssueClassificationResult[] = [
+    {
+      issue_id: 'i1',
+      classifierOutput: {
+        ...HIGH_CONF_OUTPUT,
+        model_confidence: { ...HIGH_CONF_OUTPUT.model_confidence, Priority: 0.3 },
+      },
+      computedConfidence: { Category: 0.9, Priority: 0.4 },
+      fieldsNeedingInput: ['Priority'],
     },
-    computedConfidence: { Category: 0.9, Priority: 0.4 },
-    fieldsNeedingInput: ['Priority'],
-  }];
+  ];
 
   let session = createSession({
     conversation_id: 'conv-1',
@@ -119,9 +137,7 @@ function makeAnswerContext(overrides?: {
       action_type: 'ANSWER_FOLLOWUPS' as any,
       actor: ActorType.TENANT,
       tenant_input: {
-        answers: [
-          { question_id: 'q1', answer: 'normal', received_at: '2026-02-25T12:05:00.000Z' },
-        ],
+        answers: [{ question_id: 'q1', answer: 'normal', received_at: '2026-02-25T12:05:00.000Z' }],
       },
       auth_context: {
         tenant_user_id: 'user-1',
@@ -136,12 +152,19 @@ function makeAnswerContext(overrides?: {
       clock: () => '2026-02-25T12:05:00.000Z',
       issueSplitter: vi.fn(),
       issueClassifier: overrides?.classifierFn ?? vi.fn().mockResolvedValue(HIGH_CONF_OUTPUT),
-      followUpGenerator: overrides?.followUpFn ?? vi.fn().mockResolvedValue({
-        questions: [{
-          question_id: 'q2', field_target: 'Priority',
-          prompt: 'Priority again?', options: ['low', 'high'], answer_type: 'enum',
-        }],
-      }),
+      followUpGenerator:
+        overrides?.followUpFn ??
+        vi.fn().mockResolvedValue({
+          questions: [
+            {
+              question_id: 'q2',
+              field_target: 'Priority',
+              prompt: 'Priority again?',
+              options: ['low', 'high'],
+              answer_type: 'enum',
+            },
+          ],
+        }),
       cueDict: overrides?.cueDict ?? FULL_CUES,
       taxonomy,
       followUpCaps: DEFAULT_FOLLOWUP_CAPS,
@@ -182,10 +205,15 @@ describe('handleAnswerFollowups', () => {
       cueDict: MINI_CUES,
       // Return a question for a non-answered field (Priority is answered and short-circuited)
       followUpFn: vi.fn().mockResolvedValue({
-        questions: [{
-          question_id: 'q2', field_target: 'Sub_Location',
-          prompt: 'Which room?', options: ['kitchen', 'bathroom'], answer_type: 'enum',
-        }],
+        questions: [
+          {
+            question_id: 'q2',
+            field_target: 'Sub_Location',
+            prompt: 'Which room?',
+            options: ['kitchen', 'bathroom'],
+            answer_type: 'enum',
+          },
+        ],
       }),
     });
     const result = await handleAnswerFollowups(ctx);
@@ -213,7 +241,9 @@ describe('handleAnswerFollowups', () => {
     const result = await handleAnswerFollowups(ctx);
     // Should escape hatch → tenant_confirmation_pending with needs_human_triage
     expect(result.newState).toBe(ConversationState.TENANT_CONFIRMATION_PENDING);
-    expect(result.session.classification_results![0].classifierOutput.needs_human_triage).toBe(true);
+    expect(result.session.classification_results![0].classifierOutput.needs_human_triage).toBe(
+      true,
+    );
   });
 
   it('triggers escape hatch when re-ask limit reached for all fields', async () => {
@@ -233,7 +263,9 @@ describe('handleAnswerFollowups', () => {
 
     const result = await handleAnswerFollowups(ctx);
     expect(result.newState).toBe(ConversationState.TENANT_CONFIRMATION_PENDING);
-    expect(result.session.classification_results![0].classifierOutput.needs_human_triage).toBe(true);
+    expect(result.session.classification_results![0].classifierOutput.needs_human_triage).toBe(
+      true,
+    );
   });
 
   it('does not re-ask fields that were directly answered by tenant', async () => {
@@ -252,10 +284,15 @@ describe('handleAnswerFollowups', () => {
       cueDict: MINI_CUES,
       // Return a question for Sub_Location (not Priority, which is answered)
       followUpFn: vi.fn().mockResolvedValue({
-        questions: [{
-          question_id: 'q-sub2', field_target: 'Sub_Location',
-          prompt: 'Which room?', options: ['kitchen', 'bathroom'], answer_type: 'enum',
-        }],
+        questions: [
+          {
+            question_id: 'q-sub2',
+            field_target: 'Sub_Location',
+            prompt: 'Which room?',
+            options: ['kitchen', 'bathroom'],
+            answer_type: 'enum',
+          },
+        ],
       }),
     });
     // Add Sub_Location to pending questions so we have two low-confidence fields
@@ -273,9 +310,7 @@ describe('handleAnswerFollowups', () => {
     ctx.request = {
       ...ctx.request,
       tenant_input: {
-        answers: [
-          { question_id: 'q1', answer: 'normal', received_at: '2026-02-25T12:05:00.000Z' },
-        ],
+        answers: [{ question_id: 'q1', answer: 'normal', received_at: '2026-02-25T12:05:00.000Z' }],
       },
     } as any;
 

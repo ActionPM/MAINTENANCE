@@ -1,4 +1,9 @@
-import type { RecordBundle, CommunicationEntry, ResolutionInfo, NotificationEvent } from '@wo-agent/schemas';
+import type {
+  RecordBundle,
+  CommunicationEntry,
+  ResolutionInfo,
+  NotificationEvent,
+} from '@wo-agent/schemas';
 import { WorkOrderStatus } from '@wo-agent/schemas';
 import type { RecordBundleDeps } from './types.js';
 import { computeSlaMetadata } from './sla-calculator.js';
@@ -20,7 +25,7 @@ export async function assembleRecordBundle(
   // 1. Communications from notification events
   const notifications = await deps.notificationRepo.queryByConversation(wo.conversation_id);
   const communications: CommunicationEntry[] = notifications
-    .filter(n => n.work_order_ids.includes(workOrderId))
+    .filter((n) => n.work_order_ids.includes(workOrderId))
     .map(toCommunicationEntry);
 
   // 2. SLA schedule
@@ -72,15 +77,23 @@ function toCommunicationEntry(n: NotificationEvent): CommunicationEntry {
 
 function computeResolution(
   currentStatus: string,
-  statusHistory: readonly { readonly status: string; readonly changed_at: string; readonly actor: string }[],
+  statusHistory: readonly {
+    readonly status: string;
+    readonly changed_at: string;
+    readonly actor: string;
+  }[],
 ): ResolutionInfo {
   const isTerminal = TERMINAL_STATUSES.includes(currentStatus);
   if (!isTerminal) {
-    return { resolved: false, final_status: currentStatus as ResolutionInfo['final_status'], resolved_at: null };
+    return {
+      resolved: false,
+      final_status: currentStatus as ResolutionInfo['final_status'],
+      resolved_at: null,
+    };
   }
 
   // Find the last entry with the terminal status
-  const terminalEntry = [...statusHistory].reverse().find(e => e.status === currentStatus);
+  const terminalEntry = [...statusHistory].reverse().find((e) => e.status === currentStatus);
 
   return {
     resolved: currentStatus === WorkOrderStatus.RESOLVED,

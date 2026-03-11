@@ -77,9 +77,7 @@ export async function runIssueReplay(input: IssueReplayInput): Promise<IssueRepl
     );
     if (!taxResult.valid) {
       const errors = [
-        ...taxResult.invalidValues.map(
-          (iv) => `${iv.field}: "${iv.value}" not in taxonomy`,
-        ),
+        ...taxResult.invalidValues.map((iv) => `${iv.field}: "${iv.value}" not in taxonomy`),
         ...(taxResult.contradictory ? ['Cross-domain contradiction detected'] : []),
         ...taxResult.crossDomainViolations,
       ];

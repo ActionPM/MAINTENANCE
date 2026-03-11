@@ -20,19 +20,23 @@ function makeSession(state: ConversationState): ConversationSession {
     unit_id: 'unit-1',
     authorized_unit_ids: ['unit-1'],
     pinned_versions: PINNED,
-    split_issues: [{ issue_id: 'issue-1', summary: 'Leaking toilet', raw_excerpt: 'My toilet leaks' }],
-    classification_results: [{
-      issue_id: 'issue-1',
-      classifierOutput: {
+    split_issues: [
+      { issue_id: 'issue-1', summary: 'Leaking toilet', raw_excerpt: 'My toilet leaks' },
+    ],
+    classification_results: [
+      {
         issue_id: 'issue-1',
-        classification: { Category: 'maintenance' },
-        model_confidence: { Category: 0.95 },
-        missing_fields: [],
-        needs_human_triage: false,
+        classifierOutput: {
+          issue_id: 'issue-1',
+          classification: { Category: 'maintenance' },
+          model_confidence: { Category: 0.95 },
+          missing_fields: [],
+          needs_human_triage: false,
+        },
+        computedConfidence: { Category: 0.92 },
+        fieldsNeedingInput: [],
       },
-      computedConfidence: { Category: 0.92 },
-      fieldsNeedingInput: [],
-    }],
+    ],
     prior_state_before_error: null,
     followup_turn_number: 0,
     total_questions_asked: 0,

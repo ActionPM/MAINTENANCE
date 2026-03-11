@@ -72,7 +72,7 @@ describe('scanTextForTriggers', () => {
   it('matches multiple triggers', () => {
     const result = scanTextForTriggers('Fire and flooding in the building', TEST_PROTOCOLS);
     expect(result.triggers_matched).toHaveLength(2);
-    const ids = result.triggers_matched.map(t => t.trigger.trigger_id);
+    const ids = result.triggers_matched.map((t) => t.trigger.trigger_id);
     expect(ids).toContain('fire-001');
     expect(ids).toContain('flood-001');
   });
@@ -99,23 +99,37 @@ describe('scanTextForTriggers', () => {
 describe('scanClassificationForTriggers', () => {
   it('matches taxonomy path triggers using classifier field keys', () => {
     // Classifier outputs PascalCase field keys: Category, Maintenance_Category, Maintenance_Problem
-    const classification = { Category: 'maintenance', Maintenance_Category: 'plumbing', Maintenance_Problem: 'flood' };
+    const classification = {
+      Category: 'maintenance',
+      Maintenance_Category: 'plumbing',
+      Maintenance_Problem: 'flood',
+    };
     const result = scanClassificationForTriggers(classification, TEST_PROTOCOLS);
     expect(result.triggers_matched).toHaveLength(1);
     expect(result.triggers_matched[0].trigger.trigger_id).toBe('flood-001');
-    expect(result.triggers_matched[0].matched_taxonomy_paths).toContain('maintenance.plumbing.flood');
+    expect(result.triggers_matched[0].matched_taxonomy_paths).toContain(
+      'maintenance.plumbing.flood',
+    );
   });
 
   it('matches two-level taxonomy path (Category.Maintenance_Category)', () => {
     // hvac.no_heat needs 3 levels, but Category.Maintenance_Category alone should match 2-level paths
-    const classification = { Category: 'maintenance', Maintenance_Category: 'hvac', Maintenance_Problem: 'no_heat' };
+    const classification = {
+      Category: 'maintenance',
+      Maintenance_Category: 'hvac',
+      Maintenance_Problem: 'no_heat',
+    };
     const result = scanClassificationForTriggers(classification, TEST_PROTOCOLS);
     expect(result.triggers_matched).toHaveLength(1);
     expect(result.triggers_matched[0].trigger.trigger_id).toBe('no-heat-001');
   });
 
   it('returns empty for non-risk classification', () => {
-    const classification = { Category: 'maintenance', Maintenance_Category: 'general', Maintenance_Problem: 'cleaning' };
+    const classification = {
+      Category: 'maintenance',
+      Maintenance_Category: 'general',
+      Maintenance_Problem: 'cleaning',
+    };
     const result = scanClassificationForTriggers(classification, TEST_PROTOCOLS);
     expect(result.triggers_matched).toHaveLength(0);
   });

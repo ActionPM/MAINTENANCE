@@ -31,14 +31,22 @@ describe('computeCueStrengthForField', () => {
   });
 
   it('returns boosted score for keyword hits', () => {
-    const result = computeCueStrengthForField('my toilet is leaking water from the pipe', 'Maintenance_Category', MINI_CUES);
+    const result = computeCueStrengthForField(
+      'my toilet is leaking water from the pipe',
+      'Maintenance_Category',
+      MINI_CUES,
+    );
     // plumbing: leak(1) + toilet(1) + pipe(1) = 3 hits * 0.6 = 1.8 → clamped to 1.0
     expect(result.score).toBe(1.0);
     expect(result.topLabel).toBe('plumbing');
   });
 
   it('returns top label when multiple labels match', () => {
-    const result = computeCueStrengthForField('the outlet sparks when I plug in the toilet', 'Maintenance_Category', MINI_CUES);
+    const result = computeCueStrengthForField(
+      'the outlet sparks when I plug in the toilet',
+      'Maintenance_Category',
+      MINI_CUES,
+    );
     // plumbing: toilet(1) = 1 * 0.6 = 0.6
     // electrical: outlet(1) + sparks(1) = 2 * 0.6 = 1.0 (clamped)
     expect(result.topLabel).toBe('electrical');
@@ -66,7 +74,11 @@ describe('computeCueStrengthForField', () => {
         },
       },
     };
-    const result = computeCueStrengthForField('the faucet is leaking badly', 'Maintenance_Problem', cues);
+    const result = computeCueStrengthForField(
+      'the faucet is leaking badly',
+      'Maintenance_Problem',
+      cues,
+    );
     // 1 regex hit → min(1, 1 * 0.6) = 0.6
     expect(result.score).toBeCloseTo(0.6);
     expect(result.topLabel).toBe('leak');
@@ -91,11 +103,7 @@ describe('per-hit boost normalization', () => {
   it('produces meaningful score from a single keyword hit', () => {
     // With 5 keywords but only 1 hit, score should still be substantial
     // (not diluted to 1/5 = 0.2 as with old normalization)
-    const result = computeCueStrengthForField(
-      'there is a leak',
-      'Maintenance_Category',
-      MINI_CUES,
-    );
+    const result = computeCueStrengthForField('there is a leak', 'Maintenance_Category', MINI_CUES);
     // 1 hit out of 5 keywords for plumbing: should be HIT_BOOST (0.6), not 0.2
     expect(result.score).toBeGreaterThanOrEqual(0.5);
     expect(result.topLabel).toBe('plumbing');
@@ -273,7 +281,9 @@ describe('computeCueScores', () => {
 });
 
 describe('bathtub vs shower cue disambiguation (v1.2)', () => {
-  const realCues: CueDictionary = JSON.parse(readFileSync(resolve(schemasDir, 'classification_cues.json'), 'utf-8'));
+  const realCues: CueDictionary = JSON.parse(
+    readFileSync(resolve(schemasDir, 'classification_cues.json'), 'utf-8'),
+  );
 
   it('scores bathtub higher than shower for tub-specific text', () => {
     const text = "bathtub drain is clogged and water won't drain";

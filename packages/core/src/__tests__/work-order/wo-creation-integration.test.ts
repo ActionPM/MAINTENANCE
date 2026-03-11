@@ -39,10 +39,15 @@ const FULL_CLASSIFICATION = {
     Priority: 'normal',
   },
   model_confidence: {
-    Category: 0.95, Location: 0.9, Sub_Location: 0.85,
-    Maintenance_Category: 0.92, Maintenance_Object: 0.95,
-    Maintenance_Problem: 0.88, Management_Category: 0.95,
-    Management_Object: 0.95, Priority: 0.9,
+    Category: 0.95,
+    Location: 0.9,
+    Sub_Location: 0.85,
+    Maintenance_Category: 0.92,
+    Maintenance_Object: 0.95,
+    Maintenance_Problem: 0.88,
+    Management_Category: 0.95,
+    Management_Object: 0.95,
+    Priority: 0.9,
   },
   missing_fields: [],
   needs_human_triage: false,
@@ -50,11 +55,15 @@ const FULL_CLASSIFICATION = {
 
 class InMemorySessionStore implements SessionStore {
   private sessions = new Map<string, ConversationSession>();
-  async get(id: string) { return this.sessions.get(id) ?? null; }
+  async get(id: string) {
+    return this.sessions.get(id) ?? null;
+  }
   async getByTenantUser(userId: string) {
     return [...this.sessions.values()].filter((s) => s.tenant_user_id === userId);
   }
-  async save(session: ConversationSession) { this.sessions.set(session.conversation_id, session); }
+  async save(session: ConversationSession) {
+    this.sessions.set(session.conversation_id, session);
+  }
 }
 
 const AUTH = { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['u1'] };
@@ -74,7 +83,11 @@ function makeDeps() {
     clock: () => '2026-03-03T12:00:00Z',
     issueSplitter: async (input: any) => ({
       issues: [
-        { issue_id: `issue-${++counter}`, summary: 'Toilet leaking', raw_excerpt: input.raw_text ?? 'My toilet is leaking' },
+        {
+          issue_id: `issue-${++counter}`,
+          summary: 'Toilet leaking',
+          raw_excerpt: input.raw_text ?? 'My toilet is leaking',
+        },
       ],
       issue_count: 1,
     }),
@@ -188,7 +201,7 @@ describe('WO creation on CONFIRM_SUBMISSION', () => {
     });
 
     const woEffect = result.response.pending_side_effects.find(
-      se => se.effect_type === 'create_work_orders',
+      (se) => se.effect_type === 'create_work_orders',
     );
     expect(woEffect?.status).toBe('completed');
   });

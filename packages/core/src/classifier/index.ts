@@ -1,7 +1,4 @@
-export {
-  computeCueScores,
-  computeCueStrengthForField,
-} from './cue-scoring.js';
+export { computeCueScores, computeCueStrengthForField } from './cue-scoring.js';
 export type { CueFieldResult, CueScoreMap } from './cue-scoring.js';
 
 export {
@@ -10,14 +7,16 @@ export {
   classifyConfidenceBand,
   determineFieldsNeedingInput,
 } from './confidence.js';
-export type { ConfidenceBand, FieldConfidenceInput, ComputeAllInput, DetermineFieldsOptions, FieldPolicyMetadata } from './confidence.js';
+export type {
+  ConfidenceBand,
+  FieldConfidenceInput,
+  ComputeAllInput,
+  DetermineFieldsOptions,
+  FieldPolicyMetadata,
+} from './confidence.js';
 export { DEFAULT_FIELD_POLICY } from './confidence.js';
 
-export {
-  callIssueClassifier,
-  ClassifierError,
-  ClassifierErrorCode,
-} from './issue-classifier.js';
+export { callIssueClassifier, ClassifierError, ClassifierErrorCode } from './issue-classifier.js';
 export type { ClassifierResult } from './issue-classifier.js';
 
 export { resolveValidOptions, resolveConstraintImpliedFields } from './constraint-resolver.js';

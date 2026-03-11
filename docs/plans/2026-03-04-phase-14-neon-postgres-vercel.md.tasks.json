@@ -1,20 +1,65 @@
 {
   "planPath": "docs/plans/2026-03-04-phase-14-neon-postgres-vercel.md",
   "tasks": [
-    {"id": 0, "subject": "Task 0: Scaffold packages/db Workspace Package", "status": "pending"},
-    {"id": 1, "subject": "Task 1: Neon Client Pool + Migration Runner", "status": "pending", "blockedBy": [0]},
-    {"id": 2, "subject": "Task 2: SQL Migrations — Event Tables (Append-Only)", "status": "pending", "blockedBy": [1]},
-    {"id": 3, "subject": "Task 3: SQL Migrations — Mutable Tables", "status": "pending", "blockedBy": [1]},
-    {"id": 4, "subject": "Task 4: PostgresEventStore", "status": "pending", "blockedBy": [2]},
-    {"id": 5, "subject": "Task 5: PostgresWorkOrderStore", "status": "pending", "blockedBy": [3]},
-    {"id": 6, "subject": "Task 6: PostgresSessionStore", "status": "pending", "blockedBy": [3]},
-    {"id": 7, "subject": "Task 7: PostgresNotificationStore + PostgresNotificationPreferenceStore", "status": "pending", "blockedBy": [2, 3]},
-    {"id": 8, "subject": "Task 8: PostgresIdempotencyStore", "status": "pending", "blockedBy": [3]},
-    {"id": 9, "subject": "Task 9: Barrel Exports for @wo-agent/db", "status": "pending", "blockedBy": [4, 5, 6, 7, 8]},
-    {"id": 10, "subject": "Task 10: Wire PostgreSQL Repos into Orchestrator Factory", "status": "pending", "blockedBy": [9]},
-    {"id": 11, "subject": "Task 11: Vercel Configuration", "status": "pending", "blockedBy": [10]},
-    {"id": 12, "subject": "Task 12: Core Export Fixes", "status": "pending", "blockedBy": [9]},
-    {"id": 13, "subject": "Task 13: Run Full Test Suite + Final Verification", "status": "pending", "blockedBy": [10, 11, 12]}
+    { "id": 0, "subject": "Task 0: Scaffold packages/db Workspace Package", "status": "pending" },
+    {
+      "id": 1,
+      "subject": "Task 1: Neon Client Pool + Migration Runner",
+      "status": "pending",
+      "blockedBy": [0]
+    },
+    {
+      "id": 2,
+      "subject": "Task 2: SQL Migrations — Event Tables (Append-Only)",
+      "status": "pending",
+      "blockedBy": [1]
+    },
+    {
+      "id": 3,
+      "subject": "Task 3: SQL Migrations — Mutable Tables",
+      "status": "pending",
+      "blockedBy": [1]
+    },
+    { "id": 4, "subject": "Task 4: PostgresEventStore", "status": "pending", "blockedBy": [2] },
+    { "id": 5, "subject": "Task 5: PostgresWorkOrderStore", "status": "pending", "blockedBy": [3] },
+    { "id": 6, "subject": "Task 6: PostgresSessionStore", "status": "pending", "blockedBy": [3] },
+    {
+      "id": 7,
+      "subject": "Task 7: PostgresNotificationStore + PostgresNotificationPreferenceStore",
+      "status": "pending",
+      "blockedBy": [2, 3]
+    },
+    {
+      "id": 8,
+      "subject": "Task 8: PostgresIdempotencyStore",
+      "status": "pending",
+      "blockedBy": [3]
+    },
+    {
+      "id": 9,
+      "subject": "Task 9: Barrel Exports for @wo-agent/db",
+      "status": "pending",
+      "blockedBy": [4, 5, 6, 7, 8]
+    },
+    {
+      "id": 10,
+      "subject": "Task 10: Wire PostgreSQL Repos into Orchestrator Factory",
+      "status": "pending",
+      "blockedBy": [9]
+    },
+    {
+      "id": 11,
+      "subject": "Task 11: Vercel Configuration",
+      "status": "pending",
+      "blockedBy": [10]
+    },
+    { "id": 12, "subject": "Task 12: Core Export Fixes", "status": "pending", "blockedBy": [9] },
+    {
+      "id": 13,
+      "subject": "Task 13: Run Full Test Suite + Final Verification",
+      "status": "pending",
+      "blockedBy": [10, 11, 12]
+    }
   ],
   "lastUpdated": "2026-03-04T21:00:00Z"
 }

@@ -26,13 +26,15 @@ describe('constraint-filtered follow-up options', () => {
   it('filters out invalid Sub_Location options for suite issue', async () => {
     // LLM returns parking_garage and elevator which are invalid for Location=suite
     const mockLlm = async () => ({
-      questions: [{
-        question_id: 'q1',
-        field_target: 'Sub_Location',
-        prompt: 'Where is this issue?',
-        options: ['bathroom', 'kitchen', 'parking_garage', 'elevator'],
-        answer_type: 'enum',
-      }],
+      questions: [
+        {
+          question_id: 'q1',
+          field_target: 'Sub_Location',
+          prompt: 'Where is this issue?',
+          options: ['bathroom', 'kitchen', 'parking_garage', 'elevator'],
+          answer_type: 'enum',
+        },
+      ],
     });
 
     const result = await callFollowUpGenerator(baseInput, mockLlm, 3);
@@ -53,13 +55,15 @@ describe('constraint-filtered follow-up options', () => {
     };
 
     const mockLlm = async () => ({
-      questions: [{
-        question_id: 'q1',
-        field_target: 'Maintenance_Problem',
-        prompt: 'What is the problem?',
-        options: ['leak', 'clog', 'no_heat', 'infestation'],
-        answer_type: 'enum',
-      }],
+      questions: [
+        {
+          question_id: 'q1',
+          field_target: 'Maintenance_Problem',
+          prompt: 'What is the problem?',
+          options: ['leak', 'clog', 'no_heat', 'infestation'],
+          answer_type: 'enum',
+        },
+      ],
     });
 
     const result = await callFollowUpGenerator(input, mockLlm, 3);
@@ -80,13 +84,15 @@ describe('constraint-filtered follow-up options', () => {
     };
 
     const mockLlm = async () => ({
-      questions: [{
-        question_id: 'q1',
-        field_target: 'Location',
-        prompt: 'Where is this issue located?',
-        options: ['suite', 'building_interior', 'building_exterior'],
-        answer_type: 'enum',
-      }],
+      questions: [
+        {
+          question_id: 'q1',
+          field_target: 'Location',
+          prompt: 'Where is this issue located?',
+          options: ['suite', 'building_interior', 'building_exterior'],
+          answer_type: 'enum',
+        },
+      ],
     });
 
     const result = await callFollowUpGenerator(input, mockLlm, 3);
@@ -106,13 +112,15 @@ describe('constraint-filtered follow-up options', () => {
     };
 
     const mockLlm = async () => ({
-      questions: [{
-        question_id: 'q1',
-        field_target: 'Sub_Location',
-        prompt: 'Where is this?',
-        options: ['parking_garage', 'elevator'],
-        answer_type: 'enum',
-      }],
+      questions: [
+        {
+          question_id: 'q1',
+          field_target: 'Sub_Location',
+          prompt: 'Where is this?',
+          options: ['parking_garage', 'elevator'],
+          answer_type: 'enum',
+        },
+      ],
     });
 
     const result = await callFollowUpGenerator(input, mockLlm, 3);

@@ -11,7 +11,13 @@
         "response_due_at": { "type": "string", "format": "date-time" },
         "resolution_due_at": { "type": "string", "format": "date-time" }
       },
-      "required": ["priority", "response_hours", "resolution_hours", "response_due_at", "resolution_due_at"],
+      "required": [
+        "priority",
+        "response_hours",
+        "resolution_hours",
+        "response_due_at",
+        "resolution_due_at"
+      ],
       "additionalProperties": false
     },
     "CommunicationEntry": {
@@ -24,7 +30,14 @@
         "created_at": { "type": "string", "format": "date-time" },
         "sent_at": { "type": ["string", "null"], "format": "date-time" }
       },
-      "required": ["notification_id", "channel", "notification_type", "status", "created_at", "sent_at"],
+      "required": [
+        "notification_id",
+        "channel",
+        "notification_type",
+        "status",
+        "created_at",
+        "sent_at"
+      ],
       "additionalProperties": false
     },
     "ResolutionInfo": {

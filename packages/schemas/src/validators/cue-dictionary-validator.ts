@@ -22,7 +22,11 @@ export function validateCueDictionary(
   }
 
   if (!cues.fields || typeof cues.fields !== 'object') {
-    errors.push({ path: '/fields', message: 'fields is required and must be an object', keyword: 'required' });
+    errors.push({
+      path: '/fields',
+      message: 'fields is required and must be an object',
+      keyword: 'required',
+    });
     return { valid: false, errors };
   }
 

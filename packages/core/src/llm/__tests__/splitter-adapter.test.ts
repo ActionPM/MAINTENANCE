@@ -22,7 +22,11 @@ describe('createSplitterAdapter', () => {
     const responseJson = JSON.stringify({
       issues: [
         { issue_id: 'issue-1', summary: 'Toilet leak', raw_excerpt: 'My toilet is leaking' },
-        { issue_id: 'issue-2', summary: 'Kitchen light flickering', raw_excerpt: 'the kitchen light is flickering' },
+        {
+          issue_id: 'issue-2',
+          summary: 'Kitchen light flickering',
+          raw_excerpt: 'the kitchen light is flickering',
+        },
       ],
       issue_count: 2,
     });

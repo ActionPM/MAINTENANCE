@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const body = await request.json() as { work_order_id?: string };
+    const body = (await request.json()) as { work_order_id?: string };
     if (!body.work_order_id) {
       return NextResponse.json({ error: 'work_order_id is required' }, { status: 400 });
     }

@@ -8,7 +8,12 @@ describe('setSessionScope', () => {
     tenant_user_id: 'tu-1',
     tenant_account_id: 'ta-1',
     authorized_unit_ids: ['unit-1'],
-    pinned_versions: { taxonomy_version: '1', schema_version: '1', model_id: 'm', prompt_version: '1' },
+    pinned_versions: {
+      taxonomy_version: '1',
+      schema_version: '1',
+      model_id: 'm',
+      prompt_version: '1',
+    },
   });
 
   it('sets property_id and client_id from UnitInfo', () => {

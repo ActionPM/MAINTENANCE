@@ -10,11 +10,15 @@ describe('classifier prompt constraint awareness', () => {
   });
 
   it('mentions Location constrains Sub_Location', () => {
-    expect(prompt).toMatch(/Location.*constrain.*Sub_Location|Sub_Location.*must.*match.*Location/i);
+    expect(prompt).toMatch(
+      /Location.*constrain.*Sub_Location|Sub_Location.*must.*match.*Location/i,
+    );
   });
 
   it('mentions Maintenance_Object constrains Maintenance_Problem', () => {
-    expect(prompt).toMatch(/Maintenance_Object.*constrain.*Maintenance_Problem|Maintenance_Problem.*must.*valid.*Maintenance_Object/i);
+    expect(prompt).toMatch(
+      /Maintenance_Object.*constrain.*Maintenance_Problem|Maintenance_Problem.*must.*valid.*Maintenance_Object/i,
+    );
   });
 
   it('gives toilet + bathroom as an example', () => {

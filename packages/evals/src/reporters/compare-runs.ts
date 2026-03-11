@@ -89,10 +89,7 @@ function compareMetricSet(
   // per governance doc §6 ("any regression on critical slices blocks merge").
   const threshold = CRITICAL_SLICE_SET.has(slice) ? 0 : REGRESSION_THRESHOLD;
 
-  const allMetrics = new Set([
-    ...Object.keys(baseMetrics),
-    ...Object.keys(candMetrics),
-  ]);
+  const allMetrics = new Set([...Object.keys(baseMetrics), ...Object.keys(candMetrics)]);
 
   for (const metric of allMetrics) {
     const baseValue = baseMetrics[metric] ?? 0;
@@ -101,9 +98,21 @@ function compareMetricSet(
     const kind = classifyDelta(metric, delta, threshold);
 
     if (kind === 'regression') {
-      regressions.push({ metric, slice, baseline_value: baseValue, candidate_value: candValue, delta });
+      regressions.push({
+        metric,
+        slice,
+        baseline_value: baseValue,
+        candidate_value: candValue,
+        delta,
+      });
     } else if (kind === 'improvement') {
-      improvements.push({ metric, slice, baseline_value: baseValue, candidate_value: candValue, delta });
+      improvements.push({
+        metric,
+        slice,
+        baseline_value: baseValue,
+        candidate_value: candValue,
+        delta,
+      });
     }
   }
 }

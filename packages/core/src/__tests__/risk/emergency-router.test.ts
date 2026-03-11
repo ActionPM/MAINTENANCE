@@ -37,10 +37,11 @@ describe('routeEmergency', () => {
   });
 
   it('iterates chain until someone answers', async () => {
-    const contactExecutor = vi.fn()
-      .mockResolvedValueOnce(false)  // BM doesn't answer
-      .mockResolvedValueOnce(false)  // PM doesn't answer
-      .mockResolvedValueOnce(true);  // Fallback answers
+    const contactExecutor = vi
+      .fn()
+      .mockResolvedValueOnce(false) // BM doesn't answer
+      .mockResolvedValueOnce(false) // PM doesn't answer
+      .mockResolvedValueOnce(true); // Fallback answers
 
     const result = await routeEmergency({
       buildingId: 'bldg-001',
@@ -67,7 +68,9 @@ describe('routeEmergency', () => {
 
     expect(result.state).toBe('exhausted');
     expect(result.answered_by).toBeNull();
-    expect(result.exhaustion_message).toBe('Unable to reach management. Call 911 if life-threatening.');
+    expect(result.exhaustion_message).toBe(
+      'Unable to reach management. Call 911 if life-threatening.',
+    );
     expect(contactExecutor).toHaveBeenCalledTimes(3);
   });
 
@@ -84,10 +87,11 @@ describe('routeEmergency', () => {
   });
 
   it('treats contactExecutor errors as unanswered and continues chain', async () => {
-    const contactExecutor = vi.fn()
+    const contactExecutor = vi
+      .fn()
       .mockRejectedValueOnce(new Error('network timeout')) // BM throws
-      .mockResolvedValueOnce(false)                        // PM doesn't answer
-      .mockResolvedValueOnce(true);                        // Fallback answers
+      .mockResolvedValueOnce(false) // PM doesn't answer
+      .mockResolvedValueOnce(true); // Fallback answers
 
     const result = await routeEmergency({
       buildingId: 'bldg-001',
@@ -116,6 +120,6 @@ describe('routeEmergency', () => {
     expect(result.state).toBe('exhausted');
     expect(result.answered_by).toBeNull();
     expect(result.attempts).toHaveLength(3);
-    expect(result.attempts.every(a => !a.answered)).toBe(true);
+    expect(result.attempts.every((a) => !a.answered)).toBe(true);
   });
 });

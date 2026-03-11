@@ -5,14 +5,10 @@ import type { IssueSplitterInput, IssueSplitterOutput } from '../types/issue-spl
 const INPUT_REF = 'issue_split.schema.json#/definitions/IssueSplitterInput';
 const OUTPUT_REF = 'issue_split.schema.json#/definitions/IssueSplitterOutput';
 
-export function validateIssueSplitterInput(
-  data: unknown,
-): ValidationResult<IssueSplitterInput> {
+export function validateIssueSplitterInput(data: unknown): ValidationResult<IssueSplitterInput> {
   return validate<IssueSplitterInput>(data, INPUT_REF);
 }
 
-export function validateIssueSplitterOutput(
-  data: unknown,
-): ValidationResult<IssueSplitterOutput> {
+export function validateIssueSplitterOutput(data: unknown): ValidationResult<IssueSplitterOutput> {
   return validate<IssueSplitterOutput>(data, OUTPUT_REF);
 }

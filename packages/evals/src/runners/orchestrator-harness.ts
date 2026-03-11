@@ -52,7 +52,7 @@ export async function runOrchestratorHarness(
       example_id: options.example_id,
       issue_index: i,
       issue_text: split.issue_text,
-      expected_classification: {},  // Not used for pipeline execution
+      expected_classification: {}, // Not used for pipeline execution
       classifierAdapter: config.classifierAdapter,
       taxonomyVersion: options.taxonomyVersion,
     });
@@ -95,14 +95,14 @@ export async function runOrchestratorHarness(
  * - Otherwise -> tenant_confirmation_pending
  */
 function deriveTerminalState(results: readonly IssueReplayResult[]): string {
-  const hasHumanTriage = results.some(r => r.status === 'needs_human_triage');
+  const hasHumanTriage = results.some((r) => r.status === 'needs_human_triage');
   if (hasHumanTriage) return 'needs_human_triage';
 
-  const hasError = results.some(r => r.status === 'schema_fail' || r.status === 'taxonomy_fail');
+  const hasError = results.some((r) => r.status === 'schema_fail' || r.status === 'taxonomy_fail');
   if (hasError) return 'llm_error_retryable';
 
   const hasFieldsNeeding = results.some(
-    r => r.fieldsNeedingInput != null && r.fieldsNeedingInput.length > 0,
+    (r) => r.fieldsNeedingInput != null && r.fieldsNeedingInput.length > 0,
   );
   if (hasFieldsNeeding) return 'needs_tenant_input';
 

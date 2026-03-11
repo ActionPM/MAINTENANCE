@@ -3,7 +3,13 @@ import { createDispatcher } from '../../orchestrator/dispatcher.js';
 import { InMemoryEventStore } from '../../events/in-memory-event-store.js';
 import { InMemoryWorkOrderStore } from '../../work-order/in-memory-wo-store.js';
 import { InMemoryIdempotencyStore } from '../../idempotency/in-memory-idempotency-store.js';
-import { ActionType, ActorType, ConversationState, loadTaxonomy, loadRiskProtocols } from '@wo-agent/schemas';
+import {
+  ActionType,
+  ActorType,
+  ConversationState,
+  loadTaxonomy,
+  loadRiskProtocols,
+} from '@wo-agent/schemas';
 import type { CueDictionary } from '@wo-agent/schemas';
 import type { SessionStore } from '../../orchestrator/types.js';
 import type { ConversationSession } from '../../session/types.js';
@@ -27,11 +33,15 @@ const FULL_CUES: CueDictionary = {
 
 class InMemorySessionStore implements SessionStore {
   private sessions = new Map<string, ConversationSession>();
-  async get(id: string) { return this.sessions.get(id) ?? null; }
-  async getByTenantUser(userId: string) {
-    return [...this.sessions.values()].filter(s => s.tenant_user_id === userId);
+  async get(id: string) {
+    return this.sessions.get(id) ?? null;
   }
-  async save(session: ConversationSession) { this.sessions.set(session.conversation_id, session); }
+  async getByTenantUser(userId: string) {
+    return [...this.sessions.values()].filter((s) => s.tenant_user_id === userId);
+  }
+  async save(session: ConversationSession) {
+    this.sessions.set(session.conversation_id, session);
+  }
 }
 
 const AUTH = { tenant_user_id: 'u1', tenant_account_id: 'a1', authorized_unit_ids: ['unit-1'] };
@@ -45,7 +55,13 @@ function makeDeps() {
     clock: () => '2026-03-03T12:00:00Z',
     issueSplitter: vi.fn().mockResolvedValue({
       issue_count: 1,
-      issues: [{ issue_id: 'iss-1', summary: 'Fire in kitchen', raw_excerpt: 'There is fire in my kitchen' }],
+      issues: [
+        {
+          issue_id: 'iss-1',
+          summary: 'Fire in kitchen',
+          raw_excerpt: 'There is fire in my kitchen',
+        },
+      ],
     }),
     issueClassifier: vi.fn().mockResolvedValue({
       issue_id: 'iss-1',
@@ -61,10 +77,15 @@ function makeDeps() {
         Priority: 'normal',
       },
       model_confidence: {
-        Category: 0.95, Location: 0.9, Sub_Location: 0.85,
-        Maintenance_Category: 0.92, Maintenance_Object: 0.95,
-        Maintenance_Problem: 0.88, Management_Category: 0.95,
-        Management_Object: 0.95, Priority: 0.9,
+        Category: 0.95,
+        Location: 0.9,
+        Sub_Location: 0.85,
+        Maintenance_Category: 0.92,
+        Maintenance_Object: 0.95,
+        Maintenance_Problem: 0.88,
+        Management_Category: 0.95,
+        Management_Object: 0.95,
+        Priority: 0.9,
       },
       missing_fields: [],
       needs_human_triage: false,
@@ -123,7 +144,7 @@ describe('Risk + Emergency integration', () => {
 
     // Risk mitigation should be in UI messages
     const messages = submitResult.response.ui_directive.messages ?? [];
-    const allContent = messages.map(m => m.content).join(' ');
+    const allContent = messages.map((m) => m.content).join(' ');
     expect(allContent).toContain('Fire Safety');
     expect(allContent).toContain('911');
 
@@ -136,7 +157,9 @@ describe('Risk + Emergency integration', () => {
     const deps = makeDeps();
     deps.issueSplitter.mockResolvedValue({
       issue_count: 1,
-      issues: [{ issue_id: 'iss-1', summary: 'Leaky faucet', raw_excerpt: 'My faucet is dripping' }],
+      issues: [
+        { issue_id: 'iss-1', summary: 'Leaky faucet', raw_excerpt: 'My faucet is dripping' },
+      ],
     });
     const dispatch = createDispatcher(deps);
 
@@ -197,7 +220,9 @@ describe('Risk + Emergency integration', () => {
       tenant_input: { message: 'There is fire in my kitchen and smoke everywhere' },
       auth_context: AUTH,
     });
-    expect(submitResult.response.conversation_snapshot.state).toBe(ConversationState.SPLIT_PROPOSED);
+    expect(submitResult.response.conversation_snapshot.state).toBe(
+      ConversationState.SPLIT_PROPOSED,
+    );
 
     const splitResult = await dispatch({
       conversation_id: convId,

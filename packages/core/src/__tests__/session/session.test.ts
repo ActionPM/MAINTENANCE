@@ -1,7 +1,17 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { ConversationState } from '@wo-agent/schemas';
 import type { SplitIssue } from '@wo-agent/schemas';
-import { createSession, updateSessionState, touchActivity, setSessionUnit, markAbandoned, markExpired, isExpired, setSplitIssues, type ExpirationConfig } from '../../session/session.js';
+import {
+  createSession,
+  updateSessionState,
+  touchActivity,
+  setSessionUnit,
+  markAbandoned,
+  markExpired,
+  isExpired,
+  setSplitIssues,
+  type ExpirationConfig,
+} from '../../session/session.js';
 import type { ConversationSession } from '../../session/types.js';
 
 afterEach(() => {
@@ -248,7 +258,12 @@ describe('setSplitIssues', () => {
       tenant_user_id: 'user-1',
       tenant_account_id: 'acct-1',
       authorized_unit_ids: ['u1'],
-      pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'gpt-4', prompt_version: '1.0.0' },
+      pinned_versions: {
+        taxonomy_version: '1.0.0',
+        schema_version: '1.0.0',
+        model_id: 'gpt-4',
+        prompt_version: '1.0.0',
+      },
     });
     expect(session.split_issues).toBeNull();
 
@@ -269,7 +284,12 @@ describe('setSplitIssues', () => {
       tenant_user_id: 'user-1',
       tenant_account_id: 'acct-1',
       authorized_unit_ids: ['u1'],
-      pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'gpt-4', prompt_version: '1.0.0' },
+      pinned_versions: {
+        taxonomy_version: '1.0.0',
+        schema_version: '1.0.0',
+        model_id: 'gpt-4',
+        prompt_version: '1.0.0',
+      },
     });
     session = setSplitIssues(session, [{ issue_id: 'i1', summary: 'Test', raw_excerpt: 'test' }]);
     const cleared = setSplitIssues(session, null);

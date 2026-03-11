@@ -37,10 +37,15 @@ describe('createClassifierAdapter', () => {
         Priority: 'normal',
       },
       model_confidence: {
-        Category: 0.95, Location: 0.85, Sub_Location: 0.9,
-        Maintenance_Category: 0.92, Maintenance_Object: 0.95,
-        Maintenance_Problem: 0.93, Management_Category: 0.0,
-        Management_Object: 0.0, Priority: 0.7,
+        Category: 0.95,
+        Location: 0.85,
+        Sub_Location: 0.9,
+        Maintenance_Category: 0.92,
+        Maintenance_Object: 0.95,
+        Maintenance_Problem: 0.93,
+        Management_Category: 0.0,
+        Management_Object: 0.0,
+        Priority: 0.7,
       },
       missing_fields: [],
       needs_human_triage: false,
@@ -54,9 +59,14 @@ describe('createClassifierAdapter', () => {
   });
 
   it('includes retry context in the prompt when provided', async () => {
-    const client = mockClient('{"issue_id":"issue-1","classification":{},"model_confidence":{},"missing_fields":[],"needs_human_triage":false}');
+    const client = mockClient(
+      '{"issue_id":"issue-1","classification":{},"model_confidence":{},"missing_fields":[],"needs_human_triage":false}',
+    );
     const adapter = createClassifierAdapter(client, taxonomy);
-    await adapter(VALID_INPUT, { retryHint: 'domain_constraint', constraint: 'Set maintenance fields to N/A' });
+    await adapter(VALID_INPUT, {
+      retryHint: 'domain_constraint',
+      constraint: 'Set maintenance fields to N/A',
+    });
 
     const call = vi.mocked(client.complete).mock.calls[0][0];
     expect(call.userMessage).toContain('domain_constraint');
@@ -64,7 +74,9 @@ describe('createClassifierAdapter', () => {
   });
 
   it('includes followup_answers when present', async () => {
-    const client = mockClient('{"issue_id":"issue-1","classification":{},"model_confidence":{},"missing_fields":[],"needs_human_triage":false}');
+    const client = mockClient(
+      '{"issue_id":"issue-1","classification":{},"model_confidence":{},"missing_fields":[],"needs_human_triage":false}',
+    );
     const adapter = createClassifierAdapter(client, taxonomy);
     const inputWithAnswers: IssueClassifierInput = {
       ...VALID_INPUT,

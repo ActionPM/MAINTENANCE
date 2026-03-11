@@ -89,7 +89,12 @@ describe('buildResponse', () => {
       tenant_user_id: 'user-1',
       tenant_account_id: 'acct-1',
       authorized_unit_ids: ['u1'],
-      pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'gpt-4', prompt_version: '1.0.0' },
+      pinned_versions: {
+        taxonomy_version: '1.0.0',
+        schema_version: '1.0.0',
+        model_id: 'gpt-4',
+        prompt_version: '1.0.0',
+      },
     });
     session = setSplitIssues(session, issues);
 
@@ -108,7 +113,12 @@ describe('buildResponse', () => {
       tenant_user_id: 'user-1',
       tenant_account_id: 'acct-1',
       authorized_unit_ids: ['u1'],
-      pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'gpt-4', prompt_version: '1.0.0' },
+      pinned_versions: {
+        taxonomy_version: '1.0.0',
+        schema_version: '1.0.0',
+        model_id: 'gpt-4',
+        prompt_version: '1.0.0',
+      },
     });
 
     const response = buildResponse({

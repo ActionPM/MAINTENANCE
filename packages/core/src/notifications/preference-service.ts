@@ -3,7 +3,11 @@ import type { NotificationPreferenceStore } from './types.js';
 
 const DEFAULT_COOLDOWN = 5;
 
-function defaultPrefs(tenantAccountId: string, prefId: string, now: string): NotificationPreference {
+function defaultPrefs(
+  tenantAccountId: string,
+  prefId: string,
+  now: string,
+): NotificationPreference {
   return {
     preference_id: prefId,
     tenant_account_id: tenantAccountId,
@@ -29,7 +33,9 @@ export interface UpdatePrefsInput {
   readonly clock: () => string;
 }
 
-export async function updateNotificationPreferences(input: UpdatePrefsInput): Promise<NotificationPreference> {
+export async function updateNotificationPreferences(
+  input: UpdatePrefsInput,
+): Promise<NotificationPreference> {
   const { tenantAccountId, updates, prefStore, idGenerator, clock } = input;
   const now = clock();
   const existing = await prefStore.get(tenantAccountId);
@@ -40,7 +46,8 @@ export async function updateNotificationPreferences(input: UpdatePrefsInput): Pr
     in_app_enabled: updates.in_app_enabled ?? base.in_app_enabled,
     sms_enabled: updates.sms_enabled ?? base.sms_enabled,
     cooldown_minutes: updates.cooldown_minutes ?? base.cooldown_minutes,
-    notification_type_overrides: updates.notification_type_overrides ?? base.notification_type_overrides,
+    notification_type_overrides:
+      updates.notification_type_overrides ?? base.notification_type_overrides,
     updated_at: now,
   };
 
@@ -56,7 +63,9 @@ export interface GrantSmsConsentInput {
   readonly clock: () => string;
 }
 
-export async function grantSmsConsent(input: GrantSmsConsentInput): Promise<NotificationPreference> {
+export async function grantSmsConsent(
+  input: GrantSmsConsentInput,
+): Promise<NotificationPreference> {
   const { tenantAccountId, phoneNumber, prefStore, idGenerator, clock } = input;
   const now = clock();
   const existing = await prefStore.get(tenantAccountId);
@@ -83,7 +92,9 @@ export interface RevokeSmsConsentInput {
   readonly clock: () => string;
 }
 
-export async function revokeSmsConsent(input: RevokeSmsConsentInput): Promise<NotificationPreference> {
+export async function revokeSmsConsent(
+  input: RevokeSmsConsentInput,
+): Promise<NotificationPreference> {
   const { tenantAccountId, prefStore, clock } = input;
   const now = clock();
   const existing = await prefStore.get(tenantAccountId);

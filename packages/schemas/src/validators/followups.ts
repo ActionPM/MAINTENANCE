@@ -7,20 +7,14 @@ const INPUT_REF = 'followup_request.schema.json#/definitions/FollowUpGeneratorIn
 const OUTPUT_REF = 'followups.schema.json#/definitions/FollowUpGeneratorOutput';
 const EVENT_REF = 'followups.schema.json#/definitions/FollowUpEvent';
 
-export function validateFollowUpInput(
-  data: unknown,
-): ValidationResult<FollowUpGeneratorInput> {
+export function validateFollowUpInput(data: unknown): ValidationResult<FollowUpGeneratorInput> {
   return validate<FollowUpGeneratorInput>(data, INPUT_REF);
 }
 
-export function validateFollowUpOutput(
-  data: unknown,
-): ValidationResult<FollowUpGeneratorOutput> {
+export function validateFollowUpOutput(data: unknown): ValidationResult<FollowUpGeneratorOutput> {
   return validate<FollowUpGeneratorOutput>(data, OUTPUT_REF);
 }
 
-export function validateFollowUpEvent(
-  data: unknown,
-): ValidationResult<FollowUpEvent> {
+export function validateFollowUpEvent(data: unknown): ValidationResult<FollowUpEvent> {
   return validate<FollowUpEvent>(data, EVENT_REF);
 }

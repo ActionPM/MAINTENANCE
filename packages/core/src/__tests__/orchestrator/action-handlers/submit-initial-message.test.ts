@@ -38,16 +38,22 @@ function makeContext(
     tenant_user_id: 'user-1',
     tenant_account_id: 'acct-1',
     authorized_unit_ids: ['u1'],
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'gpt-4', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'gpt-4',
+      prompt_version: '1.0.0',
+    },
   });
   if (unitResolved) {
     session = updateSessionState(session, ConversationState.UNIT_SELECTED);
     session = setSessionUnit(session, 'u1');
   }
 
-  const issueSplitter = splitterResult instanceof Error
-    ? vi.fn().mockRejectedValue(splitterResult)
-    : vi.fn().mockResolvedValue(splitterResult ?? VALID_SPLIT);
+  const issueSplitter =
+    splitterResult instanceof Error
+      ? vi.fn().mockRejectedValue(splitterResult)
+      : vi.fn().mockResolvedValue(splitterResult ?? VALID_SPLIT);
 
   return {
     session,
@@ -56,11 +62,19 @@ function makeContext(
       action_type: ActionType.SUBMIT_INITIAL_MESSAGE,
       actor: ActorType.TENANT,
       tenant_input: { message: 'My toilet is leaking and kitchen light is broken' },
-      auth_context: { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['u1'] },
+      auth_context: {
+        tenant_user_id: 'user-1',
+        tenant_account_id: 'acct-1',
+        authorized_unit_ids: ['u1'],
+      },
     },
     deps: {
       eventRepo: new InMemoryEventStore(),
-      sessionStore: { get: async () => null, getByTenantUser: async () => [], save: async () => {} },
+      sessionStore: {
+        get: async () => null,
+        getByTenantUser: async () => [],
+        save: async () => {},
+      },
       idGenerator: () => `id-${++counter}`,
       clock: () => '2026-01-15T12:00:00Z',
       issueSplitter,
@@ -155,7 +169,7 @@ describe('handleSubmitInitialMessage', () => {
     const result = await handleSubmitInitialMessage(ctx);
     expect(result.uiMessages.length).toBeGreaterThan(0);
     // Should describe the split to the tenant
-    const content = result.uiMessages.map(m => m.content).join(' ');
+    const content = result.uiMessages.map((m) => m.content).join(' ');
     expect(content).toContain('2'); // issue count
   });
 

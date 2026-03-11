@@ -7,9 +7,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@/components/chat-shell', () => ({
-  ChatShell: ({ token }: { token: string }) => (
-    <div data-testid="chat-shell" data-token={token} />
-  ),
+  ChatShell: ({ token }: { token: string }) => <div data-testid="chat-shell" data-token={token} />,
 }));
 
 import { useSearchParams } from 'next/navigation';

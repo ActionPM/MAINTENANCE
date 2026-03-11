@@ -33,7 +33,12 @@ function makeWO(overrides: Partial<WorkOrder> & { work_order_id: string }): Work
     missing_fields: [],
     pets_present: 'unknown',
     needs_human_triage: false,
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'test', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'test',
+      prompt_version: '1.0.0',
+    },
     created_at: '2026-03-01T10:00:00Z',
     updated_at: '2026-03-01T10:00:00Z',
     row_version: 0,
@@ -45,7 +50,12 @@ describe('AnalyticsService.computeTaxonomyBreakdown (Phase 13)', () => {
   it('returns empty object when no WOs exist', async () => {
     const woRepo = new InMemoryWorkOrderStore();
     const notifRepo = new InMemoryNotificationStore();
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
 
     const result = await svc.compute({});
     expect(result.taxonomy_breakdown).toEqual({});
@@ -57,23 +67,43 @@ describe('AnalyticsService.computeTaxonomyBreakdown (Phase 13)', () => {
     await woRepo.insertBatch([
       makeWO({
         work_order_id: 'wo-1',
-        classification: { Category: 'maintenance', Maintenance_Category: 'plumbing', Priority: 'high' },
+        classification: {
+          Category: 'maintenance',
+          Maintenance_Category: 'plumbing',
+          Priority: 'high',
+        },
       }),
       makeWO({
         work_order_id: 'wo-2',
-        classification: { Category: 'maintenance', Maintenance_Category: 'electrical', Priority: 'normal' },
+        classification: {
+          Category: 'maintenance',
+          Maintenance_Category: 'electrical',
+          Priority: 'normal',
+        },
       }),
       makeWO({
         work_order_id: 'wo-3',
-        classification: { Category: 'management', Management_Category: 'lease', Priority: 'normal' },
+        classification: {
+          Category: 'management',
+          Management_Category: 'lease',
+          Priority: 'normal',
+        },
       }),
     ]);
 
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
     const result = await svc.compute({});
 
     expect(result.taxonomy_breakdown['Category']).toEqual({ maintenance: 2, management: 1 });
-    expect(result.taxonomy_breakdown['Maintenance_Category']).toEqual({ plumbing: 1, electrical: 1 });
+    expect(result.taxonomy_breakdown['Maintenance_Category']).toEqual({
+      plumbing: 1,
+      electrical: 1,
+    });
     expect(result.taxonomy_breakdown['Management_Category']).toEqual({ lease: 1 });
     expect(result.taxonomy_breakdown['Priority']).toEqual({ high: 1, normal: 2 });
   });
@@ -88,7 +118,12 @@ describe('AnalyticsService.computeTaxonomyBreakdown (Phase 13)', () => {
       }),
     ]);
 
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
     const result = await svc.compute({});
 
     expect(result.taxonomy_breakdown['Category']).toEqual({ maintenance: 1 });

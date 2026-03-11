@@ -1,7 +1,10 @@
 import { ConversationState, DEFAULT_CONFIDENCE_CONFIG } from '@wo-agent/schemas';
 import type { ConfidenceConfig } from '@wo-agent/schemas';
 import type { ActionHandlerContext, ActionHandlerResult, SideEffectInput } from '../types.js';
-import { buildConfirmationPayload, computeContentHash } from '../../confirmation/payload-builder.js';
+import {
+  buildConfirmationPayload,
+  computeContentHash,
+} from '../../confirmation/payload-builder.js';
 import { checkStaleness } from '../../confirmation/staleness.js';
 import { buildConfirmationEvent, buildStalenessEvent } from '../../confirmation/event-builder.js';
 import { classifyConfidenceBand } from '../../classifier/confidence.js';
@@ -23,7 +26,9 @@ const BAND_SEVERITY: Record<ConfidenceBand, number> = { low: 0, medium: 1, high:
  * 6. Reserve idempotency key atomically (if already reserved → replay cached result)
  * 7. If fresh: record confirmation event, create WOs, complete idempotency, transition to submitted
  */
-export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promise<ActionHandlerResult> {
+export async function handleConfirmSubmission(
+  ctx: ActionHandlerContext,
+): Promise<ActionHandlerResult> {
   const { session, request, deps } = ctx;
 
   // Guard: idempotency key is required — CONFIRM_SUBMISSION has irreversible side effects
@@ -33,7 +38,12 @@ export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promis
       newState: session.state,
       session,
       uiMessages: [],
-      errors: [{ code: 'MISSING_IDEMPOTENCY_KEY', message: 'CONFIRM_SUBMISSION requires an idempotency_key' }],
+      errors: [
+        {
+          code: 'MISSING_IDEMPOTENCY_KEY',
+          message: 'CONFIRM_SUBMISSION requires an idempotency_key',
+        },
+      ],
     };
   }
 
@@ -53,7 +63,12 @@ export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promis
       newState: session.state,
       session,
       uiMessages: [],
-      errors: [{ code: 'NO_CLASSIFICATION', message: 'Cannot confirm: no classification results on session' }],
+      errors: [
+        {
+          code: 'NO_CLASSIFICATION',
+          message: 'Cannot confirm: no classification results on session',
+        },
+      ],
     };
   }
 
@@ -65,16 +80,15 @@ export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promis
 
   // Compute current content hashes
   const currentSourceHash = computeContentHash(
-    session.split_issues.map(i => i.raw_excerpt).join('|'),
+    session.split_issues.map((i) => i.raw_excerpt).join('|'),
   );
   const currentSplitHash = computeContentHash(
-    JSON.stringify(session.split_issues.map(i => ({ id: i.issue_id, summary: i.summary }))),
+    JSON.stringify(session.split_issues.map((i) => ({ id: i.issue_id, summary: i.summary }))),
   );
 
   // Staleness check (only if we have stored hashes to compare against)
   if (session.source_text_hash || session.split_hash) {
-    const confidenceConfig: ConfidenceConfig =
-      deps.confidenceConfig ?? DEFAULT_CONFIDENCE_CONFIG;
+    const confidenceConfig: ConfidenceConfig = deps.confidenceConfig ?? DEFAULT_CONFIDENCE_CONFIG;
 
     // Build confidence bands from classification results.
     // When multiple issues share a field name, keep the WORST (lowest) band
@@ -124,10 +138,13 @@ export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promis
           confirmation_presented: false,
         },
         finalSystemAction: SystemEvent.STALENESS_DETECTED,
-        uiMessages: [{
-          role: 'agent',
-          content: 'Some information has changed since your last visit. Let me re-verify your issue details.',
-        }],
+        uiMessages: [
+          {
+            role: 'agent',
+            content:
+              'Some information has changed since your last visit. Let me re-verify your issue details.',
+          },
+        ],
         eventPayload: {
           staleness_detected: true,
           reasons: stalenessResult.reasons,
@@ -144,12 +161,16 @@ export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promis
     return {
       newState: ConversationState.SUBMITTED,
       session,
-      uiMessages: [{ role: 'agent', content: 'Your request has been submitted. We\'ll be in touch.' }],
-      sideEffects: [{
-        effect_type: 'create_work_orders',
-        status: 'completed',
-        idempotency_key: idempotencyKey,
-      }],
+      uiMessages: [
+        { role: 'agent', content: "Your request has been submitted. We'll be in touch." },
+      ],
+      sideEffects: [
+        {
+          effect_type: 'create_work_orders',
+          status: 'completed',
+          idempotency_key: idempotencyKey,
+        },
+      ],
       eventPayload: {
         confirmed: true,
         confirmation_payload: confirmationPayload,
@@ -196,7 +217,7 @@ export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promis
   }
 
   // Complete idempotency record with the created WO IDs
-  const woIds = workOrders.map(wo => wo.work_order_id);
+  const woIds = workOrders.map((wo) => wo.work_order_id);
   await deps.idempotencyStore.complete(idempotencyKey, {
     work_order_ids: woIds,
   });
@@ -231,7 +252,7 @@ export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promis
   return {
     newState: ConversationState.SUBMITTED,
     session,
-    uiMessages: [{ role: 'agent', content: 'Your request has been submitted. We\'ll be in touch.' }],
+    uiMessages: [{ role: 'agent', content: "Your request has been submitted. We'll be in touch." }],
     sideEffects: [
       {
         effect_type: 'create_work_orders',

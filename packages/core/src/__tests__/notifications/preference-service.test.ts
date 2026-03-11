@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { updateNotificationPreferences, grantSmsConsent, revokeSmsConsent } from '../../notifications/preference-service.js';
+import {
+  updateNotificationPreferences,
+  grantSmsConsent,
+  revokeSmsConsent,
+} from '../../notifications/preference-service.js';
 import { InMemoryNotificationPreferenceStore } from '../../notifications/in-memory-notification-store.js';
 
 describe('Preference updates', () => {

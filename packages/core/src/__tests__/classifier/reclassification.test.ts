@@ -1,6 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
 import { handleAnswerFollowups } from '../../orchestrator/action-handlers/answer-followups.js';
-import { createSession, updateSessionState, setSplitIssues, setClassificationResults, setPendingFollowUpQuestions } from '../../session/session.js';
+import {
+  createSession,
+  updateSessionState,
+  setSplitIssues,
+  setClassificationResults,
+  setPendingFollowUpQuestions,
+} from '../../session/session.js';
 import { ConversationState, ActorType, loadTaxonomy } from '@wo-agent/schemas';
 import type { IssueClassifierOutput, CueDictionary } from '@wo-agent/schemas';
 import type { IssueClassificationResult } from '../../session/types.js';
@@ -72,15 +78,17 @@ function makeFollowupContext(overrides?: {
   cueDict?: CueDictionary;
 }): ActionHandlerContext {
   let counter = 0;
-  const priorResults: IssueClassificationResult[] = [{
-    issue_id: 'i1',
-    classifierOutput: {
-      ...HIGH_CONFIDENCE_OUTPUT,
-      model_confidence: { ...HIGH_CONFIDENCE_OUTPUT.model_confidence, Priority: 0.3 },
+  const priorResults: IssueClassificationResult[] = [
+    {
+      issue_id: 'i1',
+      classifierOutput: {
+        ...HIGH_CONFIDENCE_OUTPUT,
+        model_confidence: { ...HIGH_CONFIDENCE_OUTPUT.model_confidence, Priority: 0.3 },
+      },
+      computedConfidence: { Category: 0.9, Priority: 0.4 },
+      fieldsNeedingInput: ['Priority'],
     },
-    computedConfidence: { Category: 0.9, Priority: 0.4 },
-    fieldsNeedingInput: ['Priority'],
-  }];
+  ];
 
   let session = createSession({
     conversation_id: 'conv-1',
@@ -95,7 +103,13 @@ function makeFollowupContext(overrides?: {
   ]);
   session = setClassificationResults(session, priorResults);
   session = setPendingFollowUpQuestions(session, [
-    { question_id: 'Priority', field_target: 'Priority', prompt: 'How urgent is this?', options: ['low', 'normal', 'high'], answer_type: 'enum' },
+    {
+      question_id: 'Priority',
+      field_target: 'Priority',
+      prompt: 'How urgent is this?',
+      options: ['low', 'normal', 'high'],
+      answer_type: 'enum',
+    },
   ]);
 
   return {
@@ -184,7 +198,15 @@ describe('handleAnswerFollowups (re-classification)', () => {
     // FollowUpGenerator must return valid questions for a non-answered field
     // (Priority is answered and short-circuited; targeting it would get filtered)
     (ctx.deps as any).followUpGenerator = vi.fn().mockResolvedValue({
-      questions: [{ question_id: 'q2', field_target: 'Sub_Location', prompt: 'Which room?', options: ['kitchen', 'bathroom'], answer_type: 'enum' }],
+      questions: [
+        {
+          question_id: 'q2',
+          field_target: 'Sub_Location',
+          prompt: 'Which room?',
+          options: ['kitchen', 'bathroom'],
+          answer_type: 'enum',
+        },
+      ],
     });
     const result = await handleAnswerFollowups(ctx);
     expect(result.newState).toBe(ConversationState.NEEDS_TENANT_INPUT);
@@ -219,13 +241,20 @@ describe('handleAnswerFollowups (re-classification)', () => {
     (ctx as any).session = setClassificationResults((ctx as any).session, [
       {
         issue_id: 'i1',
-        classifierOutput: { ...HIGH_CONFIDENCE_OUTPUT, model_confidence: { ...HIGH_CONFIDENCE_OUTPUT.model_confidence, Priority: 0.3 } },
+        classifierOutput: {
+          ...HIGH_CONFIDENCE_OUTPUT,
+          model_confidence: { ...HIGH_CONFIDENCE_OUTPUT.model_confidence, Priority: 0.3 },
+        },
         computedConfidence: { Category: 0.9, Priority: 0.4 },
         fieldsNeedingInput: ['Priority'],
       },
       {
         issue_id: 'i2',
-        classifierOutput: { ...HIGH_CONFIDENCE_OUTPUT, issue_id: 'i2', model_confidence: { ...HIGH_CONFIDENCE_OUTPUT.model_confidence, Location: 0.3 } },
+        classifierOutput: {
+          ...HIGH_CONFIDENCE_OUTPUT,
+          issue_id: 'i2',
+          model_confidence: { ...HIGH_CONFIDENCE_OUTPUT.model_confidence, Location: 0.3 },
+        },
         computedConfidence: { Category: 0.9, Location: 0.4 },
         fieldsNeedingInput: ['Location'],
       },

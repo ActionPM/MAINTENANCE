@@ -35,11 +35,11 @@ export const DEFAULT_CONFIDENCE_CONFIG: ConfidenceConfig = {
   model_hint_min: 0.2,
   model_hint_max: 0.95,
   weights: {
-    cue_strength: 0.40,
+    cue_strength: 0.4,
     completeness: 0.25,
-    model_hint: 0.20,
+    model_hint: 0.2,
     constraint_implied: 0.25,
-    disagreement: 0.10,
+    disagreement: 0.1,
     ambiguity_penalty: 0.05,
   },
 } as const;

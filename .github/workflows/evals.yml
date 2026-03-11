@@ -1,0 +1,138 @@
+name: Evals
+
+# Trigger on ALL pull requests — no paths filter.
+# Path filtering is done at the job level via dorny/paths-filter so that
+# required status checks resolve to "success" (not stuck on "pending")
+# when no eval-relevant files are changed.
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  # Step 1: Detect whether eval-relevant files changed
+  detect-changes:
+    name: Detect eval-relevant changes
+    runs-on: ubuntu-latest
+    outputs:
+      eval-relevant: ${{ steps.filter.outputs.eval }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            eval:
+              - 'packages/core/src/classifier/**'
+              - 'packages/core/src/followup/**'
+              - 'packages/core/src/splitter/**'
+              - 'packages/schemas/src/**'
+              - 'packages/schemas/taxonomy*'
+              - 'packages/schemas/classification_cues.json'
+              - 'packages/evals/**'
+
+  # Step 2: Run eval matrix — only if relevant files changed
+  eval-gate:
+    name: Eval Gate (offline)
+    runs-on: ubuntu-latest
+    needs: [detect-changes]
+    if: needs.detect-changes.outputs.eval-relevant == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        dataset: [gold, hard, ood, regression]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # Run eval against committed baseline.
+      # The fixture adapter requires no secrets — it replays pre-recorded outputs.
+      # Baselines must be committed first (Task 4.1) or comparison is skipped.
+      - name: Run ${{ matrix.dataset }} eval
+        run: pnpm --filter @wo-agent/evals eval:run --dataset ${{ matrix.dataset }} --adapter fixture
+
+      # Upload the run artifact for traceability
+      - name: Upload eval artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-${{ matrix.dataset }}
+          path: |
+            packages/evals/baselines/${{ matrix.dataset }}-run-*.json
+            packages/evals/baselines/${{ matrix.dataset }}-comparison-*.md
+
+  # Step 3: Post combined comment after all matrix jobs complete.
+  # This is the REQUIRED check in branch protection, so it must:
+  #   - succeed when no eval-relevant files changed (no-op)
+  #   - succeed when evals ran and all passed
+  #   - FAIL when evals ran and any matrix job failed
+  eval-comment:
+    name: Post Eval Summary
+    runs-on: ubuntu-latest
+    needs: [detect-changes, eval-gate]
+    # Run if detect-changes succeeded — covers both "evals ran" and "evals skipped"
+    if: always() && needs.detect-changes.result == 'success'
+    steps:
+      # If no eval-relevant changes, skip with a success exit
+      - name: Skip (no eval-relevant changes)
+        if: needs.detect-changes.outputs.eval-relevant != 'true'
+        run: echo "No eval-relevant files changed — skipping."
+
+      # CRITICAL: Fail this job if any eval-gate matrix job failed.
+      # Because this job uses `always()`, GitHub does not propagate failure
+      # from `needs.eval-gate` automatically. Without this step, a failed
+      # eval gate would still produce a green "Post Eval Summary" check,
+      # allowing the PR to merge despite regressions.
+      - name: Enforce eval gate result
+        if: needs.detect-changes.outputs.eval-relevant == 'true' && needs.eval-gate.result != 'success'
+        run: |
+          echo "::error::Eval gate failed or was cancelled (result: ${{ needs.eval-gate.result }}). PR cannot merge."
+          exit 1
+
+      - uses: actions/download-artifact@v4
+        if: needs.detect-changes.outputs.eval-relevant == 'true'
+        with:
+          path: eval-artifacts
+          pattern: eval-*
+          merge-multiple: true
+
+      - name: Post eval results
+        if: needs.detect-changes.outputs.eval-relevant == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const dir = 'eval-artifacts';
+            if (!fs.existsSync(dir)) {
+              core.warning('No eval artifacts found');
+              return;
+            }
+            const files = fs.readdirSync(dir)
+              .filter(f => f.endsWith('.md') && f.includes('-comparison-'))
+              .sort();
+            if (files.length === 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: '## Eval Results (offline fixture)\n\nNo comparison reports generated. Baselines may not be seeded yet — see Task 4.1 in the CI/CD plan.'
+              });
+              return;
+            }
+            const reports = files.map(f => fs.readFileSync(`${dir}/${f}`, 'utf8')).join('\n\n---\n\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `## Eval Results (offline fixture)\n\n${reports}`
+            });

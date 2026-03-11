@@ -18,7 +18,8 @@ describe('extractJsonFromResponse', () => {
   });
 
   it('extracts the first JSON object when surrounded by text', () => {
-    const input = 'I analyzed the text. {"issue_count": 1, "issues": [{"issue_id": "x", "summary": "leak", "raw_excerpt": "leak"}]} That is my answer.';
+    const input =
+      'I analyzed the text. {"issue_count": 1, "issues": [{"issue_id": "x", "summary": "leak", "raw_excerpt": "leak"}]} That is my answer.';
     const result = extractJsonFromResponse(input);
     expect(result).toHaveProperty('issue_count', 1);
   });

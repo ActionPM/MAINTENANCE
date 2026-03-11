@@ -39,9 +39,7 @@ const makeResponse = (state: string, extras: Record<string, unknown> = {}) => ({
     ...extras,
   },
   ui_directive: {
-    messages: [
-      { role: 'agent' as const, content: 'Hello!', timestamp: '2026-03-04T10:00:00Z' },
-    ],
+    messages: [{ role: 'agent' as const, content: 'Hello!', timestamp: '2026-03-04T10:00:00Z' }],
     quick_replies: [],
   },
   artifacts: [],
@@ -60,9 +58,7 @@ describe('ChatShell', () => {
   });
 
   it('starts conversation and shows message input after unit_selected', async () => {
-    vi.mocked(api.createConversation).mockResolvedValueOnce(
-      makeResponse('unit_selected') as any,
-    );
+    vi.mocked(api.createConversation).mockResolvedValueOnce(makeResponse('unit_selected') as any);
     const user = userEvent.setup();
     render(<ChatShell token="tok" unitIds={['unit-1']} />);
 
@@ -83,9 +79,7 @@ describe('ChatShell', () => {
 
   it('shows split review when split_proposed', async () => {
     const resp = makeResponse('split_proposed', {
-      issues: [
-        { issue_id: 'i1', summary: 'Sink leaking', raw_excerpt: 'sink' },
-      ],
+      issues: [{ issue_id: 'i1', summary: 'Sink leaking', raw_excerpt: 'sink' }],
     });
     vi.mocked(api.createConversation).mockResolvedValueOnce(resp as any);
     const user = userEvent.setup();
@@ -151,9 +145,7 @@ describe('ChatShell', () => {
   });
 
   it('displays chat messages from ui_directive', async () => {
-    vi.mocked(api.createConversation).mockResolvedValueOnce(
-      makeResponse('unit_selected') as any,
-    );
+    vi.mocked(api.createConversation).mockResolvedValueOnce(makeResponse('unit_selected') as any);
     const user = userEvent.setup();
     render(<ChatShell token="tok" unitIds={['unit-1']} />);
 
@@ -164,21 +156,15 @@ describe('ChatShell', () => {
   it('dispatches quick reply action based on action_type', async () => {
     const resp = {
       ...makeResponse('split_proposed', {
-        issues: [
-          { issue_id: 'i1', summary: 'Sink leaking', raw_excerpt: 'sink' },
-        ],
+        issues: [{ issue_id: 'i1', summary: 'Sink leaking', raw_excerpt: 'sink' }],
       }),
       ui_directive: {
         messages: [],
-        quick_replies: [
-          { label: 'Confirm split', value: 'confirm', action_type: 'CONFIRM_SPLIT' },
-        ],
+        quick_replies: [{ label: 'Confirm split', value: 'confirm', action_type: 'CONFIRM_SPLIT' }],
       },
     };
     vi.mocked(api.createConversation).mockResolvedValueOnce(resp as any);
-    vi.mocked(api.confirmSplit).mockResolvedValueOnce(
-      makeResponse('split_finalized') as any,
-    );
+    vi.mocked(api.confirmSplit).mockResolvedValueOnce(makeResponse('split_finalized') as any);
     const user = userEvent.setup();
     render(<ChatShell token="tok" unitIds={['unit-1']} />);
 

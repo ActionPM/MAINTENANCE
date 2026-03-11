@@ -15,16 +15,12 @@ const PINNED = {
   prompt_version: '1.0.0',
 };
 
-const SPLIT_ISSUES = [
-  { issue_id: 'iss-1', summary: 'Leaky faucet', raw_excerpt: 'Faucet leaks' },
-];
+const SPLIT_ISSUES = [{ issue_id: 'iss-1', summary: 'Leaky faucet', raw_excerpt: 'Faucet leaks' }];
 
 // Pre-compute hashes that match what the handler computes internally
-const MATCHING_SOURCE_HASH = computeContentHash(
-  SPLIT_ISSUES.map(i => i.raw_excerpt).join('|'),
-);
+const MATCHING_SOURCE_HASH = computeContentHash(SPLIT_ISSUES.map((i) => i.raw_excerpt).join('|'));
 const MATCHING_SPLIT_HASH = computeContentHash(
-  JSON.stringify(SPLIT_ISSUES.map(i => ({ id: i.issue_id, summary: i.summary }))),
+  JSON.stringify(SPLIT_ISSUES.map((i) => ({ id: i.issue_id, summary: i.summary }))),
 );
 
 const CLASSIFICATION_RESULTS: IssueClassificationResult[] = [

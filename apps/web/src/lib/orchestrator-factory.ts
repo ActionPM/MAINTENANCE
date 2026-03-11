@@ -1,11 +1,42 @@
 import { randomUUID } from 'crypto';
-import { createDispatcher, ERPSyncService, AnalyticsService, createLlmDependencies, computeCueScores } from '@wo-agent/core';
+import {
+  createDispatcher,
+  ERPSyncService,
+  AnalyticsService,
+  createLlmDependencies,
+  computeCueScores,
+} from '@wo-agent/core';
 import type { LlmDependencies } from '@wo-agent/core';
-import { InMemoryEventStore, InMemoryWorkOrderStore, InMemoryIdempotencyStore } from '@wo-agent/core';
-import { InMemoryNotificationStore, InMemoryNotificationPreferenceStore, MockSmsSender, NotificationService } from '@wo-agent/core';
-import type { SessionStore, OrchestratorDependencies, UnitResolver, SlaPolicies, EventRepository, WorkOrderRepository, NotificationRepository, NotificationPreferenceStore, IdempotencyStore, ContactExecutor } from '@wo-agent/core';
+import {
+  InMemoryEventStore,
+  InMemoryWorkOrderStore,
+  InMemoryIdempotencyStore,
+} from '@wo-agent/core';
+import {
+  InMemoryNotificationStore,
+  InMemoryNotificationPreferenceStore,
+  MockSmsSender,
+  NotificationService,
+} from '@wo-agent/core';
+import type {
+  SessionStore,
+  OrchestratorDependencies,
+  UnitResolver,
+  SlaPolicies,
+  EventRepository,
+  WorkOrderRepository,
+  NotificationRepository,
+  NotificationPreferenceStore,
+  IdempotencyStore,
+  ContactExecutor,
+} from '@wo-agent/core';
 import type { ConversationSession } from '@wo-agent/core';
-import type { CueDictionary, IssueClassifierInput, RiskProtocols, EscalationPlans } from '@wo-agent/schemas';
+import type {
+  CueDictionary,
+  IssueClassifierInput,
+  RiskProtocols,
+  EscalationPlans,
+} from '@wo-agent/schemas';
 import { loadTaxonomy } from '@wo-agent/schemas';
 import classificationCues from '@wo-agent/schemas/classification_cues.json' with { type: 'json' };
 import { MockERPAdapter } from '@wo-agent/mock-erp';
@@ -14,11 +45,15 @@ import slaPoliciesJson from '@wo-agent/schemas/sla_policies.json' with { type: '
 // In-memory session store fallback
 class InMemorySessionStore implements SessionStore {
   private sessions = new Map<string, ConversationSession>();
-  async get(id: string) { return this.sessions.get(id) ?? null; }
+  async get(id: string) {
+    return this.sessions.get(id) ?? null;
+  }
   async getByTenantUser(userId: string) {
     return [...this.sessions.values()].filter((s) => s.tenant_user_id === userId);
   }
-  async save(session: ConversationSession) { this.sessions.set(session.conversation_id, session); }
+  async save(session: ConversationSession) {
+    this.sessions.set(session.conversation_id, session);
+  }
 }
 
 interface Stores {
@@ -35,8 +70,16 @@ function createStores(): Stores {
 
   if (databaseUrl) {
     // Lazy-import to avoid bundling @neondatabase/serverless when not needed
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { createPool, PostgresEventStore, PostgresWorkOrderStore, PostgresSessionStore, PostgresNotificationStore, PostgresNotificationPreferenceStore, PostgresIdempotencyStore } = require('@wo-agent/db');
+    const {
+      createPool,
+      PostgresEventStore,
+      PostgresWorkOrderStore,
+      PostgresSessionStore,
+      PostgresNotificationStore,
+      PostgresNotificationPreferenceStore,
+      PostgresIdempotencyStore,
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+    } = require('@wo-agent/db');
     const pool = createPool(databaseUrl);
     return {
       eventRepo: new PostgresEventStore(pool),
@@ -112,70 +155,89 @@ function ensureInitialized(): FactoryDeps {
       sessionStore: stores.sessionStore,
       idGenerator,
       clock,
-      issueSplitter: llmDeps?.issueSplitter ?? (async (input) => ({
-        issues: [{ issue_id: randomUUID(), summary: input.raw_text.slice(0, 200), raw_excerpt: input.raw_text }],
-        issue_count: 1,
-      })),
-      issueClassifier: llmDeps?.issueClassifier ?? (async (input: IssueClassifierInput) => {
-        const text = `${input.issue_summary} ${input.raw_excerpt}`;
-        const cueScores = computeCueScores(text, classificationCues as CueDictionary);
+      issueSplitter:
+        llmDeps?.issueSplitter ??
+        (async (input) => ({
+          issues: [
+            {
+              issue_id: randomUUID(),
+              summary: input.raw_text.slice(0, 200),
+              raw_excerpt: input.raw_text,
+            },
+          ],
+          issue_count: 1,
+        })),
+      issueClassifier:
+        llmDeps?.issueClassifier ??
+        (async (input: IssueClassifierInput) => {
+          const text = `${input.issue_summary} ${input.raw_excerpt}`;
+          const cueScores = computeCueScores(text, classificationCues as CueDictionary);
 
-        // Derive classification from top cue labels, falling back to sensible defaults
-        const category = cueScores['Category']?.topLabel ?? 'maintenance';
-        const location = cueScores['Location']?.topLabel ?? 'suite';
-        const subLocation = cueScores['Sub_Location']?.topLabel ?? 'general';
-        const maintCategory = cueScores['Maintenance_Category']?.topLabel ?? 'general_maintenance';
-        const maintObject = cueScores['Maintenance_Object']?.topLabel ?? 'other_object';
-        const maintProblem = cueScores['Maintenance_Problem']?.topLabel ?? 'not_working';
-        const mgmtCategory = cueScores['Management_Category']?.topLabel ?? 'other_mgmt_cat';
-        const mgmtObject = cueScores['Management_Object']?.topLabel ?? 'other_mgmt_obj';
-        const priority = cueScores['Priority']?.topLabel ?? 'normal';
+          // Derive classification from top cue labels, falling back to sensible defaults
+          const category = cueScores['Category']?.topLabel ?? 'maintenance';
+          const location = cueScores['Location']?.topLabel ?? 'suite';
+          const subLocation = cueScores['Sub_Location']?.topLabel ?? 'general';
+          const maintCategory =
+            cueScores['Maintenance_Category']?.topLabel ?? 'general_maintenance';
+          const maintObject = cueScores['Maintenance_Object']?.topLabel ?? 'other_object';
+          const maintProblem = cueScores['Maintenance_Problem']?.topLabel ?? 'not_working';
+          const mgmtCategory = cueScores['Management_Category']?.topLabel ?? 'other_mgmt_cat';
+          const mgmtObject = cueScores['Management_Object']?.topLabel ?? 'other_mgmt_obj';
+          const priority = cueScores['Priority']?.topLabel ?? 'normal';
 
-        // Use cue score as model_confidence proxy (higher cue = more confident mock)
-        const conf = (field: string) => {
-          const s = cueScores[field]?.score ?? 0;
-          return s > 0 ? Math.min(0.95, 0.7 + s * 0.25) : 0.5;
-        };
+          // Use cue score as model_confidence proxy (higher cue = more confident mock)
+          const conf = (field: string) => {
+            const s = cueScores[field]?.score ?? 0;
+            return s > 0 ? Math.min(0.95, 0.7 + s * 0.25) : 0.5;
+          };
 
-        return {
-          issue_id: input.issue_id,
-          classification: {
-            Category: category,
-            Location: location,
-            Sub_Location: subLocation,
-            Maintenance_Category: maintCategory,
-            Maintenance_Object: maintObject,
-            Maintenance_Problem: maintProblem,
-            Management_Category: category === 'management' ? mgmtCategory : 'other_mgmt_cat',
-            Management_Object: category === 'management' ? mgmtObject : 'other_mgmt_obj',
-            Priority: priority,
-          },
-          model_confidence: {
-            Category: conf('Category'),
-            Location: conf('Location'),
-            Sub_Location: conf('Sub_Location'),
-            Maintenance_Category: conf('Maintenance_Category'),
-            Maintenance_Object: conf('Maintenance_Object'),
-            Maintenance_Problem: conf('Maintenance_Problem'),
-            Management_Category: category === 'management' ? conf('Management_Category') : 0.0,
-            Management_Object: category === 'management' ? conf('Management_Object') : 0.0,
-            Priority: conf('Priority'),
-          },
-          missing_fields: [],
-          needs_human_triage: false,
-        };
-      }),
+          return {
+            issue_id: input.issue_id,
+            classification: {
+              Category: category,
+              Location: location,
+              Sub_Location: subLocation,
+              Maintenance_Category: maintCategory,
+              Maintenance_Object: maintObject,
+              Maintenance_Problem: maintProblem,
+              Management_Category: category === 'management' ? mgmtCategory : 'other_mgmt_cat',
+              Management_Object: category === 'management' ? mgmtObject : 'other_mgmt_obj',
+              Priority: priority,
+            },
+            model_confidence: {
+              Category: conf('Category'),
+              Location: conf('Location'),
+              Sub_Location: conf('Sub_Location'),
+              Maintenance_Category: conf('Maintenance_Category'),
+              Maintenance_Object: conf('Maintenance_Object'),
+              Maintenance_Problem: conf('Maintenance_Problem'),
+              Management_Category: category === 'management' ? conf('Management_Category') : 0.0,
+              Management_Object: category === 'management' ? conf('Management_Object') : 0.0,
+              Priority: conf('Priority'),
+            },
+            missing_fields: [],
+            needs_human_triage: false,
+          };
+        }),
       followUpGenerator: llmDeps?.followUpGenerator ?? (async () => ({ questions: [] })),
       cueDict: classificationCues as CueDictionary,
       taxonomy,
       unitResolver: {
-        resolve: async (unitId: string) => ({ unit_id: unitId, property_id: `prop-${unitId}`, client_id: `client-${unitId}` }),
+        resolve: async (unitId: string) => ({
+          unit_id: unitId,
+          property_id: `prop-${unitId}`,
+          client_id: `client-${unitId}`,
+        }),
       } satisfies UnitResolver,
       workOrderRepo: stores.workOrderRepo,
       idempotencyStore: stores.idempotencyStore,
       notificationService,
       erpAdapter,
-      riskProtocols: { version: '1.0.0', triggers: [], mitigation_templates: [] } satisfies RiskProtocols,
+      riskProtocols: {
+        version: '1.0.0',
+        triggers: [],
+        mitigation_templates: [],
+      } satisfies RiskProtocols,
       escalationPlans: { version: '1.0.0', plans: [] } satisfies EscalationPlans,
       contactExecutor: (async () => false) as ContactExecutor,
     };
@@ -199,9 +261,21 @@ function ensureInitialized(): FactoryDeps {
   return globalForFactory.__woAgentDeps;
 }
 
-export function getOrchestrator() { return ensureInitialized().dispatcher; }
-export function getWorkOrderRepo() { return ensureInitialized().workOrderRepo; }
-export function getNotificationRepo() { return ensureInitialized().notificationRepo; }
-export function getERPAdapter() { return ensureInitialized().erpAdapter; }
-export function getERPSyncService() { return ensureInitialized().erpSyncService; }
-export function getAnalyticsService() { return ensureInitialized().analyticsService; }
+export function getOrchestrator() {
+  return ensureInitialized().dispatcher;
+}
+export function getWorkOrderRepo() {
+  return ensureInitialized().workOrderRepo;
+}
+export function getNotificationRepo() {
+  return ensureInitialized().notificationRepo;
+}
+export function getERPAdapter() {
+  return ensureInitialized().erpAdapter;
+}
+export function getERPSyncService() {
+  return ensureInitialized().erpSyncService;
+}
+export function getAnalyticsService() {
+  return ensureInitialized().analyticsService;
+}

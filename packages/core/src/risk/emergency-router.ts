@@ -32,7 +32,7 @@ export interface RouteEmergencyInput {
 export async function routeEmergency(input: RouteEmergencyInput): Promise<EscalationResult> {
   const { buildingId, escalationPlans, contactExecutor, clock } = input;
 
-  const plan = escalationPlans.plans.find(p => p.building_id === buildingId);
+  const plan = escalationPlans.plans.find((p) => p.building_id === buildingId);
   if (!plan) {
     throw new Error(`No escalation plan found for building: ${buildingId}`);
   }

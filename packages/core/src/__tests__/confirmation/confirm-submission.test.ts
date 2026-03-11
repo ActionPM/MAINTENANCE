@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { handleConfirmSubmission } from '../../orchestrator/action-handlers/confirm-submission.js';
-import { ConversationState, ActionType, ActorType, DEFAULT_CONFIDENCE_CONFIG } from '@wo-agent/schemas';
+import {
+  ConversationState,
+  ActionType,
+  ActorType,
+  DEFAULT_CONFIDENCE_CONFIG,
+} from '@wo-agent/schemas';
 import type { ActionHandlerContext } from '../../orchestrator/types.js';
 import type { ConversationSession, IssueClassificationResult } from '../../session/types.js';
 import { computeContentHash } from '../../confirmation/payload-builder.js';
@@ -15,12 +20,14 @@ const PINNED = {
   prompt_version: '1.0.0',
 };
 
-const SPLIT_ISSUES = [{ issue_id: 'issue-1', summary: 'Leaking toilet', raw_excerpt: 'My toilet leaks' }];
+const SPLIT_ISSUES = [
+  { issue_id: 'issue-1', summary: 'Leaking toilet', raw_excerpt: 'My toilet leaks' },
+];
 
 // Pre-compute the hashes that will match what the handler computes
-const MATCHING_SOURCE_HASH = computeContentHash(SPLIT_ISSUES.map(i => i.raw_excerpt).join('|'));
+const MATCHING_SOURCE_HASH = computeContentHash(SPLIT_ISSUES.map((i) => i.raw_excerpt).join('|'));
 const MATCHING_SPLIT_HASH = computeContentHash(
-  JSON.stringify(SPLIT_ISSUES.map(i => ({ id: i.issue_id, summary: i.summary }))),
+  JSON.stringify(SPLIT_ISSUES.map((i) => ({ id: i.issue_id, summary: i.summary }))),
 );
 
 const CLASSIFICATION_RESULTS: IssueClassificationResult[] = [
@@ -29,7 +36,7 @@ const CLASSIFICATION_RESULTS: IssueClassificationResult[] = [
     classifierOutput: {
       issue_id: 'issue-1',
       classification: { Category: 'maintenance', Maintenance_Category: 'plumbing' },
-      model_confidence: { Category: 0.95, Maintenance_Category: 0.90 },
+      model_confidence: { Category: 0.95, Maintenance_Category: 0.9 },
       missing_fields: [],
       needs_human_triage: false,
     },
@@ -92,7 +99,9 @@ function makeCtx(
     },
     deps: {
       eventRepo: {
-        insert: async (e: unknown) => { events.push(e); },
+        insert: async (e: unknown) => {
+          events.push(e);
+        },
         query: async () => [],
       },
       sessionStore: {
@@ -107,7 +116,9 @@ function makeCtx(
       followUpGenerator: async () => ({}),
       cueDict: { version: '1.0.0', fields: {} },
       taxonomy: { version: '1.0.0', categories: {} } as any,
-      unitResolver: { resolve: async () => ({ unit_id: 'unit-1', property_id: 'prop-1', client_id: 'client-1' }) } satisfies UnitResolver,
+      unitResolver: {
+        resolve: async () => ({ unit_id: 'unit-1', property_id: 'prop-1', client_id: 'client-1' }),
+      } satisfies UnitResolver,
       workOrderRepo: new InMemoryWorkOrderStore(),
       idempotencyStore: new InMemoryIdempotencyStore(),
       riskProtocols: { version: '1.0.0', triggers: [], mitigation_templates: [] },
@@ -184,7 +195,7 @@ describe('handleConfirmSubmission', () => {
           missing_fields: [],
           needs_human_triage: false,
         },
-        computedConfidence: { Category: 0.30 }, // low band
+        computedConfidence: { Category: 0.3 }, // low band
         fieldsNeedingInput: [],
       },
       {
@@ -201,9 +212,9 @@ describe('handleConfirmSubmission', () => {
       },
     ];
 
-    const sourceHash = computeContentHash(multiIssues.map(i => i.raw_excerpt).join('|'));
+    const sourceHash = computeContentHash(multiIssues.map((i) => i.raw_excerpt).join('|'));
     const splitHash = computeContentHash(
-      JSON.stringify(multiIssues.map(i => ({ id: i.issue_id, summary: i.summary }))),
+      JSON.stringify(multiIssues.map((i) => ({ id: i.issue_id, summary: i.summary }))),
     );
 
     const ctx = makeCtx({

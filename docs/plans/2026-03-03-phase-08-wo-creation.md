@@ -13,6 +13,7 @@
 **Spec references:** §2 (non-negotiable #4 — no side effects without confirmation, #6 — append-only events), §6 (canonical WO model), §7 (append-only events, `work_order_events`), §10 (orchestrator contract, idempotency_key), §11.2 (transition matrix — `tenant_confirmation_pending` → `submitted`), §18 (idempotency keys, multi-WO transaction, optimistic locking, no group status)
 
 **Skills that apply during execution:**
+
 - `@test-driven-development` — every task follows red-green-refactor
 - `@state-machine-implementation` — no state transition changes needed (already handled)
 - `@schema-first-development` — WO creation validated against existing schema
@@ -26,6 +27,7 @@
 The `WorkOrder` type requires `property_id` and `client_id`, but `ConversationSession` only has `unit_id`. We need a `UnitResolver` to look up scope from the unit, and store it on the session once a unit is selected.
 
 **Files:**
+
 - Modify: `packages/core/src/session/types.ts` (add `property_id`, `client_id` fields)
 - Modify: `packages/core/src/session/session.ts` (add `setSessionScope` helper)
 - Create: `packages/core/src/unit-resolver/types.ts` (UnitResolver interface + UnitInfo type)
@@ -48,7 +50,12 @@ describe('setSessionScope', () => {
     tenant_user_id: 'tu-1',
     tenant_account_id: 'ta-1',
     authorized_unit_ids: ['unit-1'],
-    pinned_versions: { taxonomy_version: '1', schema_version: '1', model_id: 'm', prompt_version: '1' },
+    pinned_versions: {
+      taxonomy_version: '1',
+      schema_version: '1',
+      model_id: 'm',
+      prompt_version: '1',
+    },
   });
 
   it('sets property_id and client_id from UnitInfo', () => {
@@ -156,6 +163,7 @@ Import `UnitResolver` from `'../unit-resolver/types.js'`.
 **Step 7: Update barrel exports in `packages/core/src/index.ts`**
 
 Add:
+
 ```typescript
 // --- Unit Resolver (Phase 8) ---
 export type { UnitInfo, UnitResolver } from './unit-resolver/index.js';
@@ -191,6 +199,7 @@ git commit -m "feat(core): add property_id/client_id to session + UnitResolver d
 When the tenant selects a unit, resolve `property_id`/`client_id` and store them on the session. This makes scope available downstream for WO creation.
 
 **Files:**
+
 - Modify: `packages/core/src/orchestrator/action-handlers/select-unit.ts`
 - Test: `packages/core/src/__tests__/unit-resolver/select-unit-scope.test.ts`
 
@@ -212,7 +221,13 @@ function makeTestDeps(overrides?: Partial<OrchestratorDependencies>): Orchestrat
     idGenerator: () => `id-${++counter}`,
     clock: () => '2026-03-03T12:00:00Z',
     issueSplitter: async () => ({ issues: [], issue_count: 0 }),
-    issueClassifier: async () => ({ issue_id: '', classification: {}, model_confidence: {}, missing_fields: [], needs_human_triage: false }),
+    issueClassifier: async () => ({
+      issue_id: '',
+      classification: {},
+      model_confidence: {},
+      missing_fields: [],
+      needs_human_triage: false,
+    }),
     followUpGenerator: async () => ({ questions: [] }),
     cueDict: { version: '1', fields: {} },
     taxonomy: { version: '1', categories: {} } as any,
@@ -340,6 +355,7 @@ git commit -m "feat(core): resolve property/client scope via UnitResolver on SEL
 Create the persistence layer for work orders. Follows the same pattern as `EventRepository` / `InMemoryEventStore` but for the `work_order_events` table (spec §7). The repository stores `WorkOrder` objects with INSERT-only semantics for events, and supports idempotent lookups.
 
 **Files:**
+
 - Create: `packages/core/src/work-order/types.ts` (WorkOrderEvent type, WorkOrderRepository interface)
 - Create: `packages/core/src/work-order/in-memory-wo-store.ts` (test implementation)
 - Create: `packages/core/src/work-order/index.ts` (barrel export)
@@ -373,7 +389,12 @@ const makeWO = (overrides?: Partial<WorkOrder>): WorkOrder => ({
   missing_fields: [],
   pets_present: 'unknown',
   needs_human_triage: false,
-  pinned_versions: { taxonomy_version: '1', schema_version: '1', model_id: 'm', prompt_version: '1' },
+  pinned_versions: {
+    taxonomy_version: '1',
+    schema_version: '1',
+    model_id: 'm',
+    prompt_version: '1',
+  },
   created_at: '2026-03-03T12:00:00Z',
   updated_at: '2026-03-03T12:00:00Z',
   row_version: 1,
@@ -494,7 +515,7 @@ export class InMemoryWorkOrderStore implements WorkOrderRepository {
   }
 
   async getByIssueGroup(issueGroupId: string): Promise<readonly WorkOrder[]> {
-    return [...this.store.values()].filter(wo => wo.issue_group_id === issueGroupId);
+    return [...this.store.values()].filter((wo) => wo.issue_group_id === issueGroupId);
   }
 }
 ```
@@ -510,6 +531,7 @@ export { InMemoryWorkOrderStore } from './in-memory-wo-store.js';
 **Step 6: Update `packages/core/src/index.ts`**
 
 Add:
+
 ```typescript
 // --- Work Order (Phase 8) ---
 export { InMemoryWorkOrderStore } from './work-order/index.js';
@@ -536,6 +558,7 @@ git commit -m "feat(core): WorkOrderRepository interface + in-memory implementat
 Idempotency keys prevent duplicate WO creation on retries (spec §18). The store maps `idempotency_key` → previously returned result. If a key exists, the original result is returned instead of re-executing.
 
 **Files:**
+
 - Create: `packages/core/src/idempotency/types.ts`
 - Create: `packages/core/src/idempotency/in-memory-idempotency-store.ts`
 - Create: `packages/core/src/idempotency/index.ts`
@@ -643,6 +666,7 @@ export { InMemoryIdempotencyStore } from './in-memory-idempotency-store.js';
 **Step 6: Update `packages/core/src/index.ts`**
 
 Add:
+
 ```typescript
 // --- Idempotency (Phase 8) ---
 export { InMemoryIdempotencyStore } from './idempotency/index.js';
@@ -669,6 +693,7 @@ git commit -m "feat(core): IdempotencyStore interface + in-memory implementation
 The core business logic: given a confirmed session, produce `WorkOrder[]`. This is a **pure function** (no I/O) — it takes session data and returns work order objects. The dispatcher calls this, then persists them via the repository.
 
 **Files:**
+
 - Create: `packages/core/src/work-order/wo-creator.ts`
 - Modify: `packages/core/src/work-order/index.ts` (export)
 - Modify: `packages/core/src/index.ts` (export)
@@ -682,7 +707,13 @@ import { describe, it, expect } from 'vitest';
 import { createWorkOrders } from '../../work-order/wo-creator.js';
 import type { ConversationSession } from '../../session/types.js';
 import type { WorkOrder } from '@wo-agent/schemas';
-import { createSession, setSessionUnit, setSplitIssues, setClassificationResults, setSessionScope } from '../../session/session.js';
+import {
+  createSession,
+  setSessionUnit,
+  setSplitIssues,
+  setClassificationResults,
+  setSessionScope,
+} from '../../session/session.js';
 
 const baseSession = (): ConversationSession => {
   let s = createSession({
@@ -690,7 +721,12 @@ const baseSession = (): ConversationSession => {
     tenant_user_id: 'tu-1',
     tenant_account_id: 'ta-1',
     authorized_unit_ids: ['unit-1'],
-    pinned_versions: { taxonomy_version: '1.0', schema_version: '1.0', model_id: 'gpt-test', prompt_version: '1.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0',
+      schema_version: '1.0',
+      model_id: 'gpt-test',
+      prompt_version: '1.0',
+    },
   });
   s = setSessionUnit(s, 'unit-1');
   s = setSessionScope(s, { property_id: 'prop-1', client_id: 'client-1' });
@@ -732,7 +768,9 @@ describe('createWorkOrders', () => {
   const idGen = () => `gen-${++idCounter}`;
   const clock = () => '2026-03-03T14:00:00Z';
 
-  beforeEach(() => { idCounter = 0; });
+  beforeEach(() => {
+    idCounter = 0;
+  });
 
   it('creates one WO per split issue', () => {
     const session = baseSession();
@@ -745,20 +783,20 @@ describe('createWorkOrders', () => {
     const wos = createWorkOrders({ session, idGenerator: idGen, clock });
     const groupId = wos[0].issue_group_id;
     expect(groupId).toBeTruthy();
-    expect(wos.every(wo => wo.issue_group_id === groupId)).toBe(true);
+    expect(wos.every((wo) => wo.issue_group_id === groupId)).toBe(true);
   });
 
   it('each WO has a unique work_order_id', () => {
     const session = baseSession();
     const wos = createWorkOrders({ session, idGenerator: idGen, clock });
-    const ids = new Set(wos.map(wo => wo.work_order_id));
+    const ids = new Set(wos.map((wo) => wo.work_order_id));
     expect(ids.size).toBe(2);
   });
 
   it('maps issue_id correctly', () => {
     const session = baseSession();
     const wos = createWorkOrders({ session, idGenerator: idGen, clock });
-    expect(wos.map(wo => wo.issue_id).sort()).toEqual(['iss-1', 'iss-2']);
+    expect(wos.map((wo) => wo.issue_id).sort()).toEqual(['iss-1', 'iss-2']);
   });
 
   it('populates scope fields from session', () => {
@@ -790,7 +828,7 @@ describe('createWorkOrders', () => {
   it('maps classification and confidence from results', () => {
     const session = baseSession();
     const wos = createWorkOrders({ session, idGenerator: idGen, clock });
-    const wo1 = wos.find(wo => wo.issue_id === 'iss-1')!;
+    const wo1 = wos.find((wo) => wo.issue_id === 'iss-1')!;
     expect(wo1.classification).toEqual({ category: 'plumbing', subcategory: 'faucet' });
     expect(wo1.confidence_by_field).toEqual({ category: 0.92, subcategory: 0.85 });
   });
@@ -798,7 +836,7 @@ describe('createWorkOrders', () => {
   it('uses raw_excerpt as raw_text and summary as summary_confirmed', () => {
     const session = baseSession();
     const wos = createWorkOrders({ session, idGenerator: idGen, clock });
-    const wo1 = wos.find(wo => wo.issue_id === 'iss-1')!;
+    const wo1 = wos.find((wo) => wo.issue_id === 'iss-1')!;
     expect(wo1.raw_text).toBe('My kitchen faucet is leaking');
     expect(wo1.summary_confirmed).toBe('Leaky faucet');
   });
@@ -864,15 +902,13 @@ describe('createWorkOrders', () => {
   it('throws if session has no unit_id', () => {
     let session = baseSession();
     session = { ...session, unit_id: null };
-    expect(() => createWorkOrders({ session, idGenerator: idGen, clock }))
-      .toThrow(/unit_id/);
+    expect(() => createWorkOrders({ session, idGenerator: idGen, clock })).toThrow(/unit_id/);
   });
 
   it('throws if session has no property_id or client_id', () => {
     let session = baseSession();
     session = { ...session, property_id: null };
-    expect(() => createWorkOrders({ session, idGenerator: idGen, clock }))
-      .toThrow(/property_id/);
+    expect(() => createWorkOrders({ session, idGenerator: idGen, clock })).toThrow(/property_id/);
   });
 });
 ```
@@ -923,7 +959,7 @@ export function createWorkOrders(input: CreateWorkOrdersInput): WorkOrder[] {
   const now = clock();
   const issueGroupId = idGenerator();
   const resultMap = new Map<string, IssueClassificationResult>(
-    session.classification_results.map(r => [r.issue_id, r]),
+    session.classification_results.map((r) => [r.issue_id, r]),
   );
 
   // Build photo references from draft_photo_ids.
@@ -931,14 +967,14 @@ export function createWorkOrders(input: CreateWorkOrdersInput): WorkOrder[] {
   // Storage key and sha256 are placeholders — the photo-upload handler
   // stores the real values. We reference by ID for now; Phase 9+ can
   // enrich from a photo store.
-  const photos = session.draft_photo_ids.map(photoId => ({
+  const photos = session.draft_photo_ids.map((photoId) => ({
     photo_id: photoId,
     storage_key: '', // resolved later from photo store
     sha256: '',
     scanned_status: 'pending' as const,
   }));
 
-  return session.split_issues.map(issue => {
+  return session.split_issues.map((issue) => {
     const classResult = resultMap.get(issue.issue_id);
 
     const wo: WorkOrder = {
@@ -951,11 +987,13 @@ export function createWorkOrders(input: CreateWorkOrdersInput): WorkOrder[] {
       tenant_user_id: session.tenant_user_id,
       tenant_account_id: session.tenant_account_id,
       status: WorkOrderStatus.CREATED,
-      status_history: [{
-        status: WorkOrderStatus.CREATED,
-        changed_at: now,
-        actor: ActorType.SYSTEM,
-      }],
+      status_history: [
+        {
+          status: WorkOrderStatus.CREATED,
+          changed_at: now,
+          actor: ActorType.SYSTEM,
+        },
+      ],
       raw_text: issue.raw_excerpt,
       summary_confirmed: issue.summary,
       photos,
@@ -978,6 +1016,7 @@ export function createWorkOrders(input: CreateWorkOrdersInput): WorkOrder[] {
 **Step 4: Update barrel exports**
 
 In `packages/core/src/work-order/index.ts`, add:
+
 ```typescript
 export { createWorkOrders } from './wo-creator.js';
 export type { CreateWorkOrdersInput } from './wo-creator.js';
@@ -1007,6 +1046,7 @@ git commit -m "feat(core): WorkOrderCreator pure factory — one WO per split is
 Append-only events for `work_order_events` (spec §7). One `work_order_created` event per WO.
 
 **Files:**
+
 - Create: `packages/core/src/work-order/event-builder.ts`
 - Modify: `packages/core/src/work-order/index.ts` (export)
 - Modify: `packages/core/src/index.ts` (export)
@@ -1039,7 +1079,12 @@ const makeWO = (): WorkOrder => ({
   missing_fields: [],
   pets_present: 'unknown',
   needs_human_triage: false,
-  pinned_versions: { taxonomy_version: '1', schema_version: '1', model_id: 'm', prompt_version: '1' },
+  pinned_versions: {
+    taxonomy_version: '1',
+    schema_version: '1',
+    model_id: 'm',
+    prompt_version: '1',
+  },
   created_at: '2026-03-03T12:00:00Z',
   updated_at: '2026-03-03T12:00:00Z',
   row_version: 1,
@@ -1111,6 +1156,7 @@ export function buildWorkOrderCreatedEvent(input: WOCreatedEventInput): WorkOrde
 **Step 4: Update exports**
 
 In `packages/core/src/work-order/index.ts`:
+
 ```typescript
 export { buildWorkOrderCreatedEvent } from './event-builder.js';
 export type { WOCreatedEventInput } from './event-builder.js';
@@ -1140,6 +1186,7 @@ git commit -m "feat(core): work_order_created event builder (append-only)"
 Wire the new stores into the orchestrator dependency injection.
 
 **Files:**
+
 - Modify: `packages/core/src/orchestrator/types.ts`
 - Test: (existing tests — need updating for new deps)
 
@@ -1162,6 +1209,7 @@ Add to the interface:
 **Step 2: Update all test helpers that construct `OrchestratorDependencies`**
 
 Search for all files that create a deps object and add the two new stores with in-memory implementations. Key files to update:
+
 - `packages/core/src/__tests__/orchestrator-integration.test.ts`
 - `packages/core/src/__tests__/integration.test.ts`
 - `packages/core/src/__tests__/confirmation/confirm-submission.test.ts`
@@ -1169,6 +1217,7 @@ Search for all files that create a deps object and add the two new stores with i
 - Any other test creating `OrchestratorDependencies`
 
 Pattern:
+
 ```typescript
 import { InMemoryWorkOrderStore } from '../../work-order/in-memory-wo-store.js';
 import { InMemoryIdempotencyStore } from '../../idempotency/in-memory-idempotency-store.js';
@@ -1197,6 +1246,7 @@ git commit -m "feat(core): add workOrderRepo + idempotencyStore to OrchestratorD
 The main integration: when confirmation is accepted (fresh, not stale), create WOs, persist them, record events, and mark the side effect as completed. Respects idempotency keys.
 
 **Files:**
+
 - Modify: `packages/core/src/orchestrator/action-handlers/confirm-submission.ts`
 - Test: `packages/core/src/__tests__/work-order/wo-creation-integration.test.ts`
 
@@ -1375,7 +1425,7 @@ for (const wo of workOrders) {
 }
 
 // Store idempotency record
-const woIds = workOrders.map(wo => wo.work_order_id);
+const woIds = workOrders.map((wo) => wo.work_order_id);
 if (ctx.request.idempotency_key) {
   await deps.idempotencyStore.set(ctx.request.idempotency_key, {
     work_order_ids: woIds,
@@ -1386,12 +1436,14 @@ if (ctx.request.idempotency_key) {
 return {
   newState: ConversationState.SUBMITTED,
   session,
-  uiMessages: [{ role: 'agent', content: 'Your request has been submitted. We\'ll be in touch.' }],
-  sideEffects: [{
-    effect_type: 'create_work_orders',
-    status: 'completed',
-    idempotency_key: ctx.request.idempotency_key,
-  }],
+  uiMessages: [{ role: 'agent', content: "Your request has been submitted. We'll be in touch." }],
+  sideEffects: [
+    {
+      effect_type: 'create_work_orders',
+      status: 'completed',
+      idempotency_key: ctx.request.idempotency_key,
+    },
+  ],
   eventPayload: {
     confirmed: true,
     confirmation_payload: confirmationPayload,
@@ -1426,6 +1478,7 @@ git commit -m "feat(core): wire WO creation into CONFIRM_SUBMISSION with idempot
 Explicitly test that when `CONFIRM_SUBMISSION` is called twice with the same `idempotency_key`, the second call returns the same WO IDs without creating duplicates. This is tested at the handler level (not through the dispatcher) to avoid state transition issues on retry.
 
 **Files:**
+
 - Test: `packages/core/src/__tests__/work-order/idempotent-retry.test.ts`
 
 **Step 1: Write the test**
@@ -1438,7 +1491,13 @@ import { InMemoryEventStore } from '../../events/in-memory-event-store.js';
 import { InMemoryWorkOrderStore } from '../../work-order/in-memory-wo-store.js';
 import { InMemoryIdempotencyStore } from '../../idempotency/in-memory-idempotency-store.js';
 import { ConversationState, ActionType, ActorType } from '@wo-agent/schemas';
-import { createSession, setSessionUnit, setSplitIssues, setClassificationResults, setSessionScope } from '../../session/session.js';
+import {
+  createSession,
+  setSessionUnit,
+  setSplitIssues,
+  setClassificationResults,
+  setSessionScope,
+} from '../../session/session.js';
 import type { ActionHandlerContext } from '../../orchestrator/types.js';
 
 function makeCtxWithIdempKey(idempotencyKey: string): ActionHandlerContext {
@@ -1447,7 +1506,12 @@ function makeCtxWithIdempKey(idempotencyKey: string): ActionHandlerContext {
     tenant_user_id: 'tu-1',
     tenant_account_id: 'ta-1',
     authorized_unit_ids: ['unit-1'],
-    pinned_versions: { taxonomy_version: '1', schema_version: '1', model_id: 'm', prompt_version: '1' },
+    pinned_versions: {
+      taxonomy_version: '1',
+      schema_version: '1',
+      model_id: 'm',
+      prompt_version: '1',
+    },
   });
   s = { ...s, state: ConversationState.TENANT_CONFIRMATION_PENDING };
   s = setSessionUnit(s, 'unit-1');
@@ -1455,18 +1519,20 @@ function makeCtxWithIdempKey(idempotencyKey: string): ActionHandlerContext {
   s = setSplitIssues(s, [
     { issue_id: 'iss-1', summary: 'Leaky faucet', raw_excerpt: 'Faucet leaks' },
   ]);
-  s = setClassificationResults(s, [{
-    issue_id: 'iss-1',
-    classifierOutput: {
+  s = setClassificationResults(s, [
+    {
       issue_id: 'iss-1',
-      classification: { category: 'plumbing' },
-      model_confidence: { category: 0.9 },
-      missing_fields: [],
-      needs_human_triage: false,
+      classifierOutput: {
+        issue_id: 'iss-1',
+        classification: { category: 'plumbing' },
+        model_confidence: { category: 0.9 },
+        missing_fields: [],
+        needs_human_triage: false,
+      },
+      computedConfidence: { category: 0.92 },
+      fieldsNeedingInput: [],
     },
-    computedConfidence: { category: 0.92 },
-    fieldsNeedingInput: [],
-  }]);
+  ]);
 
   let counter = 0;
   return {
@@ -1477,7 +1543,11 @@ function makeCtxWithIdempKey(idempotencyKey: string): ActionHandlerContext {
       actor: ActorType.TENANT,
       tenant_input: {},
       idempotency_key: idempotencyKey,
-      auth_context: { tenant_user_id: 'tu-1', tenant_account_id: 'ta-1', authorized_unit_ids: ['unit-1'] },
+      auth_context: {
+        tenant_user_id: 'tu-1',
+        tenant_account_id: 'ta-1',
+        authorized_unit_ids: ['unit-1'],
+      },
     },
     deps: {
       eventRepo: new InMemoryEventStore(),
@@ -1487,7 +1557,13 @@ function makeCtxWithIdempKey(idempotencyKey: string): ActionHandlerContext {
       idGenerator: () => `id-${++counter}`,
       clock: () => '2026-03-03T14:00:00Z',
       issueSplitter: async () => ({ issues: [], issue_count: 0 }),
-      issueClassifier: async () => ({ issue_id: '', classification: {}, model_confidence: {}, missing_fields: [], needs_human_triage: false }),
+      issueClassifier: async () => ({
+        issue_id: '',
+        classification: {},
+        model_confidence: {},
+        missing_fields: [],
+        needs_human_triage: false,
+      }),
       followUpGenerator: async () => ({ questions: [] }),
       cueDict: { version: '1', fields: {} },
       taxonomy: {} as any,
@@ -1504,7 +1580,7 @@ describe('idempotent CONFIRM_SUBMISSION retry', () => {
     // First call — creates WOs
     const result1 = await handleConfirmSubmission(ctx);
     expect(result1.newState).toBe(ConversationState.SUBMITTED);
-    const woIds1 = result1.sideEffects?.find(se => se.effect_type === 'create_work_orders');
+    const woIds1 = result1.sideEffects?.find((se) => se.effect_type === 'create_work_orders');
     expect(woIds1?.status).toBe('completed');
 
     // Second call with same idempotency key
@@ -1536,6 +1612,7 @@ git commit -m "test(core): idempotent CONFIRM_SUBMISSION retry scenario"
 When the state transitions to `submitted`, the `ConversationSnapshot` should include the created `work_order_ids` so the client can navigate to the WO detail pages.
 
 **Files:**
+
 - Modify: `packages/schemas/src/types/orchestrator-action.ts` (add `work_order_ids` to `ConversationSnapshot`)
 - Modify: `packages/core/src/orchestrator/response-builder.ts` (populate from handler result)
 - Test: `packages/core/src/__tests__/work-order/response-wo-ids.test.ts`
@@ -1557,7 +1634,12 @@ describe('buildResponse includes work_order_ids for submitted state', () => {
       tenant_user_id: 'tu-1',
       tenant_account_id: 'ta-1',
       authorized_unit_ids: ['u-1'],
-      pinned_versions: { taxonomy_version: '1', schema_version: '1', model_id: 'm', prompt_version: '1' },
+      pinned_versions: {
+        taxonomy_version: '1',
+        schema_version: '1',
+        model_id: 'm',
+        prompt_version: '1',
+      },
     });
 
     const result: ActionHandlerResult = {
@@ -1578,7 +1660,12 @@ describe('buildResponse includes work_order_ids for submitted state', () => {
       tenant_user_id: 'tu-1',
       tenant_account_id: 'ta-1',
       authorized_unit_ids: ['u-1'],
-      pinned_versions: { taxonomy_version: '1', schema_version: '1', model_id: 'm', prompt_version: '1' },
+      pinned_versions: {
+        taxonomy_version: '1',
+        schema_version: '1',
+        model_id: 'm',
+        prompt_version: '1',
+      },
     });
 
     const result: ActionHandlerResult = {
@@ -1642,6 +1729,7 @@ git commit -m "feat(core): include work_order_ids in ConversationSnapshot for su
 A single test that drives the entire happy path: CREATE_CONVERSATION → SELECT_UNIT → SUBMIT_INITIAL_MESSAGE → CONFIRM_SPLIT → (auto-classify) → CONFIRM_SUBMISSION, then verifies the WOs were created, events were written, and the response is correct.
 
 **Files:**
+
 - Test: `packages/core/src/__tests__/work-order/e2e-wo-creation.test.ts`
 
 **Step 1: Write the test**
@@ -1666,7 +1754,9 @@ describe('E2E: WO creation flow', () => {
     const dispatch = createDispatcher(deps);
 
     // 1. CREATE_CONVERSATION
-    const createRes = await dispatch({ /* ... */ });
+    const createRes = await dispatch({
+      /* ... */
+    });
     const convId = createRes.session.conversation_id;
 
     // 2. SELECT_UNIT (if multi-unit)
@@ -1678,7 +1768,9 @@ describe('E2E: WO creation flow', () => {
       action_type: ActionType.SUBMIT_INITIAL_MESSAGE,
       actor: ActorType.TENANT,
       tenant_input: { message: 'My faucet is leaking and my window is cracked' },
-      auth_context: { /* ... */ },
+      auth_context: {
+        /* ... */
+      },
     });
 
     // 4. CONFIRM_SPLIT (auto-fire → classification → confirmation)
@@ -1687,7 +1779,9 @@ describe('E2E: WO creation flow', () => {
       action_type: ActionType.CONFIRM_SPLIT,
       actor: ActorType.TENANT,
       tenant_input: {},
-      auth_context: { /* ... */ },
+      auth_context: {
+        /* ... */
+      },
     });
 
     // Should be at tenant_confirmation_pending after classification
@@ -1700,7 +1794,9 @@ describe('E2E: WO creation flow', () => {
       actor: ActorType.TENANT,
       tenant_input: {},
       idempotency_key: 'e2e-key-1',
-      auth_context: { /* ... */ },
+      auth_context: {
+        /* ... */
+      },
     });
 
     // Assertions
@@ -1723,15 +1819,13 @@ describe('E2E: WO creation flow', () => {
     }
 
     // All WOs share issue_group_id
-    const allWOs = await Promise.all(
-      snapshot.work_order_ids!.map(id => woStore.getById(id)),
-    );
-    const groupIds = new Set(allWOs.map(wo => wo!.issue_group_id));
+    const allWOs = await Promise.all(snapshot.work_order_ids!.map((id) => woStore.getById(id)));
+    const groupIds = new Set(allWOs.map((wo) => wo!.issue_group_id));
     expect(groupIds.size).toBe(1);
 
     // Side effects show completed
     const woEffect = confirmRes.response.pending_side_effects.find(
-      se => se.effect_type === 'create_work_orders',
+      (se) => se.effect_type === 'create_work_orders',
     );
     expect(woEffect?.status).toBe('completed');
 
@@ -1764,6 +1858,7 @@ git commit -m "test(core): E2E integration test — full WO creation flow"
 Final pass: ensure all types compile, all tests pass, no lint errors. Validate WO objects against the existing `validateWorkOrder` schema validator.
 
 **Files:**
+
 - Modify: various (fix any type issues discovered)
 - Test: `packages/core/src/__tests__/work-order/wo-schema-validation.test.ts`
 
@@ -1774,7 +1869,13 @@ Final pass: ensure all types compile, all tests pass, no lint errors. Validate W
 import { describe, it, expect } from 'vitest';
 import { validateWorkOrder } from '@wo-agent/schemas';
 import { createWorkOrders } from '../../work-order/wo-creator.js';
-import { createSession, setSessionUnit, setSplitIssues, setClassificationResults, setSessionScope } from '../../session/session.js';
+import {
+  createSession,
+  setSessionUnit,
+  setSplitIssues,
+  setClassificationResults,
+  setSessionScope,
+} from '../../session/session.js';
 
 describe('created WOs pass schema validation', () => {
   it('validates against work_order.schema.json', () => {
@@ -1783,25 +1884,32 @@ describe('created WOs pass schema validation', () => {
       tenant_user_id: 'tu-1',
       tenant_account_id: 'ta-1',
       authorized_unit_ids: ['u-1'],
-      pinned_versions: { taxonomy_version: '1.0', schema_version: '1.0', model_id: 'm', prompt_version: '1.0' },
+      pinned_versions: {
+        taxonomy_version: '1.0',
+        schema_version: '1.0',
+        model_id: 'm',
+        prompt_version: '1.0',
+      },
     });
     s = setSessionUnit(s, 'u-1');
     s = setSessionScope(s, { property_id: 'p-1', client_id: 'c-1' });
     s = setSplitIssues(s, [
       { issue_id: 'iss-1', summary: 'Test issue', raw_excerpt: 'Test raw text' },
     ]);
-    s = setClassificationResults(s, [{
-      issue_id: 'iss-1',
-      classifierOutput: {
+    s = setClassificationResults(s, [
+      {
         issue_id: 'iss-1',
-        classification: { category: 'plumbing' },
-        model_confidence: { category: 0.9 },
-        missing_fields: [],
-        needs_human_triage: false,
+        classifierOutput: {
+          issue_id: 'iss-1',
+          classification: { category: 'plumbing' },
+          model_confidence: { category: 0.9 },
+          missing_fields: [],
+          needs_human_triage: false,
+        },
+        computedConfidence: { category: 0.92 },
+        fieldsNeedingInput: [],
       },
-      computedConfidence: { category: 0.92 },
-      fieldsNeedingInput: [],
-    }]);
+    ]);
 
     let counter = 0;
     const wos = createWorkOrders({
@@ -1870,6 +1978,7 @@ Task 11 (cleanup + validation)
 ```
 
 Parallelizable groups:
+
 - **Group A** (independent): Task 0, Task 2, Task 3
 - **Group B** (after Group A): Task 1, Task 4, Task 5, Task 6
 - **Group C** (after Group B): Task 7

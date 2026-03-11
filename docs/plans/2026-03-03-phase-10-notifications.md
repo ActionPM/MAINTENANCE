@@ -11,6 +11,7 @@
 **Prerequisite:** Phase 9 (risk/emergency) merged to main.
 
 **Spec references:**
+
 - §20 — Notification requirements (in-app + SMS, prefs, consent, batching, deduping)
 - §7 — `notification_events` append-only table
 - §10.1 — Orchestrator sends notifications
@@ -20,6 +21,7 @@
 - §2.4 — No side effects without tenant confirmation
 
 **Skills:**
+
 - `@test-driven-development` — red-green-refactor for every task
 - `@append-only-events` — notification_events INSERT+SELECT only
 - `@schema-first-development` — types before implementation
@@ -30,6 +32,7 @@
 ### Task 0: Create notification type definitions
 
 **Files:**
+
 - Create: `packages/schemas/src/types/notification.ts`
 - Modify: `packages/schemas/src/index.ts`
 
@@ -119,10 +122,7 @@ export type NotificationChannel = 'in_app' | 'sms';
  * status_changed: sent when WO status updates
  * needs_input: sent when follow-up questions are pending
  */
-export type NotificationType =
-  | 'work_order_created'
-  | 'status_changed'
-  | 'needs_input';
+export type NotificationType = 'work_order_created' | 'status_changed' | 'needs_input';
 
 /**
  * Notification delivery status.
@@ -211,6 +211,7 @@ git commit -m "feat(schemas): add notification type definitions (phase 10)"
 ### Task 1: Create NotificationRepository interface and in-memory implementation
 
 **Files:**
+
 - Create: `packages/core/src/notifications/types.ts`
 - Create: `packages/core/src/notifications/in-memory-notification-store.ts`
 - Create: `packages/core/src/notifications/index.ts`
@@ -266,7 +267,14 @@ describe('InMemoryNotificationStore', () => {
   it('queries by conversation_id', async () => {
     const store = new InMemoryNotificationStore();
     await store.insert(makeEvent({ event_id: 'e1', conversation_id: 'c1' }));
-    await store.insert(makeEvent({ event_id: 'e2', conversation_id: 'c2', notification_id: 'n2', idempotency_key: 'k2' }));
+    await store.insert(
+      makeEvent({
+        event_id: 'e2',
+        conversation_id: 'c2',
+        notification_id: 'n2',
+        idempotency_key: 'k2',
+      }),
+    );
     const results = await store.queryByConversation('c1');
     expect(results).toHaveLength(1);
   });
@@ -288,16 +296,20 @@ describe('InMemoryNotificationStore', () => {
   it('findRecentByTenantAndType returns events within cooldown window', async () => {
     const store = new InMemoryNotificationStore();
     const now = '2026-03-03T12:05:00Z';
-    await store.insert(makeEvent({
-      event_id: 'e1',
-      created_at: '2026-03-03T12:03:00Z', // 2 min ago
-    }));
-    await store.insert(makeEvent({
-      event_id: 'e2',
-      notification_id: 'n2',
-      idempotency_key: 'k2',
-      created_at: '2026-03-03T11:50:00Z', // 15 min ago
-    }));
+    await store.insert(
+      makeEvent({
+        event_id: 'e1',
+        created_at: '2026-03-03T12:03:00Z', // 2 min ago
+      }),
+    );
+    await store.insert(
+      makeEvent({
+        event_id: 'e2',
+        notification_id: 'n2',
+        idempotency_key: 'k2',
+        created_at: '2026-03-03T11:50:00Z', // 15 min ago
+      }),
+    );
     const recent = await store.findRecentByTenantAndType(
       'user-1',
       'work_order_created',
@@ -383,21 +395,24 @@ export class InMemoryNotificationStore implements NotificationRepository {
     this.events.push(event);
   }
 
-  async queryByTenantUser(tenantUserId: string, limit?: number): Promise<readonly NotificationEvent[]> {
+  async queryByTenantUser(
+    tenantUserId: string,
+    limit?: number,
+  ): Promise<readonly NotificationEvent[]> {
     const results = this.events
-      .filter(e => e.tenant_user_id === tenantUserId)
+      .filter((e) => e.tenant_user_id === tenantUserId)
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     return limit ? results.slice(0, limit) : results;
   }
 
   async queryByConversation(conversationId: string): Promise<readonly NotificationEvent[]> {
     return this.events
-      .filter(e => e.conversation_id === conversationId)
+      .filter((e) => e.conversation_id === conversationId)
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }
 
   async findByIdempotencyKey(key: string): Promise<NotificationEvent | null> {
-    return this.events.find(e => e.idempotency_key === key) ?? null;
+    return this.events.find((e) => e.idempotency_key === key) ?? null;
   }
 
   async findRecentByTenantAndType(
@@ -407,10 +422,11 @@ export class InMemoryNotificationStore implements NotificationRepository {
     now: string,
   ): Promise<readonly NotificationEvent[]> {
     const cutoff = new Date(now).getTime() - cooldownMinutes * 60_000;
-    return this.events.filter(e =>
-      e.tenant_user_id === tenantUserId &&
-      e.notification_type === notificationType &&
-      new Date(e.created_at).getTime() >= cutoff,
+    return this.events.filter(
+      (e) =>
+        e.tenant_user_id === tenantUserId &&
+        e.notification_type === notificationType &&
+        new Date(e.created_at).getTime() >= cutoff,
     );
   }
 }
@@ -434,7 +450,10 @@ export class InMemoryNotificationPreferenceStore implements NotificationPreferen
 ```typescript
 // packages/core/src/notifications/index.ts
 export type { NotificationRepository, NotificationPreferenceStore, SmsSender } from './types.js';
-export { InMemoryNotificationStore, InMemoryNotificationPreferenceStore } from './in-memory-notification-store.js';
+export {
+  InMemoryNotificationStore,
+  InMemoryNotificationPreferenceStore,
+} from './in-memory-notification-store.js';
 ```
 
 **Step 4: Run test to verify it passes**
@@ -454,6 +473,7 @@ git commit -m "feat(core): add NotificationRepository interface and in-memory st
 ### Task 2: Create notification event builder
 
 **Files:**
+
 - Create: `packages/core/src/notifications/event-builder.ts`
 - Test: `packages/core/src/__tests__/notifications/event-builder.test.ts`
 
@@ -560,12 +580,15 @@ export interface WoCreatedNotificationInput {
  * Batches: one notification for all WOs in an issue group.
  * In-app: immediately sent. SMS: pending until sender processes.
  */
-export function buildWoCreatedNotificationEvent(input: WoCreatedNotificationInput): NotificationEvent {
+export function buildWoCreatedNotificationEvent(
+  input: WoCreatedNotificationInput,
+): NotificationEvent {
   const isSms = input.channel === 'sms';
   const count = input.workOrderIds.length;
-  const message = count === 1
-    ? 'Your service request has been submitted.'
-    : 'Your service requests have been submitted.';
+  const message =
+    count === 1
+      ? 'Your service request has been submitted.'
+      : 'Your service requests have been submitted.';
 
   return {
     event_id: input.eventId,
@@ -615,6 +638,7 @@ git commit -m "feat(core): add notification event builder with batching (phase 1
 ### Task 3: Create the NotificationService with dedup + cooldown + preference checks
 
 **Files:**
+
 - Create: `packages/core/src/notifications/notification-service.ts`
 - Test: `packages/core/src/__tests__/notifications/notification-service.test.ts`
 
@@ -625,7 +649,10 @@ git commit -m "feat(core): add notification event builder with batching (phase 1
 import { describe, it, expect, beforeEach } from 'vitest';
 import type { NotificationPreference, NotificationEvent } from '@wo-agent/schemas';
 import { NotificationService } from '../../notifications/notification-service.js';
-import { InMemoryNotificationStore, InMemoryNotificationPreferenceStore } from '../../notifications/in-memory-notification-store.js';
+import {
+  InMemoryNotificationStore,
+  InMemoryNotificationPreferenceStore,
+} from '../../notifications/in-memory-notification-store.js';
 import type { SmsSender } from '../../notifications/types.js';
 
 function makePrefs(overrides: Partial<NotificationPreference> = {}): NotificationPreference {
@@ -737,7 +764,10 @@ describe('NotificationService', () => {
   it('sends SMS when consent given and sms_enabled', async () => {
     const smsCalls: string[] = [];
     const trackingSender: SmsSender = {
-      send: async (phone, msg) => { smsCalls.push(phone); return { success: true }; },
+      send: async (phone, msg) => {
+        smsCalls.push(phone);
+        return { success: true };
+      },
     };
     service = new NotificationService({
       notificationRepo: notifStore,
@@ -747,14 +777,16 @@ describe('NotificationService', () => {
       clock: () => '2026-03-03T12:00:00Z',
     });
 
-    await prefStore.save(makePrefs({
-      sms_enabled: true,
-      sms_consent: {
-        phone_number: '+14165551234',
-        consent_given_at: '2026-01-01T00:00:00Z',
-        consent_revoked_at: null,
-      },
-    }));
+    await prefStore.save(
+      makePrefs({
+        sms_enabled: true,
+        sms_consent: {
+          phone_number: '+14165551234',
+          consent_given_at: '2026-01-01T00:00:00Z',
+          consent_revoked_at: null,
+        },
+      }),
+    );
 
     const result = await service.notifyWorkOrdersCreated({
       conversationId: 'conv-1',
@@ -772,14 +804,16 @@ describe('NotificationService', () => {
   });
 
   it('does NOT send SMS when consent revoked', async () => {
-    await prefStore.save(makePrefs({
-      sms_enabled: true,
-      sms_consent: {
-        phone_number: '+14165551234',
-        consent_given_at: '2026-01-01T00:00:00Z',
-        consent_revoked_at: '2026-02-01T00:00:00Z',
-      },
-    }));
+    await prefStore.save(
+      makePrefs({
+        sms_enabled: true,
+        sms_consent: {
+          phone_number: '+14165551234',
+          consent_given_at: '2026-01-01T00:00:00Z',
+          consent_revoked_at: '2026-02-01T00:00:00Z',
+        },
+      }),
+    );
 
     const result = await service.notifyWorkOrdersCreated({
       conversationId: 'conv-1',
@@ -836,14 +870,16 @@ describe('NotificationService', () => {
       clock: () => '2026-03-03T12:00:00Z',
     });
 
-    await prefStore.save(makePrefs({
-      sms_enabled: true,
-      sms_consent: {
-        phone_number: '+14165551234',
-        consent_given_at: '2026-01-01T00:00:00Z',
-        consent_revoked_at: null,
-      },
-    }));
+    await prefStore.save(
+      makePrefs({
+        sms_enabled: true,
+        sms_consent: {
+          phone_number: '+14165551234',
+          consent_given_at: '2026-01-01T00:00:00Z',
+          consent_revoked_at: null,
+        },
+      }),
+    );
 
     const result = await service.notifyWorkOrdersCreated({
       conversationId: 'conv-1',
@@ -858,7 +894,7 @@ describe('NotificationService', () => {
     expect(result.sms_failed).toBe(true);
 
     const stored = await notifStore.queryByTenantUser('user-1');
-    const smsEvent = stored.find(e => e.channel === 'sms');
+    const smsEvent = stored.find((e) => e.channel === 'sms');
     expect(smsEvent?.status).toBe('failed');
     expect(smsEvent?.failure_reason).toBe('Network timeout');
   });
@@ -1030,7 +1066,11 @@ Add to barrel export:
 ```typescript
 // packages/core/src/notifications/index.ts — add:
 export { NotificationService } from './notification-service.js';
-export type { NotificationServiceDeps, NotifyWoCreatedInput, NotifyResult } from './notification-service.js';
+export type {
+  NotificationServiceDeps,
+  NotifyWoCreatedInput,
+  NotifyResult,
+} from './notification-service.js';
 ```
 
 **Step 4: Run test to verify it passes**
@@ -1050,6 +1090,7 @@ git commit -m "feat(core): add NotificationService with dedup/cooldown/prefs/con
 ### Task 4: Create mock SMS sender
 
 **Files:**
+
 - Create: `packages/core/src/notifications/mock-sms-sender.ts`
 - Test: `packages/core/src/__tests__/notifications/mock-sms-sender.test.ts`
 
@@ -1141,6 +1182,7 @@ git commit -m "feat(core): add MockSmsSender for testing (phase 10)"
 ### Task 5: Wire NotificationService into OrchestratorDependencies
 
 **Files:**
+
 - Modify: `packages/core/src/orchestrator/types.ts:15-39` — add notificationService to deps
 - Modify: `packages/core/src/notifications/types.ts` — export NotificationService interface
 - Test: `packages/core/src/__tests__/notifications/deps-wiring.test.ts`
@@ -1175,11 +1217,13 @@ Expected: FAIL — `notificationService` does not exist on type `OrchestratorDep
 In `packages/core/src/orchestrator/types.ts`, add the import and field:
 
 Add import:
+
 ```typescript
 import type { NotificationService } from '../notifications/notification-service.js';
 ```
 
 Add to `OrchestratorDependencies` interface (after `contactExecutor`):
+
 ```typescript
   readonly notificationService?: NotificationService;
 ```
@@ -1208,6 +1252,7 @@ git commit -m "feat(core): wire NotificationService into OrchestratorDependencie
 ### Task 6: Integrate notifications into confirm-submission handler
 
 **Files:**
+
 - Modify: `packages/core/src/orchestrator/action-handlers/confirm-submission.ts:170-202`
 - Test: `packages/core/src/__tests__/notifications/confirm-submission-notifications.test.ts`
 
@@ -1224,7 +1269,10 @@ import type { ConversationSession } from '../../session/types.js';
 import { InMemoryEventStore } from '../../events/in-memory-event-store.js';
 import { InMemoryWorkOrderStore } from '../../work-order/in-memory-wo-store.js';
 import { InMemoryIdempotencyStore } from '../../idempotency/in-memory-idempotency-store.js';
-import { InMemoryNotificationStore, InMemoryNotificationPreferenceStore } from '../../notifications/in-memory-notification-store.js';
+import {
+  InMemoryNotificationStore,
+  InMemoryNotificationPreferenceStore,
+} from '../../notifications/in-memory-notification-store.js';
 import { NotificationService } from '../../notifications/notification-service.js';
 import { MockSmsSender } from '../../notifications/mock-sms-sender.js';
 
@@ -1244,21 +1292,25 @@ function makeSession(): ConversationSession {
     unit_id: 'unit-1',
     authorized_unit_ids: ['unit-1'],
     pinned_versions: VERSIONS,
-    split_issues: [{
-      issue_id: 'issue-1',
-      raw_excerpt: 'Leaky faucet',
-      summary: 'Leaky faucet in kitchen',
-    }],
-    classification_results: [{
-      issue_id: 'issue-1',
-      classifierOutput: {
-        classification: { maintenance_category: 'plumbing' },
-        missing_fields: [],
-        needs_human_triage: false,
+    split_issues: [
+      {
+        issue_id: 'issue-1',
+        raw_excerpt: 'Leaky faucet',
+        summary: 'Leaky faucet in kitchen',
       },
-      computedConfidence: { maintenance_category: 0.9 },
-      fieldsNeedingInput: [],
-    }],
+    ],
+    classification_results: [
+      {
+        issue_id: 'issue-1',
+        classifierOutput: {
+          classification: { maintenance_category: 'plumbing' },
+          missing_fields: [],
+          needs_human_triage: false,
+        },
+        computedConfidence: { maintenance_category: 0.9 },
+        fieldsNeedingInput: [],
+      },
+    ],
     prior_state_before_error: null,
     followup_turn_number: 0,
     total_questions_asked: 0,
@@ -1300,7 +1352,11 @@ describe('confirm-submission notification integration', () => {
     let mainCounter = 0;
     return {
       eventRepo: new InMemoryEventStore(),
-      sessionStore: { get: async () => null, getByTenantUser: async () => [], save: async () => {} },
+      sessionStore: {
+        get: async () => null,
+        getByTenantUser: async () => [],
+        save: async () => {},
+      },
       idGenerator: () => `id-${++mainCounter}`,
       clock: () => '2026-03-03T12:00:00Z',
       issueSplitter: async () => ({ issues: [] }),
@@ -1330,7 +1386,11 @@ describe('confirm-submission notification integration', () => {
         actor: 'tenant',
         tenant_input: {},
         idempotency_key: 'submit-1',
-        auth_context: { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['unit-1'] },
+        auth_context: {
+          tenant_user_id: 'user-1',
+          tenant_account_id: 'acct-1',
+          authorized_unit_ids: ['unit-1'],
+        },
       } as OrchestratorActionRequest,
       deps,
     };
@@ -1355,13 +1415,17 @@ describe('confirm-submission notification integration', () => {
         actor: 'tenant',
         tenant_input: {},
         idempotency_key: 'submit-2',
-        auth_context: { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['unit-1'] },
+        auth_context: {
+          tenant_user_id: 'user-1',
+          tenant_account_id: 'acct-1',
+          authorized_unit_ids: ['unit-1'],
+        },
       } as OrchestratorActionRequest,
       deps,
     };
 
     const result = await handleConfirmSubmission(ctx);
-    const notifEffect = result.sideEffects?.find(e => e.effect_type === 'send_notifications');
+    const notifEffect = result.sideEffects?.find((e) => e.effect_type === 'send_notifications');
     expect(notifEffect).toBeDefined();
     expect(notifEffect?.status).toBe('completed');
   });
@@ -1379,7 +1443,11 @@ describe('confirm-submission notification integration', () => {
         actor: 'tenant',
         tenant_input: {},
         idempotency_key: 'submit-3',
-        auth_context: { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['unit-1'] },
+        auth_context: {
+          tenant_user_id: 'user-1',
+          tenant_account_id: 'acct-1',
+          authorized_unit_ids: ['unit-1'],
+        },
       } as OrchestratorActionRequest,
       deps,
     };
@@ -1404,59 +1472,60 @@ In `packages/core/src/orchestrator/action-handlers/confirm-submission.ts`, add n
 After the `idempotencyStore.complete(...)` call, add:
 
 ```typescript
-  // Dispatch notifications (spec §20 — batch multi-issue into one notification)
-  // Notifications are best-effort: failures do not roll back WO creation.
-  const notifSideEffects: SideEffectInput[] = [];
-  if (deps.notificationService) {
-    try {
-      const notifResult = await deps.notificationService.notifyWorkOrdersCreated({
-        conversationId: session.conversation_id,
-        tenantUserId: session.tenant_user_id,
-        tenantAccountId: session.tenant_account_id,
-        workOrderIds: woIds,
-        issueGroupId: workOrders[0].issue_group_id,
-        idempotencyKey: `${idempotencyKey}-notif`,
-      });
-      notifSideEffects.push({
-        effect_type: 'send_notifications',
-        status: notifResult.in_app_sent || notifResult.sms_sent ? 'completed' : 'pending',
-        idempotency_key: `${idempotencyKey}-notif`,
-      });
-    } catch {
-      notifSideEffects.push({
-        effect_type: 'send_notifications',
-        status: 'failed',
-        idempotency_key: `${idempotencyKey}-notif`,
-      });
-    }
+// Dispatch notifications (spec §20 — batch multi-issue into one notification)
+// Notifications are best-effort: failures do not roll back WO creation.
+const notifSideEffects: SideEffectInput[] = [];
+if (deps.notificationService) {
+  try {
+    const notifResult = await deps.notificationService.notifyWorkOrdersCreated({
+      conversationId: session.conversation_id,
+      tenantUserId: session.tenant_user_id,
+      tenantAccountId: session.tenant_account_id,
+      workOrderIds: woIds,
+      issueGroupId: workOrders[0].issue_group_id,
+      idempotencyKey: `${idempotencyKey}-notif`,
+    });
+    notifSideEffects.push({
+      effect_type: 'send_notifications',
+      status: notifResult.in_app_sent || notifResult.sms_sent ? 'completed' : 'pending',
+      idempotency_key: `${idempotencyKey}-notif`,
+    });
+  } catch {
+    notifSideEffects.push({
+      effect_type: 'send_notifications',
+      status: 'failed',
+      idempotency_key: `${idempotencyKey}-notif`,
+    });
   }
+}
 ```
 
 And update the return statement to include notification side effects:
 
 ```typescript
-  return {
-    newState: ConversationState.SUBMITTED,
-    session,
-    uiMessages: [{ role: 'agent', content: 'Your request has been submitted. We\'ll be in touch.' }],
-    sideEffects: [
-      {
-        effect_type: 'create_work_orders',
-        status: 'completed',
-        idempotency_key: idempotencyKey,
-      },
-      ...notifSideEffects,
-    ],
-    eventPayload: {
-      confirmed: true,
-      confirmation_payload: confirmationPayload,
-      work_order_ids: woIds,
+return {
+  newState: ConversationState.SUBMITTED,
+  session,
+  uiMessages: [{ role: 'agent', content: "Your request has been submitted. We'll be in touch." }],
+  sideEffects: [
+    {
+      effect_type: 'create_work_orders',
+      status: 'completed',
+      idempotency_key: idempotencyKey,
     },
-    eventType: 'confirmation_accepted',
-  };
+    ...notifSideEffects,
+  ],
+  eventPayload: {
+    confirmed: true,
+    confirmation_payload: confirmationPayload,
+    work_order_ids: woIds,
+  },
+  eventType: 'confirmation_accepted',
+};
 ```
 
 Add the import at the top of the file:
+
 ```typescript
 import type { SideEffectInput } from '../types.js';
 ```
@@ -1483,6 +1552,7 @@ git commit -m "feat(core): integrate NotificationService into confirm-submission
 ### Task 7: Add notification preference update logic
 
 **Files:**
+
 - Create: `packages/core/src/notifications/preference-service.ts`
 - Test: `packages/core/src/__tests__/notifications/preference-service.test.ts`
 
@@ -1491,7 +1561,11 @@ git commit -m "feat(core): integrate NotificationService into confirm-submission
 ```typescript
 // packages/core/src/__tests__/notifications/preference-service.test.ts
 import { describe, it, expect, beforeEach } from 'vitest';
-import { updateNotificationPreferences, grantSmsConsent, revokeSmsConsent } from '../../notifications/preference-service.js';
+import {
+  updateNotificationPreferences,
+  grantSmsConsent,
+  revokeSmsConsent,
+} from '../../notifications/preference-service.js';
 import { InMemoryNotificationPreferenceStore } from '../../notifications/in-memory-notification-store.js';
 
 describe('Preference updates', () => {
@@ -1605,7 +1679,11 @@ import type { NotificationPreferenceStore } from './types.js';
 
 const DEFAULT_COOLDOWN = 5;
 
-function defaultPrefs(tenantAccountId: string, prefId: string, now: string): NotificationPreference {
+function defaultPrefs(
+  tenantAccountId: string,
+  prefId: string,
+  now: string,
+): NotificationPreference {
   return {
     preference_id: prefId,
     tenant_account_id: tenantAccountId,
@@ -1631,7 +1709,9 @@ export interface UpdatePrefsInput {
   readonly clock: () => string;
 }
 
-export async function updateNotificationPreferences(input: UpdatePrefsInput): Promise<NotificationPreference> {
+export async function updateNotificationPreferences(
+  input: UpdatePrefsInput,
+): Promise<NotificationPreference> {
   const { tenantAccountId, updates, prefStore, idGenerator, clock } = input;
   const now = clock();
   const existing = await prefStore.get(tenantAccountId);
@@ -1642,7 +1722,8 @@ export async function updateNotificationPreferences(input: UpdatePrefsInput): Pr
     in_app_enabled: updates.in_app_enabled ?? base.in_app_enabled,
     sms_enabled: updates.sms_enabled ?? base.sms_enabled,
     cooldown_minutes: updates.cooldown_minutes ?? base.cooldown_minutes,
-    notification_type_overrides: updates.notification_type_overrides ?? base.notification_type_overrides,
+    notification_type_overrides:
+      updates.notification_type_overrides ?? base.notification_type_overrides,
     updated_at: now,
   };
 
@@ -1658,7 +1739,9 @@ export interface GrantSmsConsentInput {
   readonly clock: () => string;
 }
 
-export async function grantSmsConsent(input: GrantSmsConsentInput): Promise<NotificationPreference> {
+export async function grantSmsConsent(
+  input: GrantSmsConsentInput,
+): Promise<NotificationPreference> {
   const { tenantAccountId, phoneNumber, prefStore, idGenerator, clock } = input;
   const now = clock();
   const existing = await prefStore.get(tenantAccountId);
@@ -1685,7 +1768,9 @@ export interface RevokeSmsConsentInput {
   readonly clock: () => string;
 }
 
-export async function revokeSmsConsent(input: RevokeSmsConsentInput): Promise<NotificationPreference> {
+export async function revokeSmsConsent(
+  input: RevokeSmsConsentInput,
+): Promise<NotificationPreference> {
   const { tenantAccountId, prefStore, clock } = input;
   const now = clock();
   const existing = await prefStore.get(tenantAccountId);
@@ -1716,8 +1801,16 @@ Add to barrel export:
 
 ```typescript
 // packages/core/src/notifications/index.ts — add:
-export { updateNotificationPreferences, grantSmsConsent, revokeSmsConsent } from './preference-service.js';
-export type { UpdatePrefsInput, GrantSmsConsentInput, RevokeSmsConsentInput } from './preference-service.js';
+export {
+  updateNotificationPreferences,
+  grantSmsConsent,
+  revokeSmsConsent,
+} from './preference-service.js';
+export type {
+  UpdatePrefsInput,
+  GrantSmsConsentInput,
+  RevokeSmsConsentInput,
+} from './preference-service.js';
 ```
 
 **Step 4: Run test to verify it passes**
@@ -1737,6 +1830,7 @@ git commit -m "feat(core): add notification preference update + SMS consent logi
 ### Task 8: Add EventRepository support for NotificationEvent
 
 **Files:**
+
 - Modify: `packages/core/src/events/event-repository.ts:1-19` — add NotificationEvent to insert union
 - Modify: `packages/core/src/events/in-memory-event-store.ts:5` — add to AnyEvent union
 - Test: `packages/core/src/__tests__/notifications/event-repo-integration.test.ts`
@@ -1824,7 +1918,15 @@ import type { FollowUpEvent, NotificationEvent } from '@wo-agent/schemas';
 // ...
 export interface EventRepository {
   /** Append a single event (conversation, follow-up, confirmation, staleness, risk, or notification). */
-  insert(event: ConversationEvent | FollowUpEvent | ConfirmationEvent | StalenessEvent | RiskEvent | NotificationEvent): Promise<void>;
+  insert(
+    event:
+      | ConversationEvent
+      | FollowUpEvent
+      | ConfirmationEvent
+      | StalenessEvent
+      | RiskEvent
+      | NotificationEvent,
+  ): Promise<void>;
   /** Query conversation events by filters. Returns in order specified. */
   query(filters: EventQuery): Promise<readonly ConversationEvent[]>;
 }
@@ -1862,6 +1964,7 @@ git commit -m "feat(core): add NotificationEvent to EventRepository union (phase
 ### Task 9: Integration test — full notification flow through dispatcher
 
 **Files:**
+
 - Create: `packages/core/src/__tests__/notifications/e2e-notification-flow.test.ts`
 
 **Step 1: Write the integration test**
@@ -1875,7 +1978,10 @@ import { createDispatcher } from '../../orchestrator/dispatcher.js';
 import { InMemoryEventStore } from '../../events/in-memory-event-store.js';
 import { InMemoryWorkOrderStore } from '../../work-order/in-memory-wo-store.js';
 import { InMemoryIdempotencyStore } from '../../idempotency/in-memory-idempotency-store.js';
-import { InMemoryNotificationStore, InMemoryNotificationPreferenceStore } from '../../notifications/in-memory-notification-store.js';
+import {
+  InMemoryNotificationStore,
+  InMemoryNotificationPreferenceStore,
+} from '../../notifications/in-memory-notification-store.js';
 import { NotificationService } from '../../notifications/notification-service.js';
 import { MockSmsSender } from '../../notifications/mock-sms-sender.js';
 import type { OrchestratorDependencies, SessionStore } from '../../orchestrator/types.js';
@@ -1908,8 +2014,11 @@ describe('E2E: Notification flow through dispatcher', () => {
     const sessionMap = new Map<string, ConversationSession>();
     const sessionStore: SessionStore = {
       get: async (id) => sessionMap.get(id) ?? null,
-      getByTenantUser: async (uid) => [...sessionMap.values()].filter(s => s.tenant_user_id === uid),
-      save: async (s) => { sessionMap.set(s.conversation_id, s); },
+      getByTenantUser: async (uid) =>
+        [...sessionMap.values()].filter((s) => s.tenant_user_id === uid),
+      save: async (s) => {
+        sessionMap.set(s.conversation_id, s);
+      },
     };
 
     const deps: OrchestratorDependencies = {
@@ -1948,7 +2057,11 @@ describe('E2E: Notification flow through dispatcher', () => {
       action_type: ActionType.CREATE_CONVERSATION,
       actor: ActorType.TENANT,
       tenant_input: {},
-      auth_context: { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['unit-1'] },
+      auth_context: {
+        tenant_user_id: 'user-1',
+        tenant_account_id: 'acct-1',
+        authorized_unit_ids: ['unit-1'],
+      },
     } as OrchestratorActionRequest);
 
     const convId = r1.response.conversation_snapshot.conversation_id;
@@ -1959,7 +2072,11 @@ describe('E2E: Notification flow through dispatcher', () => {
       action_type: ActionType.SELECT_UNIT,
       actor: ActorType.TENANT,
       tenant_input: { unit_id: 'unit-1' },
-      auth_context: { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['unit-1'] },
+      auth_context: {
+        tenant_user_id: 'user-1',
+        tenant_account_id: 'acct-1',
+        authorized_unit_ids: ['unit-1'],
+      },
     } as OrchestratorActionRequest);
 
     // Step 3: SUBMIT_INITIAL_MESSAGE (triggers split → classification chain)
@@ -1968,7 +2085,11 @@ describe('E2E: Notification flow through dispatcher', () => {
       action_type: ActionType.SUBMIT_INITIAL_MESSAGE,
       actor: ActorType.TENANT,
       tenant_input: { message: 'I have a leaky faucet and a broken light' },
-      auth_context: { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['unit-1'] },
+      auth_context: {
+        tenant_user_id: 'user-1',
+        tenant_account_id: 'acct-1',
+        authorized_unit_ids: ['unit-1'],
+      },
     } as OrchestratorActionRequest);
 
     // Step 4: CONFIRM_SPLIT
@@ -1977,7 +2098,11 @@ describe('E2E: Notification flow through dispatcher', () => {
       action_type: ActionType.CONFIRM_SPLIT,
       actor: ActorType.TENANT,
       tenant_input: {},
-      auth_context: { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['unit-1'] },
+      auth_context: {
+        tenant_user_id: 'user-1',
+        tenant_account_id: 'acct-1',
+        authorized_unit_ids: ['unit-1'],
+      },
     } as OrchestratorActionRequest);
 
     // Step 5: CONFIRM_SUBMISSION
@@ -1987,7 +2112,11 @@ describe('E2E: Notification flow through dispatcher', () => {
       actor: ActorType.TENANT,
       tenant_input: {},
       idempotency_key: 'submit-e2e-1',
-      auth_context: { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['unit-1'] },
+      auth_context: {
+        tenant_user_id: 'user-1',
+        tenant_account_id: 'acct-1',
+        authorized_unit_ids: ['unit-1'],
+      },
     } as OrchestratorActionRequest);
 
     // Verify: WOs created
@@ -1996,7 +2125,7 @@ describe('E2E: Notification flow through dispatcher', () => {
     // Verify: Notification sent
     const notifs = await notifStore.queryByTenantUser('user-1');
     expect(notifs.length).toBeGreaterThanOrEqual(1);
-    const woNotif = notifs.find(n => n.notification_type === 'work_order_created');
+    const woNotif = notifs.find((n) => n.notification_type === 'work_order_created');
     expect(woNotif).toBeDefined();
     expect(woNotif!.channel).toBe('in_app');
     expect(woNotif!.status).toBe('sent');
@@ -2055,16 +2184,16 @@ git commit -m "chore(core): TypeScript cleanup and full validation (phase 10)"
 
 ## Summary
 
-| Task | Component | Key Files |
-|------|-----------|-----------|
-| 0 | Notification type definitions | `packages/schemas/src/types/notification.ts` |
-| 1 | NotificationRepository + in-memory store | `packages/core/src/notifications/types.ts`, `in-memory-notification-store.ts` |
-| 2 | Notification event builder | `packages/core/src/notifications/event-builder.ts` |
-| 3 | NotificationService (dedup/cooldown/prefs/consent) | `packages/core/src/notifications/notification-service.ts` |
-| 4 | Mock SMS sender | `packages/core/src/notifications/mock-sms-sender.ts` |
-| 5 | Wire into OrchestratorDependencies | `packages/core/src/orchestrator/types.ts` |
-| 6 | Integrate into confirm-submission handler | `packages/core/src/orchestrator/action-handlers/confirm-submission.ts` |
-| 7 | Preference update + SMS consent logic | `packages/core/src/notifications/preference-service.ts` |
-| 8 | EventRepository NotificationEvent support | `packages/core/src/events/event-repository.ts` |
-| 9 | E2E integration test | `packages/core/src/__tests__/notifications/e2e-notification-flow.test.ts` |
-| 10 | Full test suite + TypeScript validation | — |
+| Task | Component                                          | Key Files                                                                     |
+| ---- | -------------------------------------------------- | ----------------------------------------------------------------------------- |
+| 0    | Notification type definitions                      | `packages/schemas/src/types/notification.ts`                                  |
+| 1    | NotificationRepository + in-memory store           | `packages/core/src/notifications/types.ts`, `in-memory-notification-store.ts` |
+| 2    | Notification event builder                         | `packages/core/src/notifications/event-builder.ts`                            |
+| 3    | NotificationService (dedup/cooldown/prefs/consent) | `packages/core/src/notifications/notification-service.ts`                     |
+| 4    | Mock SMS sender                                    | `packages/core/src/notifications/mock-sms-sender.ts`                          |
+| 5    | Wire into OrchestratorDependencies                 | `packages/core/src/orchestrator/types.ts`                                     |
+| 6    | Integrate into confirm-submission handler          | `packages/core/src/orchestrator/action-handlers/confirm-submission.ts`        |
+| 7    | Preference update + SMS consent logic              | `packages/core/src/notifications/preference-service.ts`                       |
+| 8    | EventRepository NotificationEvent support          | `packages/core/src/events/event-repository.ts`                                |
+| 9    | E2E integration test                               | `packages/core/src/__tests__/notifications/e2e-notification-flow.test.ts`     |
+| 10   | Full test suite + TypeScript validation            | —                                                                             |

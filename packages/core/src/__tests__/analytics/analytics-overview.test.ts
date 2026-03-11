@@ -36,7 +36,12 @@ function makeWO(overrides: Partial<WorkOrder> & { work_order_id: string }): Work
     missing_fields: [],
     pets_present: 'unknown',
     needs_human_triage: false,
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'test', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'test',
+      prompt_version: '1.0.0',
+    },
     created_at: '2026-03-01T10:00:00Z',
     updated_at: '2026-03-01T10:00:00Z',
     row_version: 0,
@@ -48,7 +53,12 @@ describe('AnalyticsService.computeOverview (Phase 13)', () => {
   it('returns zeroes when no WOs exist', async () => {
     const woRepo = new InMemoryWorkOrderStore();
     const notifRepo = new InMemoryNotificationStore();
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
 
     const result = await svc.compute({});
     expect(result.overview.total_work_orders).toBe(0);
@@ -66,7 +76,12 @@ describe('AnalyticsService.computeOverview (Phase 13)', () => {
       makeWO({ work_order_id: 'wo-3', status: 'resolved' }),
     ]);
 
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
     const result = await svc.compute({});
 
     expect(result.overview.total_work_orders).toBe(3);
@@ -80,12 +95,21 @@ describe('AnalyticsService.computeOverview (Phase 13)', () => {
       makeWO({ work_order_id: 'wo-1', needs_human_triage: true }),
       makeWO({
         work_order_id: 'wo-2',
-        risk_flags: { has_emergency: true, highest_severity: 'emergency', trigger_ids: ['fire-001'] },
+        risk_flags: {
+          has_emergency: true,
+          highest_severity: 'emergency',
+          trigger_ids: ['fire-001'],
+        },
       }),
       makeWO({ work_order_id: 'wo-3' }),
     ]);
 
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
     const result = await svc.compute({});
 
     expect(result.overview.needs_human_triage).toBe(1);
@@ -100,7 +124,12 @@ describe('AnalyticsService.computeOverview (Phase 13)', () => {
       makeWO({ work_order_id: 'wo-2', unit_id: 'u-2' }),
     ]);
 
-    const svc = new AnalyticsService({ workOrderRepo: woRepo, notificationRepo: notifRepo, slaPolicies: SLA_POLICIES, clock: () => '2026-03-04T12:00:00Z' });
+    const svc = new AnalyticsService({
+      workOrderRepo: woRepo,
+      notificationRepo: notifRepo,
+      slaPolicies: SLA_POLICIES,
+      clock: () => '2026-03-04T12:00:00Z',
+    });
     const result = await svc.compute({ authorized_unit_ids: ['u-1'] });
 
     expect(result.overview.total_work_orders).toBe(1);

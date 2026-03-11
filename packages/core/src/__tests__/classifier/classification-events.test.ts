@@ -98,7 +98,15 @@ function makeContext(overrides?: {
       issueSplitter: vi.fn(),
       issueClassifier: overrides?.classifierFn ?? vi.fn().mockResolvedValue(VALID_CLASSIFICATION),
       followUpGenerator: vi.fn().mockResolvedValue({
-        questions: [{ question_id: 'q1', field_target: 'Category', prompt: 'What type of issue?', options: ['maintenance', 'management'], answer_type: 'enum' }],
+        questions: [
+          {
+            question_id: 'q1',
+            field_target: 'Category',
+            prompt: 'What type of issue?',
+            options: ['maintenance', 'management'],
+            answer_type: 'enum',
+          },
+        ],
       }),
       cueDict: FULL_CUES,
       taxonomy,
@@ -266,7 +274,15 @@ describe('classification event recording (spec §7)', () => {
           issue_id: `i${++callCount}`,
         })),
         followUpGenerator: vi.fn().mockResolvedValue({
-          questions: [{ question_id: 'q1', field_target: 'Priority', prompt: 'How urgent?', options: ['low', 'high'], answer_type: 'enum' }],
+          questions: [
+            {
+              question_id: 'q1',
+              field_target: 'Priority',
+              prompt: 'How urgent?',
+              options: ['low', 'high'],
+              answer_type: 'enum',
+            },
+          ],
         }),
         cueDict: FULL_CUES,
         taxonomy,

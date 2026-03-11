@@ -13,6 +13,7 @@
 **Spec references:** §2 (non-negotiable #4 — no side effects without confirmation), §10 (orchestrator contract), §11.2 (transition matrix — `tenant_confirmation_pending`), §12.3 (artifact staleness), §16 (confirmation gate + staleness)
 
 **Skills that apply during execution:**
+
 - `@test-driven-development` — every task follows red-green-refactor
 - `@state-machine-implementation` — any state transition changes
 - `@schema-first-development` — confirmation payload validated
@@ -24,6 +25,7 @@
 ## Task 0: Create worktree and branch from main
 
 **Files:**
+
 - N/A (git operations only)
 
 **Step 1: Create worktree branching from main**
@@ -64,10 +66,12 @@ No commit needed — branch created from main HEAD.
 ## Task 1: Implement staleness checker (pure function)
 
 **Files:**
+
 - Create: `packages/core/src/confirmation/staleness.ts`
 - Test: `packages/core/src/__tests__/confirmation/staleness.test.ts`
 
 **Context:** Spec §12.3 and §16 define staleness rules. A confirmation is stale if:
+
 1. **Unseen artifacts** (never presented to tenant): always expire after 60 minutes.
 2. **Seen artifacts**: stale if source hash changed, split hash changed, OR (age > 60 min AND any field has borderline confidence, i.e., confidence band = "medium").
 3. The staleness check runs when the tenant returns to the confirmation screen (CONFIRM_SUBMISSION) and also when entering `tenant_confirmation_pending` state.
@@ -111,77 +115,93 @@ describe('checkStaleness', () => {
   });
 
   it('returns stale when source text hash changed', () => {
-    const result = checkStaleness(makeInput({
-      sourceTextHash: 'changed',
-    }));
+    const result = checkStaleness(
+      makeInput({
+        sourceTextHash: 'changed',
+      }),
+    );
     expect(result.isStale).toBe(true);
     expect(result.reasons).toContain('source_hash_changed');
   });
 
   it('returns stale when split hash changed', () => {
-    const result = checkStaleness(makeInput({
-      splitHash: 'changed',
-    }));
+    const result = checkStaleness(
+      makeInput({
+        splitHash: 'changed',
+      }),
+    );
     expect(result.isStale).toBe(true);
     expect(result.reasons).toContain('split_hash_changed');
   });
 
   it('returns stale when unseen artifact is over 60 minutes old', () => {
-    const result = checkStaleness(makeInput({
-      artifactPresentedToTenant: false,
-      confirmationEnteredAt: '2026-01-01T09:00:00.000Z',
-      currentTime: '2026-01-01T10:01:00.000Z', // 61 min
-    }));
+    const result = checkStaleness(
+      makeInput({
+        artifactPresentedToTenant: false,
+        confirmationEnteredAt: '2026-01-01T09:00:00.000Z',
+        currentTime: '2026-01-01T10:01:00.000Z', // 61 min
+      }),
+    );
     expect(result.isStale).toBe(true);
     expect(result.reasons).toContain('unseen_artifact_expired');
   });
 
   it('returns fresh when unseen artifact is under 60 minutes old', () => {
-    const result = checkStaleness(makeInput({
-      artifactPresentedToTenant: false,
-      confirmationEnteredAt: '2026-01-01T09:02:00.000Z',
-      currentTime: '2026-01-01T10:01:00.000Z', // 59 min
-    }));
+    const result = checkStaleness(
+      makeInput({
+        artifactPresentedToTenant: false,
+        confirmationEnteredAt: '2026-01-01T09:02:00.000Z',
+        currentTime: '2026-01-01T10:01:00.000Z', // 59 min
+      }),
+    );
     expect(result.isStale).toBe(false);
   });
 
   it('returns stale when seen artifact is over 60 min AND has borderline confidence', () => {
-    const result = checkStaleness(makeInput({
-      artifactPresentedToTenant: true,
-      confirmationEnteredAt: '2026-01-01T09:00:00.000Z',
-      currentTime: '2026-01-01T10:01:00.000Z', // 61 min
-      confidenceBands: { Category: 'high', Maintenance_Category: 'medium' },
-    }));
+    const result = checkStaleness(
+      makeInput({
+        artifactPresentedToTenant: true,
+        confirmationEnteredAt: '2026-01-01T09:00:00.000Z',
+        currentTime: '2026-01-01T10:01:00.000Z', // 61 min
+        confidenceBands: { Category: 'high', Maintenance_Category: 'medium' },
+      }),
+    );
     expect(result.isStale).toBe(true);
     expect(result.reasons).toContain('seen_artifact_borderline_expired');
   });
 
   it('returns fresh when seen artifact is over 60 min but all confidence is high', () => {
-    const result = checkStaleness(makeInput({
-      artifactPresentedToTenant: true,
-      confirmationEnteredAt: '2026-01-01T09:00:00.000Z',
-      currentTime: '2026-01-01T10:01:00.000Z', // 61 min
-      confidenceBands: { Category: 'high', Maintenance_Category: 'high' },
-    }));
+    const result = checkStaleness(
+      makeInput({
+        artifactPresentedToTenant: true,
+        confirmationEnteredAt: '2026-01-01T09:00:00.000Z',
+        currentTime: '2026-01-01T10:01:00.000Z', // 61 min
+        confidenceBands: { Category: 'high', Maintenance_Category: 'high' },
+      }),
+    );
     expect(result.isStale).toBe(false);
   });
 
   it('returns stale when seen artifact is over 60 min and has low confidence', () => {
-    const result = checkStaleness(makeInput({
-      artifactPresentedToTenant: true,
-      confirmationEnteredAt: '2026-01-01T09:00:00.000Z',
-      currentTime: '2026-01-01T10:01:00.000Z',
-      confidenceBands: { Category: 'low', Maintenance_Category: 'high' },
-    }));
+    const result = checkStaleness(
+      makeInput({
+        artifactPresentedToTenant: true,
+        confirmationEnteredAt: '2026-01-01T09:00:00.000Z',
+        currentTime: '2026-01-01T10:01:00.000Z',
+        confidenceBands: { Category: 'low', Maintenance_Category: 'high' },
+      }),
+    );
     expect(result.isStale).toBe(true);
     expect(result.reasons).toContain('seen_artifact_borderline_expired');
   });
 
   it('accumulates multiple staleness reasons', () => {
-    const result = checkStaleness(makeInput({
-      sourceTextHash: 'changed',
-      splitHash: 'also-changed',
-    }));
+    const result = checkStaleness(
+      makeInput({
+        sourceTextHash: 'changed',
+        splitHash: 'also-changed',
+      }),
+    );
     expect(result.isStale).toBe(true);
     expect(result.reasons).toContain('source_hash_changed');
     expect(result.reasons).toContain('split_hash_changed');
@@ -261,8 +281,7 @@ export function checkStaleness(input: StalenessInput): StalenessResult {
 
   // Compute age
   const ageMs =
-    new Date(input.currentTime).getTime() -
-    new Date(input.confirmationEnteredAt).getTime();
+    new Date(input.currentTime).getTime() - new Date(input.confirmationEnteredAt).getTime();
   const isOverThreshold = ageMs > STALENESS_THRESHOLD_MS;
 
   if (isOverThreshold) {
@@ -308,6 +327,7 @@ git commit -m "feat(core): add staleness checker for confirmation gate (spec §1
 ## Task 2: Implement confirmation payload builder
 
 **Files:**
+
 - Create: `packages/core/src/confirmation/payload-builder.ts`
 - Test: `packages/core/src/__tests__/confirmation/payload-builder.test.ts`
 
@@ -351,7 +371,7 @@ const CLASSIFICATION_RESULTS: readonly IssueClassificationResult[] = [
     classifierOutput: {
       issue_id: 'issue-2',
       classification: { Category: 'maintenance', Maintenance_Category: 'general' },
-      model_confidence: { Category: 0.70, Maintenance_Category: 0.50 },
+      model_confidence: { Category: 0.7, Maintenance_Category: 0.5 },
       missing_fields: ['Maintenance_Object'],
       needs_human_triage: true,
     },
@@ -377,7 +397,10 @@ describe('buildConfirmationPayload', () => {
   it('includes classification labels and confidence', () => {
     const payload = buildConfirmationPayload(SPLIT_ISSUES, CLASSIFICATION_RESULTS);
     const first = payload.issues[0];
-    expect(first.classification).toEqual({ Category: 'maintenance', Maintenance_Category: 'plumbing' });
+    expect(first.classification).toEqual({
+      Category: 'maintenance',
+      Maintenance_Category: 'plumbing',
+    });
     expect(first.confidence_by_field).toEqual({ Category: 0.92, Maintenance_Category: 0.85 });
   });
 
@@ -394,7 +417,7 @@ describe('buildConfirmationPayload', () => {
   });
 
   it('handles missing classification result for an issue gracefully', () => {
-    const partial = CLASSIFICATION_RESULTS.filter(r => r.issue_id === 'issue-1');
+    const partial = CLASSIFICATION_RESULTS.filter((r) => r.issue_id === 'issue-1');
     const payload = buildConfirmationPayload(SPLIT_ISSUES, partial);
     expect(payload.issues[1].needs_human_triage).toBe(true);
     expect(payload.issues[1].classification).toEqual({});
@@ -462,9 +485,9 @@ export function buildConfirmationPayload(
   splitIssues: readonly SplitIssue[],
   classificationResults: readonly IssueClassificationResult[],
 ): ConfirmationPayload {
-  const resultMap = new Map(classificationResults.map(r => [r.issue_id, r]));
+  const resultMap = new Map(classificationResults.map((r) => [r.issue_id, r]));
 
-  const issues: ConfirmationIssue[] = splitIssues.map(issue => {
+  const issues: ConfirmationIssue[] = splitIssues.map((issue) => {
     const result = resultMap.get(issue.issue_id);
     if (!result) {
       return {
@@ -522,11 +545,13 @@ git commit -m "feat(core): add confirmation payload builder and content hashing"
 ## Task 3: Add confirmation tracking fields to ConversationSession
 
 **Files:**
+
 - Modify: `packages/core/src/session/types.ts`
 - Modify: `packages/core/src/session/session.ts`
 - Test: `packages/core/src/__tests__/confirmation/session-confirmation.test.ts`
 
 **Context:** The session needs to track:
+
 1. `confirmation_entered_at` — when the session entered `tenant_confirmation_pending` (for staleness age check)
 2. `source_text_hash` — hash of the original tenant message at classification time
 3. `split_hash` — hash of the split issues at classification time
@@ -540,10 +565,7 @@ Create `packages/core/src/__tests__/confirmation/session-confirmation.test.ts`:
 
 ```typescript
 import { describe, it, expect } from 'vitest';
-import {
-  setConfirmationTracking,
-  markConfirmationPresented,
-} from '../../session/session.js';
+import { setConfirmationTracking, markConfirmationPresented } from '../../session/session.js';
 import { createSession } from '../../session/session.js';
 import type { ConversationSession } from '../../session/types.js';
 
@@ -635,6 +657,7 @@ Modify `packages/core/src/session/types.ts` — add 4 fields to `ConversationSes
 **Step 4: Update session.ts — add defaults in createSession, add helper functions**
 
 In `createSession`, add defaults:
+
 ```typescript
     confirmation_entered_at: null,
     source_text_hash: null,
@@ -643,6 +666,7 @@ In `createSession`, add defaults:
 ```
 
 Add new functions:
+
 ```typescript
 export interface ConfirmationTrackingInput {
   readonly confirmationEnteredAt: string;
@@ -670,9 +694,7 @@ export function setConfirmationTracking(
 /**
  * Mark that the confirmation payload has been presented to the tenant.
  */
-export function markConfirmationPresented(
-  session: ConversationSession,
-): ConversationSession {
+export function markConfirmationPresented(session: ConversationSession): ConversationSession {
   return {
     ...session,
     confirmation_presented: true,
@@ -688,6 +710,7 @@ In `packages/core/src/session/index.ts`, add exports for `setConfirmationTrackin
 **Step 6: Fix any broken existing tests**
 
 Existing tests that construct `ConversationSession` literals will need the 4 new fields. Update them to include:
+
 ```typescript
 confirmation_entered_at: null,
 source_text_hash: null,
@@ -717,6 +740,7 @@ git commit -m "feat(core): add confirmation tracking fields to ConversationSessi
 ## Task 4: Build confirmation event builder (append-only)
 
 **Files:**
+
 - Create: `packages/core/src/confirmation/event-builder.ts`
 - Test: `packages/core/src/__tests__/confirmation/event-builder.test.ts`
 
@@ -741,15 +765,17 @@ describe('buildConfirmationEvent', () => {
       eventId: 'evt-1',
       conversationId: 'conv-1',
       confirmationPayload: {
-        issues: [{
-          issue_id: 'issue-1',
-          summary: 'Leaking toilet',
-          raw_excerpt: 'My toilet is leaking',
-          classification: { Category: 'maintenance' },
-          confidence_by_field: { Category: 0.9 },
-          missing_fields: [],
-          needs_human_triage: false,
-        }],
+        issues: [
+          {
+            issue_id: 'issue-1',
+            summary: 'Leaking toilet',
+            raw_excerpt: 'My toilet is leaking',
+            classification: { Category: 'maintenance' },
+            confidence_by_field: { Category: 0.9 },
+            missing_fields: [],
+            needs_human_triage: false,
+          },
+        ],
       },
       createdAt: '2026-01-01T12:00:00.000Z',
     };
@@ -883,6 +909,7 @@ git commit -m "feat(core): add confirmation and staleness event builders (append
 ## Task 5: Create confirmation barrel export
 
 **Files:**
+
 - Create: `packages/core/src/confirmation/index.ts`
 - Modify: `packages/core/src/index.ts`
 
@@ -964,10 +991,12 @@ git commit -m "feat(core): add confirmation barrel export and wire to core index
 ## Task 6: Implement CONFIRM_SUBMISSION handler with staleness check
 
 **Files:**
+
 - Modify: `packages/core/src/orchestrator/action-handlers/confirm-submission.ts`
 - Test: `packages/core/src/__tests__/confirmation/confirm-submission.test.ts`
 
 **Context:** This is the core of Phase 7. The `handleConfirmSubmission` handler:
+
 1. Builds the confirmation payload from session state
 2. Computes current content hashes
 3. Runs the staleness check comparing current hashes to stored hashes
@@ -1000,7 +1029,7 @@ const CLASSIFICATION_RESULTS: IssueClassificationResult[] = [
     classifierOutput: {
       issue_id: 'issue-1',
       classification: { Category: 'maintenance', Maintenance_Category: 'plumbing' },
-      model_confidence: { Category: 0.95, Maintenance_Category: 0.90 },
+      model_confidence: { Category: 0.95, Maintenance_Category: 0.9 },
       missing_fields: [],
       needs_human_triage: false,
     },
@@ -1018,7 +1047,9 @@ function makeSession(overrides: Partial<ConversationSession> = {}): Conversation
     unit_id: 'unit-1',
     authorized_unit_ids: ['unit-1'],
     pinned_versions: PINNED,
-    split_issues: [{ issue_id: 'issue-1', summary: 'Leaking toilet', raw_excerpt: 'My toilet leaks' }],
+    split_issues: [
+      { issue_id: 'issue-1', summary: 'Leaking toilet', raw_excerpt: 'My toilet leaks' },
+    ],
     classification_results: CLASSIFICATION_RESULTS,
     prior_state_before_error: null,
     followup_turn_number: 0,
@@ -1053,7 +1084,9 @@ function makeCtx(sessionOverrides: Partial<ConversationSession> = {}): ActionHan
     },
     deps: {
       eventRepo: {
-        insert: async (e: unknown) => { events.push(e); },
+        insert: async (e: unknown) => {
+          events.push(e);
+        },
         query: async () => [],
       },
       sessionStore: {
@@ -1142,7 +1175,10 @@ Replace the contents of `packages/core/src/orchestrator/action-handlers/confirm-
 ```typescript
 import { ConversationState } from '@wo-agent/schemas';
 import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
-import { buildConfirmationPayload, computeContentHash } from '../../confirmation/payload-builder.js';
+import {
+  buildConfirmationPayload,
+  computeContentHash,
+} from '../../confirmation/payload-builder.js';
 import { checkStaleness } from '../../confirmation/staleness.js';
 import { buildConfirmationEvent, buildStalenessEvent } from '../../confirmation/event-builder.js';
 import { classifyConfidenceBand } from '../../classifier/confidence.js';
@@ -1160,7 +1196,9 @@ import type { ConfidenceBand } from '@wo-agent/schemas';
  *
  * WO creation is NOT done here — that's Phase 8.
  */
-export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promise<ActionHandlerResult> {
+export async function handleConfirmSubmission(
+  ctx: ActionHandlerContext,
+): Promise<ActionHandlerResult> {
   const { session, deps } = ctx;
 
   // Guard: must have split issues
@@ -1179,7 +1217,12 @@ export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promis
       newState: session.state,
       session,
       uiMessages: [],
-      errors: [{ code: 'NO_CLASSIFICATION', message: 'Cannot confirm: no classification results on session' }],
+      errors: [
+        {
+          code: 'NO_CLASSIFICATION',
+          message: 'Cannot confirm: no classification results on session',
+        },
+      ],
     };
   }
 
@@ -1191,10 +1234,10 @@ export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promis
 
   // Compute current content hashes
   const currentSourceHash = computeContentHash(
-    session.split_issues.map(i => i.raw_excerpt).join('|'),
+    session.split_issues.map((i) => i.raw_excerpt).join('|'),
   );
   const currentSplitHash = computeContentHash(
-    JSON.stringify(session.split_issues.map(i => ({ id: i.issue_id, summary: i.summary }))),
+    JSON.stringify(session.split_issues.map((i) => ({ id: i.issue_id, summary: i.summary }))),
   );
 
   // Staleness check (only if we have stored hashes to compare against)
@@ -1238,10 +1281,13 @@ export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promis
           split_hash: null,
           confirmation_presented: false,
         },
-        uiMessages: [{
-          role: 'agent',
-          content: 'Some information has changed since your last visit. Let me re-verify your issue details.',
-        }],
+        uiMessages: [
+          {
+            role: 'agent',
+            content:
+              'Some information has changed since your last visit. Let me re-verify your issue details.',
+          },
+        ],
         eventPayload: {
           staleness_detected: true,
           reasons: stalenessResult.reasons,
@@ -1263,7 +1309,7 @@ export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promis
   return {
     newState: ConversationState.SUBMITTED,
     session,
-    uiMessages: [{ role: 'agent', content: 'Your request has been submitted. We\'ll be in touch.' }],
+    uiMessages: [{ role: 'agent', content: "Your request has been submitted. We'll be in touch." }],
     sideEffects: [{ effect_type: 'create_work_orders', status: 'pending' }],
     eventPayload: {
       confirmed: true,
@@ -1295,6 +1341,7 @@ git commit -m "feat(core): implement CONFIRM_SUBMISSION with staleness check (sp
 ## Task 7: Wire confirmation tracking into start-classification handler
 
 **Files:**
+
 - Modify: `packages/core/src/orchestrator/action-handlers/start-classification.ts`
 - Test: `packages/core/src/__tests__/confirmation/classification-confirmation.test.ts`
 
@@ -1327,7 +1374,9 @@ function makeSession(): ConversationSession {
     unit_id: 'unit-1',
     authorized_unit_ids: ['unit-1'],
     pinned_versions: PINNED,
-    split_issues: [{ issue_id: 'issue-1', summary: 'Leaking toilet', raw_excerpt: 'My toilet leaks' }],
+    split_issues: [
+      { issue_id: 'issue-1', summary: 'Leaking toilet', raw_excerpt: 'My toilet leaks' },
+    ],
     classification_results: null,
     prior_state_before_error: null,
     followup_turn_number: 0,
@@ -1361,7 +1410,9 @@ function makeCtx(): ActionHandlerContext {
     },
     deps: {
       eventRepo: {
-        insert: async (e: unknown) => { events.push(e); },
+        insert: async (e: unknown) => {
+          events.push(e);
+        },
         query: async () => [],
       },
       sessionStore: {
@@ -1421,9 +1472,9 @@ import { setConfirmationTracking } from '../../session/session.js';
 import { computeContentHash } from '../../confirmation/payload-builder.js';
 
 // Before returning a result with newState = TENANT_CONFIRMATION_PENDING:
-const sourceHash = computeContentHash(issues.map(i => i.raw_excerpt).join('|'));
+const sourceHash = computeContentHash(issues.map((i) => i.raw_excerpt).join('|'));
 const splitHash = computeContentHash(
-  JSON.stringify(issues.map(i => ({ id: i.issue_id, summary: i.summary }))),
+  JSON.stringify(issues.map((i) => ({ id: i.issue_id, summary: i.summary }))),
 );
 updatedSession = setConfirmationTracking(updatedSession, {
   confirmationEnteredAt: deps.clock(),
@@ -1433,6 +1484,7 @@ updatedSession = setConfirmationTracking(updatedSession, {
 ```
 
 Apply this to:
+
 1. The "all fields resolved" path (around line 318-340)
 2. The escape-hatch: caps exhausted path (around line 163-184)
 3. The escape-hatch: followup generation failed path (around line 210-230)
@@ -1469,6 +1521,7 @@ git commit -m "feat(core): wire confirmation tracking into start-classification 
 ## Task 8: Add confirmation payload to response snapshot
 
 **Files:**
+
 - Modify: `packages/core/src/orchestrator/response-builder.ts`
 - Modify: `packages/schemas/src/types/orchestrator-action.ts`
 - Test: `packages/core/src/__tests__/confirmation/response-confirmation.test.ts`
@@ -1502,19 +1555,23 @@ function makeSession(state: ConversationState): ConversationSession {
     unit_id: 'unit-1',
     authorized_unit_ids: ['unit-1'],
     pinned_versions: PINNED,
-    split_issues: [{ issue_id: 'issue-1', summary: 'Leaking toilet', raw_excerpt: 'My toilet leaks' }],
-    classification_results: [{
-      issue_id: 'issue-1',
-      classifierOutput: {
+    split_issues: [
+      { issue_id: 'issue-1', summary: 'Leaking toilet', raw_excerpt: 'My toilet leaks' },
+    ],
+    classification_results: [
+      {
         issue_id: 'issue-1',
-        classification: { Category: 'maintenance' },
-        model_confidence: { Category: 0.95 },
-        missing_fields: [],
-        needs_human_triage: false,
+        classifierOutput: {
+          issue_id: 'issue-1',
+          classification: { Category: 'maintenance' },
+          model_confidence: { Category: 0.95 },
+          missing_fields: [],
+          needs_human_triage: false,
+        },
+        computedConfidence: { Category: 0.92 },
+        fieldsNeedingInput: [],
       },
-      computedConfidence: { Category: 0.92 },
-      fieldsNeedingInput: [],
-    }],
+    ],
     prior_state_before_error: null,
     followup_turn_number: 0,
     total_questions_asked: 0,
@@ -1630,9 +1687,11 @@ git commit -m "feat(core): include confirmation_payload in response snapshot for
 ## Task 9: Integration tests — full confirmation flow with staleness
 
 **Files:**
+
 - Create: `packages/core/src/__tests__/confirmation/confirmation-integration.test.ts`
 
 **Context:** End-to-end integration tests that exercise the full flow through the dispatcher:
+
 1. Happy path: classify → confirm → submitted
 2. Staleness path: classify → wait > 60 min → confirm → re-classify → confirm → submitted
 3. Guard paths: confirm without issues, confirm without classification
@@ -1656,7 +1715,9 @@ function makeDeps(overrides: Partial<OrchestratorDependencies> = {}): Orchestrat
     sessionStore: {
       get: async (id) => sessions.get(id) ?? null,
       getByTenantUser: async () => [],
-      save: async (s) => { sessions.set(s.conversation_id, s); },
+      save: async (s) => {
+        sessions.set(s.conversation_id, s);
+      },
     },
     idGenerator: (() => {
       let i = 0;
@@ -1664,19 +1725,27 @@ function makeDeps(overrides: Partial<OrchestratorDependencies> = {}): Orchestrat
     })(),
     clock: () => clockTime,
     issueSplitter: async (input) => ({
-      issues: [{ issue_id: 'issue-1', summary: input.issue_summary ?? 'Test issue', raw_excerpt: input.raw_excerpt ?? 'Test' }],
+      issues: [
+        {
+          issue_id: 'issue-1',
+          summary: input.issue_summary ?? 'Test issue',
+          raw_excerpt: input.raw_excerpt ?? 'Test',
+        },
+      ],
     }),
     issueClassifier: async () => ({
       issue_id: 'issue-1',
       classification: { Category: 'maintenance', Maintenance_Category: 'plumbing' },
-      model_confidence: { Category: 0.95, Maintenance_Category: 0.90 },
+      model_confidence: { Category: 0.95, Maintenance_Category: 0.9 },
       missing_fields: [],
       needs_human_triage: false,
     }),
     followUpGenerator: async () => ({ questions: [] }),
     cueDict: { version: '1.0.0', fields: {} },
     taxonomy: { version: '1.0.0', categories: {} } as any,
-    _setClock: (t: string) => { clockTime = t; },
+    _setClock: (t: string) => {
+      clockTime = t;
+    },
     ...overrides,
   } as any;
 }
@@ -1736,9 +1805,7 @@ describe('Confirmation integration — happy path', () => {
 
     expect(confirmResult.response.conversation_snapshot.state).toBe(ConversationState.SUBMITTED);
     expect(confirmResult.response.pending_side_effects).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ effect_type: 'create_work_orders' }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ effect_type: 'create_work_orders' })]),
     );
   });
 });
@@ -1785,7 +1852,7 @@ describe('Confirmation integration — staleness', () => {
     (deps as any).issueClassifier = async () => ({
       issue_id: 'issue-1',
       classification: { Category: 'maintenance', Maintenance_Category: 'plumbing' },
-      model_confidence: { Category: 0.70, Maintenance_Category: 0.60 },
+      model_confidence: { Category: 0.7, Maintenance_Category: 0.6 },
       missing_fields: [],
       needs_human_triage: false,
     });
@@ -1833,12 +1900,14 @@ git commit -m "test(core): add confirmation flow integration tests with stalenes
 ## Task 10: Final cleanup — update barrel exports and run full validation
 
 **Files:**
+
 - Modify: `packages/core/src/session/index.ts` (ensure new exports)
 - Modify: `packages/core/src/index.ts` (ensure confirmation + session exports)
 
 **Step 1: Verify all barrel exports are complete**
 
 Check that these are exported from `packages/core/src/index.ts`:
+
 - Session: `setConfirmationTracking`, `markConfirmationPresented`
 - Confirmation: `checkStaleness`, `buildConfirmationPayload`, `computeContentHash`, `buildConfirmationEvent`, `buildStalenessEvent`
 - Types: `StalenessInput`, `StalenessResult`, `ConfirmationPayload`, etc.
@@ -1872,16 +1941,16 @@ git commit -m "chore(core): Phase 7 final cleanup — barrel exports and full va
 
 ## Summary
 
-| Task | Component | Key files |
-|------|-----------|-----------|
-| 0 | Worktree setup | git operations |
-| 1 | Staleness checker | `confirmation/staleness.ts` |
-| 2 | Confirmation payload builder | `confirmation/payload-builder.ts` |
-| 3 | Session tracking fields | `session/types.ts`, `session/session.ts` |
-| 4 | Confirmation event builder | `confirmation/event-builder.ts` |
-| 5 | Barrel exports | `confirmation/index.ts`, `index.ts` |
-| 6 | CONFIRM_SUBMISSION handler | `action-handlers/confirm-submission.ts` |
-| 7 | Wire tracking into classification | `action-handlers/start-classification.ts` |
-| 8 | Response snapshot payload | `response-builder.ts`, schema types |
-| 9 | Integration tests | `confirmation-integration.test.ts` |
-| 10 | Final cleanup | barrel exports, typecheck, tests |
+| Task | Component                         | Key files                                 |
+| ---- | --------------------------------- | ----------------------------------------- |
+| 0    | Worktree setup                    | git operations                            |
+| 1    | Staleness checker                 | `confirmation/staleness.ts`               |
+| 2    | Confirmation payload builder      | `confirmation/payload-builder.ts`         |
+| 3    | Session tracking fields           | `session/types.ts`, `session/session.ts`  |
+| 4    | Confirmation event builder        | `confirmation/event-builder.ts`           |
+| 5    | Barrel exports                    | `confirmation/index.ts`, `index.ts`       |
+| 6    | CONFIRM_SUBMISSION handler        | `action-handlers/confirm-submission.ts`   |
+| 7    | Wire tracking into classification | `action-handlers/start-classification.ts` |
+| 8    | Response snapshot payload         | `response-builder.ts`, schema types       |
+| 9    | Integration tests                 | `confirmation-integration.test.ts`        |
+| 10   | Final cleanup                     | barrel exports, typecheck, tests          |

@@ -1,0 +1,782 @@
+{
+  "run_id": "run-1773238028462",
+  "runner_type": "issue_level",
+  "dataset_manifest_id": "regression-v0.1",
+  "taxonomy_version": "2.0.0",
+  "schema_version": "1.0.0",
+  "cue_dict_version": "1.2.0",
+  "prompt_version": "fixture-replay",
+  "model_id": "fixture",
+  "started_at": "2026-03-11T14:07:08.462Z",
+  "completed_at": "2026-03-11T14:07:08.462Z",
+  "results": [
+    {
+      "example_id": "reg-001",
+      "status": "ok",
+      "classification": {
+        "Category": "maintenance",
+        "Location": "suite",
+        "Sub_Location": "bathroom",
+        "Maintenance_Category": "plumbing",
+        "Maintenance_Object": "toilet",
+        "Maintenance_Problem": "leak",
+        "Priority": "normal"
+      },
+      "confidenceByField": {
+        "Category": 0.53,
+        "Location": 0.29000000000000004,
+        "Sub_Location": 0.6900000000000001,
+        "Maintenance_Category": 0.6900000000000001,
+        "Maintenance_Object": 0.53,
+        "Maintenance_Problem": 0.6900000000000001,
+        "Priority": 0.53
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Maintenance_Category",
+        "Maintenance_Object",
+        "Maintenance_Problem",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    },
+    {
+      "example_id": "reg-001",
+      "status": "ok",
+      "classification": {
+        "Category": "maintenance",
+        "Location": "suite",
+        "Sub_Location": "kitchen",
+        "Maintenance_Category": "plumbing",
+        "Maintenance_Object": "pipe",
+        "Maintenance_Problem": "leak",
+        "Priority": "normal"
+      },
+      "confidenceByField": {
+        "Category": 0.29000000000000004,
+        "Location": 0.29000000000000004,
+        "Sub_Location": 0.53,
+        "Maintenance_Category": 0.6900000000000001,
+        "Maintenance_Object": 0.38000000000000006,
+        "Maintenance_Problem": 0.53,
+        "Priority": 0.29000000000000004
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Maintenance_Category",
+        "Maintenance_Object",
+        "Maintenance_Problem",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    },
+    {
+      "example_id": "reg-002",
+      "status": "ok",
+      "classification": {
+        "Category": "maintenance",
+        "Location": "building_interior",
+        "Sub_Location": "parking_garage",
+        "Maintenance_Category": "electrical",
+        "Maintenance_Object": "breaker",
+        "Maintenance_Problem": "not_working",
+        "Priority": "high"
+      },
+      "confidenceByField": {
+        "Category": 0.29000000000000004,
+        "Location": 0.5900000000000001,
+        "Sub_Location": 0.29000000000000004,
+        "Maintenance_Category": 0.6900000000000001,
+        "Maintenance_Object": 0.48000000000000004,
+        "Maintenance_Problem": 0.29000000000000004,
+        "Priority": 0.29000000000000004
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Maintenance_Category",
+        "Maintenance_Object",
+        "Maintenance_Problem",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    },
+    {
+      "example_id": "reg-003",
+      "status": "ok",
+      "classification": {
+        "Category": "maintenance",
+        "Location": "building_interior",
+        "Sub_Location": "pool",
+        "Maintenance_Category": "plumbing",
+        "Maintenance_Object": "drain",
+        "Maintenance_Problem": "clog",
+        "Priority": "normal"
+      },
+      "confidenceByField": {
+        "Category": 0.29000000000000004,
+        "Location": 0.29000000000000004,
+        "Sub_Location": 0.29000000000000004,
+        "Maintenance_Category": 0.6900000000000001,
+        "Maintenance_Object": 0.53,
+        "Maintenance_Problem": 0.43000000000000005,
+        "Priority": 0.29000000000000004
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Maintenance_Category",
+        "Maintenance_Object",
+        "Maintenance_Problem",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    },
+    {
+      "example_id": "reg-004",
+      "status": "ok",
+      "classification": {
+        "Category": "maintenance",
+        "Location": "building_interior",
+        "Sub_Location": "entrance_lobby",
+        "Maintenance_Category": "electrical",
+        "Maintenance_Object": "light",
+        "Maintenance_Problem": "not_working",
+        "Priority": "normal"
+      },
+      "confidenceByField": {
+        "Category": 0.29000000000000004,
+        "Location": 0.53,
+        "Sub_Location": 0.29000000000000004,
+        "Maintenance_Category": 0.53,
+        "Maintenance_Object": 0.48000000000000004,
+        "Maintenance_Problem": 0.29000000000000004,
+        "Priority": 0.29000000000000004
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Maintenance_Category",
+        "Maintenance_Object",
+        "Maintenance_Problem",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    },
+    {
+      "example_id": "reg-005",
+      "status": "ok",
+      "classification": {
+        "Category": "maintenance",
+        "Location": "building_exterior",
+        "Sub_Location": "garbage",
+        "Maintenance_Category": "pest_control",
+        "Maintenance_Object": "rodents",
+        "Maintenance_Problem": "infestation",
+        "Priority": "normal"
+      },
+      "confidenceByField": {
+        "Category": 0.29000000000000004,
+        "Location": 0.29000000000000004,
+        "Sub_Location": 0.43000000000000005,
+        "Maintenance_Category": 0.6900000000000001,
+        "Maintenance_Object": 0.29000000000000004,
+        "Maintenance_Problem": 0.29000000000000004,
+        "Priority": 0.29000000000000004
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Maintenance_Category",
+        "Maintenance_Object",
+        "Maintenance_Problem",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    },
+    {
+      "example_id": "reg-006",
+      "status": "ok",
+      "classification": {
+        "Category": "management",
+        "Location": "suite",
+        "Sub_Location": "other_sub_location",
+        "Management_Category": "accounting",
+        "Management_Object": "rent_charges",
+        "Priority": "normal"
+      },
+      "confidenceByField": {
+        "Category": 0.53,
+        "Location": 0.29000000000000004,
+        "Sub_Location": 0.29000000000000004,
+        "Management_Category": 0.66,
+        "Management_Object": 0.53,
+        "Priority": 0.29000000000000004
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Management_Object",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    },
+    {
+      "example_id": "reg-006",
+      "status": "ok",
+      "classification": {
+        "Category": "maintenance",
+        "Location": "suite",
+        "Sub_Location": "kitchen",
+        "Maintenance_Category": "plumbing",
+        "Maintenance_Object": "faucet",
+        "Maintenance_Problem": "leak",
+        "Priority": "normal"
+      },
+      "confidenceByField": {
+        "Category": 0.29000000000000004,
+        "Location": 0.29000000000000004,
+        "Sub_Location": 0.53,
+        "Maintenance_Category": 0.53,
+        "Maintenance_Object": 0.53,
+        "Maintenance_Problem": 0.6900000000000001,
+        "Priority": 0.29000000000000004
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Maintenance_Category",
+        "Maintenance_Object",
+        "Maintenance_Problem",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    },
+    {
+      "example_id": "reg-007",
+      "status": "ok",
+      "classification": {
+        "Category": "management",
+        "Location": "building_interior",
+        "Sub_Location": "entrance_lobby",
+        "Management_Category": "general",
+        "Management_Object": "intercom",
+        "Priority": "normal"
+      },
+      "confidenceByField": {
+        "Category": 0.43000000000000005,
+        "Location": 0.29000000000000004,
+        "Sub_Location": 0.29000000000000004,
+        "Management_Category": 0.53,
+        "Management_Object": 0.53,
+        "Priority": 0.53
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Management_Category",
+        "Management_Object",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    },
+    {
+      "example_id": "reg-008",
+      "status": "ok",
+      "classification": {
+        "Category": "management",
+        "Location": "building_interior",
+        "Sub_Location": "party_room",
+        "Management_Category": "general",
+        "Management_Object": "booking_scheduling",
+        "Priority": "normal"
+      },
+      "confidenceByField": {
+        "Category": 0.29000000000000004,
+        "Location": 0.29000000000000004,
+        "Sub_Location": 0.29000000000000004,
+        "Management_Category": 0.29000000000000004,
+        "Management_Object": 0.29000000000000004,
+        "Priority": 0.29000000000000004
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Management_Category",
+        "Management_Object",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    },
+    {
+      "example_id": "reg-008",
+      "status": "ok",
+      "classification": {
+        "Category": "maintenance",
+        "Location": "suite",
+        "Sub_Location": "general",
+        "Maintenance_Category": "locksmith",
+        "Maintenance_Object": "lock",
+        "Maintenance_Problem": "not_working",
+        "Priority": "high"
+      },
+      "confidenceByField": {
+        "Category": 0.29000000000000004,
+        "Location": 0.29000000000000004,
+        "Sub_Location": 0.43000000000000005,
+        "Maintenance_Category": 0.38000000000000006,
+        "Maintenance_Object": 0.56,
+        "Maintenance_Problem": 0.29000000000000004,
+        "Priority": 0.29000000000000004
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Maintenance_Category",
+        "Maintenance_Object",
+        "Maintenance_Problem",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    },
+    {
+      "example_id": "reg-009",
+      "status": "ok",
+      "classification": {
+        "Category": "management",
+        "Location": "suite",
+        "Sub_Location": "other_sub_location",
+        "Management_Category": "lease",
+        "Management_Object": "lease_inquiry",
+        "Priority": "normal"
+      },
+      "confidenceByField": {
+        "Category": 0.53,
+        "Location": 0.29000000000000004,
+        "Sub_Location": 0.29000000000000004,
+        "Management_Category": 0.53,
+        "Management_Object": 0.6900000000000001,
+        "Priority": 0.29000000000000004
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Management_Category",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    },
+    {
+      "example_id": "reg-009",
+      "status": "ok",
+      "classification": {
+        "Category": "management",
+        "Location": "building_interior",
+        "Sub_Location": "gym",
+        "Management_Category": "general",
+        "Management_Object": "other_mgmt_obj",
+        "Priority": "normal"
+      },
+      "confidenceByField": {
+        "Category": 0.29000000000000004,
+        "Location": 0.29000000000000004,
+        "Sub_Location": 0.29000000000000004,
+        "Management_Category": 0.29000000000000004,
+        "Management_Object": 0.29000000000000004,
+        "Priority": 0.29000000000000004
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Management_Category",
+        "Management_Object",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    },
+    {
+      "example_id": "reg-010",
+      "status": "ok",
+      "classification": {
+        "Category": "maintenance",
+        "Location": "suite",
+        "Sub_Location": "bathroom",
+        "Maintenance_Category": "plumbing",
+        "Maintenance_Object": "faucet",
+        "Maintenance_Problem": "leak",
+        "Priority": "low"
+      },
+      "confidenceByField": {
+        "Category": 0.29000000000000004,
+        "Location": 0.29000000000000004,
+        "Sub_Location": 0.53,
+        "Maintenance_Category": 0.53,
+        "Maintenance_Object": 0.53,
+        "Maintenance_Problem": 0.53,
+        "Priority": 0.53
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Maintenance_Category",
+        "Maintenance_Object",
+        "Maintenance_Problem",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    },
+    {
+      "example_id": "reg-011",
+      "status": "ok",
+      "classification": {
+        "Category": "maintenance",
+        "Location": "suite",
+        "Sub_Location": "other_sub_location",
+        "Maintenance_Category": "plumbing",
+        "Maintenance_Object": "other_object",
+        "Maintenance_Problem": "leak",
+        "Priority": "low"
+      },
+      "confidenceByField": {
+        "Category": 0.29000000000000004,
+        "Location": 0.29000000000000004,
+        "Sub_Location": 0.43000000000000005,
+        "Maintenance_Category": 0.48000000000000004,
+        "Maintenance_Object": 0.29000000000000004,
+        "Maintenance_Problem": 0.29000000000000004,
+        "Priority": 0.29000000000000004
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Maintenance_Category",
+        "Maintenance_Object",
+        "Maintenance_Problem",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    },
+    {
+      "example_id": "reg-012",
+      "status": "ok",
+      "classification": {
+        "Category": "maintenance",
+        "Location": "suite",
+        "Sub_Location": "kitchen",
+        "Maintenance_Category": "electrical",
+        "Maintenance_Object": "switch",
+        "Maintenance_Problem": "not_working",
+        "Priority": "normal"
+      },
+      "confidenceByField": {
+        "Category": 0.29000000000000004,
+        "Location": 0.29000000000000004,
+        "Sub_Location": 0.53,
+        "Maintenance_Category": 0.6900000000000001,
+        "Maintenance_Object": 0.43000000000000005,
+        "Maintenance_Problem": 0.29000000000000004,
+        "Priority": 0.29000000000000004
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Maintenance_Category",
+        "Maintenance_Object",
+        "Maintenance_Problem",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    },
+    {
+      "example_id": "reg-013",
+      "status": "ok",
+      "classification": {
+        "Category": "maintenance",
+        "Location": "suite",
+        "Sub_Location": "general",
+        "Maintenance_Category": "hvac",
+        "Maintenance_Object": "radiator",
+        "Maintenance_Problem": "other_problem",
+        "Priority": "normal"
+      },
+      "confidenceByField": {
+        "Category": 0.29000000000000004,
+        "Location": 0.29000000000000004,
+        "Sub_Location": 0.29000000000000004,
+        "Maintenance_Category": 0.66,
+        "Maintenance_Object": 0.29000000000000004,
+        "Maintenance_Problem": 0.29000000000000004,
+        "Priority": 0.29000000000000004
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Maintenance_Category",
+        "Maintenance_Object",
+        "Maintenance_Problem",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    },
+    {
+      "example_id": "reg-014",
+      "status": "ok",
+      "classification": {
+        "Category": "maintenance",
+        "Location": "suite",
+        "Sub_Location": "bathroom",
+        "Maintenance_Category": "tile",
+        "Maintenance_Object": "grout",
+        "Maintenance_Problem": "broken_damaged",
+        "Priority": "normal"
+      },
+      "confidenceByField": {
+        "Category": 0.29000000000000004,
+        "Location": 0.29000000000000004,
+        "Sub_Location": 0.53,
+        "Maintenance_Category": 0.66,
+        "Maintenance_Object": 0.29000000000000004,
+        "Maintenance_Problem": 0.29000000000000004,
+        "Priority": 0.29000000000000004
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Maintenance_Category",
+        "Maintenance_Object",
+        "Maintenance_Problem",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    },
+    {
+      "example_id": "reg-015",
+      "status": "ok",
+      "classification": {
+        "Category": "maintenance",
+        "Location": "building_interior",
+        "Sub_Location": "bike_locker",
+        "Maintenance_Category": "locksmith",
+        "Maintenance_Object": "lock",
+        "Maintenance_Problem": "broken_damaged",
+        "Priority": "normal"
+      },
+      "confidenceByField": {
+        "Category": 0.53,
+        "Location": 0.29000000000000004,
+        "Sub_Location": 0.43000000000000005,
+        "Maintenance_Category": 0.38000000000000006,
+        "Maintenance_Object": 0.53,
+        "Maintenance_Problem": 0.38000000000000006,
+        "Priority": 0.53
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Maintenance_Category",
+        "Maintenance_Object",
+        "Maintenance_Problem",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    },
+    {
+      "example_id": "reg-016",
+      "status": "ok",
+      "classification": {
+        "Category": "maintenance",
+        "Location": "suite",
+        "Sub_Location": "laundry",
+        "Maintenance_Category": "appliance",
+        "Maintenance_Object": "washer",
+        "Maintenance_Problem": "other_problem",
+        "Priority": "normal"
+      },
+      "confidenceByField": {
+        "Category": 0.29000000000000004,
+        "Location": 0.43000000000000005,
+        "Sub_Location": 0.29000000000000004,
+        "Maintenance_Category": 0.43000000000000005,
+        "Maintenance_Object": 0.53,
+        "Maintenance_Problem": 0.5900000000000001,
+        "Priority": 0.29000000000000004
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Maintenance_Category",
+        "Maintenance_Object",
+        "Maintenance_Problem",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    },
+    {
+      "example_id": "reg-017",
+      "status": "ok",
+      "classification": {
+        "Category": "maintenance",
+        "Location": "suite",
+        "Sub_Location": "bedroom",
+        "Maintenance_Category": "plumbing",
+        "Maintenance_Object": "ceiling",
+        "Maintenance_Problem": "leak",
+        "Priority": "normal"
+      },
+      "confidenceByField": {
+        "Category": 0.53,
+        "Location": 0.29000000000000004,
+        "Sub_Location": 0.53,
+        "Maintenance_Category": 0.66,
+        "Maintenance_Object": 0.29000000000000004,
+        "Maintenance_Problem": 0.53,
+        "Priority": 0.53
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Maintenance_Category",
+        "Maintenance_Object",
+        "Maintenance_Problem",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    },
+    {
+      "example_id": "reg-018",
+      "status": "ok",
+      "classification": {
+        "Category": "maintenance",
+        "Location": "suite",
+        "Sub_Location": "kitchen",
+        "Maintenance_Category": "appliance",
+        "Maintenance_Object": "stove",
+        "Maintenance_Problem": "safety_risk",
+        "Priority": "emergency"
+      },
+      "confidenceByField": {
+        "Category": 0.43000000000000005,
+        "Location": 0.6900000000000001,
+        "Sub_Location": 0.48000000000000004,
+        "Maintenance_Category": 0.53,
+        "Maintenance_Object": 0.53,
+        "Maintenance_Problem": 0.43000000000000005,
+        "Priority": 0.29000000000000004
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Maintenance_Category",
+        "Maintenance_Object",
+        "Maintenance_Problem",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    },
+    {
+      "example_id": "reg-019",
+      "status": "ok",
+      "classification": {
+        "Category": "maintenance",
+        "Location": "building_interior",
+        "Sub_Location": "hallways_stairwells",
+        "Maintenance_Category": "electrical",
+        "Maintenance_Object": "breaker",
+        "Maintenance_Problem": "safety_risk",
+        "Priority": "emergency"
+      },
+      "confidenceByField": {
+        "Category": 0.29000000000000004,
+        "Location": 0.53,
+        "Sub_Location": 0.29000000000000004,
+        "Maintenance_Category": 0.48000000000000004,
+        "Maintenance_Object": 0.6900000000000001,
+        "Maintenance_Problem": 0.29000000000000004,
+        "Priority": 0.53
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Maintenance_Category",
+        "Maintenance_Problem",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    },
+    {
+      "example_id": "reg-020",
+      "status": "ok",
+      "classification": {
+        "Category": "maintenance",
+        "Location": "building_interior",
+        "Sub_Location": "mechanical_room",
+        "Maintenance_Category": "plumbing",
+        "Maintenance_Object": "pipe",
+        "Maintenance_Problem": "flood",
+        "Priority": "emergency"
+      },
+      "confidenceByField": {
+        "Category": 0.29000000000000004,
+        "Location": 0.29000000000000004,
+        "Sub_Location": 0.29000000000000004,
+        "Maintenance_Category": 0.6900000000000001,
+        "Maintenance_Object": 0.53,
+        "Maintenance_Problem": 0.6900000000000001,
+        "Priority": 0.53
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Maintenance_Category",
+        "Maintenance_Object",
+        "Maintenance_Problem",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    }
+  ],
+  "metrics": {
+    "field_accuracy": 1,
+    "schema_invalid_rate": 0,
+    "taxonomy_invalid_rate": 0,
+    "contradiction_after_retry_rate": 0,
+    "needs_human_triage_rate": 0,
+    "total_examples": 20,
+    "total_results": 24
+  },
+  "slice_metrics": {
+    "emergency": {
+      "field_accuracy": 1,
+      "schema_invalid_rate": 0,
+      "taxonomy_invalid_rate": 0,
+      "contradiction_after_retry_rate": 0,
+      "example_count": 3
+    }
+  }
+}

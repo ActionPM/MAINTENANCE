@@ -35,14 +35,14 @@ export function createWorkOrders(input: CreateWorkOrdersInput): WorkOrder[] {
   const now = clock();
   const issueGroupId = idGenerator();
   const resultMap = new Map<string, IssueClassificationResult>(
-    session.classification_results.map(r => [r.issue_id, r]),
+    session.classification_results.map((r) => [r.issue_id, r]),
   );
 
   // Photos are NOT attached at creation time. Draft photo IDs on the session
   // lack the storage_key and sha256 required by the schema. Photo attachment
   // is a separate post-creation enrichment step once upload metadata is available.
 
-  return session.split_issues.map(issue => {
+  return session.split_issues.map((issue) => {
     const classResult = resultMap.get(issue.issue_id);
 
     const wo: WorkOrder = {
@@ -56,11 +56,13 @@ export function createWorkOrders(input: CreateWorkOrdersInput): WorkOrder[] {
       tenant_user_id: session.tenant_user_id,
       tenant_account_id: session.tenant_account_id,
       status: WorkOrderStatus.CREATED,
-      status_history: [{
-        status: WorkOrderStatus.CREATED,
-        changed_at: now,
-        actor: ActorType.SYSTEM,
-      }],
+      status_history: [
+        {
+          status: WorkOrderStatus.CREATED,
+          changed_at: now,
+          actor: ActorType.SYSTEM,
+        },
+      ],
       raw_text: issue.raw_excerpt,
       summary_confirmed: issue.summary,
       photos: [],
@@ -69,18 +71,21 @@ export function createWorkOrders(input: CreateWorkOrdersInput): WorkOrder[] {
       missing_fields: classResult ? [...classResult.classifierOutput.missing_fields] : [],
       pets_present: 'unknown',
       needs_human_triage: classResult?.classifierOutput.needs_human_triage ?? true,
-      ...(session.risk_triggers && session.risk_triggers.length > 0 ? {
-        risk_flags: {
-          trigger_ids: session.risk_triggers.map(t => t.trigger.trigger_id),
-          highest_severity: session.risk_triggers.reduce((worst, t) => {
-            const rank: Record<string, number> = { emergency: 3, high: 2, medium: 1 };
-            const tRank = rank[t.trigger.severity] ?? 0;
-            const wRank = rank[worst] ?? 0;
-            return tRank > wRank ? t.trigger.severity : worst;
-          }, '' as string) || undefined,
-          has_emergency: session.risk_triggers.some(t => t.trigger.severity === 'emergency'),
-        },
-      } : {}),
+      ...(session.risk_triggers && session.risk_triggers.length > 0
+        ? {
+            risk_flags: {
+              trigger_ids: session.risk_triggers.map((t) => t.trigger.trigger_id),
+              highest_severity:
+                session.risk_triggers.reduce((worst, t) => {
+                  const rank: Record<string, number> = { emergency: 3, high: 2, medium: 1 };
+                  const tRank = rank[t.trigger.severity] ?? 0;
+                  const wRank = rank[worst] ?? 0;
+                  return tRank > wRank ? t.trigger.severity : worst;
+                }, '' as string) || undefined,
+              has_emergency: session.risk_triggers.some((t) => t.trigger.severity === 'emergency'),
+            },
+          }
+        : {}),
       pinned_versions: { ...session.pinned_versions },
       created_at: now,
       updated_at: now,

@@ -7,7 +7,13 @@ import { handleConfirmSubmission } from '../../../orchestrator/action-handlers/c
 import { handlePhotoUpload } from '../../../orchestrator/action-handlers/photo-upload.js';
 import { handleResume } from '../../../orchestrator/action-handlers/resume.js';
 import { handleAbandon } from '../../../orchestrator/action-handlers/abandon.js';
-import { createSession, updateSessionState, setSplitIssues, setClassificationResults, setPendingFollowUpQuestions } from '../../../session/session.js';
+import {
+  createSession,
+  updateSessionState,
+  setSplitIssues,
+  setClassificationResults,
+  setPendingFollowUpQuestions,
+} from '../../../session/session.js';
 import { InMemoryEventStore } from '../../../events/in-memory-event-store.js';
 import { InMemoryWorkOrderStore } from '../../../work-order/in-memory-wo-store.js';
 import { InMemoryIdempotencyStore } from '../../../idempotency/in-memory-idempotency-store.js';
@@ -36,7 +42,12 @@ function makeContext(
     tenant_user_id: 'user-1',
     tenant_account_id: 'acct-1',
     authorized_unit_ids: ['u1'],
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'gpt-4', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'gpt-4',
+      prompt_version: '1.0.0',
+    },
   });
   if (state !== ConversationState.INTAKE_STARTED) {
     session = updateSessionState(session, state as any);
@@ -48,12 +59,20 @@ function makeContext(
       action_type: actionType as any,
       actor: ActorType.TENANT,
       tenant_input: tenantInput as any,
-      auth_context: { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['u1'] },
+      auth_context: {
+        tenant_user_id: 'user-1',
+        tenant_account_id: 'acct-1',
+        authorized_unit_ids: ['u1'],
+      },
       ...extras,
     },
     deps: {
       eventRepo: new InMemoryEventStore(),
-      sessionStore: { get: async () => null, getByTenantUser: async () => [], save: async () => {} },
+      sessionStore: {
+        get: async () => null,
+        getByTenantUser: async () => [],
+        save: async () => {},
+      },
       idGenerator: () => `id-${++counter}`,
       clock: () => '2026-01-15T12:00:00Z',
       issueSplitter: async () => ({ issues: [], issue_count: 0 }),
@@ -85,13 +104,21 @@ function makeContext(
 
 describe('handleSubmitAdditionalMessage', () => {
   it('stays in needs_tenant_input', async () => {
-    const ctx = makeContext(ConversationState.NEEDS_TENANT_INPUT, ActionType.SUBMIT_ADDITIONAL_MESSAGE, { message: 'Also...' });
+    const ctx = makeContext(
+      ConversationState.NEEDS_TENANT_INPUT,
+      ActionType.SUBMIT_ADDITIONAL_MESSAGE,
+      { message: 'Also...' },
+    );
     const result = await handleSubmitAdditionalMessage(ctx);
     expect(result.newState).toBe(ConversationState.NEEDS_TENANT_INPUT);
   });
 
   it('stays in tenant_confirmation_pending', async () => {
-    const ctx = makeContext(ConversationState.TENANT_CONFIRMATION_PENDING, ActionType.SUBMIT_ADDITIONAL_MESSAGE, { message: 'Wait...' });
+    const ctx = makeContext(
+      ConversationState.TENANT_CONFIRMATION_PENDING,
+      ActionType.SUBMIT_ADDITIONAL_MESSAGE,
+      { message: 'Wait...' },
+    );
     const result = await handleSubmitAdditionalMessage(ctx);
     expect(result.newState).toBe(ConversationState.TENANT_CONFIRMATION_PENDING);
   });
@@ -127,10 +154,15 @@ describe('handleAnswerFollowups', () => {
         Priority: 'normal',
       },
       model_confidence: {
-        Category: 0.95, Location: 0.9, Sub_Location: 0.85,
-        Maintenance_Category: 0.92, Maintenance_Object: 0.95,
-        Maintenance_Problem: 0.88, Management_Category: 0.95,
-        Management_Object: 0.95, Priority: 0.9,
+        Category: 0.95,
+        Location: 0.9,
+        Sub_Location: 0.85,
+        Maintenance_Category: 0.92,
+        Maintenance_Object: 0.95,
+        Maintenance_Problem: 0.88,
+        Management_Category: 0.95,
+        Management_Object: 0.95,
+        Priority: 0.9,
       },
       missing_fields: [],
       needs_human_triage: false,
@@ -159,20 +191,28 @@ describe('handleAnswerFollowups', () => {
     let session = setSplitIssues(ctx.session, [
       { issue_id: 'i1', summary: 'Toilet leaking', raw_excerpt: 'My toilet is leaking' },
     ]);
-    session = setClassificationResults(session, [{
-      issue_id: 'i1',
-      classifierOutput: {
+    session = setClassificationResults(session, [
+      {
         issue_id: 'i1',
-        classification: { Category: 'maintenance' },
-        model_confidence: { Category: 0.9 },
-        missing_fields: [],
-        needs_human_triage: false,
+        classifierOutput: {
+          issue_id: 'i1',
+          classification: { Category: 'maintenance' },
+          model_confidence: { Category: 0.9 },
+          missing_fields: [],
+          needs_human_triage: false,
+        },
+        computedConfidence: { Category: 0.9 },
+        fieldsNeedingInput: ['Priority'],
       },
-      computedConfidence: { Category: 0.9 },
-      fieldsNeedingInput: ['Priority'],
-    }]);
+    ]);
     session = setPendingFollowUpQuestions(session, [
-      { question_id: 'q-priority', field_target: 'Priority', prompt: 'How urgent?', options: ['low', 'normal', 'high'], answer_type: 'enum' },
+      {
+        question_id: 'q-priority',
+        field_target: 'Priority',
+        prompt: 'How urgent?',
+        options: ['low', 'normal', 'high'],
+        answer_type: 'enum',
+      },
     ]);
     (ctx as any).session = session;
 
@@ -185,23 +225,30 @@ describe('handleAnswerFollowups', () => {
 
 describe('handleConfirmSubmission', () => {
   it('transitions to submitted when session has issues and classification', async () => {
-    const ctx = makeContext(ConversationState.TENANT_CONFIRMATION_PENDING, ActionType.CONFIRM_SUBMISSION, {}, { idempotency_key: 'test-key' });
+    const ctx = makeContext(
+      ConversationState.TENANT_CONFIRMATION_PENDING,
+      ActionType.CONFIRM_SUBMISSION,
+      {},
+      { idempotency_key: 'test-key' },
+    );
     // Set up required session data for confirmation
     let session = setSplitIssues(ctx.session, [
       { issue_id: 'i1', summary: 'Toilet leaking', raw_excerpt: 'My toilet is leaking' },
     ]);
-    session = setClassificationResults(session, [{
-      issue_id: 'i1',
-      classifierOutput: {
+    session = setClassificationResults(session, [
+      {
         issue_id: 'i1',
-        classification: { Category: 'maintenance' },
-        model_confidence: { Category: 0.9 },
-        missing_fields: [],
-        needs_human_triage: false,
+        classifierOutput: {
+          issue_id: 'i1',
+          classification: { Category: 'maintenance' },
+          model_confidence: { Category: 0.9 },
+          missing_fields: [],
+          needs_human_triage: false,
+        },
+        computedConfidence: { Category: 0.9 },
+        fieldsNeedingInput: [],
       },
-      computedConfidence: { Category: 0.9 },
-      fieldsNeedingInput: [],
-    }]);
+    ]);
     session = { ...session, unit_id: 'u1', property_id: 'prop-1', client_id: 'client-1' };
     (ctx as any).session = session;
     const result = await handleConfirmSubmission(ctx);
@@ -212,7 +259,9 @@ describe('handleConfirmSubmission', () => {
 describe('handlePhotoUpload', () => {
   it('returns same state for UPLOAD_PHOTO_INIT', async () => {
     const ctx = makeContext(ConversationState.SPLIT_PROPOSED, ActionType.UPLOAD_PHOTO_INIT, {
-      filename: 'leak.jpg', content_type: 'image/jpeg', size_bytes: 1024,
+      filename: 'leak.jpg',
+      content_type: 'image/jpeg',
+      size_bytes: 1024,
     });
     const result = await handlePhotoUpload(ctx);
     expect(result.newState).toBe(ConversationState.SPLIT_PROPOSED);
@@ -220,7 +269,9 @@ describe('handlePhotoUpload', () => {
 
   it('returns same state for UPLOAD_PHOTO_COMPLETE', async () => {
     const ctx = makeContext(ConversationState.INTAKE_STARTED, ActionType.UPLOAD_PHOTO_COMPLETE, {
-      photo_id: 'p1', storage_key: 'key', sha256: 'abc',
+      photo_id: 'p1',
+      storage_key: 'key',
+      sha256: 'abc',
     });
     const result = await handlePhotoUpload(ctx);
     expect(result.newState).toBe(ConversationState.INTAKE_STARTED);

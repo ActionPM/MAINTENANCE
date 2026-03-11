@@ -14,7 +14,7 @@ export function loadRiskProtocols(): RiskProtocols {
   const raw = readFileSync(filePath, 'utf-8');
   const protocols = JSON.parse(raw) as RiskProtocols;
 
-  const templateIds = new Set(protocols.mitigation_templates.map(t => t.template_id));
+  const templateIds = new Set(protocols.mitigation_templates.map((t) => t.template_id));
   for (const trigger of protocols.triggers) {
     if (!templateIds.has(trigger.mitigation_template_id)) {
       throw new Error(

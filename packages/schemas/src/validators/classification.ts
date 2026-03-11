@@ -5,14 +5,10 @@ import type { IssueClassifierInput, IssueClassifierOutput } from '../types/class
 const INPUT_REF = 'classification.schema.json#/definitions/IssueClassifierInput';
 const OUTPUT_REF = 'classification.schema.json#/definitions/IssueClassifierOutput';
 
-export function validateClassifierInput(
-  data: unknown,
-): ValidationResult<IssueClassifierInput> {
+export function validateClassifierInput(data: unknown): ValidationResult<IssueClassifierInput> {
   return validate<IssueClassifierInput>(data, INPUT_REF);
 }
 
-export function validateClassifierOutput(
-  data: unknown,
-): ValidationResult<IssueClassifierOutput> {
+export function validateClassifierOutput(data: unknown): ValidationResult<IssueClassifierOutput> {
   return validate<IssueClassifierOutput>(data, OUTPUT_REF);
 }

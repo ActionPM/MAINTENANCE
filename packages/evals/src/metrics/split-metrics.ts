@@ -10,9 +10,10 @@ export function computeSplitCountAccuracy(
  * Compute token-overlap F1 between predicted and expected issue text sets.
  * Uses greedy best-match pairing for multi-issue cases.
  */
-export function computeIssueBoundaryF1(
-  pair: { predicted: readonly string[]; expected: readonly string[] },
-): number {
+export function computeIssueBoundaryF1(pair: {
+  predicted: readonly string[];
+  expected: readonly string[];
+}): number {
   if (pair.expected.length === 0 && pair.predicted.length === 0) return 1.0;
   if (pair.expected.length === 0 || pair.predicted.length === 0) return 0;
 
@@ -21,7 +22,7 @@ export function computeIssueBoundaryF1(
 
   // Compute F1 between two token sets
   const tokenF1 = (a: Set<string>, b: Set<string>): number => {
-    const overlap = [...a].filter(t => b.has(t)).length;
+    const overlap = [...a].filter((t) => b.has(t)).length;
     if (overlap === 0) return 0;
     const precision = overlap / a.size;
     const recall = overlap / b.size;
@@ -40,7 +41,10 @@ export function computeIssueBoundaryF1(
     for (let i = 0; i < expTokens.length; i++) {
       if (used.has(i)) continue;
       const f1 = tokenF1(pt, expTokens[i]);
-      if (f1 > bestF1) { bestF1 = f1; bestIdx = i; }
+      if (f1 > bestF1) {
+        bestF1 = f1;
+        bestIdx = i;
+      }
     }
     if (bestIdx >= 0) {
       used.add(bestIdx);

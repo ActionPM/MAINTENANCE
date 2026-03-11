@@ -16,12 +16,18 @@ export async function extractAuthFromHeader(
   config: JwtConfig,
 ): Promise<AuthExtractionResult> {
   if (!authHeader) {
-    return { valid: false, error: { code: 'TOKEN_MISSING', message: 'Authorization header is required' } };
+    return {
+      valid: false,
+      error: { code: 'TOKEN_MISSING', message: 'Authorization header is required' },
+    };
   }
 
   const parts = authHeader.split(' ');
   if (parts.length !== 2 || parts[0] !== 'Bearer') {
-    return { valid: false, error: { code: 'TOKEN_INVALID', message: 'Expected Bearer token format' } };
+    return {
+      valid: false,
+      error: { code: 'TOKEN_INVALID', message: 'Expected Bearer token format' },
+    };
   }
 
   const result = await verifyAccessToken(parts[1], config);
@@ -36,9 +42,6 @@ export async function extractAuthFromHeader(
  * Check if a unit_id is in the tenant's authorized list (spec §9).
  * Tenant cannot set unit/property IDs — server derives from membership.
  */
-export function validateUnitAccess(
-  authorizedUnitIds: readonly string[],
-  unitId: string,
-): boolean {
+export function validateUnitAccess(authorizedUnitIds: readonly string[], unitId: string): boolean {
   return authorizedUnitIds.includes(unitId);
 }

@@ -6,10 +6,9 @@ export interface FollowupComparisonInput {
 /**
  * Follow-up necessity precision: of predicted follow-up fields, how many were expected.
  */
-export function computeFollowupPrecision(
-  pairs: readonly FollowupComparisonInput[],
-): number {
-  let tp = 0, fp = 0;
+export function computeFollowupPrecision(pairs: readonly FollowupComparisonInput[]): number {
+  let tp = 0,
+    fp = 0;
   for (const { predicted_followup_fields, expected_followup_fields } of pairs) {
     const expected = new Set(expected_followup_fields);
     for (const field of predicted_followup_fields) {
@@ -23,10 +22,9 @@ export function computeFollowupPrecision(
 /**
  * Follow-up necessity recall: of expected follow-up fields, how many were predicted.
  */
-export function computeFollowupRecall(
-  pairs: readonly FollowupComparisonInput[],
-): number {
-  let tp = 0, fn = 0;
+export function computeFollowupRecall(pairs: readonly FollowupComparisonInput[]): number {
+  let tp = 0,
+    fn = 0;
   for (const { predicted_followup_fields, expected_followup_fields } of pairs) {
     const predicted = new Set(predicted_followup_fields);
     for (const field of expected_followup_fields) {

@@ -13,6 +13,7 @@
 **Spec references:** 2 (non-negotiables), 5.3 (category gating), 10 (orchestrator contract), 11.2 (transition matrix), 14 (classification, cues, confidence)
 
 **Skills that apply during execution:**
+
 - `@test-driven-development` -- every task follows red-green-refactor
 - `@state-machine-implementation` -- any state transition changes
 - `@schema-first-development` -- all model outputs validated
@@ -25,6 +26,7 @@
 ## Task 0: Create worktree and branch from Phase 4
 
 **Files:**
+
 - N/A (git operations only)
 
 **Step 1: Create worktree branching from Phase 4 splitter**
@@ -65,6 +67,7 @@ No commit needed -- branch created from Phase 4 HEAD.
 ## Task 1: Implement cue-scoring function
 
 **Files:**
+
 - Create: `packages/core/src/classifier/cue-scoring.ts`
 - Test: `packages/core/src/__tests__/classifier/cue-scoring.test.ts`
 
@@ -104,14 +107,22 @@ describe('computeCueStrengthForField', () => {
   });
 
   it('returns normalized score for keyword hits', () => {
-    const result = computeCueStrengthForField('my toilet is leaking water from the pipe', 'Maintenance_Category', MINI_CUES);
+    const result = computeCueStrengthForField(
+      'my toilet is leaking water from the pipe',
+      'Maintenance_Category',
+      MINI_CUES,
+    );
     // plumbing: leak(1) + toilet(1) + pipe(1) = 3/5 = 0.6
     expect(result.score).toBeCloseTo(0.6);
     expect(result.topLabel).toBe('plumbing');
   });
 
   it('returns top label when multiple labels match', () => {
-    const result = computeCueStrengthForField('the outlet sparks when I plug in the toilet', 'Maintenance_Category', MINI_CUES);
+    const result = computeCueStrengthForField(
+      'the outlet sparks when I plug in the toilet',
+      'Maintenance_Category',
+      MINI_CUES,
+    );
     // plumbing: toilet(1) = 1/5 = 0.2
     // electrical: outlet(1) + sparks(1) = 2/5 = 0.4
     expect(result.topLabel).toBe('electrical');
@@ -139,7 +150,11 @@ describe('computeCueStrengthForField', () => {
         },
       },
     };
-    const result = computeCueStrengthForField('the faucet is leaking badly', 'Maintenance_Problem', cues);
+    const result = computeCueStrengthForField(
+      'the faucet is leaking badly',
+      'Maintenance_Problem',
+      cues,
+    );
     expect(result.score).toBe(1.0);
     expect(result.topLabel).toBe('leak');
   });
@@ -308,6 +323,7 @@ git commit -m "feat(core): add cue-scoring function for classification_cues.json
 ## Task 2: Implement confidence heuristic
 
 **Files:**
+
 - Create: `packages/core/src/classifier/confidence.ts`
 - Test: `packages/core/src/__tests__/classifier/confidence.test.ts`
 
@@ -390,7 +406,7 @@ describe('computeFieldConfidence', () => {
       ambiguityPenalty: 0,
       config,
     });
-    expect(withDisagree).toBeCloseTo(noDisagree - 0.10);
+    expect(withDisagree).toBeCloseTo(noDisagree - 0.1);
   });
 
   it('subtracts ambiguity penalty', () => {
@@ -552,8 +568,8 @@ export interface FieldConfidenceInput {
   readonly cueStrength: number;
   readonly completeness: number;
   readonly modelHint: number;
-  readonly disagreement: number;      // 0 or 1
-  readonly ambiguityPenalty: number;   // 0..1
+  readonly disagreement: number; // 0 or 1
+  readonly ambiguityPenalty: number; // 0..1
   readonly config: ConfidenceConfig;
 }
 
@@ -593,7 +609,10 @@ export function computeFieldConfidence(input: FieldConfidenceInput): number {
 /**
  * Classify a confidence score into high/medium/low bands (spec 14.3).
  */
-export function classifyConfidenceBand(confidence: number, config: ConfidenceConfig): ConfidenceBand {
+export function classifyConfidenceBand(
+  confidence: number,
+  config: ConfidenceConfig,
+): ConfidenceBand {
   if (confidence >= config.high_threshold) return 'high';
   if (confidence >= config.medium_threshold) return 'medium';
   return 'low';
@@ -619,8 +638,7 @@ export function computeAllFieldConfidences(input: ComputeAllInput): Record<strin
     const completeness = modelLabel ? 1.0 : 0;
 
     // disagreement: 1 if cue top label differs from model's chosen label
-    const disagreement =
-      cueResult?.topLabel != null && cueResult.topLabel !== modelLabel ? 1 : 0;
+    const disagreement = cueResult?.topLabel != null && cueResult.topLabel !== modelLabel ? 1 : 0;
 
     // ambiguity_penalty: from cue scoring (how close top-2 labels are)
     const ambiguityPenalty = cueResult?.ambiguity ?? 0;
@@ -683,6 +701,7 @@ git commit -m "feat(core): add confidence heuristic (spec 14.3)"
 ## Task 3: Implement IssueClassifier wrapper with schema validation, category gating retry, and error handling
 
 **Files:**
+
 - Create: `packages/core/src/classifier/issue-classifier.ts`
 - Test: `packages/core/src/__tests__/classifier/issue-classifier.test.ts`
 
@@ -754,9 +773,7 @@ describe('callIssueClassifier', () => {
 
   it('retries once on schema validation failure then succeeds', async () => {
     const badOutput = { ...VALID_OUTPUT, issue_id: undefined }; // missing required field
-    const llmCall = vi.fn()
-      .mockResolvedValueOnce(badOutput)
-      .mockResolvedValueOnce(VALID_OUTPUT);
+    const llmCall = vi.fn().mockResolvedValueOnce(badOutput).mockResolvedValueOnce(VALID_OUTPUT);
     const result = await callIssueClassifier(VALID_INPUT, llmCall, taxonomy);
     expect(result.status).toBe('ok');
     expect(llmCall).toHaveBeenCalledTimes(2);
@@ -772,7 +789,9 @@ describe('callIssueClassifier', () => {
 
   it('throws ClassifierError on LLM call exception', async () => {
     const llmCall = vi.fn().mockRejectedValue(new Error('LLM timeout'));
-    await expect(callIssueClassifier(VALID_INPUT, llmCall, taxonomy)).rejects.toThrow(ClassifierError);
+    await expect(callIssueClassifier(VALID_INPUT, llmCall, taxonomy)).rejects.toThrow(
+      ClassifierError,
+    );
   });
 
   it('detects category gating contradiction and retries with constraint', async () => {
@@ -798,9 +817,7 @@ describe('callIssueClassifier', () => {
         Management_Object: 'rent_charges',
       },
     };
-    const llmCall = vi.fn()
-      .mockResolvedValueOnce(contradictory)
-      .mockResolvedValueOnce(fixed);
+    const llmCall = vi.fn().mockResolvedValueOnce(contradictory).mockResolvedValueOnce(fixed);
     const result = await callIssueClassifier(VALID_INPUT, llmCall, taxonomy);
     expect(result.status).toBe('ok');
     expect(llmCall).toHaveBeenCalledTimes(2);
@@ -849,10 +866,7 @@ Create `packages/core/src/classifier/issue-classifier.ts`:
 
 ```typescript
 import type { IssueClassifierInput, IssueClassifierOutput, Taxonomy } from '@wo-agent/schemas';
-import {
-  validateClassifierOutput,
-  validateClassificationAgainstTaxonomy,
-} from '@wo-agent/schemas';
+import { validateClassifierOutput, validateClassificationAgainstTaxonomy } from '@wo-agent/schemas';
 
 export enum ClassifierErrorCode {
   SCHEMA_VALIDATION_FAILED = 'SCHEMA_VALIDATION_FAILED',
@@ -906,10 +920,7 @@ export async function callIssueClassifier(
   for (let attempt = 0; attempt < 2; attempt++) {
     let raw: unknown;
     try {
-      raw = await llmCall(
-        input,
-        attempt > 0 ? { retryHint: 'schema_errors' } : undefined,
-      );
+      raw = await llmCall(input, attempt > 0 ? { retryHint: 'schema_errors' } : undefined);
     } catch (err) {
       throw new ClassifierError(
         ClassifierErrorCode.LLM_CALL_FAILED,
@@ -956,9 +967,10 @@ export async function callIssueClassifier(
 
   // Contradictory -- one constrained retry
   const category = validated.classification['Category'];
-  const constraint = category === 'management'
-    ? 'Set all maintenance-domain fields (Maintenance_Category, Maintenance_Object, Maintenance_Problem) to their not-applicable equivalents.'
-    : 'Set all management-domain fields (Management_Category, Management_Object) to their not-applicable equivalents.';
+  const constraint =
+    category === 'management'
+      ? 'Set all maintenance-domain fields (Maintenance_Category, Maintenance_Object, Maintenance_Problem) to their not-applicable equivalents.'
+      : 'Set all management-domain fields (Management_Category, Management_Object) to their not-applicable equivalents.';
 
   let retryRaw: unknown;
   try {
@@ -1023,6 +1035,7 @@ git commit -m "feat(core): add IssueClassifier wrapper with category gating retr
 ## Task 4: Create classifier barrel export and add issueClassifier port to OrchestratorDependencies
 
 **Files:**
+
 - Create: `packages/core/src/classifier/index.ts`
 - Modify: `packages/core/src/index.ts`
 - Modify: `packages/core/src/orchestrator/types.ts`
@@ -1035,10 +1048,7 @@ git commit -m "feat(core): add IssueClassifier wrapper with category gating retr
 Create `packages/core/src/classifier/index.ts`:
 
 ```typescript
-export {
-  computeCueScores,
-  computeCueStrengthForField,
-} from './cue-scoring.js';
+export { computeCueScores, computeCueStrengthForField } from './cue-scoring.js';
 export type { CueFieldResult, CueScoreMap } from './cue-scoring.js';
 
 export {
@@ -1049,11 +1059,7 @@ export {
 } from './confidence.js';
 export type { ConfidenceBand, FieldConfidenceInput, ComputeAllInput } from './confidence.js';
 
-export {
-  callIssueClassifier,
-  ClassifierError,
-  ClassifierErrorCode,
-} from './issue-classifier.js';
+export { callIssueClassifier, ClassifierError, ClassifierErrorCode } from './issue-classifier.js';
 export type { ClassifierResult } from './issue-classifier.js';
 ```
 
@@ -1133,6 +1139,7 @@ git commit -m "feat(core): add classifier barrel export and issueClassifier port
 ## Task 5: Extend ConversationSession with classification results storage
 
 **Files:**
+
 - Modify: `packages/core/src/session/types.ts`
 - Modify: `packages/core/src/session/session.ts`
 - Modify: `packages/core/src/session/index.ts`
@@ -1175,7 +1182,12 @@ import { describe, it, expect } from 'vitest';
 import { createSession, setClassificationResults } from '../../session/session.js';
 import type { IssueClassificationResult } from '../../session/types.js';
 
-const VERSIONS = { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'test', prompt_version: '1.0.0' };
+const VERSIONS = {
+  taxonomy_version: '1.0.0',
+  schema_version: '1.0.0',
+  model_id: 'test',
+  prompt_version: '1.0.0',
+};
 
 describe('setClassificationResults', () => {
   it('stores classification results on session', () => {
@@ -1216,18 +1228,20 @@ describe('setClassificationResults', () => {
       authorized_unit_ids: ['u1'],
       pinned_versions: VERSIONS,
     });
-    session = setClassificationResults(session, [{
-      issue_id: 'i1',
-      classifierOutput: {
+    session = setClassificationResults(session, [
+      {
         issue_id: 'i1',
-        classification: { Category: 'maintenance' },
-        model_confidence: { Category: 0.9 },
-        missing_fields: [],
-        needs_human_triage: false,
+        classifierOutput: {
+          issue_id: 'i1',
+          classification: { Category: 'maintenance' },
+          model_confidence: { Category: 0.9 },
+          missing_fields: [],
+          needs_human_triage: false,
+        },
+        computedConfidence: { Category: 0.85 },
+        fieldsNeedingInput: [],
       },
-      computedConfidence: { Category: 0.85 },
-      fieldsNeedingInput: [],
-    }]);
+    ]);
     const cleared = setClassificationResults(session, null);
     expect(cleared.classification_results).toBeNull();
   });
@@ -1287,6 +1301,7 @@ git commit -m "feat(core): add classification_results field to ConversationSessi
 ## Task 6: Implement handleStartClassification action handler
 
 **Files:**
+
 - Create: `packages/core/src/orchestrator/action-handlers/start-classification.ts`
 - Modify: `packages/core/src/orchestrator/action-handlers/index.ts` (register handler)
 - Test: `packages/core/src/__tests__/classifier/start-classification.test.ts`
@@ -1475,7 +1490,9 @@ describe('handleStartClassification', () => {
     });
     const result = await handleStartClassification(ctx);
     // Should still transition (escape hatch) but mark needs_human_triage
-    expect(result.session.classification_results![0].classifierOutput.needs_human_triage).toBe(true);
+    expect(result.session.classification_results![0].classifierOutput.needs_human_triage).toBe(
+      true,
+    );
   });
 
   it('handles LLM failure gracefully', async () => {
@@ -1514,11 +1531,18 @@ Create `packages/core/src/orchestrator/action-handlers/start-classification.ts`:
 
 ```typescript
 import { ConversationState, DEFAULT_CONFIDENCE_CONFIG } from '@wo-agent/schemas';
-import type { IssueClassifierInput, IssueClassifierOutput, ConfidenceConfig } from '@wo-agent/schemas';
+import type {
+  IssueClassifierInput,
+  IssueClassifierOutput,
+  ConfidenceConfig,
+} from '@wo-agent/schemas';
 import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
 import { callIssueClassifier, ClassifierError } from '../../classifier/issue-classifier.js';
 import { computeCueScores } from '../../classifier/cue-scoring.js';
-import { computeAllFieldConfidences, determineFieldsNeedingInput } from '../../classifier/confidence.js';
+import {
+  computeAllFieldConfidences,
+  determineFieldsNeedingInput,
+} from '../../classifier/confidence.js';
 import { setClassificationResults } from '../../session/session.js';
 import type { IssueClassificationResult } from '../../session/types.js';
 import { SystemEvent } from '../../state-machine/system-events.js';
@@ -1554,7 +1578,8 @@ export async function handleStartClassification(
 
   const cueDict = (deps as any).cueDict;
   const taxonomy = (deps as any).taxonomy;
-  const confidenceConfig: ConfidenceConfig = (deps as any).confidenceConfig ?? DEFAULT_CONFIDENCE_CONFIG;
+  const confidenceConfig: ConfidenceConfig =
+    (deps as any).confidenceConfig ?? DEFAULT_CONFIDENCE_CONFIG;
 
   const classificationResults: IssueClassificationResult[] = [];
   let anyFieldsNeedInput = false;
@@ -1562,10 +1587,7 @@ export async function handleStartClassification(
 
   for (const issue of issues) {
     // Step 1: Compute cue scores before calling classifier (spec 14.4)
-    const cueScoreMap = computeCueScores(
-      `${issue.summary} ${issue.raw_excerpt}`,
-      cueDict,
-    );
+    const cueScoreMap = computeCueScores(`${issue.summary} ${issue.raw_excerpt}`, cueDict);
 
     // Build cue_scores for classifier input (field -> top cue score)
     const cueScoresForInput: Record<string, number> = {};
@@ -1587,11 +1609,7 @@ export async function handleStartClassification(
     // Step 3: Call classifier with full validation pipeline
     let classifierResult;
     try {
-      classifierResult = await callIssueClassifier(
-        classifierInput,
-        deps.issueClassifier,
-        taxonomy,
-      );
+      classifierResult = await callIssueClassifier(classifierInput, deps.issueClassifier, taxonomy);
     } catch (err) {
       anyLlmError = true;
       break;
@@ -1651,10 +1669,12 @@ export async function handleStartClassification(
       session,
       intermediateSteps: [intermediateStep],
       finalSystemAction: SystemEvent.LLM_FAIL,
-      uiMessages: [{
-        role: 'agent',
-        content: 'I had trouble classifying your issue(s). Please try again.',
-      }],
+      uiMessages: [
+        {
+          role: 'agent',
+          content: 'I had trouble classifying your issue(s). Please try again.',
+        },
+      ],
       errors: [{ code: 'CLASSIFIER_FAILED', message: 'Classification LLM call failed' }],
       transitionContext: { prior_state: ConversationState.CLASSIFICATION_IN_PROGRESS },
       eventPayload: { error: 'classifier_failed' },
@@ -1666,7 +1686,7 @@ export async function handleStartClassification(
   const updatedSession = setClassificationResults(session, classificationResults);
 
   // Determine target state via guard (spec 11.2)
-  const allFieldsNeedingInput = classificationResults.flatMap(r => r.fieldsNeedingInput);
+  const allFieldsNeedingInput = classificationResults.flatMap((r) => r.fieldsNeedingInput);
   const targetState = resolveLlmClassifySuccess({
     fields_needing_input: allFieldsNeedingInput,
   });
@@ -1676,14 +1696,16 @@ export async function handleStartClassification(
     session: updatedSession,
     intermediateSteps: [intermediateStep],
     finalSystemAction: SystemEvent.LLM_CLASSIFY_SUCCESS,
-    uiMessages: [{
-      role: 'agent',
-      content: anyFieldsNeedInput
-        ? 'I\'ve classified your issue(s) but need a few more details to complete the work order.'
-        : 'I\'ve classified your issue(s). Please review and confirm.',
-    }],
+    uiMessages: [
+      {
+        role: 'agent',
+        content: anyFieldsNeedInput
+          ? "I've classified your issue(s) but need a few more details to complete the work order."
+          : "I've classified your issue(s). Please review and confirm.",
+      },
+    ],
     eventPayload: {
-      classification_results: classificationResults.map(r => ({
+      classification_results: classificationResults.map((r) => ({
         issue_id: r.issue_id,
         classification: r.classifierOutput.classification,
         computed_confidence: r.computedConfidence,
@@ -1731,6 +1753,7 @@ git commit -m "feat(core): add handleStartClassification action handler"
 ## Task 7: Wire CONFIRM_SPLIT to auto-trigger START_CLASSIFICATION
 
 **Files:**
+
 - Modify: `packages/core/src/orchestrator/action-handlers/split-actions.ts`
 - Modify: `packages/core/src/orchestrator/dispatcher.ts` (if needed for system event chaining)
 - Test: `packages/core/src/__tests__/classifier/classification-flow.test.ts`
@@ -1802,9 +1825,15 @@ function makeDeps() {
     },
     sessionStore: {
       sessions: new Map(),
-      async get(id: string) { return this.sessions.get(id) ?? null; },
-      async getByTenantUser() { return []; },
-      async save(session: any) { this.sessions.set(session.conversation_id, session); },
+      async get(id: string) {
+        return this.sessions.get(id) ?? null;
+      },
+      async getByTenantUser() {
+        return [];
+      },
+      async save(session: any) {
+        this.sessions.set(session.conversation_id, session);
+      },
     },
     idGenerator: () => `id-${++counter}`,
     clock: () => '2026-02-24T12:00:00Z',
@@ -1917,6 +1946,7 @@ git commit -m "feat(core): wire CONFIRM_SPLIT to trigger START_CLASSIFICATION"
 ## Task 8: Add cueDict and taxonomy to OrchestratorDependencies and wire into factory
 
 **Files:**
+
 - Modify: `packages/core/src/orchestrator/types.ts`
 - Modify: `apps/web/` orchestrator factory (if it exists)
 - Test: Existing tests must pass with updated deps
@@ -1970,6 +2000,7 @@ git commit -m "feat(core): add cueDict and taxonomy to OrchestratorDependencies"
 ## Task 9: Handle ANSWER_FOLLOWUPS re-classification entry point
 
 **Files:**
+
 - Modify: `packages/core/src/orchestrator/action-handlers/answer-followups.ts` (if it exists)
 - Test: `packages/core/src/__tests__/classifier/reclassification.test.ts`
 
@@ -1984,7 +2015,12 @@ Create `packages/core/src/__tests__/classifier/reclassification.test.ts`:
 ```typescript
 import { describe, it, expect, vi } from 'vitest';
 import { handleAnswerFollowups } from '../../orchestrator/action-handlers/answer-followups.js';
-import { createSession, updateSessionState, setSplitIssues, setClassificationResults } from '../../session/session.js';
+import {
+  createSession,
+  updateSessionState,
+  setSplitIssues,
+  setClassificationResults,
+} from '../../session/session.js';
 import { ConversationState, ActorType, loadTaxonomy } from '@wo-agent/schemas';
 import type { IssueClassifierOutput, CueDictionary } from '@wo-agent/schemas';
 import type { IssueClassificationResult } from '../../session/types.js';
@@ -2037,15 +2073,17 @@ const MINI_CUES: CueDictionary = {
 
 function makeFollowupContext() {
   let counter = 0;
-  const priorResults: IssueClassificationResult[] = [{
-    issue_id: 'i1',
-    classifierOutput: {
-      ...HIGH_CONFIDENCE_OUTPUT,
-      model_confidence: { ...HIGH_CONFIDENCE_OUTPUT.model_confidence, Priority: 0.3 },
+  const priorResults: IssueClassificationResult[] = [
+    {
+      issue_id: 'i1',
+      classifierOutput: {
+        ...HIGH_CONFIDENCE_OUTPUT,
+        model_confidence: { ...HIGH_CONFIDENCE_OUTPUT.model_confidence, Priority: 0.3 },
+      },
+      computedConfidence: { Category: 0.9, Priority: 0.4 },
+      fieldsNeedingInput: ['Priority'],
     },
-    computedConfidence: { Category: 0.9, Priority: 0.4 },
-    fieldsNeedingInput: ['Priority'],
-  }];
+  ];
 
   let session = createSession({
     conversation_id: 'conv-1',
@@ -2120,6 +2158,7 @@ Expected: FAIL
 **Step 3: Implement or modify handleAnswerFollowups**
 
 The handler should:
+
 1. Extract answers from `tenant_input`
 2. For each issue with `fieldsNeedingInput`, rebuild the classifier input with `followup_answers`
 3. Re-call classifier, re-validate, re-compute confidence
@@ -2149,6 +2188,7 @@ git commit -m "feat(core): handle ANSWER_FOLLOWUPS re-classification with enrich
 ## Task 10: Update response builder and snapshot with classification data
 
 **Files:**
+
 - Modify: `packages/core/src/orchestrator/response-builder.ts`
 - Modify: `packages/schemas/src/types/orchestrator-action.ts` (if `ConversationSnapshot` needs classification fields)
 - Test: `packages/core/src/__tests__/classifier/response-builder.test.ts`
@@ -2168,18 +2208,20 @@ import type { IssueClassificationResult } from '../../session/types.js';
 
 describe('buildResponse with classification', () => {
   it('includes classification_results in snapshot when present', () => {
-    const results: IssueClassificationResult[] = [{
-      issue_id: 'i1',
-      classifierOutput: {
+    const results: IssueClassificationResult[] = [
+      {
         issue_id: 'i1',
-        classification: { Category: 'maintenance' },
-        model_confidence: { Category: 0.9 },
-        missing_fields: [],
-        needs_human_triage: false,
+        classifierOutput: {
+          issue_id: 'i1',
+          classification: { Category: 'maintenance' },
+          model_confidence: { Category: 0.9 },
+          missing_fields: [],
+          needs_human_triage: false,
+        },
+        computedConfidence: { Category: 0.85 },
+        fieldsNeedingInput: [],
       },
-      computedConfidence: { Category: 0.85 },
-      fieldsNeedingInput: [],
-    }];
+    ];
 
     let session = createSession({
       conversation_id: 'conv-1',
@@ -2268,6 +2310,7 @@ git commit -m "feat(core): include classification results in OrchestratorActionR
 ## Task 11: Add classification_events recording
 
 **Files:**
+
 - Modify: `packages/core/src/events/types.ts` (add `classification_completed` event type if needed)
 - Modify: `packages/core/src/orchestrator/action-handlers/start-classification.ts` (ensure events include versions)
 - Test: `packages/core/src/__tests__/classifier/classification-events.test.ts`
@@ -2329,6 +2372,7 @@ git commit -m "feat(core): record classification_events with pinned versions and
 ## Task 12: Full integration test for happy path and edge cases
 
 **Files:**
+
 - Test: `packages/core/src/__tests__/classifier/integration.test.ts`
 
 **Context:** Comprehensive integration test that exercises the entire classification flow end-to-end through the dispatcher: CREATE -> SELECT_UNIT -> SUBMIT_INITIAL_MESSAGE -> CONFIRM_SPLIT -> classification -> confirmation/follow-up. Tests happy path, multi-issue, LLM failure, category gating, re-classification after follow-ups.
@@ -2421,6 +2465,7 @@ git commit -m "test(core): add classification integration tests for full lifecyc
 ## Task 13: Update apps/web orchestrator factory with classifier stub
 
 **Files:**
+
 - Modify: `apps/web/` orchestrator factory (e.g., `apps/web/app/api/orchestrator-factory.ts` or similar)
 - Test: Manual verification
 
@@ -2482,6 +2527,7 @@ git commit -m "chore: add issueClassifier stub to web orchestrator factory"
 ## Task 14: Final verification and cleanup
 
 **Files:**
+
 - All files modified in this plan
 
 **Step 1: Run full test suite**

@@ -63,7 +63,14 @@
         },
         "created_at": { "type": "string", "format": "date-time" }
       },
-      "required": ["event_id", "conversation_id", "issue_id", "turn_number", "questions_asked", "created_at"],
+      "required": [
+        "event_id",
+        "conversation_id",
+        "issue_id",
+        "turn_number",
+        "questions_asked",
+        "created_at"
+      ],
       "additionalProperties": false
     }
   }

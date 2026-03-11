@@ -52,7 +52,11 @@ export class ERPSyncService {
       try {
         const wo = await workOrderRepo.getById(update.work_order_id);
         if (!wo) {
-          errors.push({ work_order_id: update.work_order_id, ext_id: update.ext_id, reason: 'Work order not found' });
+          errors.push({
+            work_order_id: update.work_order_id,
+            ext_id: update.ext_id,
+            reason: 'Work order not found',
+          });
           failed++;
           continue;
         }

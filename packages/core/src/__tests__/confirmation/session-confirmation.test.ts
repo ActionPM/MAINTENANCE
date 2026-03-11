@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  setConfirmationTracking,
-  markConfirmationPresented,
-} from '../../session/session.js';
+import { setConfirmationTracking, markConfirmationPresented } from '../../session/session.js';
 import { createSession } from '../../session/session.js';
 import type { ConversationSession } from '../../session/types.js';
 

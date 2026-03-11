@@ -1,16 +1,65 @@
 {
   "planPath": "docs/plans/2026-02-24-phase-04-splitter-split-confirmation.md",
   "tasks": [
-    { "id": 0, "subject": "Task 0: Create worktree and branch from Phase 3", "status": "completed" },
-    { "id": 1, "subject": "Task 1: Extend ConversationSession with split issues storage", "status": "completed", "blockedBy": [0] },
-    { "id": 2, "subject": "Task 2: Add IssueSplitter port to OrchestratorDependencies", "status": "completed", "blockedBy": [0] },
-    { "id": 3, "subject": "Task 3: Input sanitization utility", "status": "completed", "blockedBy": [0] },
-    { "id": 4, "subject": "Task 4: Implement IssueSplitter tool wrapper with schema validation and retry", "status": "completed", "blockedBy": [2] },
-    { "id": 5, "subject": "Task 5: Wire splitter into submit-initial-message handler", "status": "completed", "blockedBy": [1, 4] },
-    { "id": 6, "subject": "Task 6: Enhance split confirmation actions (merge/edit/add/reject/confirm)", "status": "completed", "blockedBy": [1, 3] },
-    { "id": 7, "subject": "Task 7: Update response builder to include issues in snapshot", "status": "completed", "blockedBy": [1] },
-    { "id": 8, "subject": "Task 8: Update orchestrator integration test for full splitter flow", "status": "completed", "blockedBy": [5, 6, 7] },
-    { "id": 9, "subject": "Task 9: Final verification and typecheck", "status": "completed", "blockedBy": [8] }
+    {
+      "id": 0,
+      "subject": "Task 0: Create worktree and branch from Phase 3",
+      "status": "completed"
+    },
+    {
+      "id": 1,
+      "subject": "Task 1: Extend ConversationSession with split issues storage",
+      "status": "completed",
+      "blockedBy": [0]
+    },
+    {
+      "id": 2,
+      "subject": "Task 2: Add IssueSplitter port to OrchestratorDependencies",
+      "status": "completed",
+      "blockedBy": [0]
+    },
+    {
+      "id": 3,
+      "subject": "Task 3: Input sanitization utility",
+      "status": "completed",
+      "blockedBy": [0]
+    },
+    {
+      "id": 4,
+      "subject": "Task 4: Implement IssueSplitter tool wrapper with schema validation and retry",
+      "status": "completed",
+      "blockedBy": [2]
+    },
+    {
+      "id": 5,
+      "subject": "Task 5: Wire splitter into submit-initial-message handler",
+      "status": "completed",
+      "blockedBy": [1, 4]
+    },
+    {
+      "id": 6,
+      "subject": "Task 6: Enhance split confirmation actions (merge/edit/add/reject/confirm)",
+      "status": "completed",
+      "blockedBy": [1, 3]
+    },
+    {
+      "id": 7,
+      "subject": "Task 7: Update response builder to include issues in snapshot",
+      "status": "completed",
+      "blockedBy": [1]
+    },
+    {
+      "id": 8,
+      "subject": "Task 8: Update orchestrator integration test for full splitter flow",
+      "status": "completed",
+      "blockedBy": [5, 6, 7]
+    },
+    {
+      "id": 9,
+      "subject": "Task 9: Final verification and typecheck",
+      "status": "completed",
+      "blockedBy": [8]
+    }
   ],
   "lastUpdated": "2026-02-24T18:18:00Z"
 }

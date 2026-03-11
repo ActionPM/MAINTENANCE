@@ -19,7 +19,8 @@ export const ConversationState = {
 
 export type ConversationState = (typeof ConversationState)[keyof typeof ConversationState];
 
-export const ALL_CONVERSATION_STATES: readonly ConversationState[] = Object.values(ConversationState);
+export const ALL_CONVERSATION_STATES: readonly ConversationState[] =
+  Object.values(ConversationState);
 
 /**
  * States from which a conversation can be resumed (spec §12.1).

@@ -24,26 +24,26 @@ export class InMemoryWorkOrderStore implements WorkOrderRepository {
     let results = [...this.store.values()];
 
     if (filters?.client_id) {
-      results = results.filter(wo => wo.client_id === filters.client_id);
+      results = results.filter((wo) => wo.client_id === filters.client_id);
     }
     if (filters?.property_id) {
-      results = results.filter(wo => wo.property_id === filters.property_id);
+      results = results.filter((wo) => wo.property_id === filters.property_id);
     }
     if (filters?.unit_id) {
-      results = results.filter(wo => wo.unit_id === filters.unit_id);
+      results = results.filter((wo) => wo.unit_id === filters.unit_id);
     }
     if (filters?.unit_ids) {
       if (filters.unit_ids.length === 0) return [];
       const unitSet = new Set(filters.unit_ids);
-      results = results.filter(wo => unitSet.has(wo.unit_id));
+      results = results.filter((wo) => unitSet.has(wo.unit_id));
     }
     if (filters?.from) {
       const fromMs = new Date(filters.from).getTime();
-      results = results.filter(wo => new Date(wo.created_at).getTime() >= fromMs);
+      results = results.filter((wo) => new Date(wo.created_at).getTime() >= fromMs);
     }
     if (filters?.to) {
       const toMs = new Date(filters.to).getTime();
-      results = results.filter(wo => new Date(wo.created_at).getTime() < toMs);
+      results = results.filter((wo) => new Date(wo.created_at).getTime() < toMs);
     }
 
     return results;
@@ -54,7 +54,7 @@ export class InMemoryWorkOrderStore implements WorkOrderRepository {
   }
 
   async getByIssueGroup(issueGroupId: string): Promise<readonly WorkOrder[]> {
-    return [...this.store.values()].filter(wo => wo.issue_group_id === issueGroupId);
+    return [...this.store.values()].filter((wo) => wo.issue_group_id === issueGroupId);
   }
 
   async updateStatus(

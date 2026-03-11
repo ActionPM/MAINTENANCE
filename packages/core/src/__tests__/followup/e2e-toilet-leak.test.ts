@@ -23,15 +23,15 @@ const taxonomy = loadTaxonomy();
  */
 const RELAXED_CONFIDENCE: ConfidenceConfig = {
   high_threshold: 0.85,
-  medium_threshold: 0.30,
+  medium_threshold: 0.3,
   model_hint_min: 0.2,
   model_hint_max: 0.95,
   weights: {
-    cue_strength: 0.40,
+    cue_strength: 0.4,
     completeness: 0.25,
-    model_hint: 0.20,
+    model_hint: 0.2,
     constraint_implied: 0.25,
-    disagreement: 0.10,
+    disagreement: 0.1,
     ambiguity_penalty: 0.05,
   },
 };
@@ -73,11 +73,13 @@ describe('e2e toilet leak scenario', () => {
         model_id: 'test-model',
         prompt_version: '1.0.0',
       },
-      split_issues: [{
-        issue_id: ISSUE_ID,
-        summary: 'Tenant reports a leak',
-        raw_excerpt: 'I have a leak',
-      }],
+      split_issues: [
+        {
+          issue_id: ISSUE_ID,
+          summary: 'Tenant reports a leak',
+          raw_excerpt: 'I have a leak',
+        },
+      ],
       classification_results: null,
       prior_state_before_error: null,
       followup_turn_number: 0,
@@ -163,9 +165,27 @@ describe('e2e toilet leak scenario', () => {
     // Follow-up generator returns exactly 3 questions (schema max).
     // The pipeline filters to only fields_needing_input.
     const followUpQuestions: FollowUpQuestion[] = [
-      { question_id: 'q-loc', field_target: 'Location', prompt: 'Where?', options: ['suite', 'building_interior', 'building_exterior'], answer_type: 'enum' as const },
-      { question_id: 'q-sub', field_target: 'Sub_Location', prompt: 'Which room?', options: ['kitchen', 'bathroom', 'bedroom'], answer_type: 'enum' as const },
-      { question_id: 'q-obj', field_target: 'Maintenance_Object', prompt: 'What object?', options: ['toilet', 'sink', 'faucet', 'pipe', 'shower'], answer_type: 'enum' as const },
+      {
+        question_id: 'q-loc',
+        field_target: 'Location',
+        prompt: 'Where?',
+        options: ['suite', 'building_interior', 'building_exterior'],
+        answer_type: 'enum' as const,
+      },
+      {
+        question_id: 'q-sub',
+        field_target: 'Sub_Location',
+        prompt: 'Which room?',
+        options: ['kitchen', 'bathroom', 'bedroom'],
+        answer_type: 'enum' as const,
+      },
+      {
+        question_id: 'q-obj',
+        field_target: 'Maintenance_Object',
+        prompt: 'What object?',
+        options: ['toilet', 'sink', 'faucet', 'pipe', 'shower'],
+        answer_type: 'enum' as const,
+      },
     ];
 
     const mockFollowUpGenerator = vi.fn(async () => {
@@ -206,7 +226,7 @@ describe('e2e toilet leak scenario', () => {
     expect(pendingQuestions.length).toBeGreaterThan(0);
 
     // ── Phase 2: Tenant answers ALL pending questions ──
-    const answers = pendingQuestions.map(q => ({
+    const answers = pendingQuestions.map((q) => ({
       question_id: q.question_id,
       answer: TENANT_ANSWERS[q.field_target] ?? 'unknown',
     }));

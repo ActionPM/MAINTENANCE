@@ -23,7 +23,9 @@ describe('sanitizeIssueText', () => {
   });
 
   it('escapes HTML angle brackets', () => {
-    expect(sanitizeIssueText('<script>alert("xss")</script>')).toBe('&lt;script&gt;alert("xss")&lt;/script&gt;');
+    expect(sanitizeIssueText('<script>alert("xss")</script>')).toBe(
+      '&lt;script&gt;alert("xss")&lt;/script&gt;',
+    );
   });
 
   it('escapes ampersands', () => {

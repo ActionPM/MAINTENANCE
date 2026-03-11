@@ -105,6 +105,7 @@ apps/web/
 ### Task 0: Event Types
 
 **Files:**
+
 - Create: `packages/core/src/events/types.ts`
 
 **Step 1: Write the failing test**
@@ -221,6 +222,7 @@ git commit -m "feat(core): add ConversationEvent type for append-only event stor
 ### Task 1: Event Repository Interface
 
 **Files:**
+
 - Create: `packages/core/src/events/event-repository.ts`
 - Modify: `packages/core/src/__tests__/events/event-repository.test.ts`
 
@@ -291,6 +293,7 @@ git commit -m "feat(core): add EventRepository interface (INSERT+SELECT only)"
 ### Task 2: In-Memory Event Store
 
 **Files:**
+
 - Create: `packages/core/src/events/in-memory-event-store.ts`
 - Create: `packages/core/src/__tests__/events/in-memory-event-store.test.ts`
 
@@ -343,7 +346,10 @@ describe('InMemoryEventStore', () => {
   it('filters by event_type', async () => {
     await store.insert(makeEvent({ event_type: 'state_transition' }));
     await store.insert(makeEvent({ event_type: 'message_received' }));
-    const results = await store.query({ conversation_id: 'conv-1', event_type: 'state_transition' });
+    const results = await store.query({
+      conversation_id: 'conv-1',
+      event_type: 'state_transition',
+    });
     expect(results).toHaveLength(1);
     expect(results[0].event_type).toBe('state_transition');
   });
@@ -413,9 +419,7 @@ export class InMemoryEventStore implements EventRepository {
   }
 
   async query(filters: EventQuery): Promise<readonly ConversationEvent[]> {
-    let results = this.events.filter(
-      (e) => e.conversation_id === filters.conversation_id,
-    );
+    let results = this.events.filter((e) => e.conversation_id === filters.conversation_id);
 
     if (filters.event_type) {
       results = results.filter((e) => e.event_type === filters.event_type);
@@ -465,13 +469,18 @@ git commit -m "feat(core): add InMemoryEventStore implementing append-only Event
 ### Task 3: Orchestrator Types and Dependencies
 
 **Files:**
+
 - Create: `packages/core/src/orchestrator/types.ts`
 
 **Step 1: Implement types**
 
 ```typescript
 // packages/core/src/orchestrator/types.ts
-import type { ConversationState, OrchestratorActionRequest, OrchestratorActionResponse } from '@wo-agent/schemas';
+import type {
+  ConversationState,
+  OrchestratorActionRequest,
+  OrchestratorActionResponse,
+} from '@wo-agent/schemas';
 import type { EventRepository } from '../events/event-repository.js';
 import type { ConversationSession } from '../session/types.js';
 import type { TransitionContext } from '../state-machine/guards.js';
@@ -565,6 +574,7 @@ git commit -m "feat(core): add orchestrator types and dependency interfaces"
 ### Task 4: Response Builder
 
 **Files:**
+
 - Create: `packages/core/src/orchestrator/response-builder.ts`
 - Create: `packages/core/src/__tests__/orchestrator/response-builder.test.ts`
 
@@ -649,7 +659,11 @@ Expected: FAIL — module not found.
 
 ```typescript
 // packages/core/src/orchestrator/response-builder.ts
-import type { OrchestratorActionResponse, ConversationSnapshot, UIDirective } from '@wo-agent/schemas';
+import type {
+  OrchestratorActionResponse,
+  ConversationSnapshot,
+  UIDirective,
+} from '@wo-agent/schemas';
 import type { ActionHandlerResult } from './types.js';
 
 /**
@@ -705,10 +719,12 @@ git commit -m "feat(core): add response builder for OrchestratorActionResponse"
 ### Task 5: Core Dispatcher
 
 **Files:**
+
 - Create: `packages/core/src/orchestrator/dispatcher.ts`
 - Create: `packages/core/src/__tests__/orchestrator/dispatcher.test.ts`
 
 The dispatcher is the heart of the orchestrator. It:
+
 1. Validates the action is allowed from the current state
 2. Delegates to the appropriate action handler
 3. Validates the state transition
@@ -731,17 +747,26 @@ import type { ConversationSession } from '../../session/types.js';
 class InMemorySessionStore implements SessionStore {
   private sessions = new Map<string, ConversationSession>();
 
-  async get(id: string) { return this.sessions.get(id) ?? null; }
+  async get(id: string) {
+    return this.sessions.get(id) ?? null;
+  }
   async getByTenantUser(userId: string) {
     return [...this.sessions.values()].filter((s) => s.tenant_user_id === userId);
   }
-  async save(session: ConversationSession) { this.sessions.set(session.conversation_id, session); }
+  async save(session: ConversationSession) {
+    this.sessions.set(session.conversation_id, session);
+  }
 
   // Test helper
-  seed(session: ConversationSession) { this.sessions.set(session.conversation_id, session); }
+  seed(session: ConversationSession) {
+    this.sessions.set(session.conversation_id, session);
+  }
 }
 
-function makeDeps(): OrchestratorDependencies & { sessionStore: InMemorySessionStore; eventRepo: InMemoryEventStore } {
+function makeDeps(): OrchestratorDependencies & {
+  sessionStore: InMemorySessionStore;
+  eventRepo: InMemoryEventStore;
+} {
   let counter = 0;
   return {
     eventRepo: new InMemoryEventStore(),
@@ -919,14 +944,24 @@ export function createDispatcher(deps: OrchestratorDependencies) {
         tenant_user_id: auth_context.tenant_user_id,
         tenant_account_id: auth_context.tenant_account_id,
         authorized_unit_ids: auth_context.authorized_unit_ids,
-        pinned_versions: { taxonomy_version: '', schema_version: '', model_id: '', prompt_version: '' },
+        pinned_versions: {
+          taxonomy_version: '',
+          schema_version: '',
+          model_id: '',
+          prompt_version: '',
+        },
       });
       return {
         response: buildResponse({
           newState: errorSession.state,
           session: errorSession,
           uiMessages: [],
-          errors: [{ code: 'SYSTEM_EVENT_REJECTED', message: 'System events cannot be submitted by clients' }],
+          errors: [
+            {
+              code: 'SYSTEM_EVENT_REJECTED',
+              message: 'System events cannot be submitted by clients',
+            },
+          ],
         }),
         session: errorSession,
       };
@@ -986,7 +1021,12 @@ export function createDispatcher(deps: OrchestratorDependencies) {
         tenant_user_id: auth_context.tenant_user_id,
         tenant_account_id: auth_context.tenant_account_id,
         authorized_unit_ids: auth_context.authorized_unit_ids,
-        pinned_versions: { taxonomy_version: '', schema_version: '', model_id: '', prompt_version: '' },
+        pinned_versions: {
+          taxonomy_version: '',
+          schema_version: '',
+          model_id: '',
+          prompt_version: '',
+        },
       });
       return {
         response: buildResponse({
@@ -1034,10 +1074,12 @@ export function createDispatcher(deps: OrchestratorDependencies) {
           newState: session.state,
           session,
           uiMessages: [],
-          errors: [{
-            code: 'INVALID_TRANSITION',
-            message: `Action ${action_type} is not valid from state ${session.state}`,
-          }],
+          errors: [
+            {
+              code: 'INVALID_TRANSITION',
+              message: `Action ${action_type} is not valid from state ${session.state}`,
+            },
+          ],
         }),
         session,
       };
@@ -1048,15 +1090,16 @@ export function createDispatcher(deps: OrchestratorDependencies) {
     const handlerResult = await handler({ session, request, deps });
 
     // Apply state change
-    const updatedSession = handlerResult.newState !== session.state
-      ? updateSessionState(handlerResult.session, handlerResult.newState)
-      : touchActivity(handlerResult.session);
+    const updatedSession =
+      handlerResult.newState !== session.state
+        ? updateSessionState(handlerResult.session, handlerResult.newState)
+        : touchActivity(handlerResult.session);
 
     // Write event
     const event: ConversationEvent = {
       event_id: deps.idGenerator(),
       conversation_id: session.conversation_id,
-      event_type: handlerResult.eventType as any ?? 'state_transition',
+      event_type: (handlerResult.eventType as any) ?? 'state_transition',
       prior_state: session.state,
       new_state: handlerResult.newState,
       action_type,
@@ -1098,6 +1141,7 @@ git commit -m "feat(core): add orchestrator dispatcher with transition validatio
 ### Task 6: Action Handler Registry + CREATE_CONVERSATION
 
 **Files:**
+
 - Create: `packages/core/src/orchestrator/action-handlers/index.ts`
 - Create: `packages/core/src/orchestrator/action-handlers/create-conversation.ts`
 - Create: `packages/core/src/__tests__/orchestrator/action-handlers/create-conversation.test.ts`
@@ -1142,7 +1186,11 @@ function makeContext(unitIds: string[]): ActionHandlerContext {
     },
     deps: {
       eventRepo: new InMemoryEventStore(),
-      sessionStore: { get: async () => null, getByTenantUser: async () => [], save: async () => {} },
+      sessionStore: {
+        get: async () => null,
+        getByTenantUser: async () => [],
+        save: async () => {},
+      },
       idGenerator: () => `id-${++counter}`,
       clock: () => '2026-01-15T12:00:00Z',
     },
@@ -1185,17 +1233,24 @@ export async function handleCreateConversation(
   const { session, request } = ctx;
   const unitCount = request.auth_context.authorized_unit_ids.length;
 
-  const messages = unitCount > 1
-    ? [{ role: 'agent' as const, content: 'Welcome! Please select which unit this request is for.' }]
-    : [{ role: 'agent' as const, content: 'Welcome! How can we help you today?' }];
+  const messages =
+    unitCount > 1
+      ? [
+          {
+            role: 'agent' as const,
+            content: 'Welcome! Please select which unit this request is for.',
+          },
+        ]
+      : [{ role: 'agent' as const, content: 'Welcome! How can we help you today?' }];
 
-  const quickReplies = unitCount > 1
-    ? request.auth_context.authorized_unit_ids.map((id) => ({
-        label: `Unit ${id}`,
-        value: id,
-        action_type: 'SELECT_UNIT',
-      }))
-    : undefined;
+  const quickReplies =
+    unitCount > 1
+      ? request.auth_context.authorized_unit_ids.map((id) => ({
+          label: `Unit ${id}`,
+          value: id,
+          action_type: 'SELECT_UNIT',
+        }))
+      : undefined;
 
   return {
     newState: ConversationState.INTAKE_STARTED,
@@ -1270,6 +1325,7 @@ git commit -m "feat(core): add action handler registry and CREATE_CONVERSATION h
 ### Task 7: SELECT_UNIT Handler
 
 **Files:**
+
 - Create: `packages/core/src/orchestrator/action-handlers/select-unit.ts`
 - Create: `packages/core/src/__tests__/orchestrator/action-handlers/select-unit.test.ts`
 
@@ -1295,7 +1351,12 @@ function makeContext(
     tenant_user_id: 'user-1',
     tenant_account_id: 'acct-1',
     authorized_unit_ids: unitIds,
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'gpt-4', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'gpt-4',
+      prompt_version: '1.0.0',
+    },
   });
   return {
     session: { ...session, state: state as any },
@@ -1304,11 +1365,19 @@ function makeContext(
       action_type: ActionType.SELECT_UNIT,
       actor: ActorType.TENANT,
       tenant_input: { unit_id: selectedUnitId },
-      auth_context: { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: unitIds },
+      auth_context: {
+        tenant_user_id: 'user-1',
+        tenant_account_id: 'acct-1',
+        authorized_unit_ids: unitIds,
+      },
     },
     deps: {
       eventRepo: new InMemoryEventStore(),
-      sessionStore: { get: async () => null, getByTenantUser: async () => [], save: async () => {} },
+      sessionStore: {
+        get: async () => null,
+        getByTenantUser: async () => [],
+        save: async () => {},
+      },
       idGenerator: () => `id-${++counter}`,
       clock: () => '2026-01-15T12:00:00Z',
     },
@@ -1369,8 +1438,15 @@ export async function handleSelectUnit(ctx: ActionHandlerContext): Promise<Actio
     return {
       newState: session.state,
       session,
-      uiMessages: [{ role: 'agent', content: 'That unit is not available. Please select from your authorized units.' }],
-      errors: [{ code: 'UNIT_NOT_AUTHORIZED', message: `Unit ${unitId} is not in your authorized list` }],
+      uiMessages: [
+        {
+          role: 'agent',
+          content: 'That unit is not available. Please select from your authorized units.',
+        },
+      ],
+      errors: [
+        { code: 'UNIT_NOT_AUTHORIZED', message: `Unit ${unitId} is not in your authorized list` },
+      ],
     };
   }
 
@@ -1402,6 +1478,7 @@ git commit -m "feat(core): add SELECT_UNIT handler with membership guard"
 ### Task 8: SUBMIT_INITIAL_MESSAGE Handler
 
 **Files:**
+
 - Create: `packages/core/src/orchestrator/action-handlers/submit-initial-message.ts`
 - Create: `packages/core/src/__tests__/orchestrator/action-handlers/submit-initial-message.test.ts`
 
@@ -1423,7 +1500,12 @@ function makeContext(unitResolved: boolean): ActionHandlerContext {
     tenant_user_id: 'user-1',
     tenant_account_id: 'acct-1',
     authorized_unit_ids: ['u1'],
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'gpt-4', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'gpt-4',
+      prompt_version: '1.0.0',
+    },
   });
   if (unitResolved) {
     session = updateSessionState(session, ConversationState.UNIT_SELECTED);
@@ -1436,11 +1518,19 @@ function makeContext(unitResolved: boolean): ActionHandlerContext {
       action_type: ActionType.SUBMIT_INITIAL_MESSAGE,
       actor: ActorType.TENANT,
       tenant_input: { message: 'My toilet is leaking' },
-      auth_context: { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['u1'] },
+      auth_context: {
+        tenant_user_id: 'user-1',
+        tenant_account_id: 'acct-1',
+        authorized_unit_ids: ['u1'],
+      },
     },
     deps: {
       eventRepo: new InMemoryEventStore(),
-      sessionStore: { get: async () => null, getByTenantUser: async () => [], save: async () => {} },
+      sessionStore: {
+        get: async () => null,
+        getByTenantUser: async () => [],
+        save: async () => {},
+      },
       idGenerator: () => `id-${++counter}`,
       clock: () => '2026-01-15T12:00:00Z',
     },
@@ -1477,7 +1567,9 @@ import type { TenantInputSubmitInitialMessage } from '@wo-agent/schemas';
 import { resolveSubmitInitialMessage } from '../../state-machine/guards.js';
 import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
 
-export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Promise<ActionHandlerResult> {
+export async function handleSubmitInitialMessage(
+  ctx: ActionHandlerContext,
+): Promise<ActionHandlerResult> {
   const { session } = ctx;
   const input = ctx.request.tenant_input as TenantInputSubmitInitialMessage;
 
@@ -1487,8 +1579,15 @@ export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Pro
     return {
       newState: session.state,
       session,
-      uiMessages: [{ role: 'agent', content: 'Please select a unit before submitting your request.' }],
-      errors: [{ code: 'UNIT_NOT_RESOLVED', message: 'A unit must be selected before submitting a message' }],
+      uiMessages: [
+        { role: 'agent', content: 'Please select a unit before submitting your request.' },
+      ],
+      errors: [
+        {
+          code: 'UNIT_NOT_RESOLVED',
+          message: 'A unit must be selected before submitting a message',
+        },
+      ],
     };
   }
 
@@ -1521,6 +1620,7 @@ git commit -m "feat(core): add SUBMIT_INITIAL_MESSAGE handler with unit-resolved
 ### Task 9: Split Actions Handler (CONFIRM, MERGE, EDIT, ADD, REJECT)
 
 **Files:**
+
 - Create: `packages/core/src/orchestrator/action-handlers/split-actions.ts`
 - Create: `packages/core/src/__tests__/orchestrator/action-handlers/split-actions.test.ts`
 
@@ -1535,14 +1635,22 @@ import { createSession, updateSessionState } from '../../../session/session.js';
 import { InMemoryEventStore } from '../../../events/in-memory-event-store.js';
 import type { ActionHandlerContext } from '../../../orchestrator/types.js';
 
-function makeContext(actionType: string, tenantInput: Record<string, unknown> = {}): ActionHandlerContext {
+function makeContext(
+  actionType: string,
+  tenantInput: Record<string, unknown> = {},
+): ActionHandlerContext {
   let counter = 0;
   let session = createSession({
     conversation_id: 'conv-1',
     tenant_user_id: 'user-1',
     tenant_account_id: 'acct-1',
     authorized_unit_ids: ['u1'],
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'gpt-4', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'gpt-4',
+      prompt_version: '1.0.0',
+    },
   });
   session = updateSessionState(session, ConversationState.SPLIT_PROPOSED);
   return {
@@ -1552,11 +1660,19 @@ function makeContext(actionType: string, tenantInput: Record<string, unknown> = 
       action_type: actionType as any,
       actor: ActorType.TENANT,
       tenant_input: tenantInput as any,
-      auth_context: { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['u1'] },
+      auth_context: {
+        tenant_user_id: 'user-1',
+        tenant_account_id: 'acct-1',
+        authorized_unit_ids: ['u1'],
+      },
     },
     deps: {
       eventRepo: new InMemoryEventStore(),
-      sessionStore: { get: async () => null, getByTenantUser: async () => [], save: async () => {} },
+      sessionStore: {
+        get: async () => null,
+        getByTenantUser: async () => [],
+        save: async () => {},
+      },
       idGenerator: () => `id-${++counter}`,
       clock: () => '2026-01-15T12:00:00Z',
     },
@@ -1664,6 +1780,7 @@ git commit -m "feat(core): add split action handlers (confirm, reject, merge, ed
 ### Task 10: Remaining Action Handlers (stubs)
 
 **Files:**
+
 - Create: `packages/core/src/orchestrator/action-handlers/submit-additional-message.ts`
 - Create: `packages/core/src/orchestrator/action-handlers/answer-followups.ts`
 - Create: `packages/core/src/orchestrator/action-handlers/confirm-submission.ts`
@@ -1688,14 +1805,23 @@ import { createSession, updateSessionState } from '../../../session/session.js';
 import { InMemoryEventStore } from '../../../events/in-memory-event-store.js';
 import type { ActionHandlerContext } from '../../../orchestrator/types.js';
 
-function makeContext(state: string, actionType: string, tenantInput: Record<string, unknown> = {}): ActionHandlerContext {
+function makeContext(
+  state: string,
+  actionType: string,
+  tenantInput: Record<string, unknown> = {},
+): ActionHandlerContext {
   let counter = 0;
   let session = createSession({
     conversation_id: 'conv-1',
     tenant_user_id: 'user-1',
     tenant_account_id: 'acct-1',
     authorized_unit_ids: ['u1'],
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'gpt-4', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'gpt-4',
+      prompt_version: '1.0.0',
+    },
   });
   if (state !== ConversationState.INTAKE_STARTED) {
     session = updateSessionState(session, state as any);
@@ -1707,11 +1833,19 @@ function makeContext(state: string, actionType: string, tenantInput: Record<stri
       action_type: actionType as any,
       actor: ActorType.TENANT,
       tenant_input: tenantInput as any,
-      auth_context: { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['u1'] },
+      auth_context: {
+        tenant_user_id: 'user-1',
+        tenant_account_id: 'acct-1',
+        authorized_unit_ids: ['u1'],
+      },
     },
     deps: {
       eventRepo: new InMemoryEventStore(),
-      sessionStore: { get: async () => null, getByTenantUser: async () => [], save: async () => {} },
+      sessionStore: {
+        get: async () => null,
+        getByTenantUser: async () => [],
+        save: async () => {},
+      },
       idGenerator: () => `id-${++counter}`,
       clock: () => '2026-01-15T12:00:00Z',
     },
@@ -1720,13 +1854,21 @@ function makeContext(state: string, actionType: string, tenantInput: Record<stri
 
 describe('handleSubmitAdditionalMessage', () => {
   it('stays in needs_tenant_input', async () => {
-    const ctx = makeContext(ConversationState.NEEDS_TENANT_INPUT, ActionType.SUBMIT_ADDITIONAL_MESSAGE, { message: 'Also...' });
+    const ctx = makeContext(
+      ConversationState.NEEDS_TENANT_INPUT,
+      ActionType.SUBMIT_ADDITIONAL_MESSAGE,
+      { message: 'Also...' },
+    );
     const result = await handleSubmitAdditionalMessage(ctx);
     expect(result.newState).toBe(ConversationState.NEEDS_TENANT_INPUT);
   });
 
   it('stays in tenant_confirmation_pending', async () => {
-    const ctx = makeContext(ConversationState.TENANT_CONFIRMATION_PENDING, ActionType.SUBMIT_ADDITIONAL_MESSAGE, { message: 'Wait...' });
+    const ctx = makeContext(
+      ConversationState.TENANT_CONFIRMATION_PENDING,
+      ActionType.SUBMIT_ADDITIONAL_MESSAGE,
+      { message: 'Wait...' },
+    );
     const result = await handleSubmitAdditionalMessage(ctx);
     expect(result.newState).toBe(ConversationState.TENANT_CONFIRMATION_PENDING);
   });
@@ -1744,7 +1886,10 @@ describe('handleAnswerFollowups', () => {
 
 describe('handleConfirmSubmission', () => {
   it('transitions to submitted', async () => {
-    const ctx = makeContext(ConversationState.TENANT_CONFIRMATION_PENDING, ActionType.CONFIRM_SUBMISSION);
+    const ctx = makeContext(
+      ConversationState.TENANT_CONFIRMATION_PENDING,
+      ActionType.CONFIRM_SUBMISSION,
+    );
     const result = await handleConfirmSubmission(ctx);
     expect(result.newState).toBe(ConversationState.SUBMITTED);
   });
@@ -1753,7 +1898,9 @@ describe('handleConfirmSubmission', () => {
 describe('handlePhotoUpload', () => {
   it('returns same state for UPLOAD_PHOTO_INIT', async () => {
     const ctx = makeContext(ConversationState.SPLIT_PROPOSED, ActionType.UPLOAD_PHOTO_INIT, {
-      filename: 'leak.jpg', content_type: 'image/jpeg', size_bytes: 1024,
+      filename: 'leak.jpg',
+      content_type: 'image/jpeg',
+      size_bytes: 1024,
     });
     const result = await handlePhotoUpload(ctx);
     expect(result.newState).toBe(ConversationState.SPLIT_PROPOSED);
@@ -1761,7 +1908,9 @@ describe('handlePhotoUpload', () => {
 
   it('returns same state for UPLOAD_PHOTO_COMPLETE', async () => {
     const ctx = makeContext(ConversationState.INTAKE_STARTED, ActionType.UPLOAD_PHOTO_COMPLETE, {
-      photo_id: 'p1', storage_key: 'key', sha256: 'abc',
+      photo_id: 'p1',
+      storage_key: 'key',
+      sha256: 'abc',
     });
     const result = await handlePhotoUpload(ctx);
     expect(result.newState).toBe(ConversationState.INTAKE_STARTED);
@@ -1793,15 +1942,18 @@ Expected: FAIL
 **Step 3: Implement all remaining handlers**
 
 `packages/core/src/orchestrator/action-handlers/submit-additional-message.ts`:
+
 ```typescript
 import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
 
 /** SUBMIT_ADDITIONAL_MESSAGE: stays in current state, queues message (spec §12.2). */
-export async function handleSubmitAdditionalMessage(ctx: ActionHandlerContext): Promise<ActionHandlerResult> {
+export async function handleSubmitAdditionalMessage(
+  ctx: ActionHandlerContext,
+): Promise<ActionHandlerResult> {
   return {
     newState: ctx.session.state,
     session: ctx.session,
-    uiMessages: [{ role: 'agent', content: 'Message received. We\'ll address it shortly.' }],
+    uiMessages: [{ role: 'agent', content: "Message received. We'll address it shortly." }],
     eventPayload: { message: (ctx.request.tenant_input as any).message },
     eventType: 'message_received',
   };
@@ -1809,12 +1961,15 @@ export async function handleSubmitAdditionalMessage(ctx: ActionHandlerContext): 
 ```
 
 `packages/core/src/orchestrator/action-handlers/answer-followups.ts`:
+
 ```typescript
 import { ConversationState } from '@wo-agent/schemas';
 import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
 
 /** ANSWER_FOLLOWUPS: loops back to classification_in_progress (spec §11.2). */
-export async function handleAnswerFollowups(ctx: ActionHandlerContext): Promise<ActionHandlerResult> {
+export async function handleAnswerFollowups(
+  ctx: ActionHandlerContext,
+): Promise<ActionHandlerResult> {
   return {
     newState: ConversationState.CLASSIFICATION_IN_PROGRESS,
     session: ctx.session,
@@ -1825,18 +1980,21 @@ export async function handleAnswerFollowups(ctx: ActionHandlerContext): Promise<
 ```
 
 `packages/core/src/orchestrator/action-handlers/confirm-submission.ts`:
+
 ```typescript
 import { ConversationState } from '@wo-agent/schemas';
 import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
 
 /** CONFIRM_SUBMISSION: the only gate to side effects (spec §10, non-negotiable #4). */
-export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promise<ActionHandlerResult> {
+export async function handleConfirmSubmission(
+  ctx: ActionHandlerContext,
+): Promise<ActionHandlerResult> {
   // Actual WO creation, notifications, etc. happen here in Phase 8.
   // For now, transition to submitted and return confirmation.
   return {
     newState: ConversationState.SUBMITTED,
     session: ctx.session,
-    uiMessages: [{ role: 'agent', content: 'Your request has been submitted. We\'ll be in touch.' }],
+    uiMessages: [{ role: 'agent', content: "Your request has been submitted. We'll be in touch." }],
     sideEffects: [{ effect_type: 'create_work_orders', status: 'pending' }],
     eventPayload: { confirmed: true },
   };
@@ -1844,6 +2002,7 @@ export async function handleConfirmSubmission(ctx: ActionHandlerContext): Promis
 ```
 
 `packages/core/src/orchestrator/action-handlers/photo-upload.ts`:
+
 ```typescript
 import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
 
@@ -1860,6 +2019,7 @@ export async function handlePhotoUpload(ctx: ActionHandlerContext): Promise<Acti
 ```
 
 `packages/core/src/orchestrator/action-handlers/resume.ts`:
+
 ```typescript
 import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
 
@@ -1877,6 +2037,7 @@ export async function handleResume(ctx: ActionHandlerContext): Promise<ActionHan
 ```
 
 `packages/core/src/orchestrator/action-handlers/abandon.ts`:
+
 ```typescript
 import { ConversationState } from '@wo-agent/schemas';
 import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
@@ -1909,6 +2070,7 @@ git commit -m "feat(core): add remaining action handlers (message, followups, co
 ### Task 11: Orchestrator Barrel Exports + Core Index Update
 
 **Files:**
+
 - Create: `packages/core/src/orchestrator/index.ts`
 - Modify: `packages/core/src/index.ts`
 
@@ -1968,6 +2130,7 @@ git commit -m "feat(core): add orchestrator and events barrel exports"
 ### Task 12: Initialize apps/web Package
 
 **Files:**
+
 - Create: `apps/web/package.json`
 - Create: `apps/web/tsconfig.json`
 - Create: `apps/web/next.config.ts`
@@ -2040,6 +2203,7 @@ export default nextConfig;
 **Step 4: Create minimal app shell**
 
 `apps/web/src/app/layout.tsx`:
+
 ```tsx
 export const metadata = { title: 'Maintenance Portal' };
 
@@ -2053,6 +2217,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 ```
 
 `apps/web/src/app/page.tsx`:
+
 ```tsx
 export default function Home() {
   return <div>Maintenance Portal — API Ready</div>;
@@ -2084,6 +2249,7 @@ git commit -m "chore: initialize apps/web Next.js package"
 ### Task 13: Auth Middleware for Next.js
 
 **Files:**
+
 - Create: `apps/web/src/middleware/auth.ts`
 
 **Step 1: Implement auth middleware**
@@ -2098,8 +2264,12 @@ import type { JwtConfig } from '@wo-agent/core';
 // In production, load from env. For stubs, use a test config.
 function getJwtConfig(): JwtConfig {
   return {
-    accessTokenSecret: new TextEncoder().encode(process.env.JWT_ACCESS_SECRET ?? 'dev-access-secret-at-least-32-characters!!'),
-    refreshTokenSecret: new TextEncoder().encode(process.env.JWT_REFRESH_SECRET ?? 'dev-refresh-secret-at-least-32-characters!'),
+    accessTokenSecret: new TextEncoder().encode(
+      process.env.JWT_ACCESS_SECRET ?? 'dev-access-secret-at-least-32-characters!!',
+    ),
+    refreshTokenSecret: new TextEncoder().encode(
+      process.env.JWT_REFRESH_SECRET ?? 'dev-refresh-secret-at-least-32-characters!',
+    ),
     accessTokenExpiry: '15m',
     refreshTokenExpiry: '7d',
     issuer: 'wo-agent',
@@ -2145,6 +2315,7 @@ git commit -m "feat(web): add auth middleware wiring JWT extraction to Next.js"
 ### Task 14: Rate Limiter Middleware
 
 **Files:**
+
 - Create: `apps/web/src/middleware/rate-limiter.ts`
 
 **Step 1: Implement rate limiter**
@@ -2200,6 +2371,7 @@ git commit -m "feat(web): add rate limiter middleware enforcing spec §8 limits"
 ### Task 15: Request Context
 
 **Files:**
+
 - Create: `apps/web/src/middleware/request-context.ts`
 
 **Step 1: Implement request context**
@@ -2240,6 +2412,7 @@ git commit -m "feat(web): add request context for structured logging"
 ### Task 16: Orchestrator Instance Factory
 
 **Files:**
+
 - Create: `apps/web/src/lib/orchestrator-factory.ts`
 
 A singleton factory that creates the orchestrator dispatcher with test-appropriate dependencies.
@@ -2257,11 +2430,15 @@ import type { ConversationSession } from '@wo-agent/core';
 class InMemorySessionStore implements SessionStore {
   private sessions = new Map<string, ConversationSession>();
 
-  async get(id: string) { return this.sessions.get(id) ?? null; }
+  async get(id: string) {
+    return this.sessions.get(id) ?? null;
+  }
   async getByTenantUser(userId: string) {
     return [...this.sessions.values()].filter((s) => s.tenant_user_id === userId);
   }
-  async save(session: ConversationSession) { this.sessions.set(session.conversation_id, session); }
+  async save(session: ConversationSession) {
+    this.sessions.set(session.conversation_id, session);
+  }
 }
 
 let dispatcher: ReturnType<typeof createDispatcher> | null = null;
@@ -2293,6 +2470,7 @@ git commit -m "feat(web): add orchestrator factory with in-memory stores for MVP
 ### Task 17: Conversation Endpoint Stubs
 
 **Files:**
+
 - Create: `apps/web/src/app/api/conversations/route.ts`
 - Create: `apps/web/src/app/api/conversations/[id]/route.ts`
 - Create: `apps/web/src/app/api/conversations/[id]/select-unit/route.ts`
@@ -2325,7 +2503,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (authResult instanceof NextResponse) return authResult;
 
   // 2. Rate limit
-  const rateLimitResult = checkRateLimit(authResult.tenant_user_id, 'max_messages_per_minute_per_user');
+  const rateLimitResult = checkRateLimit(
+    authResult.tenant_user_id,
+    'max_messages_per_minute_per_user',
+  );
   if (rateLimitResult) return rateLimitResult;
 
   // 3. Parse body
@@ -2395,7 +2576,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const authResult = await authenticateRequest(request);
   if (authResult instanceof NextResponse) return authResult;
 
-  const rateLimitResult = checkRateLimit(authResult.tenant_user_id, 'max_messages_per_minute_per_user');
+  const rateLimitResult = checkRateLimit(
+    authResult.tenant_user_id,
+    'max_messages_per_minute_per_user',
+  );
   if (rateLimitResult) return rateLimitResult;
 
   const body = await request.json();
@@ -2416,20 +2600,20 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
 **Action-to-endpoint mapping (implement each following the template):**
 
-| Endpoint | Action Type | Rate Limit Key |
-|----------|------------|----------------|
-| `POST /conversations` | `CREATE_CONVERSATION` | `max_new_conversations_per_day_per_user` |
-| `POST /conversations/:id/select-unit` | `SELECT_UNIT` | `max_messages_per_minute_per_user` |
-| `POST /conversations/:id/message/initial` | `SUBMIT_INITIAL_MESSAGE` | `max_messages_per_minute_per_user` |
-| `POST /conversations/:id/message/additional` | `SUBMIT_ADDITIONAL_MESSAGE` | `max_messages_per_minute_per_user` |
-| `POST /conversations/:id/split/confirm` | `CONFIRM_SPLIT` | `max_messages_per_minute_per_user` |
-| `POST /conversations/:id/split/merge` | `MERGE_ISSUES` | `max_messages_per_minute_per_user` |
-| `POST /conversations/:id/split/edit` | `EDIT_ISSUE` | `max_messages_per_minute_per_user` |
-| `POST /conversations/:id/split/add` | `ADD_ISSUE` | `max_messages_per_minute_per_user` |
-| `POST /conversations/:id/split/reject` | `REJECT_SPLIT` | `max_messages_per_minute_per_user` |
-| `POST /conversations/:id/followups/answer` | `ANSWER_FOLLOWUPS` | `max_messages_per_minute_per_user` |
-| `POST /conversations/:id/confirm-submission` | `CONFIRM_SUBMISSION` | `max_messages_per_minute_per_user` |
-| `POST /conversations/:id/resume` | `RESUME` | `max_messages_per_minute_per_user` |
+| Endpoint                                     | Action Type                 | Rate Limit Key                           |
+| -------------------------------------------- | --------------------------- | ---------------------------------------- |
+| `POST /conversations`                        | `CREATE_CONVERSATION`       | `max_new_conversations_per_day_per_user` |
+| `POST /conversations/:id/select-unit`        | `SELECT_UNIT`               | `max_messages_per_minute_per_user`       |
+| `POST /conversations/:id/message/initial`    | `SUBMIT_INITIAL_MESSAGE`    | `max_messages_per_minute_per_user`       |
+| `POST /conversations/:id/message/additional` | `SUBMIT_ADDITIONAL_MESSAGE` | `max_messages_per_minute_per_user`       |
+| `POST /conversations/:id/split/confirm`      | `CONFIRM_SPLIT`             | `max_messages_per_minute_per_user`       |
+| `POST /conversations/:id/split/merge`        | `MERGE_ISSUES`              | `max_messages_per_minute_per_user`       |
+| `POST /conversations/:id/split/edit`         | `EDIT_ISSUE`                | `max_messages_per_minute_per_user`       |
+| `POST /conversations/:id/split/add`          | `ADD_ISSUE`                 | `max_messages_per_minute_per_user`       |
+| `POST /conversations/:id/split/reject`       | `REJECT_SPLIT`              | `max_messages_per_minute_per_user`       |
+| `POST /conversations/:id/followups/answer`   | `ANSWER_FOLLOWUPS`          | `max_messages_per_minute_per_user`       |
+| `POST /conversations/:id/confirm-submission` | `CONFIRM_SUBMISSION`        | `max_messages_per_minute_per_user`       |
+| `POST /conversations/:id/resume`             | `RESUME`                    | `max_messages_per_minute_per_user`       |
 
 **Step 2: Commit**
 
@@ -2443,6 +2627,7 @@ git commit -m "feat(web): add conversation endpoint stubs dispatching to orchest
 ### Task 18: Photo and Health Endpoint Stubs
 
 **Files:**
+
 - Create: `apps/web/src/app/api/photos/init/route.ts`
 - Create: `apps/web/src/app/api/photos/complete/route.ts`
 - Create: `apps/web/src/app/api/health/route.ts`
@@ -2450,6 +2635,7 @@ git commit -m "feat(web): add conversation endpoint stubs dispatching to orchest
 **Step 1: Implement photo routes**
 
 `apps/web/src/app/api/photos/init/route.ts`:
+
 ```typescript
 import { NextRequest, NextResponse } from 'next/server';
 import { ActionType, ActorType } from '@wo-agent/schemas';
@@ -2461,7 +2647,10 @@ export async function POST(request: NextRequest) {
   const authResult = await authenticateRequest(request);
   if (authResult instanceof NextResponse) return authResult;
 
-  const rateLimitResult = checkRateLimit(authResult.tenant_user_id, 'max_photo_uploads_per_conversation');
+  const rateLimitResult = checkRateLimit(
+    authResult.tenant_user_id,
+    'max_photo_uploads_per_conversation',
+  );
   if (rateLimitResult) return rateLimitResult;
 
   const body = await request.json();
@@ -2471,7 +2660,11 @@ export async function POST(request: NextRequest) {
     conversation_id: body.conversation_id,
     action_type: ActionType.UPLOAD_PHOTO_INIT,
     actor: ActorType.TENANT,
-    tenant_input: { filename: body.filename, content_type: body.content_type, size_bytes: body.size_bytes },
+    tenant_input: {
+      filename: body.filename,
+      content_type: body.content_type,
+      size_bytes: body.size_bytes,
+    },
     auth_context: authResult,
   });
 
@@ -2480,6 +2673,7 @@ export async function POST(request: NextRequest) {
 ```
 
 `apps/web/src/app/api/health/route.ts`:
+
 ```typescript
 import { NextResponse } from 'next/server';
 
@@ -2513,6 +2707,7 @@ git commit -m "feat(web): add photo and health endpoint stubs"
 ### Task 19: Orchestrator Integration Tests
 
 **Files:**
+
 - Create: `packages/core/src/__tests__/orchestrator-integration.test.ts`
 
 **Step 1: Write integration tests**
@@ -2528,11 +2723,15 @@ import type { ConversationSession } from '../session/types.js';
 
 class InMemorySessionStore implements SessionStore {
   private sessions = new Map<string, ConversationSession>();
-  async get(id: string) { return this.sessions.get(id) ?? null; }
+  async get(id: string) {
+    return this.sessions.get(id) ?? null;
+  }
   async getByTenantUser(userId: string) {
     return [...this.sessions.values()].filter((s) => s.tenant_user_id === userId);
   }
-  async save(session: ConversationSession) { this.sessions.set(session.conversation_id, session); }
+  async save(session: ConversationSession) {
+    this.sessions.set(session.conversation_id, session);
+  }
 }
 
 const AUTH = { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['u1'] };
@@ -2721,14 +2920,14 @@ All of the following must be true before moving to Phase 4:
 
 ## Spec References
 
-| Section | What it governs |
-|---------|----------------|
-| §2 | Non-negotiables (all 7 apply) |
-| §7 | Append-only events (conversation_events schema) |
-| §8 | Rate limits and payload caps |
-| §9 | AuthN/AuthZ (JWT, membership checks) |
-| §10 | Orchestrator contract (sole controller, action types, request/response) |
-| §11 | State machine + transition matrix (authoritative) |
-| §12 | Draft discovery, additional message policy, abandonment |
-| §24 | API surface (all endpoints) |
-| §25 | Observability (structured logging, request_id) |
+| Section | What it governs                                                         |
+| ------- | ----------------------------------------------------------------------- |
+| §2      | Non-negotiables (all 7 apply)                                           |
+| §7      | Append-only events (conversation_events schema)                         |
+| §8      | Rate limits and payload caps                                            |
+| §9      | AuthN/AuthZ (JWT, membership checks)                                    |
+| §10     | Orchestrator contract (sole controller, action types, request/response) |
+| §11     | State machine + transition matrix (authoritative)                       |
+| §12     | Draft discovery, additional message policy, abandonment                 |
+| §24     | API surface (all endpoints)                                             |
+| §25     | Observability (structured logging, request_id)                          |

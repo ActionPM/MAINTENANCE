@@ -8,7 +8,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const authResult = await authenticateRequest(request);
   if (authResult instanceof NextResponse) return authResult;
 
-  const rateLimitResult = checkRateLimit(authResult.tenant_user_id, 'max_messages_per_minute_per_user');
+  const rateLimitResult = checkRateLimit(
+    authResult.tenant_user_id,
+    'max_messages_per_minute_per_user',
+  );
   if (rateLimitResult) return rateLimitResult;
 
   const body = await request.json();

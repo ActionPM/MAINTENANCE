@@ -13,6 +13,7 @@
 ### Task 0: Risk Types in Schemas Package
 
 **Files:**
+
 - Create: `packages/schemas/src/types/risk.ts`
 - Modify: `packages/schemas/src/index.ts`
 
@@ -57,9 +58,7 @@ describe('Risk types', () => {
     const plan: EscalationPlan = {
       plan_id: 'plan-001',
       building_id: 'bldg-001',
-      contact_chain: [
-        { role: 'building_manager', contact_id: 'c-1', name: 'BM', phone: '+1234' },
-      ],
+      contact_chain: [{ role: 'building_manager', contact_id: 'c-1', name: 'BM', phone: '+1234' }],
       exhaustion_behavior: {
         internal_alert: true,
         tenant_message_template: 'Unable to reach management.',
@@ -79,7 +78,13 @@ describe('Risk types', () => {
   });
 
   it('EscalationState values are correct', () => {
-    const states: EscalationState[] = ['none', 'pending_confirmation', 'routing', 'completed', 'exhausted'];
+    const states: EscalationState[] = [
+      'none',
+      'pending_confirmation',
+      'routing',
+      'completed',
+      'exhausted',
+    ];
     expect(states).toHaveLength(5);
   });
 });
@@ -175,7 +180,12 @@ export interface EscalationPlans {
 }
 
 /** Escalation state tracked on the session. */
-export type EscalationState = 'none' | 'pending_confirmation' | 'routing' | 'completed' | 'exhausted';
+export type EscalationState =
+  | 'none'
+  | 'pending_confirmation'
+  | 'routing'
+  | 'completed'
+  | 'exhausted';
 
 /** Result of an escalation attempt on one contact. */
 export interface EscalationAttempt {
@@ -234,6 +244,7 @@ git commit -m "feat(schemas): add risk protocol, escalation plan, and risk scan 
 ### Task 1: Risk Protocol + Escalation Plan Loaders
 
 **Files:**
+
 - Create: `packages/schemas/src/risk-protocols.ts`
 - Create: `packages/schemas/src/escalation-plans.ts`
 - Create: `packages/schemas/src/__tests__/risk-loaders.test.ts`
@@ -253,7 +264,7 @@ describe('loadRiskProtocols', () => {
     expect(protocols.triggers.length).toBeGreaterThan(0);
     expect(protocols.mitigation_templates.length).toBeGreaterThan(0);
 
-    const fire = protocols.triggers.find(t => t.trigger_id === 'fire-001');
+    const fire = protocols.triggers.find((t) => t.trigger_id === 'fire-001');
     expect(fire).toBeDefined();
     expect(fire!.severity).toBe('emergency');
     expect(fire!.grammar.keyword_any).toContain('fire');
@@ -262,7 +273,7 @@ describe('loadRiskProtocols', () => {
 
   it('every trigger references an existing mitigation template', () => {
     const protocols = loadRiskProtocols();
-    const templateIds = new Set(protocols.mitigation_templates.map(t => t.template_id));
+    const templateIds = new Set(protocols.mitigation_templates.map((t) => t.template_id));
     for (const trigger of protocols.triggers) {
       expect(templateIds.has(trigger.mitigation_template_id)).toBe(true);
     }
@@ -309,7 +320,7 @@ import data from '../risk_protocols.json' with { type: 'json' };
  */
 export function loadRiskProtocols(): RiskProtocols {
   const protocols = data as unknown as RiskProtocols;
-  const templateIds = new Set(protocols.mitigation_templates.map(t => t.template_id));
+  const templateIds = new Set(protocols.mitigation_templates.map((t) => t.template_id));
   for (const trigger of protocols.triggers) {
     if (!templateIds.has(trigger.mitigation_template_id)) {
       throw new Error(
@@ -367,6 +378,7 @@ git commit -m "feat(schemas): add typed loaders for risk_protocols.json and esca
 ### Task 2: Risk Trigger Scanner (Deterministic)
 
 **Files:**
+
 - Create: `packages/core/src/risk/trigger-scanner.ts`
 - Create: `packages/core/src/__tests__/risk/trigger-scanner.test.ts`
 
@@ -448,7 +460,7 @@ describe('scanTextForTriggers', () => {
   it('matches multiple triggers', () => {
     const result = scanTextForTriggers('Fire and flooding in the building', TEST_PROTOCOLS);
     expect(result.triggers_matched).toHaveLength(2);
-    const ids = result.triggers_matched.map(t => t.trigger.trigger_id);
+    const ids = result.triggers_matched.map((t) => t.trigger.trigger_id);
     expect(ids).toContain('fire-001');
     expect(ids).toContain('flood-001');
   });
@@ -478,7 +490,9 @@ describe('scanClassificationForTriggers', () => {
     const result = scanClassificationForTriggers(classification, TEST_PROTOCOLS);
     expect(result.triggers_matched).toHaveLength(1);
     expect(result.triggers_matched[0].trigger.trigger_id).toBe('flood-001');
-    expect(result.triggers_matched[0].matched_taxonomy_paths).toContain('maintenance.plumbing.flood');
+    expect(result.triggers_matched[0].matched_taxonomy_paths).toContain(
+      'maintenance.plumbing.flood',
+    );
   });
 
   it('returns empty for non-risk classification', () => {
@@ -498,7 +512,13 @@ Expected: FAIL — module not found
 
 ```typescript
 // packages/core/src/risk/trigger-scanner.ts
-import type { RiskProtocols, RiskTrigger, RiskScanResult, MatchedTrigger, RiskSeverity } from '@wo-agent/schemas';
+import type {
+  RiskProtocols,
+  RiskTrigger,
+  RiskScanResult,
+  MatchedTrigger,
+  RiskSeverity,
+} from '@wo-agent/schemas';
 
 const SEVERITY_RANK: Record<RiskSeverity, number> = {
   emergency: 3,
@@ -511,16 +531,13 @@ const SEVERITY_RANK: Record<RiskSeverity, number> = {
  * Pure function — no side effects.
  * Checks keyword_any and regex_any against lowercased text.
  */
-export function scanTextForTriggers(
-  text: string,
-  protocols: RiskProtocols,
-): RiskScanResult {
+export function scanTextForTriggers(text: string, protocols: RiskProtocols): RiskScanResult {
   const lowerText = text.toLowerCase();
   const matched: MatchedTrigger[] = [];
 
   for (const trigger of protocols.triggers) {
-    const matchedKeywords = trigger.grammar.keyword_any.filter(
-      kw => lowerText.includes(kw.toLowerCase()),
+    const matchedKeywords = trigger.grammar.keyword_any.filter((kw) =>
+      lowerText.includes(kw.toLowerCase()),
     );
 
     const matchedRegex: string[] = [];
@@ -566,9 +583,7 @@ export function scanClassificationForTriggers(
   for (const trigger of protocols.triggers) {
     if (trigger.grammar.taxonomy_path_any.length === 0) continue;
 
-    const matchedPaths = trigger.grammar.taxonomy_path_any.filter(
-      tp => paths.has(tp),
-    );
+    const matchedPaths = trigger.grammar.taxonomy_path_any.filter((tp) => paths.has(tp));
 
     if (matchedPaths.length > 0) {
       matched.push({
@@ -587,10 +602,7 @@ export function scanClassificationForTriggers(
  * Merge two scan results (text scan + classification scan).
  * Deduplicates by trigger_id, merging match details.
  */
-export function mergeRiskScanResults(
-  a: RiskScanResult,
-  b: RiskScanResult,
-): RiskScanResult {
+export function mergeRiskScanResults(a: RiskScanResult, b: RiskScanResult): RiskScanResult {
   const byId = new Map<string, MatchedTrigger>();
 
   for (const m of [...a.triggers_matched, ...b.triggers_matched]) {
@@ -600,7 +612,9 @@ export function mergeRiskScanResults(
         trigger: m.trigger,
         matched_keywords: [...new Set([...existing.matched_keywords, ...m.matched_keywords])],
         matched_regex: [...new Set([...existing.matched_regex, ...m.matched_regex])],
-        matched_taxonomy_paths: [...new Set([...existing.matched_taxonomy_paths, ...m.matched_taxonomy_paths])],
+        matched_taxonomy_paths: [
+          ...new Set([...existing.matched_taxonomy_paths, ...m.matched_taxonomy_paths]),
+        ],
       });
     } else {
       byId.set(m.trigger.trigger_id, m);
@@ -670,6 +684,7 @@ git commit -m "feat(core): deterministic risk trigger scanner — keyword, regex
 ### Task 3: Mitigation Template Resolver
 
 **Files:**
+
 - Create: `packages/core/src/risk/mitigation.ts`
 - Create: `packages/core/src/__tests__/risk/mitigation.test.ts`
 
@@ -718,12 +733,14 @@ describe('resolveMitigationTemplate', () => {
 
 describe('renderMitigationMessages', () => {
   it('renders mitigation messages for matched triggers', () => {
-    const matches: MatchedTrigger[] = [{
-      trigger: TEST_PROTOCOLS.triggers[0],
-      matched_keywords: ['fire'],
-      matched_regex: [],
-      matched_taxonomy_paths: [],
-    }];
+    const matches: MatchedTrigger[] = [
+      {
+        trigger: TEST_PROTOCOLS.triggers[0],
+        matched_keywords: ['fire'],
+        matched_regex: [],
+        matched_taxonomy_paths: [],
+      },
+    ];
     const messages = renderMitigationMessages(matches, TEST_PROTOCOLS);
     expect(messages).toHaveLength(1);
     expect(messages[0]).toContain('Fire Safety');
@@ -758,7 +775,7 @@ export function resolveMitigationTemplate(
   templateId: string,
   protocols: RiskProtocols,
 ): MitigationTemplate | null {
-  return protocols.mitigation_templates.find(t => t.template_id === templateId) ?? null;
+  return protocols.mitigation_templates.find((t) => t.template_id === templateId) ?? null;
 }
 
 /**
@@ -775,13 +792,9 @@ export function renderMitigationMessages(
     const template = resolveMitigationTemplate(match.trigger.mitigation_template_id, protocols);
     if (!template) continue;
 
-    const instructions = template.safety_instructions
-      .map(s => `- ${s}`)
-      .join('\n');
+    const instructions = template.safety_instructions.map((s) => `- ${s}`).join('\n');
 
-    messages.push(
-      `**${template.name}**\n\n${template.message_template}\n\n${instructions}`,
-    );
+    messages.push(`**${template.name}**\n\n${template.message_template}\n\n${instructions}`);
   }
 
   return messages;
@@ -805,6 +818,7 @@ git commit -m "feat(core): mitigation template resolver and message renderer"
 ### Task 4: Risk Event Builder (Append-Only)
 
 **Files:**
+
 - Create: `packages/core/src/risk/event-builder.ts`
 - Create: `packages/core/src/__tests__/risk/event-builder.test.ts`
 
@@ -822,19 +836,21 @@ import type { MatchedTrigger, EscalationResult } from '@wo-agent/schemas';
 
 describe('buildRiskDetectedEvent', () => {
   it('builds a risk_detected event with trigger details', () => {
-    const triggers: MatchedTrigger[] = [{
-      trigger: {
-        trigger_id: 'fire-001',
-        name: 'Fire',
-        grammar: { keyword_any: [], regex_any: [], taxonomy_path_any: [] },
-        requires_confirmation: true,
-        severity: 'emergency',
-        mitigation_template_id: 'mit-fire',
+    const triggers: MatchedTrigger[] = [
+      {
+        trigger: {
+          trigger_id: 'fire-001',
+          name: 'Fire',
+          grammar: { keyword_any: [], regex_any: [], taxonomy_path_any: [] },
+          requires_confirmation: true,
+          severity: 'emergency',
+          mitigation_template_id: 'mit-fire',
+        },
+        matched_keywords: ['fire'],
+        matched_regex: [],
+        matched_taxonomy_paths: [],
       },
-      matched_keywords: ['fire'],
-      matched_regex: [],
-      matched_taxonomy_paths: [],
-    }];
+    ];
 
     const event = buildRiskDetectedEvent({
       eventId: 'evt-1',
@@ -876,7 +892,15 @@ describe('buildEscalationResultEvent', () => {
     const result: EscalationResult = {
       plan_id: 'plan-1',
       state: 'completed',
-      attempts: [{ contact_id: 'c-1', role: 'bm', name: 'BM', attempted_at: '2026-03-03T00:00:00Z', answered: true }],
+      attempts: [
+        {
+          contact_id: 'c-1',
+          role: 'bm',
+          name: 'BM',
+          attempted_at: '2026-03-03T00:00:00Z',
+          answered: true,
+        },
+      ],
       answered_by: { role: 'bm', contact_id: 'c-1', name: 'BM', phone: '+1' },
       exhaustion_message: null,
     };
@@ -952,7 +976,7 @@ export function buildRiskDetectedEvent(input: RiskDetectedInput): RiskEvent {
     conversation_id: input.conversationId,
     event_type: 'risk_detected',
     payload: {
-      triggers_matched: input.triggersMatched.map(t => ({
+      triggers_matched: input.triggersMatched.map((t) => ({
         trigger_id: t.trigger.trigger_id,
         name: t.trigger.name,
         severity: t.trigger.severity,
@@ -1033,6 +1057,7 @@ git commit -m "feat(core): append-only risk event builders — risk_detected, es
 ### Task 5: Session Risk Tracking Fields
 
 **Files:**
+
 - Modify: `packages/core/src/session/types.ts`
 - Modify: `packages/core/src/session/session.ts`
 - Create: `packages/core/src/__tests__/risk/session-risk.test.ts`
@@ -1052,7 +1077,12 @@ describe('session risk tracking', () => {
     tenant_user_id: 'user-1',
     tenant_account_id: 'acct-1',
     authorized_unit_ids: ['unit-1'],
-    pinned_versions: { taxonomy_version: '1', schema_version: '1', model_id: 'm', prompt_version: '1' },
+    pinned_versions: {
+      taxonomy_version: '1',
+      schema_version: '1',
+      model_id: 'm',
+      prompt_version: '1',
+    },
   });
 
   it('initializes with no risk triggers and escalation_state=none', () => {
@@ -1062,19 +1092,21 @@ describe('session risk tracking', () => {
   });
 
   it('setRiskTriggers stores matched triggers on session', () => {
-    const triggers: MatchedTrigger[] = [{
-      trigger: {
-        trigger_id: 'fire-001',
-        name: 'Fire',
-        grammar: { keyword_any: [], regex_any: [], taxonomy_path_any: [] },
-        requires_confirmation: true,
-        severity: 'emergency',
-        mitigation_template_id: 'mit-fire',
+    const triggers: MatchedTrigger[] = [
+      {
+        trigger: {
+          trigger_id: 'fire-001',
+          name: 'Fire',
+          grammar: { keyword_any: [], regex_any: [], taxonomy_path_any: [] },
+          requires_confirmation: true,
+          severity: 'emergency',
+          mitigation_template_id: 'mit-fire',
+        },
+        matched_keywords: ['fire'],
+        matched_regex: [],
+        matched_taxonomy_paths: [],
       },
-      matched_keywords: ['fire'],
-      matched_regex: [],
-      matched_taxonomy_paths: [],
-    }];
+    ];
 
     const updated = setRiskTriggers(baseSession, triggers);
     expect(updated.risk_triggers).toHaveLength(1);
@@ -1168,6 +1200,7 @@ git commit -m "feat(core): add risk_triggers, escalation_state, escalation_plan_
 ### Task 6: Emergency Router
 
 **Files:**
+
 - Create: `packages/core/src/risk/emergency-router.ts`
 - Create: `packages/core/src/__tests__/risk/emergency-router.test.ts`
 
@@ -1214,10 +1247,11 @@ describe('routeEmergency', () => {
   });
 
   it('iterates chain until someone answers', async () => {
-    const contactExecutor = vi.fn()
-      .mockResolvedValueOnce(false)  // BM doesn't answer
-      .mockResolvedValueOnce(false)  // PM doesn't answer
-      .mockResolvedValueOnce(true);  // Fallback answers
+    const contactExecutor = vi
+      .fn()
+      .mockResolvedValueOnce(false) // BM doesn't answer
+      .mockResolvedValueOnce(false) // PM doesn't answer
+      .mockResolvedValueOnce(true); // Fallback answers
 
     const result = await routeEmergency({
       buildingId: 'bldg-001',
@@ -1244,7 +1278,9 @@ describe('routeEmergency', () => {
 
     expect(result.state).toBe('exhausted');
     expect(result.answered_by).toBeNull();
-    expect(result.exhaustion_message).toBe('Unable to reach management. Call 911 if life-threatening.');
+    expect(result.exhaustion_message).toBe(
+      'Unable to reach management. Call 911 if life-threatening.',
+    );
     expect(contactExecutor).toHaveBeenCalledTimes(3);
   });
 
@@ -1305,7 +1341,7 @@ export interface RouteEmergencyInput {
 export async function routeEmergency(input: RouteEmergencyInput): Promise<EscalationResult> {
   const { buildingId, escalationPlans, contactExecutor, clock } = input;
 
-  const plan = escalationPlans.plans.find(p => p.building_id === buildingId);
+  const plan = escalationPlans.plans.find((p) => p.building_id === buildingId);
   if (!plan) {
     throw new Error(`No escalation plan found for building: ${buildingId}`);
   }
@@ -1361,6 +1397,7 @@ git commit -m "feat(core): emergency router — call-until-answered contact chai
 ### Task 7: Risk Barrel Export + Add Dependencies to Orchestrator
 
 **Files:**
+
 - Create: `packages/core/src/risk/index.ts`
 - Modify: `packages/core/src/index.ts`
 - Modify: `packages/core/src/orchestrator/types.ts`
@@ -1412,10 +1449,7 @@ export {
   mergeRiskScanResults,
 } from './trigger-scanner.js';
 
-export {
-  resolveMitigationTemplate,
-  renderMitigationMessages,
-} from './mitigation.js';
+export { resolveMitigationTemplate, renderMitigationMessages } from './mitigation.js';
 
 export {
   buildRiskDetectedEvent,
@@ -1502,6 +1536,7 @@ git commit -m "feat(core): risk barrel export + riskProtocols/escalationPlans/co
 ### Task 8: Wire Risk Scanning into Submit-Initial-Message Handler
 
 **Files:**
+
 - Modify: `packages/core/src/orchestrator/action-handlers/submit-initial-message.ts`
 - Create: `packages/core/src/__tests__/risk/submit-risk-scan.test.ts`
 
@@ -1516,13 +1551,21 @@ import type { ActionHandlerContext } from '../../orchestrator/types.js';
 import { createSession } from '../../session/session.js';
 import { InMemoryEventStore } from '../../events/in-memory-event-store.js';
 
-function buildCtx(message: string, overrides?: Partial<ActionHandlerContext['deps']>): ActionHandlerContext {
+function buildCtx(
+  message: string,
+  overrides?: Partial<ActionHandlerContext['deps']>,
+): ActionHandlerContext {
   const session = createSession({
     conversation_id: 'conv-1',
     tenant_user_id: 'user-1',
     tenant_account_id: 'acct-1',
     authorized_unit_ids: ['unit-1'],
-    pinned_versions: { taxonomy_version: '1', schema_version: '1', model_id: 'm', prompt_version: '1' },
+    pinned_versions: {
+      taxonomy_version: '1',
+      schema_version: '1',
+      model_id: 'm',
+      prompt_version: '1',
+    },
   });
 
   return {
@@ -1532,7 +1575,11 @@ function buildCtx(message: string, overrides?: Partial<ActionHandlerContext['dep
       action_type: ActionType.SUBMIT_INITIAL_MESSAGE,
       actor: ActorType.TENANT,
       tenant_input: { message },
-      auth_context: { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['unit-1'] },
+      auth_context: {
+        tenant_user_id: 'user-1',
+        tenant_account_id: 'acct-1',
+        authorized_unit_ids: ['unit-1'],
+      },
     },
     deps: {
       eventRepo: new InMemoryEventStore(),
@@ -1541,7 +1588,13 @@ function buildCtx(message: string, overrides?: Partial<ActionHandlerContext['dep
       clock: () => '2026-03-03T00:00:00Z',
       issueSplitter: vi.fn().mockResolvedValue({
         issue_count: 1,
-        issues: [{ issue_id: 'iss-1', summary: 'Fire in kitchen', raw_excerpt: 'There is fire in my kitchen' }],
+        issues: [
+          {
+            issue_id: 'iss-1',
+            summary: 'Fire in kitchen',
+            raw_excerpt: 'There is fire in my kitchen',
+          },
+        ],
       }),
       issueClassifier: vi.fn(),
       followUpGenerator: vi.fn(),
@@ -1552,20 +1605,24 @@ function buildCtx(message: string, overrides?: Partial<ActionHandlerContext['dep
       idempotencyStore: { tryReserve: vi.fn(), complete: vi.fn() },
       riskProtocols: {
         version: '1.0.0',
-        triggers: [{
-          trigger_id: 'fire-001',
-          name: 'Fire',
-          grammar: { keyword_any: ['fire'], regex_any: [], taxonomy_path_any: [] },
-          requires_confirmation: true,
-          severity: 'emergency',
-          mitigation_template_id: 'mit-fire',
-        }],
-        mitigation_templates: [{
-          template_id: 'mit-fire',
-          name: 'Fire Safety',
-          message_template: 'If active fire, call 911.',
-          safety_instructions: ['Call 911', 'Evacuate'],
-        }],
+        triggers: [
+          {
+            trigger_id: 'fire-001',
+            name: 'Fire',
+            grammar: { keyword_any: ['fire'], regex_any: [], taxonomy_path_any: [] },
+            requires_confirmation: true,
+            severity: 'emergency',
+            mitigation_template_id: 'mit-fire',
+          },
+        ],
+        mitigation_templates: [
+          {
+            template_id: 'mit-fire',
+            name: 'Fire Safety',
+            message_template: 'If active fire, call 911.',
+            safety_instructions: ['Call 911', 'Evacuate'],
+          },
+        ],
       },
       escalationPlans: { version: '1.0.0', plans: [] },
       contactExecutor: vi.fn(),
@@ -1583,7 +1640,7 @@ describe('submit-initial-message risk scanning', () => {
     expect(result.newState).toBe(ConversationState.SPLIT_PROPOSED);
 
     // Mitigation message included
-    const allContent = result.uiMessages.map(m => m.content).join(' ');
+    const allContent = result.uiMessages.map((m) => m.content).join(' ');
     expect(allContent).toContain('Fire Safety');
     expect(allContent).toContain('911');
   });
@@ -1612,7 +1669,7 @@ describe('submit-initial-message risk scanning', () => {
     expect(result.newState).toBe(ConversationState.SPLIT_PROPOSED);
     expect(result.session.risk_triggers).toHaveLength(0);
 
-    const allContent = result.uiMessages.map(m => m.content).join(' ');
+    const allContent = result.uiMessages.map((m) => m.content).join(' ');
     expect(allContent).not.toContain('Fire Safety');
   });
 
@@ -1621,8 +1678,8 @@ describe('submit-initial-message risk scanning', () => {
     const result = await handleSubmitInitialMessage(ctx);
 
     // Should have confirmation quick replies alongside normal ones
-    const qrLabels = result.quickReplies?.map(qr => qr.label) ?? [];
-    expect(qrLabels.some(l => l.toLowerCase().includes('emergency'))).toBe(true);
+    const qrLabels = result.quickReplies?.map((qr) => qr.label) ?? [];
+    expect(qrLabels.some((l) => l.toLowerCase().includes('emergency'))).toBe(true);
   });
 });
 ```
@@ -1646,82 +1703,85 @@ import { setRiskTriggers, setEscalationState } from '../../session/session.js';
 
 // ... inside try block, after setSplitIssues:
 
-    // --- Risk scanning (spec §17, non-negotiable #7) ---
-    const riskScan = scanTextForTriggers(input.message, deps.riskProtocols);
-    let sessionAfterRisk = updatedSession;
-    const additionalMessages: UIMessageInput[] = [];
-    const additionalQuickReplies: QuickReplyInput[] = [];
+// --- Risk scanning (spec §17, non-negotiable #7) ---
+const riskScan = scanTextForTriggers(input.message, deps.riskProtocols);
+let sessionAfterRisk = updatedSession;
+const additionalMessages: UIMessageInput[] = [];
+const additionalQuickReplies: QuickReplyInput[] = [];
 
-    if (riskScan.triggers_matched.length > 0) {
-      sessionAfterRisk = setRiskTriggers(updatedSession, riskScan.triggers_matched);
+if (riskScan.triggers_matched.length > 0) {
+  sessionAfterRisk = setRiskTriggers(updatedSession, riskScan.triggers_matched);
 
-      // Record risk_detected event
-      const riskEvent = buildRiskDetectedEvent({
-        eventId: deps.idGenerator(),
-        conversationId: session.conversation_id,
-        triggersMatched: riskScan.triggers_matched,
-        hasEmergency: riskScan.has_emergency,
-        highestSeverity: riskScan.highest_severity,
-        createdAt: deps.clock(),
-      });
-      await deps.eventRepo.insert(riskEvent);
+  // Record risk_detected event
+  const riskEvent = buildRiskDetectedEvent({
+    eventId: deps.idGenerator(),
+    conversationId: session.conversation_id,
+    triggersMatched: riskScan.triggers_matched,
+    hasEmergency: riskScan.has_emergency,
+    highestSeverity: riskScan.highest_severity,
+    createdAt: deps.clock(),
+  });
+  await deps.eventRepo.insert(riskEvent);
 
-      // Render mitigation messages
-      const mitigationMessages = renderMitigationMessages(
-        riskScan.triggers_matched,
-        deps.riskProtocols,
-      );
-      for (const msg of mitigationMessages) {
-        additionalMessages.push({ role: 'system', content: msg });
-      }
+  // Render mitigation messages
+  const mitigationMessages = renderMitigationMessages(
+    riskScan.triggers_matched,
+    deps.riskProtocols,
+  );
+  for (const msg of mitigationMessages) {
+    additionalMessages.push({ role: 'system', content: msg });
+  }
 
-      // If emergency requires confirmation, add quick replies
-      const needsConfirmation = riskScan.triggers_matched.some(
-        m => m.trigger.requires_confirmation && m.trigger.severity === 'emergency',
-      );
-      if (needsConfirmation) {
-        sessionAfterRisk = setEscalationState(sessionAfterRisk, 'pending_confirmation');
-        additionalQuickReplies.push(
-          { label: 'Yes, this is an emergency', value: 'confirm_emergency' },
-          { label: 'No, not an emergency', value: 'decline_emergency' },
-        );
-      }
-    }
+  // If emergency requires confirmation, add quick replies
+  const needsConfirmation = riskScan.triggers_matched.some(
+    (m) => m.trigger.requires_confirmation && m.trigger.severity === 'emergency',
+  );
+  if (needsConfirmation) {
+    sessionAfterRisk = setEscalationState(sessionAfterRisk, 'pending_confirmation');
+    additionalQuickReplies.push(
+      { label: 'Yes, this is an emergency', value: 'confirm_emergency' },
+      { label: 'No, not an emergency', value: 'decline_emergency' },
+    );
+  }
+}
 
-    // Use sessionAfterRisk instead of updatedSession in the return
+// Use sessionAfterRisk instead of updatedSession in the return
 ```
 
 Update the return statement to merge the additional messages and quick replies:
 
 ```typescript
-    return {
-      newState: ConversationState.SPLIT_PROPOSED,
-      session: sessionAfterRisk,
-      intermediateSteps: [intermediateStep],
-      finalSystemAction: SystemEvent.LLM_SPLIT_SUCCESS,
-      uiMessages: [
-        ...additionalMessages,
-        {
-          role: 'agent',
-          content: splitResult.issue_count === 1
-            ? `I identified 1 issue:\n\n1. ${splitResult.issues[0].summary}\n\nPlease confirm or edit this issue.`
-            : `I identified ${splitResult.issue_count} issues:\n\n${issueList}\n\nPlease confirm, edit, or merge these issues.`,
-        },
-      ],
-      quickReplies: [
-        ...additionalQuickReplies,
-        { label: 'Confirm', value: 'confirm', action_type: 'CONFIRM_SPLIT' },
-        { label: 'Reject (single issue)', value: 'reject', action_type: 'REJECT_SPLIT' },
-      ],
-      eventPayload: {
-        split_result: splitResult,
-        ...(riskScan.triggers_matched.length > 0 ? {
+return {
+  newState: ConversationState.SPLIT_PROPOSED,
+  session: sessionAfterRisk,
+  intermediateSteps: [intermediateStep],
+  finalSystemAction: SystemEvent.LLM_SPLIT_SUCCESS,
+  uiMessages: [
+    ...additionalMessages,
+    {
+      role: 'agent',
+      content:
+        splitResult.issue_count === 1
+          ? `I identified 1 issue:\n\n1. ${splitResult.issues[0].summary}\n\nPlease confirm or edit this issue.`
+          : `I identified ${splitResult.issue_count} issues:\n\n${issueList}\n\nPlease confirm, edit, or merge these issues.`,
+    },
+  ],
+  quickReplies: [
+    ...additionalQuickReplies,
+    { label: 'Confirm', value: 'confirm', action_type: 'CONFIRM_SPLIT' },
+    { label: 'Reject (single issue)', value: 'reject', action_type: 'REJECT_SPLIT' },
+  ],
+  eventPayload: {
+    split_result: splitResult,
+    ...(riskScan.triggers_matched.length > 0
+      ? {
           risk_detected: true,
-          risk_trigger_ids: riskScan.triggers_matched.map(t => t.trigger.trigger_id),
-        } : {}),
-      },
-      eventType: 'state_transition',
-    };
+          risk_trigger_ids: riskScan.triggers_matched.map((t) => t.trigger.trigger_id),
+        }
+      : {}),
+  },
+  eventType: 'state_transition',
+};
 ```
 
 **Step 4: Run test to verify it passes**
@@ -1746,6 +1806,7 @@ git commit -m "feat(core): wire risk scanning + mitigation rendering into SUBMIT
 ### Task 9: Wire Risk Flags into WO Creation
 
 **Files:**
+
 - Modify: `packages/core/src/work-order/wo-creator.ts`
 - Create: `packages/core/src/__tests__/risk/wo-risk-flags.test.ts`
 
@@ -1755,7 +1816,13 @@ git commit -m "feat(core): wire risk scanning + mitigation rendering into SUBMIT
 // packages/core/src/__tests__/risk/wo-risk-flags.test.ts
 import { describe, it, expect } from 'vitest';
 import { createWorkOrders } from '../../work-order/wo-creator.js';
-import { createSession, setRiskTriggers, setClassificationResults, setSplitIssues, setSessionScope } from '../../session/session.js';
+import {
+  createSession,
+  setRiskTriggers,
+  setClassificationResults,
+  setSplitIssues,
+  setSessionScope,
+} from '../../session/session.js';
 import type { MatchedTrigger } from '@wo-agent/schemas';
 
 describe('WO creation with risk flags', () => {
@@ -1764,7 +1831,12 @@ describe('WO creation with risk flags', () => {
     tenant_user_id: 'user-1',
     tenant_account_id: 'acct-1',
     authorized_unit_ids: ['unit-1'],
-    pinned_versions: { taxonomy_version: '1', schema_version: '1', model_id: 'm', prompt_version: '1' },
+    pinned_versions: {
+      taxonomy_version: '1',
+      schema_version: '1',
+      model_id: 'm',
+      prompt_version: '1',
+    },
   });
 
   function makeSession(withRisk: boolean) {
@@ -1773,24 +1845,37 @@ describe('WO creation with risk flags', () => {
     session = setSplitIssues(session, [
       { issue_id: 'iss-1', summary: 'Fire in kitchen', raw_excerpt: 'There is fire' },
     ]);
-    session = setClassificationResults(session, [{
-      issue_id: 'iss-1',
-      classifierOutput: { issue_id: 'iss-1', classification: {}, model_confidence: {}, missing_fields: [], needs_human_triage: false },
-      computedConfidence: {},
-      fieldsNeedingInput: [],
-    }]);
+    session = setClassificationResults(session, [
+      {
+        issue_id: 'iss-1',
+        classifierOutput: {
+          issue_id: 'iss-1',
+          classification: {},
+          model_confidence: {},
+          missing_fields: [],
+          needs_human_triage: false,
+        },
+        computedConfidence: {},
+        fieldsNeedingInput: [],
+      },
+    ]);
 
     if (withRisk) {
-      const triggers: MatchedTrigger[] = [{
-        trigger: {
-          trigger_id: 'fire-001', name: 'Fire',
-          grammar: { keyword_any: [], regex_any: [], taxonomy_path_any: [] },
-          requires_confirmation: true, severity: 'emergency', mitigation_template_id: 'mit-fire',
+      const triggers: MatchedTrigger[] = [
+        {
+          trigger: {
+            trigger_id: 'fire-001',
+            name: 'Fire',
+            grammar: { keyword_any: [], regex_any: [], taxonomy_path_any: [] },
+            requires_confirmation: true,
+            severity: 'emergency',
+            mitigation_template_id: 'mit-fire',
+          },
+          matched_keywords: ['fire'],
+          matched_regex: [],
+          matched_taxonomy_paths: [],
         },
-        matched_keywords: ['fire'],
-        matched_regex: [],
-        matched_taxonomy_paths: [],
-      }];
+      ];
       session = setRiskTriggers(session, triggers);
     }
 
@@ -1800,7 +1885,9 @@ describe('WO creation with risk flags', () => {
   it('populates risk_flags when risk triggers present', () => {
     const session = makeSession(true);
     const wos = createWorkOrders({
-      session, idGenerator: () => `id-${Math.random()}`, clock: () => '2026-03-03T00:00:00Z',
+      session,
+      idGenerator: () => `id-${Math.random()}`,
+      clock: () => '2026-03-03T00:00:00Z',
     });
 
     expect(wos).toHaveLength(1);
@@ -1813,7 +1900,9 @@ describe('WO creation with risk flags', () => {
   it('omits risk_flags when no risk triggers', () => {
     const session = makeSession(false);
     const wos = createWorkOrders({
-      session, idGenerator: () => `id-${Math.random()}`, clock: () => '2026-03-03T00:00:00Z',
+      session,
+      idGenerator: () => `id-${Math.random()}`,
+      clock: () => '2026-03-03T00:00:00Z',
     });
 
     expect(wos[0].risk_flags).toBeUndefined();
@@ -1862,6 +1951,7 @@ git commit -m "feat(core): populate risk_flags on WorkOrders from session risk t
 ### Task 10: Add Risk Data to Response Builder Snapshot
 
 **Files:**
+
 - Modify: `packages/schemas/src/types/orchestrator-action.ts` (ConversationSnapshot)
 - Modify: `packages/core/src/orchestrator/response-builder.ts`
 - Create: `packages/core/src/__tests__/risk/response-risk.test.ts`
@@ -1883,20 +1973,30 @@ describe('response builder risk data', () => {
     tenant_user_id: 'user-1',
     tenant_account_id: 'acct-1',
     authorized_unit_ids: ['unit-1'],
-    pinned_versions: { taxonomy_version: '1', schema_version: '1', model_id: 'm', prompt_version: '1' },
+    pinned_versions: {
+      taxonomy_version: '1',
+      schema_version: '1',
+      model_id: 'm',
+      prompt_version: '1',
+    },
   });
 
   it('includes risk_summary in snapshot when triggers present', () => {
-    const triggers: MatchedTrigger[] = [{
-      trigger: {
-        trigger_id: 'fire-001', name: 'Fire',
-        grammar: { keyword_any: [], regex_any: [], taxonomy_path_any: [] },
-        requires_confirmation: true, severity: 'emergency', mitigation_template_id: 'mit-fire',
+    const triggers: MatchedTrigger[] = [
+      {
+        trigger: {
+          trigger_id: 'fire-001',
+          name: 'Fire',
+          grammar: { keyword_any: [], regex_any: [], taxonomy_path_any: [] },
+          requires_confirmation: true,
+          severity: 'emergency',
+          mitigation_template_id: 'mit-fire',
+        },
+        matched_keywords: ['fire'],
+        matched_regex: [],
+        matched_taxonomy_paths: [],
       },
-      matched_keywords: ['fire'],
-      matched_regex: [],
-      matched_taxonomy_paths: [],
-    }];
+    ];
     let session = setRiskTriggers(baseSession, triggers);
     session = setEscalationState(session, 'pending_confirmation');
 
@@ -1910,7 +2010,9 @@ describe('response builder risk data', () => {
     expect(response.conversation_snapshot.risk_summary).toBeDefined();
     expect(response.conversation_snapshot.risk_summary!.has_emergency).toBe(true);
     expect(response.conversation_snapshot.risk_summary!.trigger_ids).toContain('fire-001');
-    expect(response.conversation_snapshot.risk_summary!.escalation_state).toBe('pending_confirmation');
+    expect(response.conversation_snapshot.risk_summary!.escalation_state).toBe(
+      'pending_confirmation',
+    );
   });
 
   it('omits risk_summary when no triggers', () => {
@@ -1983,6 +2085,7 @@ git commit -m "feat(core): include risk_summary in ConversationSnapshot when tri
 ### Task 11: Integration Tests — Full Risk + Emergency Flow
 
 **Files:**
+
 - Create: `packages/core/src/__tests__/risk/risk-integration.test.ts`
 
 **Step 1: Write the integration test**
@@ -2013,12 +2116,18 @@ describe('Risk + Emergency integration', () => {
       clock,
       issueSplitter: vi.fn().mockResolvedValue({
         issue_count: 1,
-        issues: [{ issue_id: 'iss-1', summary: 'Fire in kitchen', raw_excerpt: 'There is fire in my kitchen' }],
+        issues: [
+          {
+            issue_id: 'iss-1',
+            summary: 'Fire in kitchen',
+            raw_excerpt: 'There is fire in my kitchen',
+          },
+        ],
       }),
       issueClassifier: vi.fn().mockResolvedValue({
         issue_id: 'iss-1',
         classification: { maintenance_category: 'safety', maintenance_subcategory: 'fire' },
-        model_confidence: { maintenance_category: 0.95, maintenance_subcategory: 0.90 },
+        model_confidence: { maintenance_category: 0.95, maintenance_subcategory: 0.9 },
         missing_fields: [],
         needs_human_triage: false,
       }),
@@ -2026,7 +2135,11 @@ describe('Risk + Emergency integration', () => {
       cueDict: { version: '1.0.0', fields: {} },
       taxonomy: { version: '1.0.0', fields: { maintenance_category: { values: ['safety'] } } },
       unitResolver: {
-        resolve: vi.fn().mockResolvedValue({ property_id: 'prop-1', client_id: 'client-1', building_id: 'bldg-001' }),
+        resolve: vi.fn().mockResolvedValue({
+          property_id: 'prop-1',
+          client_id: 'client-1',
+          building_id: 'bldg-001',
+        }),
       },
       workOrderRepo: new InMemoryWorkOrderStore(),
       idempotencyStore: new InMemoryIdempotencyStore(),
@@ -2046,7 +2159,11 @@ describe('Risk + Emergency integration', () => {
       action_type: ActionType.CREATE_CONVERSATION,
       actor: ActorType.TENANT,
       tenant_input: {},
-      auth_context: { tenant_user_id: 'u1', tenant_account_id: 'a1', authorized_unit_ids: ['unit-1'] },
+      auth_context: {
+        tenant_user_id: 'u1',
+        tenant_account_id: 'a1',
+        authorized_unit_ids: ['unit-1'],
+      },
     });
     const convId = createResult.response.conversation_snapshot.conversation_id;
 
@@ -2056,7 +2173,11 @@ describe('Risk + Emergency integration', () => {
       action_type: ActionType.SELECT_UNIT,
       actor: ActorType.TENANT,
       tenant_input: { unit_id: 'unit-1' },
-      auth_context: { tenant_user_id: 'u1', tenant_account_id: 'a1', authorized_unit_ids: ['unit-1'] },
+      auth_context: {
+        tenant_user_id: 'u1',
+        tenant_account_id: 'a1',
+        authorized_unit_ids: ['unit-1'],
+      },
     });
 
     // 3. Submit message with emergency keyword
@@ -2065,12 +2186,16 @@ describe('Risk + Emergency integration', () => {
       action_type: ActionType.SUBMIT_INITIAL_MESSAGE,
       actor: ActorType.TENANT,
       tenant_input: { message: 'There is fire in my kitchen and smoke everywhere' },
-      auth_context: { tenant_user_id: 'u1', tenant_account_id: 'a1', authorized_unit_ids: ['unit-1'] },
+      auth_context: {
+        tenant_user_id: 'u1',
+        tenant_account_id: 'a1',
+        authorized_unit_ids: ['unit-1'],
+      },
     });
 
     // Risk mitigation should be in UI messages
     const messages = submitResult.response.ui_directive.messages ?? [];
-    const allContent = messages.map(m => m.content).join(' ');
+    const allContent = messages.map((m) => m.content).join(' ');
     expect(allContent).toContain('Fire Safety');
     expect(allContent).toContain('911');
 
@@ -2083,7 +2208,9 @@ describe('Risk + Emergency integration', () => {
     const deps = makeDeps();
     deps.issueSplitter.mockResolvedValue({
       issue_count: 1,
-      issues: [{ issue_id: 'iss-1', summary: 'Leaky faucet', raw_excerpt: 'My faucet is dripping' }],
+      issues: [
+        { issue_id: 'iss-1', summary: 'Leaky faucet', raw_excerpt: 'My faucet is dripping' },
+      ],
     });
     const dispatch = createDispatcher(deps);
 
@@ -2092,7 +2219,11 @@ describe('Risk + Emergency integration', () => {
       action_type: ActionType.CREATE_CONVERSATION,
       actor: ActorType.TENANT,
       tenant_input: {},
-      auth_context: { tenant_user_id: 'u1', tenant_account_id: 'a1', authorized_unit_ids: ['unit-1'] },
+      auth_context: {
+        tenant_user_id: 'u1',
+        tenant_account_id: 'a1',
+        authorized_unit_ids: ['unit-1'],
+      },
     });
     const convId = createResult.response.conversation_snapshot.conversation_id;
 
@@ -2101,7 +2232,11 @@ describe('Risk + Emergency integration', () => {
       action_type: ActionType.SELECT_UNIT,
       actor: ActorType.TENANT,
       tenant_input: { unit_id: 'unit-1' },
-      auth_context: { tenant_user_id: 'u1', tenant_account_id: 'a1', authorized_unit_ids: ['unit-1'] },
+      auth_context: {
+        tenant_user_id: 'u1',
+        tenant_account_id: 'a1',
+        authorized_unit_ids: ['unit-1'],
+      },
     });
 
     const submitResult = await dispatch({
@@ -2109,7 +2244,11 @@ describe('Risk + Emergency integration', () => {
       action_type: ActionType.SUBMIT_INITIAL_MESSAGE,
       actor: ActorType.TENANT,
       tenant_input: { message: 'My faucet is dripping' },
-      auth_context: { tenant_user_id: 'u1', tenant_account_id: 'a1', authorized_unit_ids: ['unit-1'] },
+      auth_context: {
+        tenant_user_id: 'u1',
+        tenant_account_id: 'a1',
+        authorized_unit_ids: ['unit-1'],
+      },
     });
 
     expect(submitResult.response.conversation_snapshot.risk_summary).toBeUndefined();
@@ -2125,7 +2264,11 @@ describe('Risk + Emergency integration', () => {
       action_type: ActionType.CREATE_CONVERSATION,
       actor: ActorType.TENANT,
       tenant_input: {},
-      auth_context: { tenant_user_id: 'u1', tenant_account_id: 'a1', authorized_unit_ids: ['unit-1'] },
+      auth_context: {
+        tenant_user_id: 'u1',
+        tenant_account_id: 'a1',
+        authorized_unit_ids: ['unit-1'],
+      },
     });
     const convId = createResult.response.conversation_snapshot.conversation_id;
 
@@ -2134,7 +2277,11 @@ describe('Risk + Emergency integration', () => {
       action_type: ActionType.SELECT_UNIT,
       actor: ActorType.TENANT,
       tenant_input: { unit_id: 'unit-1' },
-      auth_context: { tenant_user_id: 'u1', tenant_account_id: 'a1', authorized_unit_ids: ['unit-1'] },
+      auth_context: {
+        tenant_user_id: 'u1',
+        tenant_account_id: 'a1',
+        authorized_unit_ids: ['unit-1'],
+      },
     });
 
     await dispatch({
@@ -2142,7 +2289,11 @@ describe('Risk + Emergency integration', () => {
       action_type: ActionType.SUBMIT_INITIAL_MESSAGE,
       actor: ActorType.TENANT,
       tenant_input: { message: 'Gas leak in my apartment, I smell gas' },
-      auth_context: { tenant_user_id: 'u1', tenant_account_id: 'a1', authorized_unit_ids: ['unit-1'] },
+      auth_context: {
+        tenant_user_id: 'u1',
+        tenant_account_id: 'a1',
+        authorized_unit_ids: ['unit-1'],
+      },
     });
 
     await dispatch({
@@ -2150,7 +2301,11 @@ describe('Risk + Emergency integration', () => {
       action_type: ActionType.CONFIRM_SPLIT,
       actor: ActorType.TENANT,
       tenant_input: {},
-      auth_context: { tenant_user_id: 'u1', tenant_account_id: 'a1', authorized_unit_ids: ['unit-1'] },
+      auth_context: {
+        tenant_user_id: 'u1',
+        tenant_account_id: 'a1',
+        authorized_unit_ids: ['unit-1'],
+      },
     });
 
     // After classification + confirmation, submit
@@ -2160,7 +2315,11 @@ describe('Risk + Emergency integration', () => {
       actor: ActorType.TENANT,
       tenant_input: {},
       idempotency_key: 'idem-1',
-      auth_context: { tenant_user_id: 'u1', tenant_account_id: 'a1', authorized_unit_ids: ['unit-1'] },
+      auth_context: {
+        tenant_user_id: 'u1',
+        tenant_account_id: 'a1',
+        authorized_unit_ids: ['unit-1'],
+      },
     });
 
     // Check WOs in store have risk_flags
@@ -2180,8 +2339,11 @@ function createInMemorySessionStore() {
   const store = new Map<string, any>();
   return {
     get: async (id: string) => store.get(id) ?? null,
-    getByTenantUser: async (userId: string) => [...store.values()].filter(s => s.tenant_user_id === userId),
-    save: async (session: any) => { store.set(session.conversation_id, session); },
+    getByTenantUser: async (userId: string) =>
+      [...store.values()].filter((s) => s.tenant_user_id === userId),
+    save: async (session: any) => {
+      store.set(session.conversation_id, session);
+    },
   };
 }
 ```
@@ -2205,6 +2367,7 @@ git commit -m "test(core): integration tests — risk scanning, mitigation displ
 ### Task 12: TypeScript Cleanup + Full Validation Pass
 
 **Files:**
+
 - Potentially modify: any files with type errors
 
 **Step 1: Run TypeScript check**

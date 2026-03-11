@@ -19,7 +19,8 @@ export class InMemoryEventStore implements EventRepository {
 
   async query(filters: EventQuery): Promise<readonly ConversationEvent[]> {
     let results = this.events.filter(
-      (e): e is ConversationEvent => e.conversation_id === filters.conversation_id && 'event_type' in e,
+      (e): e is ConversationEvent =>
+        e.conversation_id === filters.conversation_id && 'event_type' in e,
     );
 
     if (filters.event_type) {

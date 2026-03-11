@@ -26,7 +26,7 @@ export function buildRiskDetectedEvent(input: RiskDetectedInput): RiskEvent {
     conversation_id: input.conversationId,
     event_type: 'risk_detected',
     payload: {
-      triggers_matched: input.triggersMatched.map(t => ({
+      triggers_matched: input.triggersMatched.map((t) => ({
         trigger_id: t.trigger.trigger_id,
         name: t.trigger.name,
         severity: t.trigger.severity,

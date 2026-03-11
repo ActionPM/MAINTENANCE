@@ -86,7 +86,9 @@ describe('useConversation', () => {
 
   it('sets loading status during API call', async () => {
     let resolve: (v: any) => void;
-    const pending = new Promise((r) => { resolve = r; });
+    const pending = new Promise((r) => {
+      resolve = r;
+    });
     vi.mocked(api.createConversation).mockReturnValueOnce(pending as any);
 
     const { result } = renderHook(() => useConversation('token'));

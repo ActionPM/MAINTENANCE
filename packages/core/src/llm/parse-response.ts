@@ -39,9 +39,18 @@ export function extractJsonFromResponse(text: string): unknown {
     let escape = false;
     for (let i = firstBrace; i < trimmed.length; i++) {
       const ch = trimmed[i];
-      if (escape) { escape = false; continue; }
-      if (ch === '\\' && inString) { escape = true; continue; }
-      if (ch === '"') { inString = !inString; continue; }
+      if (escape) {
+        escape = false;
+        continue;
+      }
+      if (ch === '\\' && inString) {
+        escape = true;
+        continue;
+      }
+      if (ch === '"') {
+        inString = !inString;
+        continue;
+      }
       if (inString) continue;
       if (ch === '{') depth++;
       if (ch === '}') {

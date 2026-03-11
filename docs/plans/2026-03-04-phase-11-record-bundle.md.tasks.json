@@ -1,16 +1,55 @@
 {
   "planPath": "docs/plans/2026-03-04-phase-11-record-bundle.md",
   "tasks": [
-    { "id": 0, "subject": "Task 0: Add conversation_id to WorkOrder schema and type", "status": "completed" },
-    { "id": 1, "subject": "Task 1: Create RecordBundle JSON schema", "status": "completed", "blockedBy": [0] },
-    { "id": 2, "subject": "Task 2: Create RecordBundle TypeScript type and validator", "status": "completed", "blockedBy": [1] },
+    {
+      "id": 0,
+      "subject": "Task 0: Add conversation_id to WorkOrder schema and type",
+      "status": "completed"
+    },
+    {
+      "id": 1,
+      "subject": "Task 1: Create RecordBundle JSON schema",
+      "status": "completed",
+      "blockedBy": [0]
+    },
+    {
+      "id": 2,
+      "subject": "Task 2: Create RecordBundle TypeScript type and validator",
+      "status": "completed",
+      "blockedBy": [1]
+    },
     { "id": 3, "subject": "Task 3: Implement SLA calculator", "status": "completed" },
-    { "id": 4, "subject": "Task 4: Implement RecordBundleAssembler", "status": "completed", "blockedBy": [0, 2, 3] },
+    {
+      "id": 4,
+      "subject": "Task 4: Implement RecordBundleAssembler",
+      "status": "completed",
+      "blockedBy": [0, 2, 3]
+    },
     { "id": 5, "subject": "Task 5: Expose repos from orchestrator factory", "status": "completed" },
-    { "id": 6, "subject": "Task 6: Create API route GET /work-orders/:id/record-bundle", "status": "completed", "blockedBy": [4, 5] },
-    { "id": 7, "subject": "Task 7: E2E integration test — full flow through assembler", "status": "completed", "blockedBy": [4] },
-    { "id": 8, "subject": "Task 8: Run full test suite and TypeScript checks", "status": "completed", "blockedBy": [6, 7] },
-    { "id": 9, "subject": "Task 9: Validate schema output with validateRecordBundle", "status": "completed", "blockedBy": [4] }
+    {
+      "id": 6,
+      "subject": "Task 6: Create API route GET /work-orders/:id/record-bundle",
+      "status": "completed",
+      "blockedBy": [4, 5]
+    },
+    {
+      "id": 7,
+      "subject": "Task 7: E2E integration test — full flow through assembler",
+      "status": "completed",
+      "blockedBy": [4]
+    },
+    {
+      "id": 8,
+      "subject": "Task 8: Run full test suite and TypeScript checks",
+      "status": "completed",
+      "blockedBy": [6, 7]
+    },
+    {
+      "id": 9,
+      "subject": "Task 9: Validate schema output with validateRecordBundle",
+      "status": "completed",
+      "blockedBy": [4]
+    }
   ],
   "lastUpdated": "2026-03-04T14:34:00.000Z"
 }

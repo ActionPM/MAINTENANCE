@@ -37,7 +37,12 @@ describe('PostgresSessionStore', () => {
       state: 'awaiting_initial_message',
       unit_id: null,
       authorized_unit_ids: ['u-1'],
-      pinned_versions: { taxonomy_version: '1.0', schema_version: '1.0', model_id: 'm1', prompt_version: '1.0' },
+      pinned_versions: {
+        taxonomy_version: '1.0',
+        schema_version: '1.0',
+        model_id: 'm1',
+        prompt_version: '1.0',
+      },
       split_issues: null,
       classification_results: null,
       prior_state_before_error: null,
@@ -60,7 +65,7 @@ describe('PostgresSessionStore', () => {
     };
 
     await store.save(session as never);
-    const query = pool.queries.find(q => q.text.includes('INSERT'));
+    const query = pool.queries.find((q) => q.text.includes('INSERT'));
     expect(query).toBeDefined();
     expect(query!.text).toContain('ON CONFLICT');
   });
@@ -68,7 +73,7 @@ describe('PostgresSessionStore', () => {
   it('getByTenantUser() filters by tenant_user_id', async () => {
     pool.nextRows = [];
     await store.getByTenantUser('tu-1');
-    const query = pool.queries.find(q => q.text.includes('tenant_user_id'));
+    const query = pool.queries.find((q) => q.text.includes('tenant_user_id'));
     expect(query).toBeDefined();
   });
 });

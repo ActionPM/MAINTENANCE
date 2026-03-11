@@ -9,6 +9,7 @@
 **Tech Stack:** TypeScript, Vitest, pnpm workspaces, append-only events (spec §7)
 
 **Prerequisite skills:**
+
 - @append-only-events — all ERP sync events are INSERT-only
 - @schema-first-development — ERPAdapter interface is the contract
 - @test-driven-development — TDD throughout
@@ -19,6 +20,7 @@
 ### Task 0: ERPAdapter Interface + Types (Core)
 
 **Files:**
+
 - Create: `packages/core/src/erp/types.ts`
 - Test: `packages/core/src/__tests__/erp/erp-types.test.ts`
 
@@ -179,6 +181,7 @@ git commit -m "feat(core): add ERPAdapter interface and types (phase 12)"
 ### Task 1: WorkOrder Status Update + Optimistic Locking (Core)
 
 **Files:**
+
 - Modify: `packages/core/src/work-order/types.ts` (add `updateStatus` to interface)
 - Modify: `packages/core/src/work-order/in-memory-wo-store.ts` (implement `updateStatus`)
 - Modify: `packages/core/src/work-order/event-builder.ts` (add `buildWorkOrderStatusChangedEvent`)
@@ -207,7 +210,13 @@ function makeWorkOrder(overrides: Partial<WorkOrder> = {}): WorkOrder {
     tenant_user_id: 'user-1',
     tenant_account_id: 'acct-1',
     status: WorkOrderStatus.CREATED,
-    status_history: [{ status: WorkOrderStatus.CREATED, changed_at: '2026-03-04T00:00:00Z', actor: ActorType.SYSTEM }],
+    status_history: [
+      {
+        status: WorkOrderStatus.CREATED,
+        changed_at: '2026-03-04T00:00:00Z',
+        actor: ActorType.SYSTEM,
+      },
+    ],
     raw_text: 'Leaking faucet',
     summary_confirmed: 'Leaking faucet in kitchen',
     photos: [],
@@ -216,7 +225,12 @@ function makeWorkOrder(overrides: Partial<WorkOrder> = {}): WorkOrder {
     missing_fields: [],
     pets_present: 'unknown',
     needs_human_triage: false,
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'test', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'test',
+      prompt_version: '1.0.0',
+    },
     created_at: '2026-03-04T00:00:00Z',
     updated_at: '2026-03-04T00:00:00Z',
     row_version: 1,
@@ -259,20 +273,38 @@ describe('WorkOrder status update (Phase 12)', () => {
     await store.insertBatch([wo]);
 
     await expect(
-      store.updateStatus('wo-1', WorkOrderStatus.ACTION_REQUIRED, ActorType.SYSTEM, '2026-03-04T01:00:00Z', 999),
+      store.updateStatus(
+        'wo-1',
+        WorkOrderStatus.ACTION_REQUIRED,
+        ActorType.SYSTEM,
+        '2026-03-04T01:00:00Z',
+        999,
+      ),
     ).rejects.toThrow('Version mismatch');
   });
 
   it('rejects on unknown work_order_id', async () => {
     await expect(
-      store.updateStatus('nonexistent', WorkOrderStatus.ACTION_REQUIRED, ActorType.SYSTEM, '2026-03-04T01:00:00Z', 1),
+      store.updateStatus(
+        'nonexistent',
+        WorkOrderStatus.ACTION_REQUIRED,
+        ActorType.SYSTEM,
+        '2026-03-04T01:00:00Z',
+        1,
+      ),
     ).rejects.toThrow('not found');
   });
 
   it('persists update for subsequent getById', async () => {
     const wo = makeWorkOrder();
     await store.insertBatch([wo]);
-    await store.updateStatus('wo-1', WorkOrderStatus.ACTION_REQUIRED, ActorType.SYSTEM, '2026-03-04T01:00:00Z', 1);
+    await store.updateStatus(
+      'wo-1',
+      WorkOrderStatus.ACTION_REQUIRED,
+      ActorType.SYSTEM,
+      '2026-03-04T01:00:00Z',
+      1,
+    );
 
     const fetched = await store.getById('wo-1');
     expect(fetched?.status).toBe('action_required');
@@ -450,6 +482,7 @@ git commit -m "feat(core): add WO status update with optimistic locking (phase 1
 ### Task 2: ERP Event Builder (Core)
 
 **Files:**
+
 - Create: `packages/core/src/erp/event-builder.ts`
 - Test: `packages/core/src/__tests__/erp/erp-event-builder.test.ts`
 
@@ -616,6 +649,7 @@ git commit -m "feat(core): add ERP event builders (phase 12)"
 ### Task 3: Core ERP Barrel + Main Barrel Update
 
 **Files:**
+
 - Create: `packages/core/src/erp/index.ts`
 - Modify: `packages/core/src/index.ts`
 - Test: `packages/core/src/__tests__/erp/erp-barrel.test.ts`
@@ -677,11 +711,7 @@ export type {
   ERPHealthResult,
   ERPSyncEvent,
 } from './erp/index.js';
-export {
-  buildERPCreateEvent,
-  buildERPStatusPollEvent,
-  buildERPSyncEvent,
-} from './erp/index.js';
+export { buildERPCreateEvent, buildERPStatusPollEvent, buildERPSyncEvent } from './erp/index.js';
 export type {
   ERPCreateEventInput,
   ERPStatusPollEventInput,
@@ -718,6 +748,7 @@ git commit -m "feat(core): add ERP barrel exports (phase 12)"
 ### Task 4: Mock Adapter Package Scaffolding
 
 **Files:**
+
 - Create: `packages/adapters/mock/package.json`
 - Create: `packages/adapters/mock/tsconfig.json`
 - Create: `packages/adapters/mock/vitest.config.ts`
@@ -818,6 +849,7 @@ git commit -m "chore: scaffold @wo-agent/mock-erp adapter package (phase 12)"
 ### Task 5: MockERPAdapter Implementation
 
 **Files:**
+
 - Create: `packages/adapters/mock/src/mock-erp-adapter.ts`
 - Modify: `packages/adapters/mock/src/index.ts`
 - Test: `packages/adapters/mock/src/__tests__/mock-erp-adapter.test.ts`
@@ -843,7 +875,13 @@ function makeWorkOrder(id: string = 'wo-1'): WorkOrder {
     tenant_user_id: 'user-1',
     tenant_account_id: 'acct-1',
     status: WorkOrderStatus.CREATED,
-    status_history: [{ status: WorkOrderStatus.CREATED, changed_at: '2026-03-04T00:00:00Z', actor: ActorType.SYSTEM }],
+    status_history: [
+      {
+        status: WorkOrderStatus.CREATED,
+        changed_at: '2026-03-04T00:00:00Z',
+        actor: ActorType.SYSTEM,
+      },
+    ],
     raw_text: 'Leaking faucet',
     summary_confirmed: 'Leaking faucet in kitchen',
     photos: [],
@@ -852,7 +890,12 @@ function makeWorkOrder(id: string = 'wo-1'): WorkOrder {
     missing_fields: [],
     pets_present: 'unknown',
     needs_human_triage: false,
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'test', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'test',
+      prompt_version: '1.0.0',
+    },
     created_at: '2026-03-04T00:00:00Z',
     updated_at: '2026-03-04T00:00:00Z',
     row_version: 1,
@@ -1120,9 +1163,7 @@ export class MockERPAdapter implements ERPAdapter {
 
     this.calls.syncUpdates.push({ since });
     const sinceTime = new Date(since).getTime();
-    return this.statusChanges.filter(
-      (change) => new Date(change.updated_at).getTime() > sinceTime,
-    );
+    return this.statusChanges.filter((change) => new Date(change.updated_at).getTime() > sinceTime);
   }
 
   async healthCheck(): Promise<ERPHealthResult> {
@@ -1197,6 +1238,7 @@ git commit -m "feat(mock-erp): implement MockERPAdapter with status simulation (
 ### Task 6: ERP Sync Service (Core)
 
 **Files:**
+
 - Create: `packages/core/src/erp/erp-sync-service.ts`
 - Modify: `packages/core/src/erp/index.ts` (export sync service)
 - Modify: `packages/core/src/index.ts` (export sync service)
@@ -1225,7 +1267,13 @@ function makeWorkOrder(id: string = 'wo-1'): WorkOrder {
     tenant_user_id: 'user-1',
     tenant_account_id: 'acct-1',
     status: WorkOrderStatus.CREATED,
-    status_history: [{ status: WorkOrderStatus.CREATED, changed_at: '2026-03-04T00:00:00Z', actor: ActorType.SYSTEM }],
+    status_history: [
+      {
+        status: WorkOrderStatus.CREATED,
+        changed_at: '2026-03-04T00:00:00Z',
+        actor: ActorType.SYSTEM,
+      },
+    ],
     raw_text: 'Leaking faucet',
     summary_confirmed: 'Leaking faucet in kitchen',
     photos: [],
@@ -1234,7 +1282,12 @@ function makeWorkOrder(id: string = 'wo-1'): WorkOrder {
     missing_fields: [],
     pets_present: 'unknown',
     needs_human_triage: false,
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'test', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'test',
+      prompt_version: '1.0.0',
+    },
     created_at: '2026-03-04T00:00:00Z',
     updated_at: '2026-03-04T00:00:00Z',
     row_version: 1,
@@ -1244,7 +1297,11 @@ function makeWorkOrder(id: string = 'wo-1'): WorkOrder {
 function makeFakeAdapter(updates: ERPStatusUpdate[]): ERPAdapter {
   return {
     createWorkOrder: async () => ({ ext_id: 'EXT-1' }),
-    getWorkOrderStatus: async () => ({ ext_id: 'EXT-1', status: 'created' as WorkOrderStatus, updated_at: '2026-03-04T00:00:00Z' }),
+    getWorkOrderStatus: async () => ({
+      ext_id: 'EXT-1',
+      status: 'created' as WorkOrderStatus,
+      updated_at: '2026-03-04T00:00:00Z',
+    }),
     syncUpdates: async () => updates,
     healthCheck: async () => ({ healthy: true }),
   };
@@ -1265,16 +1322,23 @@ describe('ERPSyncService (Phase 12)', () => {
     const wo = makeWorkOrder();
     await woStore.insertBatch([wo]);
 
-    const updates: ERPStatusUpdate[] = [{
-      ext_id: 'EXT-1',
-      work_order_id: 'wo-1',
-      previous_status: WorkOrderStatus.CREATED,
-      new_status: WorkOrderStatus.ACTION_REQUIRED,
-      updated_at: '2026-03-04T01:00:00Z',
-    }];
+    const updates: ERPStatusUpdate[] = [
+      {
+        ext_id: 'EXT-1',
+        work_order_id: 'wo-1',
+        previous_status: WorkOrderStatus.CREATED,
+        new_status: WorkOrderStatus.ACTION_REQUIRED,
+        updated_at: '2026-03-04T01:00:00Z',
+      },
+    ];
 
     const adapter = makeFakeAdapter(updates);
-    const service = new ERPSyncService({ erpAdapter: adapter, workOrderRepo: woStore, idGenerator: idGen, clock });
+    const service = new ERPSyncService({
+      erpAdapter: adapter,
+      workOrderRepo: woStore,
+      idGenerator: idGen,
+      clock,
+    });
 
     const result = await service.sync('2026-03-04T00:00:00Z');
 
@@ -1288,23 +1352,35 @@ describe('ERPSyncService (Phase 12)', () => {
 
   it('returns zero applied when no updates exist', async () => {
     const adapter = makeFakeAdapter([]);
-    const service = new ERPSyncService({ erpAdapter: adapter, workOrderRepo: woStore, idGenerator: idGen, clock });
+    const service = new ERPSyncService({
+      erpAdapter: adapter,
+      workOrderRepo: woStore,
+      idGenerator: idGen,
+      clock,
+    });
 
     const result = await service.sync('2026-03-04T00:00:00Z');
     expect(result.applied).toBe(0);
   });
 
   it('skips updates for unknown work_order_ids without crashing', async () => {
-    const updates: ERPStatusUpdate[] = [{
-      ext_id: 'EXT-999',
-      work_order_id: 'nonexistent',
-      previous_status: WorkOrderStatus.CREATED,
-      new_status: WorkOrderStatus.ACTION_REQUIRED,
-      updated_at: '2026-03-04T01:00:00Z',
-    }];
+    const updates: ERPStatusUpdate[] = [
+      {
+        ext_id: 'EXT-999',
+        work_order_id: 'nonexistent',
+        previous_status: WorkOrderStatus.CREATED,
+        new_status: WorkOrderStatus.ACTION_REQUIRED,
+        updated_at: '2026-03-04T01:00:00Z',
+      },
+    ];
 
     const adapter = makeFakeAdapter(updates);
-    const service = new ERPSyncService({ erpAdapter: adapter, workOrderRepo: woStore, idGenerator: idGen, clock });
+    const service = new ERPSyncService({
+      erpAdapter: adapter,
+      workOrderRepo: woStore,
+      idGenerator: idGen,
+      clock,
+    });
 
     const result = await service.sync('2026-03-04T00:00:00Z');
     expect(result.applied).toBe(0);
@@ -1316,18 +1392,31 @@ describe('ERPSyncService (Phase 12)', () => {
     const wo = makeWorkOrder();
     await woStore.insertBatch([wo]);
     // Pre-advance to version 2 to cause mismatch
-    await woStore.updateStatus('wo-1', WorkOrderStatus.ACTION_REQUIRED, ActorType.SYSTEM, '2026-03-04T00:30:00Z', 1);
+    await woStore.updateStatus(
+      'wo-1',
+      WorkOrderStatus.ACTION_REQUIRED,
+      ActorType.SYSTEM,
+      '2026-03-04T00:30:00Z',
+      1,
+    );
 
-    const updates: ERPStatusUpdate[] = [{
-      ext_id: 'EXT-1',
-      work_order_id: 'wo-1',
-      previous_status: WorkOrderStatus.CREATED,
-      new_status: WorkOrderStatus.ACTION_REQUIRED,
-      updated_at: '2026-03-04T01:00:00Z',
-    }];
+    const updates: ERPStatusUpdate[] = [
+      {
+        ext_id: 'EXT-1',
+        work_order_id: 'wo-1',
+        previous_status: WorkOrderStatus.CREATED,
+        new_status: WorkOrderStatus.ACTION_REQUIRED,
+        updated_at: '2026-03-04T01:00:00Z',
+      },
+    ];
 
     const adapter = makeFakeAdapter(updates);
-    const service = new ERPSyncService({ erpAdapter: adapter, workOrderRepo: woStore, idGenerator: idGen, clock });
+    const service = new ERPSyncService({
+      erpAdapter: adapter,
+      workOrderRepo: woStore,
+      idGenerator: idGen,
+      clock,
+    });
 
     // Should not throw — just count as failed
     const result = await service.sync('2026-03-04T00:00:00Z');
@@ -1338,16 +1427,23 @@ describe('ERPSyncService (Phase 12)', () => {
     const wo = makeWorkOrder();
     await woStore.insertBatch([wo]);
 
-    const updates: ERPStatusUpdate[] = [{
-      ext_id: 'EXT-1',
-      work_order_id: 'wo-1',
-      previous_status: WorkOrderStatus.CREATED,
-      new_status: WorkOrderStatus.ACTION_REQUIRED,
-      updated_at: '2026-03-04T01:00:00Z',
-    }];
+    const updates: ERPStatusUpdate[] = [
+      {
+        ext_id: 'EXT-1',
+        work_order_id: 'wo-1',
+        previous_status: WorkOrderStatus.CREATED,
+        new_status: WorkOrderStatus.ACTION_REQUIRED,
+        updated_at: '2026-03-04T01:00:00Z',
+      },
+    ];
 
     const adapter = makeFakeAdapter(updates);
-    const service = new ERPSyncService({ erpAdapter: adapter, workOrderRepo: woStore, idGenerator: idGen, clock });
+    const service = new ERPSyncService({
+      erpAdapter: adapter,
+      workOrderRepo: woStore,
+      idGenerator: idGen,
+      clock,
+    });
 
     const result = await service.sync('2026-03-04T00:00:00Z');
     expect(result.events).toHaveLength(1);
@@ -1416,7 +1512,11 @@ export class ERPSyncService {
       try {
         const wo = await workOrderRepo.getById(update.work_order_id);
         if (!wo) {
-          errors.push({ work_order_id: update.work_order_id, ext_id: update.ext_id, reason: 'Work order not found' });
+          errors.push({
+            work_order_id: update.work_order_id,
+            ext_id: update.ext_id,
+            reason: 'Work order not found',
+          });
           failed++;
           continue;
         }
@@ -1491,6 +1591,7 @@ git commit -m "feat(core): add ERP sync service (phase 12)"
 ### Task 7: Web Integration — Wiring + Endpoints
 
 **Files:**
+
 - Modify: `apps/web/src/lib/orchestrator-factory.ts` (wire MockERPAdapter + ERPSyncService)
 - Create: `apps/web/src/app/api/health/erp/route.ts`
 - Create: `apps/web/src/app/api/erp/test/advance-status/route.ts`
@@ -1520,25 +1621,25 @@ let _deps: {
 Inside `ensureInitialized()`, after `notificationService` construction, add:
 
 ```typescript
-    const erpAdapter = new MockERPAdapter();
-    const erpSyncService = new ERPSyncService({
-      erpAdapter,
-      workOrderRepo,
-      idGenerator,
-      clock,
-    });
+const erpAdapter = new MockERPAdapter();
+const erpSyncService = new ERPSyncService({
+  erpAdapter,
+  workOrderRepo,
+  idGenerator,
+  clock,
+});
 ```
 
 Update the `_deps` assignment to include:
 
 ```typescript
-    _deps = {
-      workOrderRepo,
-      notificationRepo,
-      dispatcher: createDispatcher(deps),
-      erpAdapter,
-      erpSyncService,
-    };
+_deps = {
+  workOrderRepo,
+  notificationRepo,
+  dispatcher: createDispatcher(deps),
+  erpAdapter,
+  erpSyncService,
+};
 ```
 
 Add getter functions at the bottom:
@@ -1588,7 +1689,7 @@ import { getERPAdapter, getERPSyncService } from '../../../../../lib/orchestrato
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json() as { work_order_id?: string };
+    const body = (await request.json()) as { work_order_id?: string };
     if (!body.work_order_id) {
       return NextResponse.json({ error: 'work_order_id is required' }, { status: 400 });
     }
@@ -1641,6 +1742,7 @@ git commit -m "feat(web): wire MockERPAdapter + health + test advance endpoint (
 ### Task 8: Integration Test — Full ERP Flow
 
 **Files:**
+
 - Test: `packages/core/src/__tests__/erp/erp-integration.test.ts`
 
 **Step 1: Write the integration test**
@@ -1677,7 +1779,13 @@ function makeWorkOrder(id: string): WorkOrder {
     tenant_user_id: 'user-1',
     tenant_account_id: 'acct-1',
     status: WorkOrderStatus.CREATED,
-    status_history: [{ status: WorkOrderStatus.CREATED, changed_at: '2026-03-04T00:00:00Z', actor: ActorType.SYSTEM }],
+    status_history: [
+      {
+        status: WorkOrderStatus.CREATED,
+        changed_at: '2026-03-04T00:00:00Z',
+        actor: ActorType.SYSTEM,
+      },
+    ],
     raw_text: 'Test issue',
     summary_confirmed: 'Test issue summary',
     photos: [],
@@ -1686,7 +1794,12 @@ function makeWorkOrder(id: string): WorkOrder {
     missing_fields: [],
     pets_present: 'unknown',
     needs_human_triage: false,
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'test', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'test',
+      prompt_version: '1.0.0',
+    },
     created_at: '2026-03-04T00:00:00Z',
     updated_at: '2026-03-04T00:00:00Z',
     row_version: 1,
@@ -1712,11 +1825,22 @@ describe('ERP integration (Phase 12)', () => {
 
     // 2. Simulate ERP registration (inline mock adapter)
     const erpRecords = new Map<string, ERPRecord>();
-    const statusChanges: Array<{ ext_id: string; work_order_id: string; previous_status: WorkOrderStatus; new_status: WorkOrderStatus; updated_at: string }> = [];
+    const statusChanges: Array<{
+      ext_id: string;
+      work_order_id: string;
+      previous_status: WorkOrderStatus;
+      new_status: WorkOrderStatus;
+      updated_at: string;
+    }> = [];
 
     const registerWithERP = (wo: WorkOrder): string => {
       const extId = `EXT-${wo.work_order_id}`;
-      erpRecords.set(extId, { ext_id: extId, work_order_id: wo.work_order_id, status: wo.status, updated_at: wo.created_at });
+      erpRecords.set(extId, {
+        ext_id: extId,
+        work_order_id: wo.work_order_id,
+        status: wo.status,
+        updated_at: wo.created_at,
+      });
       return extId;
     };
 
@@ -1740,7 +1864,11 @@ describe('ERP integration (Phase 12)', () => {
     // 4. Run sync service
     const fakeAdapter = {
       createWorkOrder: async () => ({ ext_id: 'unused' }),
-      getWorkOrderStatus: async () => ({ ext_id: 'unused', status: 'created' as WorkOrderStatus, updated_at: '' }),
+      getWorkOrderStatus: async () => ({
+        ext_id: 'unused',
+        status: 'created' as WorkOrderStatus,
+        updated_at: '',
+      }),
       syncUpdates: async () => statusChanges,
       healthCheck: async () => ({ healthy: true }),
     };
@@ -1791,14 +1919,36 @@ describe('ERP integration (Phase 12)', () => {
     await woStore.insertBatch([wo]);
 
     const updates = [
-      { ext_id: 'EXT-seq', work_order_id: 'wo-seq', previous_status: WorkOrderStatus.CREATED, new_status: WorkOrderStatus.ACTION_REQUIRED, updated_at: '2026-03-04T01:00:00Z' },
-      { ext_id: 'EXT-seq', work_order_id: 'wo-seq', previous_status: WorkOrderStatus.ACTION_REQUIRED, new_status: WorkOrderStatus.SCHEDULED, updated_at: '2026-03-04T02:00:00Z' },
-      { ext_id: 'EXT-seq', work_order_id: 'wo-seq', previous_status: WorkOrderStatus.SCHEDULED, new_status: WorkOrderStatus.RESOLVED, updated_at: '2026-03-04T03:00:00Z' },
+      {
+        ext_id: 'EXT-seq',
+        work_order_id: 'wo-seq',
+        previous_status: WorkOrderStatus.CREATED,
+        new_status: WorkOrderStatus.ACTION_REQUIRED,
+        updated_at: '2026-03-04T01:00:00Z',
+      },
+      {
+        ext_id: 'EXT-seq',
+        work_order_id: 'wo-seq',
+        previous_status: WorkOrderStatus.ACTION_REQUIRED,
+        new_status: WorkOrderStatus.SCHEDULED,
+        updated_at: '2026-03-04T02:00:00Z',
+      },
+      {
+        ext_id: 'EXT-seq',
+        work_order_id: 'wo-seq',
+        previous_status: WorkOrderStatus.SCHEDULED,
+        new_status: WorkOrderStatus.RESOLVED,
+        updated_at: '2026-03-04T03:00:00Z',
+      },
     ];
 
     const fakeAdapter = {
       createWorkOrder: async () => ({ ext_id: 'unused' }),
-      getWorkOrderStatus: async () => ({ ext_id: 'unused', status: 'created' as WorkOrderStatus, updated_at: '' }),
+      getWorkOrderStatus: async () => ({
+        ext_id: 'unused',
+        status: 'created' as WorkOrderStatus,
+        updated_at: '',
+      }),
       syncUpdates: async () => updates,
       healthCheck: async () => ({ healthy: true }),
     };
@@ -1844,17 +1994,17 @@ git commit -m "test(core): ERP integration tests — full sync flow (phase 12)"
 
 ## Summary
 
-| Task | Description | New Files | Modified Files |
-|------|-------------|-----------|----------------|
-| 0 | ERPAdapter interface + types | 2 | 0 |
-| 1 | WO status update + optimistic locking | 1 | 4 |
-| 2 | ERP event builders | 2 | 0 |
-| 3 | Core barrel exports | 2 | 1 |
-| 4 | Mock adapter package scaffolding | 4 | 0 |
-| 5 | MockERPAdapter implementation | 2 | 1 |
-| 6 | ERP sync service | 1 | 2 |
-| 7 | Web integration + endpoints | 0 | 3 |
-| 8 | Integration tests | 1 | 0 |
+| Task | Description                           | New Files | Modified Files |
+| ---- | ------------------------------------- | --------- | -------------- |
+| 0    | ERPAdapter interface + types          | 2         | 0              |
+| 1    | WO status update + optimistic locking | 1         | 4              |
+| 2    | ERP event builders                    | 2         | 0              |
+| 3    | Core barrel exports                   | 2         | 1              |
+| 4    | Mock adapter package scaffolding      | 4         | 0              |
+| 5    | MockERPAdapter implementation         | 2         | 1              |
+| 6    | ERP sync service                      | 1         | 2              |
+| 7    | Web integration + endpoints           | 0         | 3              |
+| 8    | Integration tests                     | 1         | 0              |
 
 **Total commits:** 8 (one per task)
 **Test coverage:** types, WO status update, event builders, mock adapter, sync service, integration flow

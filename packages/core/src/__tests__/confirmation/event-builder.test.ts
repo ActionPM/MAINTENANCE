@@ -12,15 +12,17 @@ describe('buildConfirmationEvent', () => {
       eventId: 'evt-1',
       conversationId: 'conv-1',
       confirmationPayload: {
-        issues: [{
-          issue_id: 'issue-1',
-          summary: 'Leaking toilet',
-          raw_excerpt: 'My toilet is leaking',
-          classification: { Category: 'maintenance' },
-          confidence_by_field: { Category: 0.9 },
-          missing_fields: [],
-          needs_human_triage: false,
-        }],
+        issues: [
+          {
+            issue_id: 'issue-1',
+            summary: 'Leaking toilet',
+            raw_excerpt: 'My toilet is leaking',
+            classification: { Category: 'maintenance' },
+            confidence_by_field: { Category: 0.9 },
+            missing_fields: [],
+            needs_human_triage: false,
+          },
+        ],
       },
       createdAt: '2026-01-01T12:00:00.000Z',
     };

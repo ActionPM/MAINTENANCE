@@ -10,10 +10,7 @@ import { extractJsonFromResponse } from '../parse-response.js';
  */
 export function createFollowUpAdapter(
   client: LlmClient,
-): (
-  input: FollowUpGeneratorInput,
-  retryContext?: { retryHint: string },
-) => Promise<unknown> {
+): (input: FollowUpGeneratorInput, retryContext?: { retryHint: string }) => Promise<unknown> {
   const systemPrompt = buildFollowUpSystemPrompt();
 
   return async (

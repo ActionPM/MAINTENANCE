@@ -94,21 +94,66 @@ interface OrchestratorActionRequestBase {
 }
 
 export type OrchestratorActionRequest =
-  | OrchestratorActionRequestBase & { readonly action_type: 'CREATE_CONVERSATION'; readonly tenant_input: TenantInputCreateConversation }
-  | OrchestratorActionRequestBase & { readonly action_type: 'SELECT_UNIT'; readonly tenant_input: TenantInputSelectUnit }
-  | OrchestratorActionRequestBase & { readonly action_type: 'SUBMIT_INITIAL_MESSAGE'; readonly tenant_input: TenantInputSubmitInitialMessage }
-  | OrchestratorActionRequestBase & { readonly action_type: 'SUBMIT_ADDITIONAL_MESSAGE'; readonly tenant_input: TenantInputSubmitAdditionalMessage }
-  | OrchestratorActionRequestBase & { readonly action_type: 'CONFIRM_SPLIT'; readonly tenant_input: TenantInputConfirmSplit }
-  | OrchestratorActionRequestBase & { readonly action_type: 'MERGE_ISSUES'; readonly tenant_input: TenantInputMergeIssues }
-  | OrchestratorActionRequestBase & { readonly action_type: 'EDIT_ISSUE'; readonly tenant_input: TenantInputEditIssue }
-  | OrchestratorActionRequestBase & { readonly action_type: 'ADD_ISSUE'; readonly tenant_input: TenantInputAddIssue }
-  | OrchestratorActionRequestBase & { readonly action_type: 'REJECT_SPLIT'; readonly tenant_input: TenantInputRejectSplit }
-  | OrchestratorActionRequestBase & { readonly action_type: 'ANSWER_FOLLOWUPS'; readonly tenant_input: TenantInputAnswerFollowups }
-  | OrchestratorActionRequestBase & { readonly action_type: 'CONFIRM_SUBMISSION'; readonly tenant_input: TenantInputConfirmSubmission }
-  | OrchestratorActionRequestBase & { readonly action_type: 'UPLOAD_PHOTO_INIT'; readonly tenant_input: TenantInputUploadPhotoInit }
-  | OrchestratorActionRequestBase & { readonly action_type: 'UPLOAD_PHOTO_COMPLETE'; readonly tenant_input: TenantInputUploadPhotoComplete }
-  | OrchestratorActionRequestBase & { readonly action_type: 'RESUME'; readonly tenant_input: TenantInputResume }
-  | OrchestratorActionRequestBase & { readonly action_type: 'ABANDON'; readonly tenant_input: TenantInputAbandon };
+  | (OrchestratorActionRequestBase & {
+      readonly action_type: 'CREATE_CONVERSATION';
+      readonly tenant_input: TenantInputCreateConversation;
+    })
+  | (OrchestratorActionRequestBase & {
+      readonly action_type: 'SELECT_UNIT';
+      readonly tenant_input: TenantInputSelectUnit;
+    })
+  | (OrchestratorActionRequestBase & {
+      readonly action_type: 'SUBMIT_INITIAL_MESSAGE';
+      readonly tenant_input: TenantInputSubmitInitialMessage;
+    })
+  | (OrchestratorActionRequestBase & {
+      readonly action_type: 'SUBMIT_ADDITIONAL_MESSAGE';
+      readonly tenant_input: TenantInputSubmitAdditionalMessage;
+    })
+  | (OrchestratorActionRequestBase & {
+      readonly action_type: 'CONFIRM_SPLIT';
+      readonly tenant_input: TenantInputConfirmSplit;
+    })
+  | (OrchestratorActionRequestBase & {
+      readonly action_type: 'MERGE_ISSUES';
+      readonly tenant_input: TenantInputMergeIssues;
+    })
+  | (OrchestratorActionRequestBase & {
+      readonly action_type: 'EDIT_ISSUE';
+      readonly tenant_input: TenantInputEditIssue;
+    })
+  | (OrchestratorActionRequestBase & {
+      readonly action_type: 'ADD_ISSUE';
+      readonly tenant_input: TenantInputAddIssue;
+    })
+  | (OrchestratorActionRequestBase & {
+      readonly action_type: 'REJECT_SPLIT';
+      readonly tenant_input: TenantInputRejectSplit;
+    })
+  | (OrchestratorActionRequestBase & {
+      readonly action_type: 'ANSWER_FOLLOWUPS';
+      readonly tenant_input: TenantInputAnswerFollowups;
+    })
+  | (OrchestratorActionRequestBase & {
+      readonly action_type: 'CONFIRM_SUBMISSION';
+      readonly tenant_input: TenantInputConfirmSubmission;
+    })
+  | (OrchestratorActionRequestBase & {
+      readonly action_type: 'UPLOAD_PHOTO_INIT';
+      readonly tenant_input: TenantInputUploadPhotoInit;
+    })
+  | (OrchestratorActionRequestBase & {
+      readonly action_type: 'UPLOAD_PHOTO_COMPLETE';
+      readonly tenant_input: TenantInputUploadPhotoComplete;
+    })
+  | (OrchestratorActionRequestBase & {
+      readonly action_type: 'RESUME';
+      readonly tenant_input: TenantInputResume;
+    })
+  | (OrchestratorActionRequestBase & {
+      readonly action_type: 'ABANDON';
+      readonly tenant_input: TenantInputAbandon;
+    });
 
 // --- Response ---
 

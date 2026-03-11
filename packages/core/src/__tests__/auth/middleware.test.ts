@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  extractAuthFromHeader,
-  validateUnitAccess,
-} from '../../auth/middleware.js';
+import { extractAuthFromHeader, validateUnitAccess } from '../../auth/middleware.js';
 import { createTokenPair } from '../../auth/jwt.js';
 import type { JwtConfig } from '../../auth/types.js';
 

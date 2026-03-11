@@ -2,32 +2,16 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import {
-  taxonomy,
-  loadTaxonomy,
-  isTaxonomyValue,
-  TAXONOMY_FIELD_NAMES,
-} from '../taxonomy.js';
+import { taxonomy, loadTaxonomy, isTaxonomyValue, TAXONOMY_FIELD_NAMES } from '../taxonomy.js';
 import {
   ConversationState,
   ALL_CONVERSATION_STATES,
   RESUMABLE_STATES,
 } from '../conversation-states.js';
-import {
-  WorkOrderStatus,
-  ALL_WORK_ORDER_STATUSES,
-} from '../work-order-status.js';
-import {
-  ActionType,
-  ALL_ACTION_TYPES,
-  ActorType,
-  ALL_ACTOR_TYPES,
-} from '../action-types.js';
+import { WorkOrderStatus, ALL_WORK_ORDER_STATUSES } from '../work-order-status.js';
+import { ActionType, ALL_ACTION_TYPES, ActorType, ALL_ACTOR_TYPES } from '../action-types.js';
 import { DEFAULT_RATE_LIMITS } from '../rate-limits.js';
-import {
-  DEFAULT_CONFIDENCE_CONFIG,
-  DEFAULT_FOLLOWUP_CAPS,
-} from '../confidence-config.js';
+import { DEFAULT_CONFIDENCE_CONFIG, DEFAULT_FOLLOWUP_CAPS } from '../confidence-config.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const schemasDir = resolve(__dirname, '..', '..');
@@ -223,10 +207,10 @@ describe('ConfidenceConfig', () => {
 
   it('has correct individual weight values', () => {
     const { weights } = DEFAULT_CONFIDENCE_CONFIG;
-    expect(weights.cue_strength).toBe(0.40);
+    expect(weights.cue_strength).toBe(0.4);
     expect(weights.completeness).toBe(0.25);
-    expect(weights.model_hint).toBe(0.20);
-    expect(weights.disagreement).toBe(0.10);
+    expect(weights.model_hint).toBe(0.2);
+    expect(weights.disagreement).toBe(0.1);
     expect(weights.ambiguity_penalty).toBe(0.05);
   });
 });
@@ -240,10 +224,12 @@ describe('FollowUpCaps', () => {
   });
 
   it('schema bounds match DEFAULT_FOLLOWUP_CAPS', () => {
-    const requestSchema = JSON.parse(readFileSync(
-      resolve(schemasDir, 'followup_request.schema.json'), 'utf-8'));
-    const followupsSchema = JSON.parse(readFileSync(
-      resolve(schemasDir, 'followups.schema.json'), 'utf-8'));
+    const requestSchema = JSON.parse(
+      readFileSync(resolve(schemasDir, 'followup_request.schema.json'), 'utf-8'),
+    );
+    const followupsSchema = JSON.parse(
+      readFileSync(resolve(schemasDir, 'followups.schema.json'), 'utf-8'),
+    );
 
     // Input schema bounds
     const input = requestSchema.definitions.FollowUpGeneratorInput.properties;

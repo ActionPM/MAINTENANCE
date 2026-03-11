@@ -15,7 +15,13 @@ function makeWorkOrder(id: string = 'wo-1'): WorkOrder {
     tenant_user_id: 'user-1',
     tenant_account_id: 'acct-1',
     status: WorkOrderStatus.CREATED,
-    status_history: [{ status: WorkOrderStatus.CREATED, changed_at: '2026-03-04T00:00:00Z', actor: ActorType.SYSTEM }],
+    status_history: [
+      {
+        status: WorkOrderStatus.CREATED,
+        changed_at: '2026-03-04T00:00:00Z',
+        actor: ActorType.SYSTEM,
+      },
+    ],
     raw_text: 'Leaking faucet',
     summary_confirmed: 'Leaking faucet in kitchen',
     photos: [],
@@ -24,7 +30,12 @@ function makeWorkOrder(id: string = 'wo-1'): WorkOrder {
     missing_fields: [],
     pets_present: 'unknown',
     needs_human_triage: false,
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'test', prompt_version: '1.0.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'test',
+      prompt_version: '1.0.0',
+    },
     created_at: '2026-03-04T00:00:00Z',
     updated_at: '2026-03-04T00:00:00Z',
     row_version: 1,

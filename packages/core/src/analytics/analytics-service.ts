@@ -34,13 +34,13 @@ export class AnalyticsService {
     });
 
     // Scope notifications to WOs in the filtered set (fix: cross-tenant leak)
-    const woIdSet = new Set(workOrders.map(wo => wo.work_order_id));
+    const woIdSet = new Set(workOrders.map((wo) => wo.work_order_id));
     const allNotifications = await this.deps.notificationRepo.listAll({
       from: query.from,
       to: query.to,
     });
-    const notifications = allNotifications.filter(n =>
-      n.work_order_ids.some(id => woIdSet.has(id)),
+    const notifications = allNotifications.filter((n) =>
+      n.work_order_ids.some((id) => woIdSet.has(id)),
     );
 
     return {
@@ -87,7 +87,13 @@ export class AnalyticsService {
 
   private computeSlaMetrics(workOrders: readonly WorkOrder[]): SlaMetrics {
     if (workOrders.length === 0) {
-      return { total_with_sla: 0, response_adherence_pct: 0, resolution_adherence_pct: 0, avg_response_hours: null, avg_resolution_hours: null };
+      return {
+        total_with_sla: 0,
+        response_adherence_pct: 0,
+        resolution_adherence_pct: 0,
+        avg_response_hours: null,
+        avg_resolution_hours: null,
+      };
     }
 
     let totalWithSla = 0;
@@ -109,9 +115,7 @@ export class AnalyticsService {
 
       // Find first non-"created" status transition for response time
       const createdMs = new Date(wo.created_at).getTime();
-      const firstResponse = wo.status_history.find(
-        (e) => e.status !== 'created',
-      );
+      const firstResponse = wo.status_history.find((e) => e.status !== 'created');
 
       if (firstResponse) {
         totalWithSla++;
@@ -138,22 +142,24 @@ export class AnalyticsService {
 
     return {
       total_with_sla: totalWithSla,
-      response_adherence_pct: responseCount > 0
-        ? Math.round((responseMetCount / responseCount) * 100 * 100) / 100
-        : 0,
-      resolution_adherence_pct: resolutionCount > 0
-        ? Math.round((resolutionMetCount / resolutionCount) * 100 * 100) / 100
-        : 0,
-      avg_response_hours: responseCount > 0
-        ? Math.round(totalResponseHours / responseCount * 100) / 100
-        : null,
-      avg_resolution_hours: resolutionCount > 0
-        ? Math.round(totalResolutionHours / resolutionCount * 100) / 100
-        : null,
+      response_adherence_pct:
+        responseCount > 0 ? Math.round((responseMetCount / responseCount) * 100 * 100) / 100 : 0,
+      resolution_adherence_pct:
+        resolutionCount > 0
+          ? Math.round((resolutionMetCount / resolutionCount) * 100 * 100) / 100
+          : 0,
+      avg_response_hours:
+        responseCount > 0 ? Math.round((totalResponseHours / responseCount) * 100) / 100 : null,
+      avg_resolution_hours:
+        resolutionCount > 0
+          ? Math.round((totalResolutionHours / resolutionCount) * 100) / 100
+          : null,
     };
   }
 
-  private computeNotificationMetrics(notifications: readonly NotificationEvent[]): NotificationMetrics {
+  private computeNotificationMetrics(
+    notifications: readonly NotificationEvent[],
+  ): NotificationMetrics {
     if (notifications.length === 0) {
       return { total_sent: 0, by_channel: {}, by_type: {}, delivery_success_pct: 0 };
     }

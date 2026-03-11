@@ -1,5 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
-import { callIssueSplitter, SplitterError, SplitterErrorCode } from '../../splitter/issue-splitter.js';
+import {
+  callIssueSplitter,
+  SplitterError,
+  SplitterErrorCode,
+} from '../../splitter/issue-splitter.js';
 import type { IssueSplitterInput, IssueSplitterOutput } from '@wo-agent/schemas';
 
 const VALID_INPUT: IssueSplitterInput = {
@@ -28,7 +32,8 @@ describe('callIssueSplitter', () => {
 
   it('retries once on schema validation failure then succeeds', async () => {
     const invalidOutput = { issues: [{ summary: 'no id' }], issue_count: 1 };
-    const llmCall = vi.fn()
+    const llmCall = vi
+      .fn()
       .mockResolvedValueOnce(invalidOutput)
       .mockResolvedValueOnce(VALID_OUTPUT);
     const result = await callIssueSplitter(VALID_INPUT, llmCall);

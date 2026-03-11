@@ -1,4 +1,13 @@
-import type { ConversationState, IssueClassifierOutput, PinnedVersions, SplitIssue, PreviousQuestion, FollowUpQuestion, MatchedTrigger, EscalationState } from '@wo-agent/schemas';
+import type {
+  ConversationState,
+  IssueClassifierOutput,
+  PinnedVersions,
+  SplitIssue,
+  PreviousQuestion,
+  FollowUpQuestion,
+  MatchedTrigger,
+  EscalationState,
+} from '@wo-agent/schemas';
 
 /**
  * Per-issue classification result stored on the session.

@@ -68,7 +68,8 @@ describe('validateEvalExample', () => {
 
   it('rejects invalid taxonomy values in expected classification', () => {
     const example = validGoldExample();
-    (example.expected_classification_by_issue as Record<string, string>[])[0].Category = 'BOGUS_CATEGORY';
+    (example.expected_classification_by_issue as Record<string, string>[])[0].Category =
+      'BOGUS_CATEGORY';
     const result = validateEvalExample(example);
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.includes('BOGUS_CATEGORY'))).toBe(true);
@@ -119,9 +120,7 @@ describe('validateEvalRun', () => {
       model_id: 'claude-3-haiku',
       started_at: NOW,
       completed_at: NOW,
-      results: [
-        { example_id: 'ex-001', status: 'ok' },
-      ],
+      results: [{ example_id: 'ex-001', status: 'ok' }],
     });
     expect(result.valid).toBe(true);
   });

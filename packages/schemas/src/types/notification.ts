@@ -9,10 +9,7 @@ export type NotificationChannel = 'in_app' | 'sms';
  * status_changed: sent when WO status updates
  * needs_input: sent when follow-up questions are pending
  */
-export type NotificationType =
-  | 'work_order_created'
-  | 'status_changed'
-  | 'needs_input';
+export type NotificationType = 'work_order_created' | 'status_changed' | 'needs_input';
 
 /**
  * Notification delivery status.

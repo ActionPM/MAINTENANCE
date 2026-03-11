@@ -56,6 +56,7 @@ packages/core/
 ## Task 0: Initialize `packages/core` Package
 
 **Files:**
+
 - Create: `packages/core/package.json`
 - Create: `packages/core/tsconfig.json`
 - Create: `packages/core/vitest.config.ts`
@@ -122,6 +123,7 @@ export default defineConfig({
 **Step 4: Create empty barrel export**
 
 Create `packages/core/src/index.ts`:
+
 ```typescript
 // @wo-agent/core — barrel export
 // Phase 2: Auth/Session Scaffolding + Conversation State Machine
@@ -138,6 +140,7 @@ cd /workspaces/MAINTENANCE && pnpm install
 ```bash
 cd /workspaces/MAINTENANCE/packages/core && pnpm exec tsc --noEmit
 ```
+
 Expected: no errors.
 
 **Step 7: Commit**
@@ -152,6 +155,7 @@ git commit -m "chore: initialize packages/core for Phase 2"
 ## Task 1: System Events and Transition Types
 
 **Files:**
+
 - Create: `packages/core/src/state-machine/system-events.ts`
 - Test: `packages/core/src/__tests__/state-machine/transition-matrix.test.ts`
 
@@ -189,6 +193,7 @@ describe('SystemEvent', () => {
 ```bash
 cd /workspaces/MAINTENANCE/packages/core && pnpm test -- src/__tests__/state-machine/transition-matrix.test.ts
 ```
+
 Expected: FAIL — module not found.
 
 **Step 3: Implement system-events.ts**
@@ -220,6 +225,7 @@ export const ALL_SYSTEM_EVENTS: readonly SystemEvent[] = Object.values(SystemEve
 ```bash
 cd /workspaces/MAINTENANCE/packages/core && pnpm test -- src/__tests__/state-machine/transition-matrix.test.ts
 ```
+
 Expected: PASS
 
 **Step 5: Commit**
@@ -234,6 +240,7 @@ git commit -m "feat(core): add SystemEvent enum for internal orchestrator trigge
 ## Task 2: Transition Matrix Data
 
 **Files:**
+
 - Create: `packages/core/src/state-machine/transition-matrix.ts`
 - Modify: `packages/core/src/__tests__/state-machine/transition-matrix.test.ts`
 
@@ -306,7 +313,11 @@ describe('TRANSITION_MATRIX', () => {
     ['split_finalized', 'START_CLASSIFICATION', ['classification_in_progress']],
     ['split_finalized', 'ABANDON', ['intake_abandoned']],
     // classification_in_progress
-    ['classification_in_progress', 'LLM_CLASSIFY_SUCCESS', ['needs_tenant_input', 'tenant_confirmation_pending']],
+    [
+      'classification_in_progress',
+      'LLM_CLASSIFY_SUCCESS',
+      ['needs_tenant_input', 'tenant_confirmation_pending'],
+    ],
     ['classification_in_progress', 'LLM_FAIL', ['llm_error_retryable', 'llm_error_terminal']],
     ['classification_in_progress', 'ABANDON', ['intake_abandoned']],
     // needs_tenant_input
@@ -328,22 +339,31 @@ describe('TRANSITION_MATRIX', () => {
     ['llm_error_terminal', 'RESUME', ['llm_error_terminal']],
     ['llm_error_terminal', 'ABANDON', ['intake_abandoned']],
     // intake_abandoned
-    ['intake_abandoned', 'RESUME', ['intake_started', 'unit_selection_required', 'unit_selected', 'split_proposed', 'split_finalized', 'needs_tenant_input', 'tenant_confirmation_pending']],
+    [
+      'intake_abandoned',
+      'RESUME',
+      [
+        'intake_started',
+        'unit_selection_required',
+        'unit_selected',
+        'split_proposed',
+        'split_finalized',
+        'needs_tenant_input',
+        'tenant_confirmation_pending',
+      ],
+    ],
     ['intake_abandoned', 'EXPIRE', ['intake_expired']],
     // intake_expired
     ['intake_expired', 'CREATE_CONVERSATION', ['intake_started']],
   ];
 
-  it.each(expectedTransitions)(
-    'from %s + %s → %s',
-    (state, trigger, expectedTargets) => {
-      const transitions = TRANSITION_MATRIX[state as ConversationState];
-      expect(transitions).toBeDefined();
-      const targets = transitions![trigger as TransitionTrigger];
-      expect(targets).toBeDefined();
-      expect([...(targets as ConversationState[])].sort()).toEqual([...expectedTargets].sort());
-    },
-  );
+  it.each(expectedTransitions)('from %s + %s → %s', (state, trigger, expectedTargets) => {
+    const transitions = TRANSITION_MATRIX[state as ConversationState];
+    expect(transitions).toBeDefined();
+    const targets = transitions![trigger as TransitionTrigger];
+    expect(targets).toBeDefined();
+    expect([...(targets as ConversationState[])].sort()).toEqual([...expectedTargets].sort());
+  });
 });
 
 describe('isPhotoAction', () => {
@@ -367,6 +387,7 @@ describe('isPhotoAction', () => {
 ```bash
 cd /workspaces/MAINTENANCE/packages/core && pnpm test -- src/__tests__/state-machine/transition-matrix.test.ts
 ```
+
 Expected: FAIL — module not found.
 
 **Step 3: Implement transition-matrix.ts**
@@ -417,7 +438,10 @@ export const TRANSITION_MATRIX: Record<
   Partial<Record<TransitionTrigger, readonly ConversationState[]>>
 > = {
   [ConversationState.INTAKE_STARTED]: {
-    [ActionType.SELECT_UNIT]: [ConversationState.UNIT_SELECTED, ConversationState.UNIT_SELECTION_REQUIRED],
+    [ActionType.SELECT_UNIT]: [
+      ConversationState.UNIT_SELECTED,
+      ConversationState.UNIT_SELECTION_REQUIRED,
+    ],
     [ActionType.SUBMIT_INITIAL_MESSAGE]: [ConversationState.SPLIT_IN_PROGRESS],
     [ActionType.RESUME]: [ConversationState.INTAKE_STARTED],
   },
@@ -434,7 +458,10 @@ export const TRANSITION_MATRIX: Record<
 
   [ConversationState.SPLIT_IN_PROGRESS]: {
     [SystemEvent.LLM_SPLIT_SUCCESS]: [ConversationState.SPLIT_PROPOSED],
-    [SystemEvent.LLM_FAIL]: [ConversationState.LLM_ERROR_RETRYABLE, ConversationState.LLM_ERROR_TERMINAL],
+    [SystemEvent.LLM_FAIL]: [
+      ConversationState.LLM_ERROR_RETRYABLE,
+      ConversationState.LLM_ERROR_TERMINAL,
+    ],
     [ActionType.ABANDON]: [ConversationState.INTAKE_ABANDONED],
   },
 
@@ -453,8 +480,14 @@ export const TRANSITION_MATRIX: Record<
   },
 
   [ConversationState.CLASSIFICATION_IN_PROGRESS]: {
-    [SystemEvent.LLM_CLASSIFY_SUCCESS]: [ConversationState.NEEDS_TENANT_INPUT, ConversationState.TENANT_CONFIRMATION_PENDING],
-    [SystemEvent.LLM_FAIL]: [ConversationState.LLM_ERROR_RETRYABLE, ConversationState.LLM_ERROR_TERMINAL],
+    [SystemEvent.LLM_CLASSIFY_SUCCESS]: [
+      ConversationState.NEEDS_TENANT_INPUT,
+      ConversationState.TENANT_CONFIRMATION_PENDING,
+    ],
+    [SystemEvent.LLM_FAIL]: [
+      ConversationState.LLM_ERROR_RETRYABLE,
+      ConversationState.LLM_ERROR_TERMINAL,
+    ],
     [ActionType.ABANDON]: [ConversationState.INTAKE_ABANDONED],
   },
 
@@ -476,7 +509,10 @@ export const TRANSITION_MATRIX: Record<
   },
 
   [ConversationState.LLM_ERROR_RETRYABLE]: {
-    [SystemEvent.RETRY_LLM]: [ConversationState.SPLIT_IN_PROGRESS, ConversationState.CLASSIFICATION_IN_PROGRESS],
+    [SystemEvent.RETRY_LLM]: [
+      ConversationState.SPLIT_IN_PROGRESS,
+      ConversationState.CLASSIFICATION_IN_PROGRESS,
+    ],
     [ActionType.RESUME]: [ConversationState.LLM_ERROR_RETRYABLE],
     [ActionType.ABANDON]: [ConversationState.INTAKE_ABANDONED],
   },
@@ -502,6 +538,7 @@ export const TRANSITION_MATRIX: Record<
 ```bash
 cd /workspaces/MAINTENANCE/packages/core && pnpm test -- src/__tests__/state-machine/transition-matrix.test.ts
 ```
+
 Expected: ALL PASS
 
 **Step 5: Commit**
@@ -516,6 +553,7 @@ git commit -m "feat(core): add authoritative transition matrix from spec §11.2"
 ## Task 3: Core Transition Function
 
 **Files:**
+
 - Create: `packages/core/src/state-machine/transition.ts`
 - Create: `packages/core/src/__tests__/state-machine/transition.test.ts`
 
@@ -526,16 +564,17 @@ git commit -m "feat(core): add authoritative transition matrix from spec §11.2"
 import { describe, it, expect } from 'vitest';
 import { ConversationState, ActionType } from '@wo-agent/schemas';
 import { SystemEvent } from '../../state-machine/system-events.js';
-import {
-  isValidTransition,
-  getPossibleTargets,
-} from '../../state-machine/transition.js';
+import { isValidTransition, getPossibleTargets } from '../../state-machine/transition.js';
 
 describe('isValidTransition', () => {
   it('returns true for valid transitions', () => {
     expect(isValidTransition(ConversationState.INTAKE_STARTED, ActionType.SELECT_UNIT)).toBe(true);
-    expect(isValidTransition(ConversationState.SPLIT_PROPOSED, ActionType.CONFIRM_SPLIT)).toBe(true);
-    expect(isValidTransition(ConversationState.NEEDS_TENANT_INPUT, ActionType.ANSWER_FOLLOWUPS)).toBe(true);
+    expect(isValidTransition(ConversationState.SPLIT_PROPOSED, ActionType.CONFIRM_SPLIT)).toBe(
+      true,
+    );
+    expect(
+      isValidTransition(ConversationState.NEEDS_TENANT_INPUT, ActionType.ANSWER_FOLLOWUPS),
+    ).toBe(true);
   });
 
   it('returns true for photo actions from any state', () => {
@@ -553,15 +592,23 @@ describe('isValidTransition', () => {
   });
 
   it('returns false for invalid transitions', () => {
-    expect(isValidTransition(ConversationState.INTAKE_STARTED, ActionType.CONFIRM_SPLIT)).toBe(false);
+    expect(isValidTransition(ConversationState.INTAKE_STARTED, ActionType.CONFIRM_SPLIT)).toBe(
+      false,
+    );
     expect(isValidTransition(ConversationState.SUBMITTED, ActionType.ANSWER_FOLLOWUPS)).toBe(false);
     expect(isValidTransition(ConversationState.INTAKE_EXPIRED, ActionType.ABANDON)).toBe(false);
-    expect(isValidTransition(ConversationState.SPLIT_PROPOSED, SystemEvent.START_CLASSIFICATION)).toBe(false);
+    expect(
+      isValidTransition(ConversationState.SPLIT_PROPOSED, SystemEvent.START_CLASSIFICATION),
+    ).toBe(false);
   });
 
   it('returns true for system events in correct states', () => {
-    expect(isValidTransition(ConversationState.SPLIT_IN_PROGRESS, SystemEvent.LLM_SPLIT_SUCCESS)).toBe(true);
-    expect(isValidTransition(ConversationState.SPLIT_FINALIZED, SystemEvent.START_CLASSIFICATION)).toBe(true);
+    expect(
+      isValidTransition(ConversationState.SPLIT_IN_PROGRESS, SystemEvent.LLM_SPLIT_SUCCESS),
+    ).toBe(true);
+    expect(
+      isValidTransition(ConversationState.SPLIT_FINALIZED, SystemEvent.START_CLASSIFICATION),
+    ).toBe(true);
     expect(isValidTransition(ConversationState.INTAKE_ABANDONED, SystemEvent.EXPIRE)).toBe(true);
   });
 });
@@ -575,19 +622,24 @@ describe('getPossibleTargets', () => {
   });
 
   it('returns same state for photo actions', () => {
-    expect(getPossibleTargets(ConversationState.SPLIT_PROPOSED, ActionType.UPLOAD_PHOTO_INIT)).toEqual([
-      ConversationState.SPLIT_PROPOSED,
-    ]);
+    expect(
+      getPossibleTargets(ConversationState.SPLIT_PROPOSED, ActionType.UPLOAD_PHOTO_INIT),
+    ).toEqual([ConversationState.SPLIT_PROPOSED]);
   });
 
   it('returns empty array for invalid transitions', () => {
-    expect(getPossibleTargets(ConversationState.INTAKE_STARTED, ActionType.CONFIRM_SPLIT)).toEqual([]);
+    expect(getPossibleTargets(ConversationState.INTAKE_STARTED, ActionType.CONFIRM_SPLIT)).toEqual(
+      [],
+    );
   });
 
   it('returns single target for deterministic transitions', () => {
-    expect(getPossibleTargets(ConversationState.TENANT_CONFIRMATION_PENDING, ActionType.CONFIRM_SUBMISSION)).toEqual([
-      ConversationState.SUBMITTED,
-    ]);
+    expect(
+      getPossibleTargets(
+        ConversationState.TENANT_CONFIRMATION_PENDING,
+        ActionType.CONFIRM_SUBMISSION,
+      ),
+    ).toEqual([ConversationState.SUBMITTED]);
   });
 });
 ```
@@ -597,6 +649,7 @@ describe('getPossibleTargets', () => {
 ```bash
 cd /workspaces/MAINTENANCE/packages/core && pnpm test -- src/__tests__/state-machine/transition.test.ts
 ```
+
 Expected: FAIL — module not found.
 
 **Step 3: Implement transition.ts**
@@ -641,6 +694,7 @@ export function getPossibleTargets(
 ```bash
 cd /workspaces/MAINTENANCE/packages/core && pnpm test -- src/__tests__/state-machine/transition.test.ts
 ```
+
 Expected: ALL PASS
 
 **Step 5: Commit**
@@ -655,6 +709,7 @@ git commit -m "feat(core): add transition validation functions"
 ## Task 4: Transition Guards
 
 **Files:**
+
 - Create: `packages/core/src/state-machine/guards.ts`
 - Create: `packages/core/src/__tests__/state-machine/guards.test.ts`
 
@@ -682,7 +737,9 @@ describe('resolveSelectUnit', () => {
       authorized_unit_ids: ['u1', 'u2'],
       selected_unit_id: 'u1',
     };
-    expect(resolveSelectUnit(ConversationState.INTAKE_STARTED, ctx)).toBe(ConversationState.UNIT_SELECTED);
+    expect(resolveSelectUnit(ConversationState.INTAKE_STARTED, ctx)).toBe(
+      ConversationState.UNIT_SELECTED,
+    );
   });
 
   it('returns unit_selection_required when multiple units and no selection', () => {
@@ -690,7 +747,9 @@ describe('resolveSelectUnit', () => {
       authorized_unit_ids: ['u1', 'u2'],
       selected_unit_id: null,
     };
-    expect(resolveSelectUnit(ConversationState.INTAKE_STARTED, ctx)).toBe(ConversationState.UNIT_SELECTION_REQUIRED);
+    expect(resolveSelectUnit(ConversationState.INTAKE_STARTED, ctx)).toBe(
+      ConversationState.UNIT_SELECTION_REQUIRED,
+    );
   });
 
   it('returns unit_selected when single authorized unit', () => {
@@ -698,7 +757,9 @@ describe('resolveSelectUnit', () => {
       authorized_unit_ids: ['u1'],
       selected_unit_id: null,
     };
-    expect(resolveSelectUnit(ConversationState.INTAKE_STARTED, ctx)).toBe(ConversationState.UNIT_SELECTED);
+    expect(resolveSelectUnit(ConversationState.INTAKE_STARTED, ctx)).toBe(
+      ConversationState.UNIT_SELECTED,
+    );
   });
 
   it('returns null when unit_id not in authorized list', () => {
@@ -712,7 +773,9 @@ describe('resolveSelectUnit', () => {
 
 describe('resolveSubmitInitialMessage', () => {
   it('returns split_in_progress when unit is resolved', () => {
-    expect(resolveSubmitInitialMessage({ unit_resolved: true })).toBe(ConversationState.SPLIT_IN_PROGRESS);
+    expect(resolveSubmitInitialMessage({ unit_resolved: true })).toBe(
+      ConversationState.SPLIT_IN_PROGRESS,
+    );
   });
 
   it('returns null when unit is not resolved', () => {
@@ -732,21 +795,29 @@ describe('resolveLlmFailure', () => {
 
 describe('resolveLlmClassifySuccess', () => {
   it('returns tenant_confirmation_pending when no fields need input', () => {
-    expect(resolveLlmClassifySuccess({ fields_needing_input: [] })).toBe(ConversationState.TENANT_CONFIRMATION_PENDING);
+    expect(resolveLlmClassifySuccess({ fields_needing_input: [] })).toBe(
+      ConversationState.TENANT_CONFIRMATION_PENDING,
+    );
   });
 
   it('returns needs_tenant_input when fields need clarification', () => {
-    expect(resolveLlmClassifySuccess({ fields_needing_input: ['Maintenance_Object'] })).toBe(ConversationState.NEEDS_TENANT_INPUT);
+    expect(resolveLlmClassifySuccess({ fields_needing_input: ['Maintenance_Object'] })).toBe(
+      ConversationState.NEEDS_TENANT_INPUT,
+    );
   });
 });
 
 describe('resolveRetryLlm', () => {
   it('returns split_in_progress when prior state was split_in_progress', () => {
-    expect(resolveRetryLlm({ prior_state: ConversationState.SPLIT_IN_PROGRESS })).toBe(ConversationState.SPLIT_IN_PROGRESS);
+    expect(resolveRetryLlm({ prior_state: ConversationState.SPLIT_IN_PROGRESS })).toBe(
+      ConversationState.SPLIT_IN_PROGRESS,
+    );
   });
 
   it('returns classification_in_progress when prior state was classification_in_progress', () => {
-    expect(resolveRetryLlm({ prior_state: ConversationState.CLASSIFICATION_IN_PROGRESS })).toBe(ConversationState.CLASSIFICATION_IN_PROGRESS);
+    expect(resolveRetryLlm({ prior_state: ConversationState.CLASSIFICATION_IN_PROGRESS })).toBe(
+      ConversationState.CLASSIFICATION_IN_PROGRESS,
+    );
   });
 
   it('returns null for invalid prior state', () => {
@@ -756,7 +827,9 @@ describe('resolveRetryLlm', () => {
 
 describe('resolveAbandonResume', () => {
   it('returns the stored prior state', () => {
-    expect(resolveAbandonResume({ prior_state: ConversationState.NEEDS_TENANT_INPUT })).toBe(ConversationState.NEEDS_TENANT_INPUT);
+    expect(resolveAbandonResume({ prior_state: ConversationState.NEEDS_TENANT_INPUT })).toBe(
+      ConversationState.NEEDS_TENANT_INPUT,
+    );
   });
 
   it('returns null when no prior state stored', () => {
@@ -774,6 +847,7 @@ describe('resolveAbandonResume', () => {
 ```bash
 cd /workspaces/MAINTENANCE/packages/core && pnpm test -- src/__tests__/state-machine/guards.test.ts
 ```
+
 Expected: FAIL — module not found.
 
 **Step 3: Implement guards.ts**
@@ -847,9 +921,7 @@ export function resolveSubmitInitialMessage(
 /**
  * Resolve LLM_FAIL target — retryable on first failure, terminal after.
  */
-export function resolveLlmFailure(
-  ctx: Pick<TransitionContext, 'retry_count'>,
-): ConversationState {
+export function resolveLlmFailure(ctx: Pick<TransitionContext, 'retry_count'>): ConversationState {
   return (ctx.retry_count ?? 0) < 1
     ? ConversationState.LLM_ERROR_RETRYABLE
     : ConversationState.LLM_ERROR_TERMINAL;
@@ -899,11 +971,13 @@ export function resolveAbandonResume(
 ```bash
 cd /workspaces/MAINTENANCE/packages/core && pnpm test -- src/__tests__/state-machine/guards.test.ts
 ```
+
 Expected: ALL PASS
 
 **Step 5: Create state-machine barrel export**
 
 Create `packages/core/src/state-machine/index.ts`:
+
 ```typescript
 export { SystemEvent, ALL_SYSTEM_EVENTS } from './system-events.js';
 export type { SystemEvent as SystemEventType } from './system-events.js';
@@ -940,6 +1014,7 @@ git commit -m "feat(core): add transition guards for conditional state resolutio
 ## Task 5: Auth Types and JWT Config
 
 **Files:**
+
 - Create: `packages/core/src/auth/types.ts`
 
 Pure type definitions — no tests needed for types alone.
@@ -955,9 +1030,9 @@ import type { AuthContext } from '@wo-agent/schemas';
  * Maps to AuthContext fields for server-side extraction.
  */
 export interface JwtPayload {
-  readonly sub: string;          // tenant_user_id
-  readonly account_id: string;   // tenant_account_id
-  readonly unit_ids: readonly string[];  // authorized_unit_ids
+  readonly sub: string; // tenant_user_id
+  readonly account_id: string; // tenant_account_id
+  readonly unit_ids: readonly string[]; // authorized_unit_ids
   readonly iat?: number;
   readonly exp?: number;
   readonly iss?: string;
@@ -970,8 +1045,8 @@ export interface JwtPayload {
 export interface JwtConfig {
   readonly accessTokenSecret: Uint8Array;
   readonly refreshTokenSecret: Uint8Array;
-  readonly accessTokenExpiry: string;   // e.g., '15m'
-  readonly refreshTokenExpiry: string;  // e.g., '7d'
+  readonly accessTokenExpiry: string; // e.g., '15m'
+  readonly refreshTokenExpiry: string; // e.g., '7d'
   readonly issuer: string;
   readonly audience: string;
 }
@@ -1030,6 +1105,7 @@ git commit -m "feat(core): add auth types for JWT payload, config, and errors"
 ## Task 6: JWT Utilities
 
 **Files:**
+
 - Create: `packages/core/src/auth/jwt.ts`
 - Create: `packages/core/src/__tests__/auth/jwt.test.ts`
 
@@ -1116,6 +1192,7 @@ describe('verifyRefreshToken', () => {
 ```bash
 cd /workspaces/MAINTENANCE/packages/core && pnpm test -- src/__tests__/auth/jwt.test.ts
 ```
+
 Expected: FAIL — module not found.
 
 **Step 3: Implement jwt.ts**
@@ -1216,6 +1293,7 @@ export async function verifyRefreshToken(
 ```bash
 cd /workspaces/MAINTENANCE/packages/core && pnpm test -- src/__tests__/auth/jwt.test.ts
 ```
+
 Expected: ALL PASS
 
 **Step 5: Commit**
@@ -1230,6 +1308,7 @@ git commit -m "feat(core): add JWT creation and verification with jose"
 ## Task 7: Auth Middleware
 
 **Files:**
+
 - Create: `packages/core/src/auth/middleware.ts`
 - Create: `packages/core/src/__tests__/auth/middleware.test.ts`
 
@@ -1240,10 +1319,7 @@ Framework-agnostic pure functions. Next.js wiring happens in Phase 3.
 ```typescript
 // packages/core/src/__tests__/auth/middleware.test.ts
 import { describe, it, expect } from 'vitest';
-import {
-  extractAuthFromHeader,
-  validateUnitAccess,
-} from '../../auth/middleware.js';
+import { extractAuthFromHeader, validateUnitAccess } from '../../auth/middleware.js';
 import { createTokenPair } from '../../auth/jwt.js';
 import type { JwtConfig } from '../../auth/types.js';
 
@@ -1316,6 +1392,7 @@ describe('validateUnitAccess', () => {
 ```bash
 cd /workspaces/MAINTENANCE/packages/core && pnpm test -- src/__tests__/auth/middleware.test.ts
 ```
+
 Expected: FAIL
 
 **Step 3: Implement middleware.ts**
@@ -1340,12 +1417,18 @@ export async function extractAuthFromHeader(
   config: JwtConfig,
 ): Promise<AuthExtractionResult> {
   if (!authHeader) {
-    return { valid: false, error: { code: 'TOKEN_MISSING', message: 'Authorization header is required' } };
+    return {
+      valid: false,
+      error: { code: 'TOKEN_MISSING', message: 'Authorization header is required' },
+    };
   }
 
   const parts = authHeader.split(' ');
   if (parts.length !== 2 || parts[0] !== 'Bearer') {
-    return { valid: false, error: { code: 'TOKEN_INVALID', message: 'Expected Bearer token format' } };
+    return {
+      valid: false,
+      error: { code: 'TOKEN_INVALID', message: 'Expected Bearer token format' },
+    };
   }
 
   const result = await verifyAccessToken(parts[1], config);
@@ -1360,10 +1443,7 @@ export async function extractAuthFromHeader(
  * Check if a unit_id is in the tenant's authorized list (spec §9).
  * Tenant cannot set unit/property IDs — server derives from membership.
  */
-export function validateUnitAccess(
-  authorizedUnitIds: readonly string[],
-  unitId: string,
-): boolean {
+export function validateUnitAccess(authorizedUnitIds: readonly string[], unitId: string): boolean {
   return authorizedUnitIds.includes(unitId);
 }
 ```
@@ -1373,11 +1453,13 @@ export function validateUnitAccess(
 ```bash
 cd /workspaces/MAINTENANCE/packages/core && pnpm test -- src/__tests__/auth/middleware.test.ts
 ```
+
 Expected: ALL PASS
 
 **Step 5: Create auth barrel export**
 
 Create `packages/core/src/auth/index.ts`:
+
 ```typescript
 export type {
   JwtPayload,
@@ -1407,6 +1489,7 @@ git commit -m "feat(core): add auth middleware with JWT extraction and membershi
 ## Task 8: Conversation Session Types and Creation
 
 **Files:**
+
 - Create: `packages/core/src/session/types.ts`
 - Create: `packages/core/src/session/session.ts`
 - Create: `packages/core/src/__tests__/session/session.test.ts`
@@ -1549,6 +1632,7 @@ describe('touchActivity', () => {
 ```bash
 cd /workspaces/MAINTENANCE/packages/core && pnpm test -- src/__tests__/session/session.test.ts
 ```
+
 Expected: FAIL
 
 **Step 3: Implement types.ts**
@@ -1648,10 +1732,7 @@ export function touchActivity(session: ConversationSession): ConversationSession
 /**
  * Set the resolved unit_id on the session.
  */
-export function setSessionUnit(
-  session: ConversationSession,
-  unitId: string,
-): ConversationSession {
+export function setSessionUnit(session: ConversationSession, unitId: string): ConversationSession {
   return {
     ...session,
     unit_id: unitId,
@@ -1665,6 +1746,7 @@ export function setSessionUnit(
 ```bash
 cd /workspaces/MAINTENANCE/packages/core && pnpm test -- src/__tests__/session/session.test.ts
 ```
+
 Expected: ALL PASS
 
 **Step 6: Commit**
@@ -1679,6 +1761,7 @@ git commit -m "feat(core): add conversation session model with state tracking"
 ## Task 9: Draft Discovery
 
 **Files:**
+
 - Create: `packages/core/src/session/draft-discovery.ts`
 - Create: `packages/core/src/__tests__/session/draft-discovery.test.ts`
 
@@ -1724,8 +1807,16 @@ describe('filterResumableDrafts', () => {
 
   it('filters by tenant_user_id', () => {
     const sessions = [
-      makeSession({ conversation_id: 'c1', tenant_user_id: 'user-1', state: ConversationState.SPLIT_PROPOSED }),
-      makeSession({ conversation_id: 'c2', tenant_user_id: 'user-2', state: ConversationState.SPLIT_PROPOSED }),
+      makeSession({
+        conversation_id: 'c1',
+        tenant_user_id: 'user-1',
+        state: ConversationState.SPLIT_PROPOSED,
+      }),
+      makeSession({
+        conversation_id: 'c2',
+        tenant_user_id: 'user-2',
+        state: ConversationState.SPLIT_PROPOSED,
+      }),
     ];
     const result = filterResumableDrafts(sessions, 'user-1');
     expect(result).toHaveLength(1);
@@ -1734,9 +1825,21 @@ describe('filterResumableDrafts', () => {
 
   it('sorts by last_activity_at descending (most recent first)', () => {
     const sessions = [
-      makeSession({ conversation_id: 'c1', state: ConversationState.SPLIT_PROPOSED, last_activity_at: '2026-01-01T00:00:00Z' }),
-      makeSession({ conversation_id: 'c2', state: ConversationState.NEEDS_TENANT_INPUT, last_activity_at: '2026-01-03T00:00:00Z' }),
-      makeSession({ conversation_id: 'c3', state: ConversationState.UNIT_SELECTION_REQUIRED, last_activity_at: '2026-01-02T00:00:00Z' }),
+      makeSession({
+        conversation_id: 'c1',
+        state: ConversationState.SPLIT_PROPOSED,
+        last_activity_at: '2026-01-01T00:00:00Z',
+      }),
+      makeSession({
+        conversation_id: 'c2',
+        state: ConversationState.NEEDS_TENANT_INPUT,
+        last_activity_at: '2026-01-03T00:00:00Z',
+      }),
+      makeSession({
+        conversation_id: 'c3',
+        state: ConversationState.UNIT_SELECTION_REQUIRED,
+        last_activity_at: '2026-01-02T00:00:00Z',
+      }),
     ];
     const result = filterResumableDrafts(sessions, 'user-1');
     expect(result.map((s) => s.conversation_id)).toEqual(['c2', 'c3', 'c1']);
@@ -1744,10 +1847,26 @@ describe('filterResumableDrafts', () => {
 
   it('limits to 3 results', () => {
     const sessions = [
-      makeSession({ conversation_id: 'c1', state: ConversationState.SPLIT_PROPOSED, last_activity_at: '2026-01-04T00:00:00Z' }),
-      makeSession({ conversation_id: 'c2', state: ConversationState.NEEDS_TENANT_INPUT, last_activity_at: '2026-01-03T00:00:00Z' }),
-      makeSession({ conversation_id: 'c3', state: ConversationState.UNIT_SELECTION_REQUIRED, last_activity_at: '2026-01-02T00:00:00Z' }),
-      makeSession({ conversation_id: 'c4', state: ConversationState.LLM_ERROR_RETRYABLE, last_activity_at: '2026-01-01T00:00:00Z' }),
+      makeSession({
+        conversation_id: 'c1',
+        state: ConversationState.SPLIT_PROPOSED,
+        last_activity_at: '2026-01-04T00:00:00Z',
+      }),
+      makeSession({
+        conversation_id: 'c2',
+        state: ConversationState.NEEDS_TENANT_INPUT,
+        last_activity_at: '2026-01-03T00:00:00Z',
+      }),
+      makeSession({
+        conversation_id: 'c3',
+        state: ConversationState.UNIT_SELECTION_REQUIRED,
+        last_activity_at: '2026-01-02T00:00:00Z',
+      }),
+      makeSession({
+        conversation_id: 'c4',
+        state: ConversationState.LLM_ERROR_RETRYABLE,
+        last_activity_at: '2026-01-01T00:00:00Z',
+      }),
     ];
     const result = filterResumableDrafts(sessions, 'user-1');
     expect(result).toHaveLength(3);
@@ -1770,6 +1889,7 @@ describe('filterResumableDrafts', () => {
 ```bash
 cd /workspaces/MAINTENANCE/packages/core && pnpm test -- src/__tests__/session/draft-discovery.test.ts
 ```
+
 Expected: FAIL
 
 **Step 3: Implement draft-discovery.ts**
@@ -1807,11 +1927,13 @@ export function filterResumableDrafts(
 ```bash
 cd /workspaces/MAINTENANCE/packages/core && pnpm test -- src/__tests__/session/draft-discovery.test.ts
 ```
+
 Expected: ALL PASS
 
 **Step 5: Create session barrel export**
 
 Create `packages/core/src/session/index.ts`:
+
 ```typescript
 export type { ConversationSession, CreateSessionInput } from './types.js';
 export { createSession, updateSessionState, touchActivity, setSessionUnit } from './session.js';
@@ -1830,6 +1952,7 @@ git commit -m "feat(core): add draft discovery with resumable state filtering"
 ## Task 10: Abandonment and Expiration
 
 **Files:**
+
 - Modify: `packages/core/src/session/session.ts`
 - Modify: `packages/core/src/__tests__/session/session.test.ts`
 
@@ -1840,7 +1963,12 @@ Spec §12.3: Unseen artifacts expire after 60 min. Abandoned conversations can b
 Append to `packages/core/src/__tests__/session/session.test.ts`:
 
 ```typescript
-import { markAbandoned, markExpired, isExpired, type ExpirationConfig } from '../../session/session.js';
+import {
+  markAbandoned,
+  markExpired,
+  isExpired,
+  type ExpirationConfig,
+} from '../../session/session.js';
 
 describe('markAbandoned', () => {
   it('transitions to intake_abandoned and stores prior state', () => {
@@ -1947,6 +2075,7 @@ describe('isExpired', () => {
 ```bash
 cd /workspaces/MAINTENANCE/packages/core && pnpm test -- src/__tests__/session/session.test.ts
 ```
+
 Expected: FAIL — missing exports.
 
 **Step 3: Add implementations to session.ts**
@@ -1979,10 +2108,7 @@ export function markExpired(session: ConversationSession): ConversationSession {
 /**
  * Check if an abandoned session has exceeded the expiry window.
  */
-export function isExpired(
-  session: ConversationSession,
-  config: ExpirationConfig,
-): boolean {
+export function isExpired(session: ConversationSession, config: ExpirationConfig): boolean {
   if (session.state !== ConversationState.INTAKE_ABANDONED) return false;
   const elapsed = Date.now() - new Date(session.last_activity_at).getTime();
   return elapsed > config.abandonedExpiryMs;
@@ -1992,6 +2118,7 @@ export function isExpired(
 **Step 4: Update session barrel export**
 
 Update `packages/core/src/session/index.ts` to include new exports:
+
 ```typescript
 export type { ConversationSession, CreateSessionInput } from './types.js';
 export {
@@ -2012,6 +2139,7 @@ export { filterResumableDrafts } from './draft-discovery.js';
 ```bash
 cd /workspaces/MAINTENANCE/packages/core && pnpm test -- src/__tests__/session/session.test.ts
 ```
+
 Expected: ALL PASS
 
 **Step 6: Commit**
@@ -2026,6 +2154,7 @@ git commit -m "feat(core): add abandonment, expiration, and expired-check logic"
 ## Task 11: Integration Tests
 
 **Files:**
+
 - Create: `packages/core/src/__tests__/integration.test.ts`
 
 End-to-end scenarios testing state machine + session + auth together.
@@ -2046,7 +2175,14 @@ import {
   resolveRetryLlm,
   resolveAbandonResume,
 } from '../state-machine/guards.js';
-import { createSession, updateSessionState, markAbandoned, markExpired, isExpired, setSessionUnit } from '../session/session.js';
+import {
+  createSession,
+  updateSessionState,
+  markAbandoned,
+  markExpired,
+  isExpired,
+  setSessionUnit,
+} from '../session/session.js';
 import { filterResumableDrafts } from '../session/draft-discovery.js';
 import { createTokenPair, verifyAccessToken } from '../auth/jwt.js';
 import { extractAuthFromHeader } from '../auth/middleware.js';
@@ -2069,13 +2205,21 @@ describe('Integration: full happy-path lifecycle', () => {
       tenant_user_id: 'user-1',
       tenant_account_id: 'acct-1',
       authorized_unit_ids: ['u1'],
-      pinned_versions: { taxonomy_version: '1.0', schema_version: '1.0', model_id: 'gpt-4', prompt_version: '1.0' },
+      pinned_versions: {
+        taxonomy_version: '1.0',
+        schema_version: '1.0',
+        model_id: 'gpt-4',
+        prompt_version: '1.0',
+      },
     });
     expect(session.state).toBe(ConversationState.INTAKE_STARTED);
 
     // 2. SELECT_UNIT (single unit → auto-select)
     expect(isValidTransition(session.state, ActionType.SELECT_UNIT)).toBe(true);
-    const unitTarget = resolveSelectUnit(session.state, { authorized_unit_ids: ['u1'], selected_unit_id: null });
+    const unitTarget = resolveSelectUnit(session.state, {
+      authorized_unit_ids: ['u1'],
+      selected_unit_id: null,
+    });
     expect(unitTarget).toBe(ConversationState.UNIT_SELECTED);
     session = updateSessionState(session, unitTarget!);
     session = setSessionUnit(session, 'u1');
@@ -2118,7 +2262,12 @@ describe('Integration: error recovery with retry', () => {
       tenant_user_id: 'user-1',
       tenant_account_id: 'acct-1',
       authorized_unit_ids: ['u1'],
-      pinned_versions: { taxonomy_version: '1.0', schema_version: '1.0', model_id: 'gpt-4', prompt_version: '1.0' },
+      pinned_versions: {
+        taxonomy_version: '1.0',
+        schema_version: '1.0',
+        model_id: 'gpt-4',
+        prompt_version: '1.0',
+      },
     });
 
     session = updateSessionState(session, ConversationState.UNIT_SELECTED);
@@ -2145,7 +2294,12 @@ describe('Integration: abandon and resume', () => {
       tenant_user_id: 'user-1',
       tenant_account_id: 'acct-1',
       authorized_unit_ids: ['u1'],
-      pinned_versions: { taxonomy_version: '1.0', schema_version: '1.0', model_id: 'gpt-4', prompt_version: '1.0' },
+      pinned_versions: {
+        taxonomy_version: '1.0',
+        schema_version: '1.0',
+        model_id: 'gpt-4',
+        prompt_version: '1.0',
+      },
     });
 
     session = updateSessionState(session, ConversationState.NEEDS_TENANT_INPUT);
@@ -2176,9 +2330,54 @@ describe('Integration: draft discovery with auth', () => {
 
     // Create sessions in various states
     const sessions = [
-      { ...createSession({ conversation_id: 'c1', tenant_user_id, tenant_account_id: 'acct-1', authorized_unit_ids: ['u1'], pinned_versions: { taxonomy_version: '1.0', schema_version: '1.0', model_id: 'gpt-4', prompt_version: '1.0' } }), state: ConversationState.NEEDS_TENANT_INPUT as ConversationState, last_activity_at: '2026-01-02T00:00:00Z' },
-      { ...createSession({ conversation_id: 'c2', tenant_user_id, tenant_account_id: 'acct-1', authorized_unit_ids: ['u1'], pinned_versions: { taxonomy_version: '1.0', schema_version: '1.0', model_id: 'gpt-4', prompt_version: '1.0' } }), state: ConversationState.SUBMITTED as ConversationState, last_activity_at: '2026-01-03T00:00:00Z' },
-      { ...createSession({ conversation_id: 'c3', tenant_user_id, tenant_account_id: 'acct-1', authorized_unit_ids: ['u1'], pinned_versions: { taxonomy_version: '1.0', schema_version: '1.0', model_id: 'gpt-4', prompt_version: '1.0' } }), state: ConversationState.SPLIT_PROPOSED as ConversationState, last_activity_at: '2026-01-01T00:00:00Z' },
+      {
+        ...createSession({
+          conversation_id: 'c1',
+          tenant_user_id,
+          tenant_account_id: 'acct-1',
+          authorized_unit_ids: ['u1'],
+          pinned_versions: {
+            taxonomy_version: '1.0',
+            schema_version: '1.0',
+            model_id: 'gpt-4',
+            prompt_version: '1.0',
+          },
+        }),
+        state: ConversationState.NEEDS_TENANT_INPUT as ConversationState,
+        last_activity_at: '2026-01-02T00:00:00Z',
+      },
+      {
+        ...createSession({
+          conversation_id: 'c2',
+          tenant_user_id,
+          tenant_account_id: 'acct-1',
+          authorized_unit_ids: ['u1'],
+          pinned_versions: {
+            taxonomy_version: '1.0',
+            schema_version: '1.0',
+            model_id: 'gpt-4',
+            prompt_version: '1.0',
+          },
+        }),
+        state: ConversationState.SUBMITTED as ConversationState,
+        last_activity_at: '2026-01-03T00:00:00Z',
+      },
+      {
+        ...createSession({
+          conversation_id: 'c3',
+          tenant_user_id,
+          tenant_account_id: 'acct-1',
+          authorized_unit_ids: ['u1'],
+          pinned_versions: {
+            taxonomy_version: '1.0',
+            schema_version: '1.0',
+            model_id: 'gpt-4',
+            prompt_version: '1.0',
+          },
+        }),
+        state: ConversationState.SPLIT_PROPOSED as ConversationState,
+        last_activity_at: '2026-01-01T00:00:00Z',
+      },
     ];
 
     const drafts = filterResumableDrafts(sessions, tenant_user_id);
@@ -2207,7 +2406,12 @@ describe('Integration: follow-up loop', () => {
       tenant_user_id: 'user-1',
       tenant_account_id: 'acct-1',
       authorized_unit_ids: ['u1'],
-      pinned_versions: { taxonomy_version: '1.0', schema_version: '1.0', model_id: 'gpt-4', prompt_version: '1.0' },
+      pinned_versions: {
+        taxonomy_version: '1.0',
+        schema_version: '1.0',
+        model_id: 'gpt-4',
+        prompt_version: '1.0',
+      },
     });
 
     // Fast-forward to classification
@@ -2236,6 +2440,7 @@ describe('Integration: follow-up loop', () => {
 ```bash
 cd /workspaces/MAINTENANCE/packages/core && pnpm test
 ```
+
 Expected: ALL PASS
 
 **Step 3: Commit**
@@ -2250,6 +2455,7 @@ git commit -m "test(core): add integration tests for full lifecycle scenarios"
 ## Task 12: Barrel Exports and Final Verification
 
 **Files:**
+
 - Modify: `packages/core/src/index.ts`
 
 **Step 1: Wire up the barrel export**
@@ -2307,11 +2513,7 @@ export {
   isExpired,
   filterResumableDrafts,
 } from './session/index.js';
-export type {
-  ConversationSession,
-  CreateSessionInput,
-  ExpirationConfig,
-} from './session/index.js';
+export type { ConversationSession, CreateSessionInput, ExpirationConfig } from './session/index.js';
 ```
 
 **Step 2: Run full test suite**
@@ -2319,6 +2521,7 @@ export type {
 ```bash
 cd /workspaces/MAINTENANCE/packages/core && pnpm test
 ```
+
 Expected: ALL PASS
 
 **Step 3: Run typecheck**
@@ -2326,6 +2529,7 @@ Expected: ALL PASS
 ```bash
 cd /workspaces/MAINTENANCE/packages/core && pnpm exec tsc --noEmit
 ```
+
 Expected: no errors.
 
 **Step 4: Run schemas tests to verify no regressions**
@@ -2333,6 +2537,7 @@ Expected: no errors.
 ```bash
 cd /workspaces/MAINTENANCE/packages/schemas && pnpm test
 ```
+
 Expected: 85 tests pass (unchanged).
 
 **Step 5: Commit**

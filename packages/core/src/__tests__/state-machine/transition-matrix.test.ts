@@ -82,7 +82,11 @@ describe('TRANSITION_MATRIX', () => {
     ['split_finalized', 'START_CLASSIFICATION', ['classification_in_progress']],
     ['split_finalized', 'ABANDON', ['intake_abandoned']],
     // classification_in_progress
-    ['classification_in_progress', 'LLM_CLASSIFY_SUCCESS', ['needs_tenant_input', 'tenant_confirmation_pending']],
+    [
+      'classification_in_progress',
+      'LLM_CLASSIFY_SUCCESS',
+      ['needs_tenant_input', 'tenant_confirmation_pending'],
+    ],
     ['classification_in_progress', 'LLM_FAIL', ['llm_error_retryable', 'llm_error_terminal']],
     ['classification_in_progress', 'ABANDON', ['intake_abandoned']],
     // needs_tenant_input
@@ -105,22 +109,31 @@ describe('TRANSITION_MATRIX', () => {
     ['llm_error_terminal', 'RESUME', ['llm_error_terminal']],
     ['llm_error_terminal', 'ABANDON', ['intake_abandoned']],
     // intake_abandoned
-    ['intake_abandoned', 'RESUME', ['intake_started', 'unit_selection_required', 'unit_selected', 'split_proposed', 'split_finalized', 'needs_tenant_input', 'tenant_confirmation_pending']],
+    [
+      'intake_abandoned',
+      'RESUME',
+      [
+        'intake_started',
+        'unit_selection_required',
+        'unit_selected',
+        'split_proposed',
+        'split_finalized',
+        'needs_tenant_input',
+        'tenant_confirmation_pending',
+      ],
+    ],
     ['intake_abandoned', 'EXPIRE', ['intake_expired']],
     // intake_expired
     ['intake_expired', 'CREATE_CONVERSATION', ['intake_started']],
   ];
 
-  it.each(expectedTransitions)(
-    'from %s + %s → %s',
-    (state, trigger, expectedTargets) => {
-      const transitions = TRANSITION_MATRIX[state as ConversationState];
-      expect(transitions).toBeDefined();
-      const targets = transitions![trigger as TransitionTrigger];
-      expect(targets).toBeDefined();
-      expect([...(targets as ConversationState[])].sort()).toEqual([...expectedTargets].sort());
-    },
-  );
+  it.each(expectedTransitions)('from %s + %s → %s', (state, trigger, expectedTargets) => {
+    const transitions = TRANSITION_MATRIX[state as ConversationState];
+    expect(transitions).toBeDefined();
+    const targets = transitions![trigger as TransitionTrigger];
+    expect(targets).toBeDefined();
+    expect([...(targets as ConversationState[])].sort()).toEqual([...expectedTargets].sort());
+  });
 });
 
 describe('isPhotoAction', () => {

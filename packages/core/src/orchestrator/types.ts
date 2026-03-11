@@ -1,4 +1,14 @@
-import type { ConversationState, IssueClassifierInput, IssueSplitterInput, IssueSplitterOutput, OrchestratorActionRequest, OrchestratorActionResponse, FollowUpGeneratorInput, RiskProtocols, EscalationPlans } from '@wo-agent/schemas';
+import type {
+  ConversationState,
+  IssueClassifierInput,
+  IssueSplitterInput,
+  IssueSplitterOutput,
+  OrchestratorActionRequest,
+  OrchestratorActionResponse,
+  FollowUpGeneratorInput,
+  RiskProtocols,
+  EscalationPlans,
+} from '@wo-agent/schemas';
 import type { CueDictionary, Taxonomy, ConfidenceConfig, FollowUpCaps } from '@wo-agent/schemas';
 import type { EventRepository } from '../events/event-repository.js';
 import type { ConversationSession } from '../session/types.js';

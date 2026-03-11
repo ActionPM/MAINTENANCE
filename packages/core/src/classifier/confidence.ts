@@ -7,9 +7,9 @@ export interface FieldConfidenceInput {
   readonly cueStrength: number;
   readonly completeness: number;
   readonly modelHint: number;
-  readonly constraintImplied: number;  // 0 or 1
-  readonly disagreement: number;      // 0 or 1
-  readonly ambiguityPenalty: number;   // 0..1
+  readonly constraintImplied: number; // 0 or 1
+  readonly disagreement: number; // 0 or 1
+  readonly ambiguityPenalty: number; // 0..1
   readonly config: ConfidenceConfig;
 }
 
@@ -32,7 +32,15 @@ function clamp01(x: number): number {
  * Model hint is clamped to [0.2, 0.95] before use.
  */
 export function computeFieldConfidence(input: FieldConfidenceInput): number {
-  const { cueStrength, completeness, modelHint, constraintImplied, disagreement, ambiguityPenalty, config } = input;
+  const {
+    cueStrength,
+    completeness,
+    modelHint,
+    constraintImplied,
+    disagreement,
+    ambiguityPenalty,
+    config,
+  } = input;
 
   // Clamp model hint (spec 14.3: "Model hint clamped to [0.2, 0.95] and scaled")
   const clampedHint = Math.max(config.model_hint_min, Math.min(config.model_hint_max, modelHint));
@@ -51,7 +59,10 @@ export function computeFieldConfidence(input: FieldConfidenceInput): number {
 /**
  * Classify a confidence score into high/medium/low bands (spec 14.3).
  */
-export function classifyConfidenceBand(confidence: number, config: ConfidenceConfig): ConfidenceBand {
+export function classifyConfidenceBand(
+  confidence: number,
+  config: ConfidenceConfig,
+): ConfidenceBand {
   if (confidence >= config.high_threshold) return 'high';
   if (confidence >= config.medium_threshold) return 'medium';
   return 'low';
@@ -78,11 +89,10 @@ export function computeAllFieldConfidences(input: ComputeAllInput): Record<strin
 
     // constraint_implied: 1 if hierarchical constraints narrow to exactly one value
     // and the classifier's chosen value matches (C2: separate from cue_strength)
-    const constraintImplied = (impliedFields?.[field] === modelLabel) ? 1 : 0;
+    const constraintImplied = impliedFields?.[field] === modelLabel ? 1 : 0;
 
     // disagreement: 1 if cue top label differs from model's chosen label
-    const disagreement =
-      cueResult?.topLabel != null && cueResult.topLabel !== modelLabel ? 1 : 0;
+    const disagreement = cueResult?.topLabel != null && cueResult.topLabel !== modelLabel ? 1 : 0;
 
     // ambiguity_penalty: from cue scoring (how close top-2 labels are)
     const ambiguityPenalty = cueResult?.ambiguity ?? 0;
@@ -173,10 +183,12 @@ export function determineFieldsNeedingInput(opts: DetermineFieldsOptions): strin
   if (opts.classificationOutput && !fields.includes('Category')) {
     const category = opts.classificationOutput['Category'];
     const excludes =
-      category === 'maintenance' ? MAINTENANCE_EXCLUDES :
-      category === 'management' ? MANAGEMENT_EXCLUDES :
-      [];
-    return fields.filter(f => !excludes.includes(f));
+      category === 'maintenance'
+        ? MAINTENANCE_EXCLUDES
+        : category === 'management'
+          ? MANAGEMENT_EXCLUDES
+          : [];
+    return fields.filter((f) => !excludes.includes(f));
   }
 
   return fields;

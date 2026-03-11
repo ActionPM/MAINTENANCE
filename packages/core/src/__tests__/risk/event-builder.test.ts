@@ -8,19 +8,21 @@ import type { MatchedTrigger, EscalationResult } from '@wo-agent/schemas';
 
 describe('buildRiskDetectedEvent', () => {
   it('builds a risk_detected event with trigger details', () => {
-    const triggers: MatchedTrigger[] = [{
-      trigger: {
-        trigger_id: 'fire-001',
-        name: 'Fire',
-        grammar: { keyword_any: [], regex_any: [], taxonomy_path_any: [] },
-        requires_confirmation: true,
-        severity: 'emergency',
-        mitigation_template_id: 'mit-fire',
+    const triggers: MatchedTrigger[] = [
+      {
+        trigger: {
+          trigger_id: 'fire-001',
+          name: 'Fire',
+          grammar: { keyword_any: [], regex_any: [], taxonomy_path_any: [] },
+          requires_confirmation: true,
+          severity: 'emergency',
+          mitigation_template_id: 'mit-fire',
+        },
+        matched_keywords: ['fire'],
+        matched_regex: [],
+        matched_taxonomy_paths: [],
       },
-      matched_keywords: ['fire'],
-      matched_regex: [],
-      matched_taxonomy_paths: [],
-    }];
+    ];
 
     const event = buildRiskDetectedEvent({
       eventId: 'evt-1',
@@ -62,7 +64,15 @@ describe('buildEscalationResultEvent', () => {
     const result: EscalationResult = {
       plan_id: 'plan-1',
       state: 'completed',
-      attempts: [{ contact_id: 'c-1', role: 'bm', name: 'BM', attempted_at: '2026-03-03T00:00:00Z', answered: true }],
+      attempts: [
+        {
+          contact_id: 'c-1',
+          role: 'bm',
+          name: 'BM',
+          attempted_at: '2026-03-03T00:00:00Z',
+          answered: true,
+        },
+      ],
       answered_by: { role: 'bm', contact_id: 'c-1', name: 'BM', phone: '+1' },
       exhaustion_message: null,
     };

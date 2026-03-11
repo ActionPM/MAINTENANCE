@@ -6,8 +6,12 @@ import type { JwtConfig } from '@wo-agent/core';
 // In production, load from env. For stubs, use a test config.
 function getJwtConfig(): JwtConfig {
   return {
-    accessTokenSecret: new TextEncoder().encode(process.env.JWT_ACCESS_SECRET ?? 'dev-access-secret-at-least-32-characters!!'),
-    refreshTokenSecret: new TextEncoder().encode(process.env.JWT_REFRESH_SECRET ?? 'dev-refresh-secret-at-least-32-characters!'),
+    accessTokenSecret: new TextEncoder().encode(
+      process.env.JWT_ACCESS_SECRET ?? 'dev-access-secret-at-least-32-characters!!',
+    ),
+    refreshTokenSecret: new TextEncoder().encode(
+      process.env.JWT_REFRESH_SECRET ?? 'dev-refresh-secret-at-least-32-characters!',
+    ),
     accessTokenExpiry: '15m',
     refreshTokenExpiry: '7d',
     issuer: 'wo-agent',

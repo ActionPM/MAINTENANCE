@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { PostgresNotificationStore, PostgresNotificationPreferenceStore } from '../repos/pg-notification-store.js';
+import {
+  PostgresNotificationStore,
+  PostgresNotificationPreferenceStore,
+} from '../repos/pg-notification-store.js';
 
 function createFakePool() {
   const fake = {
@@ -67,7 +70,9 @@ describe('PostgresNotificationStore', () => {
   it('insert() swallows unique violation on idempotency_key (23505)', async () => {
     const throwingPool = createFakePool();
     const err = Object.assign(new Error('duplicate key'), { code: '23505' });
-    throwingPool.query = async () => { throw err; };
+    throwingPool.query = async () => {
+      throw err;
+    };
     const throwingStore = new PostgresNotificationStore(throwingPool as never);
 
     const event = {
@@ -97,7 +102,9 @@ describe('PostgresNotificationStore', () => {
 
   it('insert() rethrows non-unique-violation errors', async () => {
     const throwingPool = createFakePool();
-    throwingPool.query = async () => { throw new Error('connection lost'); };
+    throwingPool.query = async () => {
+      throw new Error('connection lost');
+    };
     const throwingStore = new PostgresNotificationStore(throwingPool as never);
 
     const event = {

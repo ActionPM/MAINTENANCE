@@ -7,7 +7,12 @@ import { callIssueSplitter, SplitterError } from '../../splitter/issue-splitter.
 import { scanTextForTriggers } from '../../risk/trigger-scanner.js';
 import { renderMitigationMessages } from '../../risk/mitigation.js';
 import { buildRiskDetectedEvent } from '../../risk/event-builder.js';
-import type { ActionHandlerContext, ActionHandlerResult, UIMessageInput, QuickReplyInput } from '../types.js';
+import type {
+  ActionHandlerContext,
+  ActionHandlerResult,
+  UIMessageInput,
+  QuickReplyInput,
+} from '../types.js';
 
 /**
  * Handle SUBMIT_INITIAL_MESSAGE (spec §11.2, §13, §17).
@@ -20,7 +25,9 @@ import type { ActionHandlerContext, ActionHandlerResult, UIMessageInput, QuickRe
  * 5. On success: LLM_SPLIT_SUCCESS → split_proposed (final event)
  * 6. On failure: LLM_FAIL → llm_error_retryable (final event)
  */
-export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Promise<ActionHandlerResult> {
+export async function handleSubmitInitialMessage(
+  ctx: ActionHandlerContext,
+): Promise<ActionHandlerResult> {
   const { session, deps } = ctx;
   const input = ctx.request.tenant_input as TenantInputSubmitInitialMessage;
 
@@ -29,8 +36,15 @@ export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Pro
     return {
       newState: session.state,
       session,
-      uiMessages: [{ role: 'agent', content: 'Please select a unit before submitting your request.' }],
-      errors: [{ code: 'UNIT_NOT_RESOLVED', message: 'A unit must be selected before submitting a message' }],
+      uiMessages: [
+        { role: 'agent', content: 'Please select a unit before submitting your request.' },
+      ],
+      errors: [
+        {
+          code: 'UNIT_NOT_RESOLVED',
+          message: 'A unit must be selected before submitting a message',
+        },
+      ],
     };
   }
 
@@ -74,7 +88,7 @@ export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Pro
 
     // If emergency requires confirmation, add quick replies
     const needsConfirmation = riskScan.triggers_matched.some(
-      m => m.trigger.requires_confirmation && m.trigger.severity === 'emergency',
+      (m) => m.trigger.requires_confirmation && m.trigger.severity === 'emergency',
     );
     if (needsConfirmation) {
       sessionAfterRisk = setEscalationState(sessionAfterRisk, 'pending_confirmation');
@@ -98,9 +112,7 @@ export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Pro
     const splitResult = await callIssueSplitter(splitterInput, deps.issueSplitter);
     const updatedSession = setSplitIssues(sessionAfterRisk, splitResult.issues);
 
-    const issueList = splitResult.issues
-      .map((issue, i) => `${i + 1}. ${issue.summary}`)
-      .join('\n');
+    const issueList = splitResult.issues.map((issue, i) => `${i + 1}. ${issue.summary}`).join('\n');
 
     return {
       newState: ConversationState.SPLIT_PROPOSED,
@@ -111,9 +123,10 @@ export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Pro
         ...riskMessages,
         {
           role: 'agent',
-          content: splitResult.issue_count === 1
-            ? `I identified 1 issue:\n\n1. ${splitResult.issues[0].summary}\n\nPlease confirm or edit this issue.`
-            : `I identified ${splitResult.issue_count} issues:\n\n${issueList}\n\nPlease confirm, edit, or merge these issues.`,
+          content:
+            splitResult.issue_count === 1
+              ? `I identified 1 issue:\n\n1. ${splitResult.issues[0].summary}\n\nPlease confirm or edit this issue.`
+              : `I identified ${splitResult.issue_count} issues:\n\n${issueList}\n\nPlease confirm, edit, or merge these issues.`,
         },
       ],
       quickReplies: [
@@ -123,15 +136,18 @@ export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Pro
       ],
       eventPayload: {
         split_result: splitResult,
-        ...(riskScan.triggers_matched.length > 0 ? {
-          risk_detected: true,
-          risk_trigger_ids: riskScan.triggers_matched.map(t => t.trigger.trigger_id),
-        } : {}),
+        ...(riskScan.triggers_matched.length > 0
+          ? {
+              risk_detected: true,
+              risk_trigger_ids: riskScan.triggers_matched.map((t) => t.trigger.trigger_id),
+            }
+          : {}),
       },
       eventType: 'state_transition',
     };
   } catch (err) {
-    const errorMessage = err instanceof SplitterError ? err.message : 'Unexpected error analyzing your request';
+    const errorMessage =
+      err instanceof SplitterError ? err.message : 'Unexpected error analyzing your request';
     return {
       newState: ConversationState.LLM_ERROR_RETRYABLE,
       session: sessionAfterRisk,
@@ -145,10 +161,12 @@ export async function handleSubmitInitialMessage(ctx: ActionHandlerContext): Pro
       transitionContext: { prior_state: ConversationState.SPLIT_IN_PROGRESS },
       eventPayload: {
         error: errorMessage,
-        ...(riskScan.triggers_matched.length > 0 ? {
-          risk_detected: true,
-          risk_trigger_ids: riskScan.triggers_matched.map(t => t.trigger.trigger_id),
-        } : {}),
+        ...(riskScan.triggers_matched.length > 0
+          ? {
+              risk_detected: true,
+              risk_trigger_ids: riskScan.triggers_matched.map((t) => t.trigger.trigger_id),
+            }
+          : {}),
       },
       eventType: 'error_occurred',
     };

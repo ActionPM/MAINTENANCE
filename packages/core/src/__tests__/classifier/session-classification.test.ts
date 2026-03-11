@@ -2,7 +2,12 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { createSession, setClassificationResults } from '../../session/session.js';
 import type { IssueClassificationResult } from '../../session/types.js';
 
-const VERSIONS = { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'test', prompt_version: '1.0.0' };
+const VERSIONS = {
+  taxonomy_version: '1.0.0',
+  schema_version: '1.0.0',
+  model_id: 'test',
+  prompt_version: '1.0.0',
+};
 
 afterEach(() => {
   vi.useRealTimers();
@@ -51,18 +56,20 @@ describe('setClassificationResults', () => {
       authorized_unit_ids: ['u1'],
       pinned_versions: VERSIONS,
     });
-    session = setClassificationResults(session, [{
-      issue_id: 'i1',
-      classifierOutput: {
+    session = setClassificationResults(session, [
+      {
         issue_id: 'i1',
-        classification: { Category: 'maintenance' },
-        model_confidence: { Category: 0.9 },
-        missing_fields: [],
-        needs_human_triage: false,
+        classifierOutput: {
+          issue_id: 'i1',
+          classification: { Category: 'maintenance' },
+          model_confidence: { Category: 0.9 },
+          missing_fields: [],
+          needs_human_triage: false,
+        },
+        computedConfidence: { Category: 0.85 },
+        fieldsNeedingInput: [],
       },
-      computedConfidence: { Category: 0.85 },
-      fieldsNeedingInput: [],
-    }]);
+    ]);
     const cleared = setClassificationResults(session, null);
     expect(cleared.classification_results).toBeNull();
   });

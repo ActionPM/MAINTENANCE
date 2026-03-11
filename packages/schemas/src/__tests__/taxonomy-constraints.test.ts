@@ -33,7 +33,9 @@ describe('taxonomy_constraints.json', () => {
 
   it('every Maintenance_Category -> Maintenance_Object mapping references valid values', () => {
     constraints = loadTaxonomyConstraints();
-    for (const [cat, objs] of Object.entries(constraints.Maintenance_Category_to_Maintenance_Object)) {
+    for (const [cat, objs] of Object.entries(
+      constraints.Maintenance_Category_to_Maintenance_Object,
+    )) {
       expect(taxonomy.Maintenance_Category).toContain(cat);
       for (const obj of objs) {
         expect(taxonomy.Maintenance_Object).toContain(obj);
@@ -43,7 +45,9 @@ describe('taxonomy_constraints.json', () => {
 
   it('every Maintenance_Object -> Maintenance_Problem mapping references valid values', () => {
     constraints = loadTaxonomyConstraints();
-    for (const [obj, problems] of Object.entries(constraints.Maintenance_Object_to_Maintenance_Problem)) {
+    for (const [obj, problems] of Object.entries(
+      constraints.Maintenance_Object_to_Maintenance_Problem,
+    )) {
       expect(taxonomy.Maintenance_Object).toContain(obj);
       for (const prob of problems) {
         expect(taxonomy.Maintenance_Problem).toContain(prob);
@@ -89,7 +93,10 @@ describe('taxonomy_constraints.json', () => {
       }
     }
     for (const [sub, locs] of subToLocations) {
-      expect(locs, `Sub_Location "${sub}" appears in multiple Locations: ${locs.join(', ')}`).toHaveLength(1);
+      expect(
+        locs,
+        `Sub_Location "${sub}" appears in multiple Locations: ${locs.join(', ')}`,
+      ).toHaveLength(1);
     }
   });
 
@@ -97,6 +104,8 @@ describe('taxonomy_constraints.json', () => {
   it('other_issue and other_maintenance_category appear in Maintenance_Category_to_Maintenance_Object', () => {
     constraints = loadTaxonomyConstraints();
     expect(constraints.Maintenance_Category_to_Maintenance_Object['other_issue']).toBeDefined();
-    expect(constraints.Maintenance_Category_to_Maintenance_Object['other_maintenance_category']).toBeDefined();
+    expect(
+      constraints.Maintenance_Category_to_Maintenance_Object['other_maintenance_category'],
+    ).toBeDefined();
   });
 });

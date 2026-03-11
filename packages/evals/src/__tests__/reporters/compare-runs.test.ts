@@ -5,11 +5,11 @@ describe('compareRuns', () => {
   it('detects a regression on a critical slice (emergency)', () => {
     const baseline = {
       metrics: { field_accuracy: 0.85 },
-      slice_metrics: { emergency: { field_accuracy: 0.90 } },
+      slice_metrics: { emergency: { field_accuracy: 0.9 } },
     };
     const candidate = {
       metrics: { field_accuracy: 0.87 },
-      slice_metrics: { emergency: { field_accuracy: 0.80 } },
+      slice_metrics: { emergency: { field_accuracy: 0.8 } },
     };
 
     const report = compareRuns(baseline, candidate);
@@ -21,14 +21,14 @@ describe('compareRuns', () => {
     const baseline = {
       metrics: {},
       slice_metrics: {
-        building_access: { field_accuracy: 0.90 },
+        building_access: { field_accuracy: 0.9 },
         pest_control: { field_accuracy: 0.85 },
       },
     };
     const candidate = {
       metrics: {},
       slice_metrics: {
-        building_access: { field_accuracy: 0.80 },
+        building_access: { field_accuracy: 0.8 },
         pest_control: { field_accuracy: 0.75 },
       },
     };
@@ -42,7 +42,7 @@ describe('compareRuns', () => {
   it('passes when all slices improve or hold', () => {
     const baseline = {
       metrics: { field_accuracy: 0.85 },
-      slice_metrics: { emergency: { field_accuracy: 0.90 } },
+      slice_metrics: { emergency: { field_accuracy: 0.9 } },
     };
     const candidate = {
       metrics: { field_accuracy: 0.87 },
@@ -57,7 +57,7 @@ describe('compareRuns', () => {
   it('blocks even a tiny drop on a critical slice (zero threshold)', () => {
     const baseline = {
       metrics: { field_accuracy: 0.85 },
-      slice_metrics: { emergency: { field_accuracy: 0.90 } },
+      slice_metrics: { emergency: { field_accuracy: 0.9 } },
     };
     const candidate = {
       metrics: { field_accuracy: 0.85 },
@@ -72,7 +72,7 @@ describe('compareRuns', () => {
   it('applies normal threshold on non-critical slices', () => {
     const baseline = {
       metrics: { field_accuracy: 0.85 },
-      slice_metrics: { plumbing: { field_accuracy: 0.90 } },
+      slice_metrics: { plumbing: { field_accuracy: 0.9 } },
     };
     const candidate = {
       metrics: { field_accuracy: 0.85 },
@@ -86,7 +86,7 @@ describe('compareRuns', () => {
 
   it('detects improvements', () => {
     const baseline = {
-      metrics: { field_accuracy: 0.80 },
+      metrics: { field_accuracy: 0.8 },
       slice_metrics: { plumbing: { field_accuracy: 0.75 } },
     };
     const candidate = {
@@ -101,11 +101,11 @@ describe('compareRuns', () => {
   it('gate passes when regressions are on non-critical slices only', () => {
     const baseline = {
       metrics: { field_accuracy: 0.85 },
-      slice_metrics: { plumbing: { field_accuracy: 0.90 } },
+      slice_metrics: { plumbing: { field_accuracy: 0.9 } },
     };
     const candidate = {
       metrics: { field_accuracy: 0.85 },
-      slice_metrics: { plumbing: { field_accuracy: 0.70 } },
+      slice_metrics: { plumbing: { field_accuracy: 0.7 } },
     };
 
     const report = compareRuns(baseline, candidate);
@@ -155,7 +155,7 @@ describe('compareRuns', () => {
 
   it('blocks on contradiction_after_retry_rate increase', () => {
     const baseline = {
-      metrics: { contradiction_after_retry_rate: 0.00 },
+      metrics: { contradiction_after_retry_rate: 0.0 },
       slice_metrics: {},
     };
     const candidate = {
@@ -165,7 +165,9 @@ describe('compareRuns', () => {
 
     const report = compareRuns(baseline, candidate);
     expect(report.gate_passed).toBe(false);
-    expect(report.regressions.some((r) => r.metric === 'contradiction_after_retry_rate')).toBe(true);
+    expect(report.regressions.some((r) => r.metric === 'contradiction_after_retry_rate')).toBe(
+      true,
+    );
   });
 
   it('blocks on any increase in blocking rate metrics, even below 2% threshold', () => {

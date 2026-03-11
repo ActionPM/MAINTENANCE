@@ -5,7 +5,10 @@ import { createDispatcher } from '../../orchestrator/dispatcher.js';
 import { InMemoryEventStore } from '../../events/in-memory-event-store.js';
 import { InMemoryWorkOrderStore } from '../../work-order/in-memory-wo-store.js';
 import { InMemoryIdempotencyStore } from '../../idempotency/in-memory-idempotency-store.js';
-import { InMemoryNotificationStore, InMemoryNotificationPreferenceStore } from '../../notifications/in-memory-notification-store.js';
+import {
+  InMemoryNotificationStore,
+  InMemoryNotificationPreferenceStore,
+} from '../../notifications/in-memory-notification-store.js';
 import { NotificationService } from '../../notifications/notification-service.js';
 import { MockSmsSender } from '../../notifications/mock-sms-sender.js';
 import type { SessionStore } from '../../orchestrator/types.js';
@@ -30,14 +33,22 @@ const FULL_CUES: CueDictionary = {
 
 class InMemorySessionStore implements SessionStore {
   private sessions = new Map<string, ConversationSession>();
-  async get(id: string) { return this.sessions.get(id) ?? null; }
-  async getByTenantUser(userId: string) {
-    return [...this.sessions.values()].filter(s => s.tenant_user_id === userId);
+  async get(id: string) {
+    return this.sessions.get(id) ?? null;
   }
-  async save(session: ConversationSession) { this.sessions.set(session.conversation_id, session); }
+  async getByTenantUser(userId: string) {
+    return [...this.sessions.values()].filter((s) => s.tenant_user_id === userId);
+  }
+  async save(session: ConversationSession) {
+    this.sessions.set(session.conversation_id, session);
+  }
 }
 
-const AUTH = { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['unit-1'] };
+const AUTH = {
+  tenant_user_id: 'user-1',
+  tenant_account_id: 'acct-1',
+  authorized_unit_ids: ['unit-1'],
+};
 
 /**
  * E2E test: Walk the full intake flow through to submitted,
@@ -85,10 +96,15 @@ describe('E2E: Notification flow through dispatcher', () => {
           Priority: 'normal',
         },
         model_confidence: {
-          Category: 0.95, Location: 0.9, Sub_Location: 0.85,
-          Maintenance_Category: 0.92, Maintenance_Object: 0.95,
-          Maintenance_Problem: 0.88, Management_Category: 0.95,
-          Management_Object: 0.95, Priority: 0.9,
+          Category: 0.95,
+          Location: 0.9,
+          Sub_Location: 0.85,
+          Maintenance_Category: 0.92,
+          Maintenance_Object: 0.95,
+          Maintenance_Problem: 0.88,
+          Management_Category: 0.95,
+          Management_Object: 0.95,
+          Priority: 0.9,
         },
         missing_fields: [],
         needs_human_triage: false,
@@ -166,7 +182,7 @@ describe('E2E: Notification flow through dispatcher', () => {
     // Verify: Notification sent
     const notifs = await notifStore.queryByTenantUser('user-1');
     expect(notifs.length).toBeGreaterThanOrEqual(1);
-    const woNotif = notifs.find(n => n.notification_type === 'work_order_created');
+    const woNotif = notifs.find((n) => n.notification_type === 'work_order_created');
     expect(woNotif).toBeDefined();
     expect(woNotif!.channel).toBe('in_app');
     expect(woNotif!.status).toBe('sent');

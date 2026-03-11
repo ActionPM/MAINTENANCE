@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  AnalyticsService,
-} from '@wo-agent/core';
+import { AnalyticsService } from '@wo-agent/core';
 import type {
   AnalyticsServiceDeps,
   AnalyticsQuery,

@@ -34,9 +34,7 @@ export function computePerFieldAccuracy(
 /**
  * Overall field accuracy — average of per-field accuracies.
  */
-export function computeOverallFieldAccuracy(
-  pairs: readonly FieldComparisonInput[],
-): number {
+export function computeOverallFieldAccuracy(pairs: readonly FieldComparisonInput[]): number {
   const perField = computePerFieldAccuracy(pairs);
   const values = Object.values(perField);
   if (values.length === 0) return 0;
@@ -46,22 +44,18 @@ export function computeOverallFieldAccuracy(
 /**
  * Schema-invalid rate: proportion of results with status !== 'ok'.
  */
-export function computeSchemaInvalidRate(
-  statuses: readonly string[],
-): number {
+export function computeSchemaInvalidRate(statuses: readonly string[]): number {
   if (statuses.length === 0) return 0;
-  const invalid = statuses.filter(s => s === 'schema_fail').length;
+  const invalid = statuses.filter((s) => s === 'schema_fail').length;
   return invalid / statuses.length;
 }
 
 /**
  * Taxonomy-invalid rate: proportion of results with taxonomy_fail status.
  */
-export function computeTaxonomyInvalidRate(
-  statuses: readonly string[],
-): number {
+export function computeTaxonomyInvalidRate(statuses: readonly string[]): number {
   if (statuses.length === 0) return 0;
-  const invalid = statuses.filter(s => s === 'taxonomy_fail').length;
+  const invalid = statuses.filter((s) => s === 'taxonomy_fail').length;
   return invalid / statuses.length;
 }
 
@@ -75,6 +69,6 @@ export function computeContradictionAfterRetryRate(
   results: readonly { hierarchyValid: boolean }[],
 ): number {
   if (results.length === 0) return 0;
-  const contradictions = results.filter(r => !r.hierarchyValid).length;
+  const contradictions = results.filter((r) => !r.hierarchyValid).length;
   return contradictions / results.length;
 }

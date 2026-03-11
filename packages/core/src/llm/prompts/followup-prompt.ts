@@ -64,7 +64,9 @@ export function buildFollowUpUserMessage(
     `\nCurrent classification:`,
     ...Object.entries(input.classification).map(([k, v]) => `  ${k}: ${v}`),
     `\nConfidence by field:`,
-    ...Object.entries(input.confidence_by_field).map(([k, v]) => `  ${k}: ${(v as number).toFixed(2)}`),
+    ...Object.entries(input.confidence_by_field).map(
+      ([k, v]) => `  ${k}: ${(v as number).toFixed(2)}`,
+    ),
     `\nMissing fields: ${input.missing_fields.join(', ') || 'none'}`,
     `\nFields needing input (generate questions for THESE ONLY): ${input.fields_needing_input.join(', ')}`,
     `\nTurn number: ${input.turn_number}`,

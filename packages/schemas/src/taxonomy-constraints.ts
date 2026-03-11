@@ -15,7 +15,8 @@ export interface TaxonomyConstraints {
   readonly Maintenance_Object_to_Sub_Location: Record<string, readonly string[]>;
 }
 
-export type ConstraintMapName = 'Location_to_Sub_Location'
+export type ConstraintMapName =
+  | 'Location_to_Sub_Location'
   | 'Sub_Location_to_Maintenance_Category'
   | 'Maintenance_Category_to_Maintenance_Object'
   | 'Maintenance_Object_to_Maintenance_Problem'
@@ -55,4 +56,5 @@ export function loadTaxonomyConstraints(): TaxonomyConstraints {
 }
 
 export const taxonomyConstraints: TaxonomyConstraints = loadTaxonomyConstraints();
-export const CONSTRAINT_EDGES: readonly ConstraintEdge[] = deriveConstraintEdges(taxonomyConstraints);
+export const CONSTRAINT_EDGES: readonly ConstraintEdge[] =
+  deriveConstraintEdges(taxonomyConstraints);

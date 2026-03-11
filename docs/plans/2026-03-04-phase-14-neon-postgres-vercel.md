@@ -9,6 +9,7 @@
 **Tech Stack:** `@neondatabase/serverless` (Neon's WebSocket-based driver for Vercel edge/serverless), `postgres` (node-postgres for migrations), Vitest, pnpm workspaces
 
 **Prerequisite skills:**
+
 - @append-only-events — event tables are INSERT+SELECT only, never mutated
 - @schema-first-development — repository interfaces are the contract
 - @project-conventions — naming, file layout, barrel exports
@@ -18,6 +19,7 @@
 ### Task 0: Scaffold `packages/db` Workspace Package
 
 **Files:**
+
 - Create: `packages/db/package.json`
 - Create: `packages/db/tsconfig.json`
 - Create: `packages/db/src/index.ts`
@@ -84,7 +86,7 @@
 // Barrel — populated as repos are implemented.
 ```
 
-**Step 4: Verify pnpm-workspace.yaml already includes `packages/**`**
+**Step 4: Verify pnpm-workspace.yaml already includes `packages/**`\*\*
 
 Check that the existing `pnpm-workspace.yaml` glob covers `packages/db`. If it only lists specific paths, add `packages/db`.
 
@@ -105,6 +107,7 @@ git commit -m "chore: scaffold @wo-agent/db package (phase 14)"
 ### Task 1: Neon Client Pool + Migration Runner
 
 **Files:**
+
 - Create: `packages/db/src/pool.ts`
 - Create: `packages/db/src/migrate.ts`
 - Create: `packages/db/src/migrations/`
@@ -188,19 +191,15 @@ export async function runMigrations(databaseUrl: string): Promise<void> {
     const migrations = await loadMigrations();
 
     for (const migration of migrations) {
-      const exists = await pool.query(
-        'SELECT 1 FROM _migrations WHERE name = $1',
-        [migration.name],
-      );
+      const exists = await pool.query('SELECT 1 FROM _migrations WHERE name = $1', [
+        migration.name,
+      ]);
       if (exists.rows.length > 0) continue;
 
       await pool.query('BEGIN');
       try {
         await pool.query(migration.sql);
-        await pool.query(
-          'INSERT INTO _migrations (name) VALUES ($1)',
-          [migration.name],
-        );
+        await pool.query('INSERT INTO _migrations (name) VALUES ($1)', [migration.name]);
         await pool.query('COMMIT');
         console.log(`  applied: ${migration.name}`);
       } catch (err) {
@@ -223,7 +222,7 @@ async function loadMigrations(): Promise<Migration[]> {
   const fs = await import('node:fs/promises');
   const path = await import('node:path');
   const dir = path.join(import.meta.dirname, 'migrations');
-  const files = (await fs.readdir(dir)).filter(f => f.endsWith('.sql')).sort();
+  const files = (await fs.readdir(dir)).filter((f) => f.endsWith('.sql')).sort();
   const migrations: Migration[] = [];
   for (const file of files) {
     const sql = await fs.readFile(path.join(dir, file), 'utf-8');
@@ -241,7 +240,10 @@ if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\\/g, '
   }
   runMigrations(url)
     .then(() => console.log('Migrations complete'))
-    .catch((err) => { console.error(err); process.exit(1); });
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
 }
 ```
 
@@ -257,6 +259,7 @@ git commit -m "feat(db): add Neon pool + migration runner (phase 14)"
 ### Task 2: SQL Migrations — Event Tables (Append-Only)
 
 **Files:**
+
 - Create: `packages/db/src/migrations/001-conversation-events.sql`
 - Create: `packages/db/src/migrations/002-notification-events.sql`
 
@@ -367,6 +370,7 @@ git commit -m "feat(db): add append-only event table migrations (phase 14)"
 ### Task 3: SQL Migrations — Mutable Tables
 
 **Files:**
+
 - Create: `packages/db/src/migrations/003-sessions.sql`
 - Create: `packages/db/src/migrations/004-work-orders.sql`
 - Create: `packages/db/src/migrations/005-idempotency-keys.sql`
@@ -485,6 +489,7 @@ git commit -m "feat(db): add mutable table migrations (phase 14)"
 ### Task 4: PostgresEventStore
 
 **Files:**
+
 - Create: `packages/db/src/repos/pg-event-store.ts`
 - Test: `packages/db/src/__tests__/pg-event-store.test.ts`
 
@@ -532,7 +537,12 @@ describe('PostgresEventStore', () => {
       action_type: 'SUBMIT_INITIAL_MESSAGE',
       actor: 'tenant' as const,
       payload: { text: 'hello' },
-      pinned_versions: { taxonomy_version: '1.0', schema_version: '1.0', model_id: 'm1', prompt_version: '1.0' },
+      pinned_versions: {
+        taxonomy_version: '1.0',
+        schema_version: '1.0',
+        model_id: 'm1',
+        prompt_version: '1.0',
+      },
       created_at: '2026-03-04T00:00:00Z',
     };
 
@@ -584,7 +594,13 @@ import type { ConversationEvent, EventQuery } from '@wo-agent/core';
 import type { ConfirmationEvent, StalenessEvent } from '@wo-agent/core';
 import type { RiskEvent } from '@wo-agent/core';
 
-type AnyEvent = ConversationEvent | FollowUpEvent | ConfirmationEvent | StalenessEvent | RiskEvent | NotificationEvent;
+type AnyEvent =
+  | ConversationEvent
+  | FollowUpEvent
+  | ConfirmationEvent
+  | StalenessEvent
+  | RiskEvent
+  | NotificationEvent;
 
 /**
  * PostgreSQL-backed event store (append-only, spec §7).
@@ -672,6 +688,7 @@ git commit -m "feat(db): add PostgresEventStore (phase 14)"
 ### Task 5: PostgresWorkOrderStore
 
 **Files:**
+
 - Create: `packages/db/src/repos/pg-wo-store.ts`
 - Test: `packages/db/src/__tests__/pg-wo-store.test.ts`
 
@@ -717,7 +734,12 @@ function makeWo(overrides: Partial<Record<string, unknown>> = {}) {
     missing_fields: [],
     pets_present: 'no' as const,
     needs_human_triage: false,
-    pinned_versions: { taxonomy_version: '1.0', schema_version: '1.0', model_id: 'm1', prompt_version: '1.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0',
+      schema_version: '1.0',
+      model_id: 'm1',
+      prompt_version: '1.0',
+    },
     created_at: '2026-03-04T00:00:00Z',
     updated_at: '2026-03-04T00:00:00Z',
     row_version: 1,
@@ -739,9 +761,9 @@ describe('PostgresWorkOrderStore', () => {
     const wo2 = makeWo({ work_order_id: 'wo-2' });
     await store.insertBatch([wo1, wo2] as never);
 
-    const texts = pool.queries.map(q => q.text);
+    const texts = pool.queries.map((q) => q.text);
     expect(texts[0]).toBe('BEGIN');
-    expect(texts.filter(t => t.includes('INSERT INTO work_orders')).length).toBe(2);
+    expect(texts.filter((t) => t.includes('INSERT INTO work_orders')).length).toBe(2);
     expect(texts[texts.length - 1]).toBe('COMMIT');
   });
 
@@ -753,11 +775,19 @@ describe('PostgresWorkOrderStore', () => {
 
   it('updateStatus() uses optimistic locking', async () => {
     pool.nextRowCount = 1;
-    pool.nextRows = [{ ...makeWo(), row_version: 2, status: 'action_required', status_history: [], updated_at: new Date() }];
+    pool.nextRows = [
+      {
+        ...makeWo(),
+        row_version: 2,
+        status: 'action_required',
+        status_history: [],
+        updated_at: new Date(),
+      },
+    ];
 
     await store.updateStatus('wo-1', 'action_required', 'system', '2026-03-04T01:00:00Z', 1);
 
-    const updateQuery = pool.queries.find(q => q.text.includes('UPDATE work_orders'));
+    const updateQuery = pool.queries.find((q) => q.text.includes('UPDATE work_orders'));
     expect(updateQuery).toBeDefined();
     expect(updateQuery!.text).toContain('row_version = $');
     expect(updateQuery!.text).toContain('row_version + 1');
@@ -776,7 +806,7 @@ describe('PostgresWorkOrderStore', () => {
     pool.nextRows = [];
     await store.listAll({ client_id: 'cl-1', from: '2026-01-01T00:00:00Z' });
 
-    const query = pool.queries.find(q => q.text.includes('SELECT'));
+    const query = pool.queries.find((q) => q.text.includes('SELECT'));
     expect(query!.text).toContain('client_id');
     expect(query!.text).toContain('created_at >=');
   });
@@ -811,14 +841,30 @@ export class PostgresWorkOrderStore implements WorkOrderRepository {
              risk_flags, needs_human_triage, pinned_versions, created_at, updated_at, row_version)
            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)`,
           [
-            wo.work_order_id, wo.issue_group_id, wo.issue_id, wo.conversation_id,
-            wo.client_id, wo.property_id, wo.unit_id, wo.tenant_user_id, wo.tenant_account_id,
-            wo.status, JSON.stringify(wo.status_history), wo.raw_text, wo.summary_confirmed,
-            JSON.stringify(wo.photos), JSON.stringify(wo.classification),
-            JSON.stringify(wo.confidence_by_field), JSON.stringify(wo.missing_fields),
-            wo.pets_present, wo.risk_flags ? JSON.stringify(wo.risk_flags) : null,
-            wo.needs_human_triage, JSON.stringify(wo.pinned_versions),
-            wo.created_at, wo.updated_at, wo.row_version,
+            wo.work_order_id,
+            wo.issue_group_id,
+            wo.issue_id,
+            wo.conversation_id,
+            wo.client_id,
+            wo.property_id,
+            wo.unit_id,
+            wo.tenant_user_id,
+            wo.tenant_account_id,
+            wo.status,
+            JSON.stringify(wo.status_history),
+            wo.raw_text,
+            wo.summary_confirmed,
+            JSON.stringify(wo.photos),
+            JSON.stringify(wo.classification),
+            JSON.stringify(wo.confidence_by_field),
+            JSON.stringify(wo.missing_fields),
+            wo.pets_present,
+            wo.risk_flags ? JSON.stringify(wo.risk_flags) : null,
+            wo.needs_human_triage,
+            JSON.stringify(wo.pinned_versions),
+            wo.created_at,
+            wo.updated_at,
+            wo.row_version,
           ],
         );
       }
@@ -830,18 +876,16 @@ export class PostgresWorkOrderStore implements WorkOrderRepository {
   }
 
   async getById(workOrderId: string): Promise<WorkOrder | null> {
-    const result = await this.pool.query(
-      'SELECT * FROM work_orders WHERE work_order_id = $1',
-      [workOrderId],
-    );
+    const result = await this.pool.query('SELECT * FROM work_orders WHERE work_order_id = $1', [
+      workOrderId,
+    ]);
     return result.rows.length > 0 ? mapRowToWorkOrder(result.rows[0]) : null;
   }
 
   async getByIssueGroup(issueGroupId: string): Promise<readonly WorkOrder[]> {
-    const result = await this.pool.query(
-      'SELECT * FROM work_orders WHERE issue_group_id = $1',
-      [issueGroupId],
-    );
+    const result = await this.pool.query('SELECT * FROM work_orders WHERE issue_group_id = $1', [
+      issueGroupId,
+    ]);
     return result.rows.map(mapRowToWorkOrder);
   }
 
@@ -962,6 +1006,7 @@ git commit -m "feat(db): add PostgresWorkOrderStore (phase 14)"
 ### Task 6: PostgresSessionStore
 
 **Files:**
+
 - Create: `packages/db/src/repos/pg-session-store.ts`
 - Test: `packages/db/src/__tests__/pg-session-store.test.ts`
 
@@ -1008,7 +1053,12 @@ describe('PostgresSessionStore', () => {
       state: 'awaiting_initial_message',
       unit_id: null,
       authorized_unit_ids: ['u-1'],
-      pinned_versions: { taxonomy_version: '1.0', schema_version: '1.0', model_id: 'm1', prompt_version: '1.0' },
+      pinned_versions: {
+        taxonomy_version: '1.0',
+        schema_version: '1.0',
+        model_id: 'm1',
+        prompt_version: '1.0',
+      },
       split_issues: null,
       classification_results: null,
       prior_state_before_error: null,
@@ -1031,7 +1081,7 @@ describe('PostgresSessionStore', () => {
     };
 
     await store.save(session as never);
-    const query = pool.queries.find(q => q.text.includes('INSERT'));
+    const query = pool.queries.find((q) => q.text.includes('INSERT'));
     expect(query).toBeDefined();
     expect(query!.text).toContain('ON CONFLICT');
   });
@@ -1039,7 +1089,7 @@ describe('PostgresSessionStore', () => {
   it('getByTenantUser() filters by tenant_user_id', async () => {
     pool.nextRows = [];
     await store.getByTenantUser('tu-1');
-    const query = pool.queries.find(q => q.text.includes('tenant_user_id'));
+    const query = pool.queries.find((q) => q.text.includes('tenant_user_id'));
     expect(query).toBeDefined();
   });
 });
@@ -1064,11 +1114,10 @@ export class PostgresSessionStore implements SessionStore {
   constructor(private readonly pool: Pool) {}
 
   async get(conversationId: string): Promise<ConversationSession | null> {
-    const result = await this.pool.query(
-      'SELECT data FROM sessions WHERE conversation_id = $1',
-      [conversationId],
-    );
-    return result.rows.length > 0 ? result.rows[0].data as ConversationSession : null;
+    const result = await this.pool.query('SELECT data FROM sessions WHERE conversation_id = $1', [
+      conversationId,
+    ]);
+    return result.rows.length > 0 ? (result.rows[0].data as ConversationSession) : null;
   }
 
   async getByTenantUser(tenantUserId: string): Promise<readonly ConversationSession[]> {
@@ -1076,7 +1125,7 @@ export class PostgresSessionStore implements SessionStore {
       'SELECT data FROM sessions WHERE tenant_user_id = $1 ORDER BY last_activity_at DESC',
       [tenantUserId],
     );
-    return result.rows.map(row => row.data as ConversationSession);
+    return result.rows.map((row) => row.data as ConversationSession);
   }
 
   async save(session: ConversationSession): Promise<void> {
@@ -1115,6 +1164,7 @@ git commit -m "feat(db): add PostgresSessionStore (phase 14)"
 ### Task 7: PostgresNotificationStore + PostgresNotificationPreferenceStore
 
 **Files:**
+
 - Create: `packages/db/src/repos/pg-notification-store.ts`
 - Test: `packages/db/src/__tests__/pg-notification-store.test.ts`
 
@@ -1123,7 +1173,10 @@ git commit -m "feat(db): add PostgresSessionStore (phase 14)"
 ```typescript
 // packages/db/src/__tests__/pg-notification-store.test.ts
 import { describe, it, expect, beforeEach } from 'vitest';
-import { PostgresNotificationStore, PostgresNotificationPreferenceStore } from '../repos/pg-notification-store.js';
+import {
+  PostgresNotificationStore,
+  PostgresNotificationPreferenceStore,
+} from '../repos/pg-notification-store.js';
 
 function createFakePool() {
   const fake = {
@@ -1233,7 +1286,11 @@ Expected: FAIL
 // packages/db/src/repos/pg-notification-store.ts
 import type { Pool } from '@neondatabase/serverless';
 import type { NotificationEvent, NotificationPreference } from '@wo-agent/schemas';
-import type { NotificationRepository, NotificationListFilters, NotificationPreferenceStore } from '@wo-agent/core';
+import type {
+  NotificationRepository,
+  NotificationListFilters,
+  NotificationPreferenceStore,
+} from '@wo-agent/core';
 
 export class PostgresNotificationStore implements NotificationRepository {
   constructor(private readonly pool: Pool) {}
@@ -1247,18 +1304,34 @@ export class PostgresNotificationStore implements NotificationRepository {
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
        ON CONFLICT (event_id) DO NOTHING`,
       [
-        event.event_id, event.notification_id, event.conversation_id,
-        event.tenant_user_id, event.tenant_account_id, event.channel,
-        event.notification_type, event.work_order_ids,
-        event.issue_group_id, event.template_id, event.status, event.idempotency_key,
-        JSON.stringify(event.payload), event.created_at,
-        event.sent_at, event.delivered_at, event.failed_at, event.failure_reason,
+        event.event_id,
+        event.notification_id,
+        event.conversation_id,
+        event.tenant_user_id,
+        event.tenant_account_id,
+        event.channel,
+        event.notification_type,
+        event.work_order_ids,
+        event.issue_group_id,
+        event.template_id,
+        event.status,
+        event.idempotency_key,
+        JSON.stringify(event.payload),
+        event.created_at,
+        event.sent_at,
+        event.delivered_at,
+        event.failed_at,
+        event.failure_reason,
       ],
     );
   }
 
-  async queryByTenantUser(tenantUserId: string, limit?: number): Promise<readonly NotificationEvent[]> {
-    let sql = 'SELECT * FROM notification_events WHERE tenant_user_id = $1 ORDER BY created_at DESC';
+  async queryByTenantUser(
+    tenantUserId: string,
+    limit?: number,
+  ): Promise<readonly NotificationEvent[]> {
+    let sql =
+      'SELECT * FROM notification_events WHERE tenant_user_id = $1 ORDER BY created_at DESC';
     const values: unknown[] = [tenantUserId];
     if (limit !== undefined) {
       sql += ' LIMIT $2';
@@ -1347,9 +1420,14 @@ export class PostgresNotificationPreferenceStore implements NotificationPreferen
        DO UPDATE SET in_app_enabled = $3, sms_enabled = $4, sms_consent = $5,
                      notification_type_overrides = $6, cooldown_minutes = $7, updated_at = $8`,
       [
-        pref.preference_id, pref.tenant_account_id, pref.in_app_enabled, pref.sms_enabled,
+        pref.preference_id,
+        pref.tenant_account_id,
+        pref.in_app_enabled,
+        pref.sms_enabled,
         pref.sms_consent ? JSON.stringify(pref.sms_consent) : null,
-        JSON.stringify(pref.notification_type_overrides), pref.cooldown_minutes, pref.updated_at,
+        JSON.stringify(pref.notification_type_overrides),
+        pref.cooldown_minutes,
+        pref.updated_at,
       ],
     );
   }
@@ -1409,6 +1487,7 @@ git commit -m "feat(db): add PostgresNotificationStore + PreferenceStore (phase 
 ### Task 8: PostgresIdempotencyStore
 
 **Files:**
+
 - Create: `packages/db/src/repos/pg-idempotency-store.ts`
 - Test: `packages/db/src/__tests__/pg-idempotency-store.test.ts`
 
@@ -1544,6 +1623,7 @@ git commit -m "feat(db): add PostgresIdempotencyStore (phase 14)"
 ### Task 9: Barrel Exports for @wo-agent/db
 
 **Files:**
+
 - Modify: `packages/db/src/index.ts`
 - Test: `packages/db/src/__tests__/barrel.test.ts`
 
@@ -1604,7 +1684,10 @@ export { runMigrations } from './migrate.js';
 export { PostgresEventStore } from './repos/pg-event-store.js';
 export { PostgresWorkOrderStore } from './repos/pg-wo-store.js';
 export { PostgresSessionStore } from './repos/pg-session-store.js';
-export { PostgresNotificationStore, PostgresNotificationPreferenceStore } from './repos/pg-notification-store.js';
+export {
+  PostgresNotificationStore,
+  PostgresNotificationPreferenceStore,
+} from './repos/pg-notification-store.js';
 export { PostgresIdempotencyStore } from './repos/pg-idempotency-store.js';
 ```
 
@@ -1625,6 +1708,7 @@ git commit -m "feat(db): barrel exports for @wo-agent/db (phase 14)"
 ### Task 10: Wire PostgreSQL Repos into Orchestrator Factory
 
 **Files:**
+
 - Modify: `apps/web/package.json` — add `@wo-agent/db` dependency
 - Modify: `apps/web/src/lib/orchestrator-factory.ts` — conditional Postgres/InMemory
 
@@ -1642,9 +1726,28 @@ Replace the factory to choose Postgres repos when `DATABASE_URL` is set, falling
 // apps/web/src/lib/orchestrator-factory.ts
 import { randomUUID } from 'crypto';
 import { createDispatcher, ERPSyncService, AnalyticsService } from '@wo-agent/core';
-import { InMemoryEventStore, InMemoryWorkOrderStore, InMemoryIdempotencyStore } from '@wo-agent/core';
-import { InMemoryNotificationStore, InMemoryNotificationPreferenceStore, MockSmsSender, NotificationService } from '@wo-agent/core';
-import type { SessionStore, OrchestratorDependencies, UnitResolver, SlaPolicies, EventRepository, WorkOrderRepository, NotificationRepository, NotificationPreferenceStore, IdempotencyStore } from '@wo-agent/core';
+import {
+  InMemoryEventStore,
+  InMemoryWorkOrderStore,
+  InMemoryIdempotencyStore,
+} from '@wo-agent/core';
+import {
+  InMemoryNotificationStore,
+  InMemoryNotificationPreferenceStore,
+  MockSmsSender,
+  NotificationService,
+} from '@wo-agent/core';
+import type {
+  SessionStore,
+  OrchestratorDependencies,
+  UnitResolver,
+  SlaPolicies,
+  EventRepository,
+  WorkOrderRepository,
+  NotificationRepository,
+  NotificationPreferenceStore,
+  IdempotencyStore,
+} from '@wo-agent/core';
 import type { ConversationSession } from '@wo-agent/core';
 import type { CueDictionary, IssueClassifierInput } from '@wo-agent/schemas';
 import { loadTaxonomy } from '@wo-agent/schemas';
@@ -1655,11 +1758,15 @@ import slaPoliciesJson from '@wo-agent/schemas/sla_policies.json' with { type: '
 // In-memory session store fallback
 class InMemorySessionStore implements SessionStore {
   private sessions = new Map<string, ConversationSession>();
-  async get(id: string) { return this.sessions.get(id) ?? null; }
+  async get(id: string) {
+    return this.sessions.get(id) ?? null;
+  }
   async getByTenantUser(userId: string) {
     return [...this.sessions.values()].filter((s) => s.tenant_user_id === userId);
   }
-  async save(session: ConversationSession) { this.sessions.set(session.conversation_id, session); }
+  async save(session: ConversationSession) {
+    this.sessions.set(session.conversation_id, session);
+  }
 }
 
 interface Stores {
@@ -1677,7 +1784,15 @@ function createStores(): Stores {
   if (databaseUrl) {
     // Lazy-import to avoid bundling @neondatabase/serverless when not needed
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { createPool, PostgresEventStore, PostgresWorkOrderStore, PostgresSessionStore, PostgresNotificationStore, PostgresNotificationPreferenceStore, PostgresIdempotencyStore } = require('@wo-agent/db');
+    const {
+      createPool,
+      PostgresEventStore,
+      PostgresWorkOrderStore,
+      PostgresSessionStore,
+      PostgresNotificationStore,
+      PostgresNotificationPreferenceStore,
+      PostgresIdempotencyStore,
+    } = require('@wo-agent/db');
     const pool = createPool(databaseUrl);
     return {
       eventRepo: new PostgresEventStore(pool),
@@ -1738,21 +1853,38 @@ function ensureInitialized() {
       idGenerator,
       clock,
       issueSplitter: async (input) => ({
-        issues: [{ issue_id: randomUUID(), summary: input.raw_text.slice(0, 200), raw_excerpt: input.raw_text }],
+        issues: [
+          {
+            issue_id: randomUUID(),
+            summary: input.raw_text.slice(0, 200),
+            raw_excerpt: input.raw_text,
+          },
+        ],
         issue_count: 1,
       }),
       issueClassifier: async (input: IssueClassifierInput) => ({
         issue_id: input.issue_id,
         classification: {
-          Category: 'maintenance', Location: 'suite', Sub_Location: 'general',
-          Maintenance_Category: 'general_maintenance', Maintenance_Object: 'other_object',
-          Maintenance_Problem: 'not_working', Management_Category: 'other_mgmt_cat',
-          Management_Object: 'other_mgmt_obj', Priority: 'normal',
+          Category: 'maintenance',
+          Location: 'suite',
+          Sub_Location: 'general',
+          Maintenance_Category: 'general_maintenance',
+          Maintenance_Object: 'other_object',
+          Maintenance_Problem: 'not_working',
+          Management_Category: 'other_mgmt_cat',
+          Management_Object: 'other_mgmt_obj',
+          Priority: 'normal',
         },
         model_confidence: {
-          Category: 0.7, Location: 0.5, Sub_Location: 0.5, Maintenance_Category: 0.6,
-          Maintenance_Object: 0.5, Maintenance_Problem: 0.5, Management_Category: 0.0,
-          Management_Object: 0.0, Priority: 0.5,
+          Category: 0.7,
+          Location: 0.5,
+          Sub_Location: 0.5,
+          Maintenance_Category: 0.6,
+          Maintenance_Object: 0.5,
+          Maintenance_Problem: 0.5,
+          Management_Category: 0.0,
+          Management_Object: 0.0,
+          Priority: 0.5,
         },
         missing_fields: [],
         needs_human_triage: false,
@@ -1761,7 +1893,11 @@ function ensureInitialized() {
       cueDict: classificationCues as CueDictionary,
       taxonomy: loadTaxonomy(),
       unitResolver: {
-        resolve: async (unitId: string) => ({ unit_id: unitId, property_id: `prop-${unitId}`, client_id: `client-${unitId}` }),
+        resolve: async (unitId: string) => ({
+          unit_id: unitId,
+          property_id: `prop-${unitId}`,
+          client_id: `client-${unitId}`,
+        }),
       } satisfies UnitResolver,
       workOrderRepo: stores.workOrderRepo,
       idempotencyStore: stores.idempotencyStore,
@@ -1788,12 +1924,24 @@ function ensureInitialized() {
   return _deps;
 }
 
-export function getOrchestrator() { return ensureInitialized().dispatcher; }
-export function getWorkOrderRepo() { return ensureInitialized().workOrderRepo; }
-export function getNotificationRepo() { return ensureInitialized().notificationRepo; }
-export function getERPAdapter() { return ensureInitialized().erpAdapter; }
-export function getERPSyncService() { return ensureInitialized().erpSyncService; }
-export function getAnalyticsService() { return ensureInitialized().analyticsService; }
+export function getOrchestrator() {
+  return ensureInitialized().dispatcher;
+}
+export function getWorkOrderRepo() {
+  return ensureInitialized().workOrderRepo;
+}
+export function getNotificationRepo() {
+  return ensureInitialized().notificationRepo;
+}
+export function getERPAdapter() {
+  return ensureInitialized().erpAdapter;
+}
+export function getERPSyncService() {
+  return ensureInitialized().erpSyncService;
+}
+export function getAnalyticsService() {
+  return ensureInitialized().analyticsService;
+}
 ```
 
 **Step 3: Run all tests**
@@ -1813,6 +1961,7 @@ git commit -m "feat(web): wire Postgres repos via DATABASE_URL env var (phase 14
 ### Task 11: Vercel Configuration
 
 **Files:**
+
 - Create: `apps/web/vercel.json`
 - Create: `.env.example`
 
@@ -1855,6 +2004,7 @@ git commit -m "chore: add Vercel config + env example (phase 14)"
 ### Task 12: Core Export Fixes — Ensure All Types Are Re-exported
 
 **Files:**
+
 - Modify: `packages/core/src/index.ts` — ensure `ConversationEvent`, `EventQuery`, `ConfirmationEvent`, `StalenessEvent`, `RiskEvent` types are exported so `@wo-agent/db` can import them
 
 **Step 1: Write the failing test**

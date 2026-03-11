@@ -42,7 +42,10 @@ export const TRANSITION_MATRIX: Record<
   Partial<Record<TransitionTrigger, readonly ConversationState[]>>
 > = {
   [ConversationState.INTAKE_STARTED]: {
-    [ActionType.SELECT_UNIT]: [ConversationState.UNIT_SELECTED, ConversationState.UNIT_SELECTION_REQUIRED],
+    [ActionType.SELECT_UNIT]: [
+      ConversationState.UNIT_SELECTED,
+      ConversationState.UNIT_SELECTION_REQUIRED,
+    ],
     [ActionType.SUBMIT_INITIAL_MESSAGE]: [ConversationState.SPLIT_IN_PROGRESS],
     [ActionType.RESUME]: [ConversationState.INTAKE_STARTED],
   },
@@ -59,7 +62,10 @@ export const TRANSITION_MATRIX: Record<
 
   [ConversationState.SPLIT_IN_PROGRESS]: {
     [SystemEvent.LLM_SPLIT_SUCCESS]: [ConversationState.SPLIT_PROPOSED],
-    [SystemEvent.LLM_FAIL]: [ConversationState.LLM_ERROR_RETRYABLE, ConversationState.LLM_ERROR_TERMINAL],
+    [SystemEvent.LLM_FAIL]: [
+      ConversationState.LLM_ERROR_RETRYABLE,
+      ConversationState.LLM_ERROR_TERMINAL,
+    ],
     [ActionType.ABANDON]: [ConversationState.INTAKE_ABANDONED],
   },
 
@@ -78,8 +84,14 @@ export const TRANSITION_MATRIX: Record<
   },
 
   [ConversationState.CLASSIFICATION_IN_PROGRESS]: {
-    [SystemEvent.LLM_CLASSIFY_SUCCESS]: [ConversationState.NEEDS_TENANT_INPUT, ConversationState.TENANT_CONFIRMATION_PENDING],
-    [SystemEvent.LLM_FAIL]: [ConversationState.LLM_ERROR_RETRYABLE, ConversationState.LLM_ERROR_TERMINAL],
+    [SystemEvent.LLM_CLASSIFY_SUCCESS]: [
+      ConversationState.NEEDS_TENANT_INPUT,
+      ConversationState.TENANT_CONFIRMATION_PENDING,
+    ],
+    [SystemEvent.LLM_FAIL]: [
+      ConversationState.LLM_ERROR_RETRYABLE,
+      ConversationState.LLM_ERROR_TERMINAL,
+    ],
     [ActionType.ABANDON]: [ConversationState.INTAKE_ABANDONED],
   },
 
@@ -102,7 +114,10 @@ export const TRANSITION_MATRIX: Record<
   },
 
   [ConversationState.LLM_ERROR_RETRYABLE]: {
-    [SystemEvent.RETRY_LLM]: [ConversationState.SPLIT_IN_PROGRESS, ConversationState.CLASSIFICATION_IN_PROGRESS],
+    [SystemEvent.RETRY_LLM]: [
+      ConversationState.SPLIT_IN_PROGRESS,
+      ConversationState.CLASSIFICATION_IN_PROGRESS,
+    ],
     [ActionType.RESUME]: [ConversationState.LLM_ERROR_RETRYABLE],
     [ActionType.ABANDON]: [ConversationState.INTAKE_ABANDONED],
   },

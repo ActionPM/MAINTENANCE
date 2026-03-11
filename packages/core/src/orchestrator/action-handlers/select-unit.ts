@@ -1,4 +1,3 @@
-import { ConversationState } from '@wo-agent/schemas';
 import type { TenantInputSelectUnit } from '@wo-agent/schemas';
 import { resolveSelectUnit } from '../../state-machine/guards.js';
 import { setSessionUnit, setSessionScope } from '../../session/session.js';
@@ -18,8 +17,15 @@ export async function handleSelectUnit(ctx: ActionHandlerContext): Promise<Actio
     return {
       newState: session.state,
       session,
-      uiMessages: [{ role: 'agent', content: 'That unit is not available. Please select from your authorized units.' }],
-      errors: [{ code: 'UNIT_NOT_AUTHORIZED', message: `Unit ${unitId} is not in your authorized list` }],
+      uiMessages: [
+        {
+          role: 'agent',
+          content: 'That unit is not available. Please select from your authorized units.',
+        },
+      ],
+      errors: [
+        { code: 'UNIT_NOT_AUTHORIZED', message: `Unit ${unitId} is not in your authorized list` },
+      ],
     };
   }
 
@@ -29,7 +35,9 @@ export async function handleSelectUnit(ctx: ActionHandlerContext): Promise<Actio
     return {
       newState: session.state,
       session,
-      uiMessages: [{ role: 'agent', content: 'Unable to resolve unit information. Please try again.' }],
+      uiMessages: [
+        { role: 'agent', content: 'Unable to resolve unit information. Please try again.' },
+      ],
       errors: [{ code: 'UNIT_NOT_FOUND', message: 'Unit not found in property database' }],
     };
   }

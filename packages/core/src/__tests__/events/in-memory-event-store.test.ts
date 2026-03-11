@@ -43,7 +43,10 @@ describe('InMemoryEventStore', () => {
   it('filters by event_type', async () => {
     await store.insert(makeEvent({ event_type: 'state_transition' }));
     await store.insert(makeEvent({ event_type: 'message_received' }));
-    const results = await store.query({ conversation_id: 'conv-1', event_type: 'state_transition' });
+    const results = await store.query({
+      conversation_id: 'conv-1',
+      event_type: 'state_transition',
+    });
     expect(results).toHaveLength(1);
     expect(results[0].event_type).toBe('state_transition');
   });

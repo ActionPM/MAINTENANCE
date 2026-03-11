@@ -6,18 +6,20 @@ import type { IssueClassificationResult } from '../../session/types.js';
 
 describe('buildResponse with classification', () => {
   it('includes classification_results in snapshot when present', () => {
-    const results: IssueClassificationResult[] = [{
-      issue_id: 'i1',
-      classifierOutput: {
+    const results: IssueClassificationResult[] = [
+      {
         issue_id: 'i1',
-        classification: { Category: 'maintenance' },
-        model_confidence: { Category: 0.9 },
-        missing_fields: [],
-        needs_human_triage: false,
+        classifierOutput: {
+          issue_id: 'i1',
+          classification: { Category: 'maintenance' },
+          model_confidence: { Category: 0.9 },
+          missing_fields: [],
+          needs_human_triage: false,
+        },
+        computedConfidence: { Category: 0.85 },
+        fieldsNeedingInput: [],
       },
-      computedConfidence: { Category: 0.85 },
-      fieldsNeedingInput: [],
-    }];
+    ];
 
     let session = createSession({
       conversation_id: 'conv-1',

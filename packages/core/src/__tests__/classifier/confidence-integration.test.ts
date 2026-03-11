@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { computeCueScores } from '../../classifier/cue-scoring.js';
-import { computeAllFieldConfidences, determineFieldsNeedingInput, classifyConfidenceBand } from '../../classifier/confidence.js';
+import {
+  computeAllFieldConfidences,
+  determineFieldsNeedingInput,
+  classifyConfidenceBand,
+} from '../../classifier/confidence.js';
 import { DEFAULT_CONFIDENCE_CONFIG } from '@wo-agent/schemas';
 import classificationCues from '@wo-agent/schemas/classification_cues.json' with { type: 'json' };
 import type { CueDictionary } from '@wo-agent/schemas';
@@ -26,9 +30,9 @@ describe('confidence integration: obvious maintenance request', () => {
 
   const modelConfidence = {
     Category: 0.95,
-    Location: 0.90,
+    Location: 0.9,
     Sub_Location: 0.5,
-    Maintenance_Category: 0.90,
+    Maintenance_Category: 0.9,
     Maintenance_Object: 0.5,
     Maintenance_Problem: 0.95,
     Management_Category: 0.0,
@@ -78,10 +82,10 @@ describe('confidence integration: obvious maintenance request', () => {
     // Override confidences to high band for the fields we want to test
     // (integration test — the real values may be medium due to formula limits)
     const highConfidences = { ...confidences };
-    highConfidences['Category'] = 0.90;
-    highConfidences['Location'] = 0.90;
-    highConfidences['Maintenance_Category'] = 0.90;
-    highConfidences['Maintenance_Problem'] = 0.90;
+    highConfidences['Category'] = 0.9;
+    highConfidences['Location'] = 0.9;
+    highConfidences['Maintenance_Category'] = 0.9;
+    highConfidences['Maintenance_Problem'] = 0.9;
 
     const fieldsNeedingInput = determineFieldsNeedingInput({
       confidenceByField: highConfidences,
@@ -135,8 +139,8 @@ describe('confidence integration: obvious management request', () => {
     Maintenance_Category: 0.0,
     Maintenance_Object: 0.0,
     Maintenance_Problem: 0.0,
-    Management_Category: 0.90,
-    Management_Object: 0.90,
+    Management_Category: 0.9,
+    Management_Object: 0.9,
     Priority: 0.7,
   };
 
@@ -218,9 +222,9 @@ describe('confidence integration: category gating', () => {
 
   const modelConfidence = {
     Category: 0.95,
-    Location: 0.90,
+    Location: 0.9,
     Sub_Location: 0.5,
-    Maintenance_Category: 0.90,
+    Maintenance_Category: 0.9,
     Maintenance_Object: 0.5,
     Maintenance_Problem: 0.95,
     Management_Category: 0.0,
@@ -295,11 +299,11 @@ describe('confidence integration: cue/model disagreement penalizes correctly', (
 
     const modelConfidence = {
       Category: 0.95,
-      Location: 0.90,
+      Location: 0.9,
       Sub_Location: 0.5,
-      Maintenance_Category: 0.90,
+      Maintenance_Category: 0.9,
       Maintenance_Object: 0.85,
-      Maintenance_Problem: 0.90,
+      Maintenance_Problem: 0.9,
       Management_Category: 0.0,
       Management_Object: 0.0,
       Priority: 0.7,

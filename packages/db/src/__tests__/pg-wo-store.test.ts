@@ -36,7 +36,12 @@ function makeWo(overrides: Partial<Record<string, unknown>> = {}) {
     missing_fields: [],
     pets_present: 'no' as const,
     needs_human_triage: false,
-    pinned_versions: { taxonomy_version: '1.0', schema_version: '1.0', model_id: 'm1', prompt_version: '1.0' },
+    pinned_versions: {
+      taxonomy_version: '1.0',
+      schema_version: '1.0',
+      model_id: 'm1',
+      prompt_version: '1.0',
+    },
     created_at: '2026-03-04T00:00:00Z',
     updated_at: '2026-03-04T00:00:00Z',
     row_version: 1,
@@ -58,9 +63,9 @@ describe('PostgresWorkOrderStore', () => {
     const wo2 = makeWo({ work_order_id: 'wo-2' });
     await store.insertBatch([wo1, wo2] as never);
 
-    const texts = pool.queries.map(q => q.text);
+    const texts = pool.queries.map((q) => q.text);
     expect(texts[0]).toBe('BEGIN');
-    expect(texts.filter(t => t.includes('INSERT INTO work_orders')).length).toBe(2);
+    expect(texts.filter((t) => t.includes('INSERT INTO work_orders')).length).toBe(2);
     expect(texts[texts.length - 1]).toBe('COMMIT');
   });
 
@@ -72,11 +77,19 @@ describe('PostgresWorkOrderStore', () => {
 
   it('updateStatus() uses optimistic locking', async () => {
     pool.nextRowCount = 1;
-    pool.nextRows = [{ ...makeWo(), row_version: 2, status: 'action_required', status_history: [], updated_at: new Date() }];
+    pool.nextRows = [
+      {
+        ...makeWo(),
+        row_version: 2,
+        status: 'action_required',
+        status_history: [],
+        updated_at: new Date(),
+      },
+    ];
 
     await store.updateStatus('wo-1', 'action_required', 'system', '2026-03-04T01:00:00Z', 1);
 
-    const updateQuery = pool.queries.find(q => q.text.includes('UPDATE work_orders'));
+    const updateQuery = pool.queries.find((q) => q.text.includes('UPDATE work_orders'));
     expect(updateQuery).toBeDefined();
     expect(updateQuery!.text).toContain('row_version = $');
     expect(updateQuery!.text).toContain('row_version + 1');
@@ -95,7 +108,7 @@ describe('PostgresWorkOrderStore', () => {
     pool.nextRows = [];
     await store.listAll({ client_id: 'cl-1', from: '2026-01-01T00:00:00Z' });
 
-    const query = pool.queries.find(q => q.text.includes('SELECT'));
+    const query = pool.queries.find((q) => q.text.includes('SELECT'));
     expect(query!.text).toContain('client_id');
     expect(query!.text).toContain('created_at >=');
   });

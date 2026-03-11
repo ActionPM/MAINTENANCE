@@ -39,12 +39,14 @@ describe('resolveMitigationTemplate', () => {
 
 describe('renderMitigationMessages', () => {
   it('renders mitigation messages for matched triggers', () => {
-    const matches: MatchedTrigger[] = [{
-      trigger: TEST_PROTOCOLS.triggers[0],
-      matched_keywords: ['fire'],
-      matched_regex: [],
-      matched_taxonomy_paths: [],
-    }];
+    const matches: MatchedTrigger[] = [
+      {
+        trigger: TEST_PROTOCOLS.triggers[0],
+        matched_keywords: ['fire'],
+        matched_regex: [],
+        matched_taxonomy_paths: [],
+      },
+    ];
     const messages = renderMitigationMessages(matches, TEST_PROTOCOLS);
     expect(messages).toHaveLength(1);
     expect(messages[0]).toContain('Fire Safety');

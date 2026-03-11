@@ -1,5 +1,9 @@
 import { ConversationState } from '@wo-agent/schemas';
-import type { OrchestratorActionResponse, ConversationSnapshot, UIDirective } from '@wo-agent/schemas';
+import type {
+  OrchestratorActionResponse,
+  ConversationSnapshot,
+  UIDirective,
+} from '@wo-agent/schemas';
 import type { ActionHandlerResult } from './types.js';
 import { buildConfirmationPayload } from '../confirmation/payload-builder.js';
 
@@ -15,22 +19,23 @@ export function buildResponse(result: ActionHandlerResult): OrchestratorActionRe
       : undefined;
 
   const workOrderIds =
-    result.newState === ConversationState.SUBMITTED &&
-    result.eventPayload?.work_order_ids
+    result.newState === ConversationState.SUBMITTED && result.eventPayload?.work_order_ids
       ? (result.eventPayload.work_order_ids as readonly string[])
       : undefined;
 
   const riskSummary =
     result.session.risk_triggers && result.session.risk_triggers.length > 0
       ? {
-          has_emergency: result.session.risk_triggers.some(t => t.trigger.severity === 'emergency'),
+          has_emergency: result.session.risk_triggers.some(
+            (t) => t.trigger.severity === 'emergency',
+          ),
           highest_severity: result.session.risk_triggers.reduce((worst: string, t) => {
             const rank: Record<string, number> = { emergency: 3, high: 2, medium: 1 };
             return (rank[t.trigger.severity] ?? 0) > (rank[worst] ?? 0)
               ? t.trigger.severity
               : worst;
           }, ''),
-          trigger_ids: result.session.risk_triggers.map(t => t.trigger.trigger_id),
+          trigger_ids: result.session.risk_triggers.map((t) => t.trigger.trigger_id),
           escalation_state: result.session.escalation_state,
         }
       : undefined;

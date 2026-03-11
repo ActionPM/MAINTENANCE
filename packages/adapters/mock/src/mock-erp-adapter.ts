@@ -111,9 +111,7 @@ export class MockERPAdapter implements ERPAdapter {
 
     this.calls.syncUpdates.push({ since });
     const sinceTime = new Date(since).getTime();
-    return this.statusChanges.filter(
-      (change) => new Date(change.updated_at).getTime() > sinceTime,
-    );
+    return this.statusChanges.filter((change) => new Date(change.updated_at).getTime() > sinceTime);
   }
 
   async healthCheck(): Promise<ERPHealthResult> {
@@ -155,5 +153,4 @@ export class MockERPAdapter implements ERPAdapter {
   getExtId(workOrderId: string): string | undefined {
     return this.byWorkOrderId.get(workOrderId);
   }
-
 }

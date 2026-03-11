@@ -17,10 +17,7 @@ interface ChatShellProps {
   unitIds: readonly string[];
 }
 
-const INPUT_STATES = new Set([
-  'intake_started',
-  'unit_selected',
-]);
+const INPUT_STATES = new Set(['intake_started', 'unit_selected']);
 
 const PROCESSING_STATES = new Set([
   'split_in_progress',
@@ -95,11 +92,7 @@ export function ChatShell({ token, unitIds }: ChatShellProps) {
       <div className={styles.interactionArea}>
         {/* Unit selection */}
         {state === 'unit_selection_required' && (
-          <UnitSelector
-            unitIds={unitIds}
-            onSelect={conv.selectUnit}
-            disabled={isLoading}
-          />
+          <UnitSelector unitIds={unitIds} onSelect={conv.selectUnit} disabled={isLoading} />
         )}
 
         {/* Split review */}
@@ -134,9 +127,7 @@ export function ChatShell({ token, unitIds }: ChatShellProps) {
         )}
 
         {/* Processing states */}
-        {state && PROCESSING_STATES.has(state) && (
-          <StatusIndicator state={state} />
-        )}
+        {state && PROCESSING_STATES.has(state) && <StatusIndicator state={state} />}
 
         {/* Terminal and error states */}
         {state && TERMINAL_STATES.has(state) && (
@@ -151,19 +142,12 @@ export function ChatShell({ token, unitIds }: ChatShellProps) {
 
         {/* Quick replies */}
         {quickReplies.length > 0 && (
-          <QuickReplies
-            replies={quickReplies}
-            onSelect={handleQuickReply}
-            disabled={isLoading}
-          />
+          <QuickReplies replies={quickReplies} onSelect={handleQuickReply} disabled={isLoading} />
         )}
 
         {/* Message input for text-entry states */}
         {state && INPUT_STATES.has(state) && (
-          <MessageInput
-            onSend={conv.submitInitialMessage}
-            disabled={isLoading}
-          />
+          <MessageInput onSend={conv.submitInitialMessage} disabled={isLoading} />
         )}
 
         {/* Additional message input for states that accept it */}

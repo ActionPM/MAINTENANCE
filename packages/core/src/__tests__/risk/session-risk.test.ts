@@ -8,7 +8,12 @@ describe('session risk tracking', () => {
     tenant_user_id: 'user-1',
     tenant_account_id: 'acct-1',
     authorized_unit_ids: ['unit-1'],
-    pinned_versions: { taxonomy_version: '1', schema_version: '1', model_id: 'm', prompt_version: '1' },
+    pinned_versions: {
+      taxonomy_version: '1',
+      schema_version: '1',
+      model_id: 'm',
+      prompt_version: '1',
+    },
   });
 
   it('initializes with no risk triggers and escalation_state=none', () => {
@@ -18,19 +23,21 @@ describe('session risk tracking', () => {
   });
 
   it('setRiskTriggers stores matched triggers on session', () => {
-    const triggers: MatchedTrigger[] = [{
-      trigger: {
-        trigger_id: 'fire-001',
-        name: 'Fire',
-        grammar: { keyword_any: [], regex_any: [], taxonomy_path_any: [] },
-        requires_confirmation: true,
-        severity: 'emergency',
-        mitigation_template_id: 'mit-fire',
+    const triggers: MatchedTrigger[] = [
+      {
+        trigger: {
+          trigger_id: 'fire-001',
+          name: 'Fire',
+          grammar: { keyword_any: [], regex_any: [], taxonomy_path_any: [] },
+          requires_confirmation: true,
+          severity: 'emergency',
+          mitigation_template_id: 'mit-fire',
+        },
+        matched_keywords: ['fire'],
+        matched_regex: [],
+        matched_taxonomy_paths: [],
       },
-      matched_keywords: ['fire'],
-      matched_regex: [],
-      matched_taxonomy_paths: [],
-    }];
+    ];
 
     const updated = setRiskTriggers(baseSession, triggers);
     expect(updated.risk_triggers).toHaveLength(1);

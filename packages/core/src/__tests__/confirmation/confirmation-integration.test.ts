@@ -45,10 +45,15 @@ const FULL_CLASSIFICATION = {
     Priority: 'normal',
   },
   model_confidence: {
-    Category: 0.95, Location: 0.9, Sub_Location: 0.85,
-    Maintenance_Category: 0.92, Maintenance_Object: 0.95,
-    Maintenance_Problem: 0.88, Management_Category: 0.95,
-    Management_Object: 0.95, Priority: 0.9,
+    Category: 0.95,
+    Location: 0.9,
+    Sub_Location: 0.85,
+    Maintenance_Category: 0.92,
+    Maintenance_Object: 0.95,
+    Maintenance_Problem: 0.88,
+    Management_Category: 0.95,
+    Management_Object: 0.95,
+    Priority: 0.9,
   },
   missing_fields: [],
   needs_human_triage: false,
@@ -56,11 +61,15 @@ const FULL_CLASSIFICATION = {
 
 class InMemorySessionStore implements SessionStore {
   private sessions = new Map<string, ConversationSession>();
-  async get(id: string) { return this.sessions.get(id) ?? null; }
+  async get(id: string) {
+    return this.sessions.get(id) ?? null;
+  }
   async getByTenantUser(userId: string) {
     return [...this.sessions.values()].filter((s) => s.tenant_user_id === userId);
   }
-  async save(session: ConversationSession) { this.sessions.set(session.conversation_id, session); }
+  async save(session: ConversationSession) {
+    this.sessions.set(session.conversation_id, session);
+  }
 }
 
 const AUTH = { tenant_user_id: 'user-1', tenant_account_id: 'acct-1', authorized_unit_ids: ['u1'] };
@@ -73,10 +82,16 @@ function makeDeps() {
     sessionStore: new InMemorySessionStore(),
     idGenerator: () => `id-${++counter}`,
     clock: () => clockTime,
-    _setClock: (t: string) => { clockTime = t; },
+    _setClock: (t: string) => {
+      clockTime = t;
+    },
     issueSplitter: async (input: any) => ({
       issues: [
-        { issue_id: `issue-${++counter}`, summary: 'Toilet leaking', raw_excerpt: input.raw_text ?? 'My toilet is leaking' },
+        {
+          issue_id: `issue-${++counter}`,
+          summary: 'Toilet leaking',
+          raw_excerpt: input.raw_text ?? 'My toilet is leaking',
+        },
       ],
       issue_count: 1,
     }),
@@ -155,7 +170,9 @@ describe('Confirmation integration — happy path', () => {
   it('includes confirmation_payload in the response snapshot', async () => {
     const { splitResult } = await reachConfirmationPending();
     expect(splitResult.response.conversation_snapshot.confirmation_payload).toBeDefined();
-    expect(splitResult.response.conversation_snapshot.confirmation_payload!.issues.length).toBeGreaterThan(0);
+    expect(
+      splitResult.response.conversation_snapshot.confirmation_payload!.issues.length,
+    ).toBeGreaterThan(0);
   });
 
   it('flows to submitted on CONFIRM_SUBMISSION when fresh', async () => {
@@ -172,9 +189,7 @@ describe('Confirmation integration — happy path', () => {
 
     expect(confirmResult.response.conversation_snapshot.state).toBe(ConversationState.SUBMITTED);
     expect(confirmResult.response.pending_side_effects).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ effect_type: 'create_work_orders' }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ effect_type: 'create_work_orders' })]),
     );
   });
 });
@@ -186,16 +201,16 @@ describe('Confirmation integration — happy path', () => {
  * we lower the high_threshold to 0.80.
  */
 const RELAXED_CONFIDENCE: ConfidenceConfig = {
-  high_threshold: 0.80,
+  high_threshold: 0.8,
   medium_threshold: 0.65,
   model_hint_min: 0.2,
   model_hint_max: 0.95,
   weights: {
-    cue_strength: 0.40,
+    cue_strength: 0.4,
     completeness: 0.25,
-    model_hint: 0.20,
+    model_hint: 0.2,
     constraint_implied: 0.25,
-    disagreement: 0.10,
+    disagreement: 0.1,
     ambiguity_penalty: 0.05,
   },
 };

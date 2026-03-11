@@ -28,16 +28,12 @@ export function validateOrchestratorActionDomain(
 
   // idempotency_key required for side-effect actions
   if (SIDE_EFFECT_ACTIONS.has(request.action_type) && !request.idempotency_key) {
-    errors.push(
-      `idempotency_key is required for side-effect action "${request.action_type}"`,
-    );
+    errors.push(`idempotency_key is required for side-effect action "${request.action_type}"`);
   }
 
   // conversation_id required for all actions except CREATE_CONVERSATION
   if (request.action_type !== 'CREATE_CONVERSATION' && !request.conversation_id) {
-    errors.push(
-      `conversation_id is required for action "${request.action_type}"`,
-    );
+    errors.push(`conversation_id is required for action "${request.action_type}"`);
   }
 
   return { valid: errors.length === 0, errors };

@@ -24,11 +24,11 @@ conf = 0.40*0 + 0.25*1.0 + 0.20*0.0 = 0.25 → LOW
 
 ### Gating Rules
 
-| Resolved Category | Exclude from follow-ups |
-|-------------------|------------------------|
-| `maintenance` | `Management_Category`, `Management_Object` |
-| `management` | `Maintenance_Category`, `Maintenance_Object`, `Maintenance_Problem` |
-| Category is LOW (uncertain) | No filtering — ask about everything |
+| Resolved Category           | Exclude from follow-ups                                             |
+| --------------------------- | ------------------------------------------------------------------- |
+| `maintenance`               | `Management_Category`, `Management_Object`                          |
+| `management`                | `Maintenance_Category`, `Maintenance_Object`, `Maintenance_Problem` |
+| Category is LOW (uncertain) | No filtering — ask about everything                                 |
 
 Gating only applies when Category itself is NOT in the `fieldsNeedingInput` list (medium or high confidence). If we're unsure about Category, we can't gate.
 
@@ -61,6 +61,7 @@ Task 1 (update existing tests)     ── Task 4 (integration test)
 ### Task 0: Add category gating to `determineFieldsNeedingInput()`
 
 **Files:**
+
 - Modify: `packages/core/src/classifier/confidence.ts`
 - Test: `packages/core/src/__tests__/classifier/confidence.test.ts`
 
@@ -72,22 +73,27 @@ Add to `confidence.test.ts`:
 describe('category gating', () => {
   it('excludes Management fields when Category=maintenance and Category is confident', () => {
     const confidences: Record<string, number> = {
-      Category: 0.70,
-      Location: 0.70,
-      Sub_Location: 0.30,
-      Maintenance_Category: 0.70,
-      Maintenance_Object: 0.30,
-      Maintenance_Problem: 0.70,
+      Category: 0.7,
+      Location: 0.7,
+      Sub_Location: 0.3,
+      Maintenance_Category: 0.7,
+      Maintenance_Object: 0.3,
+      Maintenance_Problem: 0.7,
       Management_Category: 0.25,
       Management_Object: 0.25,
-      Priority: 0.30,
+      Priority: 0.3,
     };
     const classification = {
       Category: 'maintenance',
       Management_Category: 'other_mgmt_cat',
       Management_Object: 'other_mgmt_obj',
     };
-    const result = determineFieldsNeedingInput(confidences, DEFAULT_CONFIDENCE_CONFIG, [], classification);
+    const result = determineFieldsNeedingInput(
+      confidences,
+      DEFAULT_CONFIDENCE_CONFIG,
+      [],
+      classification,
+    );
     expect(result).not.toContain('Management_Category');
     expect(result).not.toContain('Management_Object');
     // Other low fields should still be present
@@ -98,15 +104,15 @@ describe('category gating', () => {
 
   it('excludes Maintenance fields when Category=management and Category is confident', () => {
     const confidences: Record<string, number> = {
-      Category: 0.70,
-      Location: 0.70,
-      Sub_Location: 0.30,
+      Category: 0.7,
+      Location: 0.7,
+      Sub_Location: 0.3,
       Maintenance_Category: 0.25,
       Maintenance_Object: 0.25,
       Maintenance_Problem: 0.25,
-      Management_Category: 0.70,
-      Management_Object: 0.30,
-      Priority: 0.30,
+      Management_Category: 0.7,
+      Management_Object: 0.3,
+      Priority: 0.3,
     };
     const classification = {
       Category: 'management',
@@ -114,7 +120,12 @@ describe('category gating', () => {
       Maintenance_Object: 'other_maintenance_object',
       Maintenance_Problem: 'other_problem',
     };
-    const result = determineFieldsNeedingInput(confidences, DEFAULT_CONFIDENCE_CONFIG, [], classification);
+    const result = determineFieldsNeedingInput(
+      confidences,
+      DEFAULT_CONFIDENCE_CONFIG,
+      [],
+      classification,
+    );
     expect(result).not.toContain('Maintenance_Category');
     expect(result).not.toContain('Maintenance_Object');
     expect(result).not.toContain('Maintenance_Problem');
@@ -126,12 +137,17 @@ describe('category gating', () => {
 
   it('does NOT gate when Category itself is low confidence', () => {
     const confidences: Record<string, number> = {
-      Category: 0.30,
+      Category: 0.3,
       Management_Category: 0.25,
       Management_Object: 0.25,
     };
     const classification = { Category: 'maintenance' };
-    const result = determineFieldsNeedingInput(confidences, DEFAULT_CONFIDENCE_CONFIG, [], classification);
+    const result = determineFieldsNeedingInput(
+      confidences,
+      DEFAULT_CONFIDENCE_CONFIG,
+      [],
+      classification,
+    );
     // Category is low, so no gating — management fields stay
     expect(result).toContain('Category');
     expect(result).toContain('Management_Category');
@@ -140,7 +156,7 @@ describe('category gating', () => {
 
   it('does NOT gate when classification is not provided (backward compat)', () => {
     const confidences: Record<string, number> = {
-      Category: 0.70,
+      Category: 0.7,
       Management_Category: 0.25,
     };
     const result = determineFieldsNeedingInput(confidences, DEFAULT_CONFIDENCE_CONFIG);
@@ -190,10 +206,12 @@ export function determineFieldsNeedingInput(
   if (classification && !fields.includes('Category')) {
     const category = classification['Category'];
     const excludes =
-      category === 'maintenance' ? MAINTENANCE_EXCLUDES :
-      category === 'management' ? MANAGEMENT_EXCLUDES :
-      [];
-    return fields.filter(f => !excludes.includes(f));
+      category === 'maintenance'
+        ? MAINTENANCE_EXCLUDES
+        : category === 'management'
+          ? MANAGEMENT_EXCLUDES
+          : [];
+    return fields.filter((f) => !excludes.includes(f));
   }
 
   return fields;
@@ -221,6 +239,7 @@ This prevents irrelevant follow-up questions for cross-category fields."
 ### Task 1: Update existing tests that call `determineFieldsNeedingInput`
 
 **Files:**
+
 - Modify: `packages/core/src/__tests__/classifier/confidence.test.ts` (existing tests)
 - Check: any other test files calling `determineFieldsNeedingInput`
 
@@ -248,6 +267,7 @@ git commit -m "test: update existing tests for category gating parameter"
 ### Task 2: Wire classification into start-classification handler
 
 **Files:**
+
 - Modify: `packages/core/src/orchestrator/action-handlers/start-classification.ts:139-141`
 
 **Step 1: Pass classification to `determineFieldsNeedingInput`**
@@ -265,7 +285,12 @@ To:
 ```typescript
 const fieldsNeedingInput = output.needs_human_triage
   ? []
-  : determineFieldsNeedingInput(computedConfidence, confidenceConfig, output.missing_fields, output.classification);
+  : determineFieldsNeedingInput(
+      computedConfidence,
+      confidenceConfig,
+      output.missing_fields,
+      output.classification,
+    );
 ```
 
 **Step 2: Run tests**
@@ -288,6 +313,7 @@ follow-up questions for Management fields."
 ### Task 3: Wire classification into answer-followups handler
 
 **Files:**
+
 - Modify: `packages/core/src/orchestrator/action-handlers/answer-followups.ts`
 
 **Step 1: Find the `determineFieldsNeedingInput` call and pass classification**
@@ -314,6 +340,7 @@ after follow-up answers are submitted."
 ### Task 4: Integration test — "leak in apartment" no longer asks about management
 
 **Files:**
+
 - Modify: `packages/core/src/__tests__/classifier/confidence-integration.test.ts`
 
 **Step 1: Add integration test**
@@ -336,9 +363,9 @@ describe('confidence integration: category gating', () => {
 
   const modelConfidence = {
     Category: 0.95,
-    Location: 0.90,
+    Location: 0.9,
     Sub_Location: 0.5,
-    Maintenance_Category: 0.90,
+    Maintenance_Category: 0.9,
     Maintenance_Object: 0.5,
     Maintenance_Problem: 0.95,
     Management_Category: 0.0,
@@ -400,16 +427,16 @@ fields (like Maintenance_Object) are still included."
 
 For "I have a leak in my apartment" after this fix:
 
-| Field | Confidence | Band | In fieldsNeedingInput? |
-|-------|-----------|------|----------------------|
-| Category | 0.68 | MEDIUM | No |
-| Location | 0.67 | MEDIUM | No |
-| Maintenance_Category | 0.67 | MEDIUM | No |
-| Maintenance_Problem | 0.68 | MEDIUM | No |
-| Maintenance_Object | 0.35 | LOW | **Yes** (genuinely uncertain) |
-| Priority | 0.63 | LOW | **Yes** (genuinely uncertain) |
-| Management_Category | 0.25 | LOW | **No** (gated — maintenance issue) |
-| Management_Object | 0.25 | LOW | **No** (gated — maintenance issue) |
-| Sub_Location | ~0.42 | LOW | **Yes** (genuinely uncertain) |
+| Field                | Confidence | Band   | In fieldsNeedingInput?             |
+| -------------------- | ---------- | ------ | ---------------------------------- |
+| Category             | 0.68       | MEDIUM | No                                 |
+| Location             | 0.67       | MEDIUM | No                                 |
+| Maintenance_Category | 0.67       | MEDIUM | No                                 |
+| Maintenance_Problem  | 0.68       | MEDIUM | No                                 |
+| Maintenance_Object   | 0.35       | LOW    | **Yes** (genuinely uncertain)      |
+| Priority             | 0.63       | LOW    | **Yes** (genuinely uncertain)      |
+| Management_Category  | 0.25       | LOW    | **No** (gated — maintenance issue) |
+| Management_Object    | 0.25       | LOW    | **No** (gated — maintenance issue) |
+| Sub_Location         | ~0.42      | LOW    | **Yes** (genuinely uncertain)      |
 
 Follow-up questions should only appear for Maintenance_Object, Priority, and Sub_Location — all genuinely relevant to a maintenance leak.

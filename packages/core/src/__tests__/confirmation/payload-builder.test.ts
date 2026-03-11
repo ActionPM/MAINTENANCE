@@ -31,7 +31,7 @@ const CLASSIFICATION_RESULTS: readonly IssueClassificationResult[] = [
     classifierOutput: {
       issue_id: 'issue-2',
       classification: { Category: 'maintenance', Maintenance_Category: 'general' },
-      model_confidence: { Category: 0.70, Maintenance_Category: 0.50 },
+      model_confidence: { Category: 0.7, Maintenance_Category: 0.5 },
       missing_fields: ['Maintenance_Object'],
       needs_human_triage: true,
     },
@@ -57,7 +57,10 @@ describe('buildConfirmationPayload', () => {
   it('includes classification labels and confidence', () => {
     const payload = buildConfirmationPayload(SPLIT_ISSUES, CLASSIFICATION_RESULTS);
     const first = payload.issues[0];
-    expect(first.classification).toEqual({ Category: 'maintenance', Maintenance_Category: 'plumbing' });
+    expect(first.classification).toEqual({
+      Category: 'maintenance',
+      Maintenance_Category: 'plumbing',
+    });
     expect(first.confidence_by_field).toEqual({ Category: 0.92, Maintenance_Category: 0.85 });
   });
 
@@ -74,7 +77,7 @@ describe('buildConfirmationPayload', () => {
   });
 
   it('handles missing classification result for an issue gracefully', () => {
-    const partial = CLASSIFICATION_RESULTS.filter(r => r.issue_id === 'issue-1');
+    const partial = CLASSIFICATION_RESULTS.filter((r) => r.issue_id === 'issue-1');
     const payload = buildConfirmationPayload(SPLIT_ISSUES, partial);
     expect(payload.issues[1].needs_human_triage).toBe(true);
     expect(payload.issues[1].classification).toEqual({});

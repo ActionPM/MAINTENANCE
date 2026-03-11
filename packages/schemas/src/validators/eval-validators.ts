@@ -118,7 +118,11 @@ export function validateEvalRun(data: unknown): EvalValidationResult {
   for (let i = 0; i < results.length; i++) {
     const classification = results[i].classification as Record<string, string> | undefined;
     if (classification && results[i].status === 'ok') {
-      const result = validateClassificationAgainstTaxonomy(classification, taxonomy, taxonomyVersion);
+      const result = validateClassificationAgainstTaxonomy(
+        classification,
+        taxonomy,
+        taxonomyVersion,
+      );
       if (!result.valid) {
         for (const iv of result.invalidValues) {
           errors.push(

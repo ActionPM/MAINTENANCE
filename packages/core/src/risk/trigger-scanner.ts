@@ -1,4 +1,9 @@
-import type { RiskProtocols, RiskScanResult, MatchedTrigger, RiskSeverity } from '@wo-agent/schemas';
+import type {
+  RiskProtocols,
+  RiskScanResult,
+  MatchedTrigger,
+  RiskSeverity,
+} from '@wo-agent/schemas';
 
 const SEVERITY_RANK: Record<RiskSeverity, number> = {
   emergency: 3,
@@ -11,16 +16,13 @@ const SEVERITY_RANK: Record<RiskSeverity, number> = {
  * Pure function — no side effects.
  * Checks keyword_any and regex_any against lowercased text.
  */
-export function scanTextForTriggers(
-  text: string,
-  protocols: RiskProtocols,
-): RiskScanResult {
+export function scanTextForTriggers(text: string, protocols: RiskProtocols): RiskScanResult {
   const lowerText = text.toLowerCase();
   const matched: MatchedTrigger[] = [];
 
   for (const trigger of protocols.triggers) {
-    const matchedKeywords = trigger.grammar.keyword_any.filter(
-      kw => lowerText.includes(kw.toLowerCase()),
+    const matchedKeywords = trigger.grammar.keyword_any.filter((kw) =>
+      lowerText.includes(kw.toLowerCase()),
     );
 
     const matchedRegex: string[] = [];
@@ -63,9 +65,7 @@ export function scanClassificationForTriggers(
   for (const trigger of protocols.triggers) {
     if (trigger.grammar.taxonomy_path_any.length === 0) continue;
 
-    const matchedPaths = trigger.grammar.taxonomy_path_any.filter(
-      tp => paths.has(tp),
-    );
+    const matchedPaths = trigger.grammar.taxonomy_path_any.filter((tp) => paths.has(tp));
 
     if (matchedPaths.length > 0) {
       matched.push({
@@ -84,10 +84,7 @@ export function scanClassificationForTriggers(
  * Merge two scan results (text scan + classification scan).
  * Deduplicates by trigger_id, merging match details.
  */
-export function mergeRiskScanResults(
-  a: RiskScanResult,
-  b: RiskScanResult,
-): RiskScanResult {
+export function mergeRiskScanResults(a: RiskScanResult, b: RiskScanResult): RiskScanResult {
   const byId = new Map<string, MatchedTrigger>();
 
   for (const m of [...a.triggers_matched, ...b.triggers_matched]) {
@@ -97,7 +94,9 @@ export function mergeRiskScanResults(
         trigger: m.trigger,
         matched_keywords: [...new Set([...existing.matched_keywords, ...m.matched_keywords])],
         matched_regex: [...new Set([...existing.matched_regex, ...m.matched_regex])],
-        matched_taxonomy_paths: [...new Set([...existing.matched_taxonomy_paths, ...m.matched_taxonomy_paths])],
+        matched_taxonomy_paths: [
+          ...new Set([...existing.matched_taxonomy_paths, ...m.matched_taxonomy_paths]),
+        ],
       });
     } else {
       byId.set(m.trigger.trigger_id, m);

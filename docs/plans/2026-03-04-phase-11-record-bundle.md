@@ -25,6 +25,7 @@
 ## Task 0: Add `conversation_id` to WorkOrder schema and type
 
 **Files:**
+
 - Modify: `packages/schemas/work_order.schema.json:41-110`
 - Modify: `packages/schemas/src/types/work-order.ts:20-44`
 - Modify: `packages/core/src/work-order/wo-creator.ts:45-91`
@@ -66,20 +67,29 @@ function makeSession(): ConversationSession {
     state: ConversationState.TENANT_CONFIRMATION_PENDING,
     unit_id: 'unit-1',
     authorized_unit_ids: ['unit-1'],
-    pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'test', prompt_version: '1.0.0' },
-    split_issues: [{ issue_id: 'issue-1', summary: 'Leaky faucet', raw_excerpt: 'My faucet leaks' }],
-    classification_results: [{
-      issue_id: 'issue-1',
-      classifierOutput: {
+    pinned_versions: {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'test',
+      prompt_version: '1.0.0',
+    },
+    split_issues: [
+      { issue_id: 'issue-1', summary: 'Leaky faucet', raw_excerpt: 'My faucet leaks' },
+    ],
+    classification_results: [
+      {
         issue_id: 'issue-1',
-        classification: { Category: 'maintenance', Priority: 'normal' },
-        model_confidence: { Category: 0.9, Priority: 0.8 },
-        missing_fields: [],
-        needs_human_triage: false,
+        classifierOutput: {
+          issue_id: 'issue-1',
+          classification: { Category: 'maintenance', Priority: 'normal' },
+          model_confidence: { Category: 0.9, Priority: 0.8 },
+          missing_fields: [],
+          needs_human_triage: false,
+        },
+        computedConfidence: { Category: 0.85, Priority: 0.75 },
+        fieldsNeedingInput: [],
       },
-      computedConfidence: { Category: 0.85, Priority: 0.75 },
-      fieldsNeedingInput: [],
-    }],
+    ],
     prior_state_before_error: null,
     followup_turn_number: 0,
     total_questions_asked: 0,
@@ -158,6 +168,7 @@ git commit -m "feat(schemas): add conversation_id to WorkOrder (phase 11 prep)"
 ## Task 1: Create RecordBundle JSON schema
 
 **Files:**
+
 - Create: `packages/schemas/record_bundle.schema.json`
 
 **Step 1: Create the schema file**
@@ -176,7 +187,13 @@ git commit -m "feat(schemas): add conversation_id to WorkOrder (phase 11 prep)"
         "response_due_at": { "type": "string", "format": "date-time" },
         "resolution_due_at": { "type": "string", "format": "date-time" }
       },
-      "required": ["priority", "response_hours", "resolution_hours", "response_due_at", "resolution_due_at"],
+      "required": [
+        "priority",
+        "response_hours",
+        "resolution_hours",
+        "response_due_at",
+        "resolution_due_at"
+      ],
       "additionalProperties": false
     },
     "CommunicationEntry": {
@@ -189,7 +206,14 @@ git commit -m "feat(schemas): add conversation_id to WorkOrder (phase 11 prep)"
         "created_at": { "type": "string", "format": "date-time" },
         "sent_at": { "type": ["string", "null"], "format": "date-time" }
       },
-      "required": ["notification_id", "channel", "notification_type", "status", "created_at", "sent_at"],
+      "required": [
+        "notification_id",
+        "channel",
+        "notification_type",
+        "status",
+        "created_at",
+        "sent_at"
+      ],
       "additionalProperties": false
     },
     "ResolutionInfo": {
@@ -275,6 +299,7 @@ git commit -m "feat(schemas): add record_bundle.schema.json (phase 11)"
 ## Task 2: Create RecordBundle TypeScript type and validator
 
 **Files:**
+
 - Create: `packages/schemas/src/types/record-bundle.ts`
 - Create: `packages/schemas/src/validators/record-bundle.ts`
 - Modify: `packages/schemas/src/index.ts`
@@ -415,9 +440,7 @@ import type { RecordBundle } from '../types/record-bundle.js';
 
 const BUNDLE_REF = 'record_bundle.schema.json#/definitions/RecordBundle';
 
-export function validateRecordBundle(
-  data: unknown,
-): ValidationResult<RecordBundle> {
+export function validateRecordBundle(data: unknown): ValidationResult<RecordBundle> {
   return validate<RecordBundle>(data, BUNDLE_REF);
 }
 ```
@@ -454,6 +477,7 @@ git commit -m "feat(schemas): add RecordBundle type and validator (phase 11)"
 ## Task 3: Implement SLA calculator
 
 **Files:**
+
 - Create: `packages/core/src/record-bundle/sla-calculator.ts`
 - Create: `packages/core/src/record-bundle/types.ts`
 - Test: `packages/core/src/__tests__/record-bundle/sla-calculator.test.ts`
@@ -599,7 +623,7 @@ export function computeSlaMetadata(input: ComputeSlaInput): SlaMetadata {
 
   // 1. Check taxonomy-path overrides
   const taxonomyPath = buildTaxonomyPath(classification);
-  const override = slaPolicies.overrides.find(o => taxonomyPath.startsWith(o.taxonomy_path));
+  const override = slaPolicies.overrides.find((o) => taxonomyPath.startsWith(o.taxonomy_path));
 
   let responseHours: number;
   let resolutionHours: number;
@@ -659,6 +683,7 @@ git commit -m "feat(core): add SLA calculator for record bundles (phase 11)"
 ## Task 4: Implement RecordBundleAssembler
 
 **Files:**
+
 - Create: `packages/core/src/record-bundle/record-bundle-assembler.ts`
 - Create: `packages/core/src/record-bundle/index.ts`
 - Modify: `packages/core/src/index.ts`
@@ -717,7 +742,11 @@ describe('assembleRecordBundle', () => {
       tenant_account_id: 'account-1',
       status: WorkOrderStatus.CREATED,
       status_history: [
-        { status: WorkOrderStatus.CREATED, changed_at: '2026-03-04T00:00:00.000Z', actor: ActorType.SYSTEM },
+        {
+          status: WorkOrderStatus.CREATED,
+          changed_at: '2026-03-04T00:00:00.000Z',
+          actor: ActorType.SYSTEM,
+        },
       ],
       raw_text: 'My faucet leaks',
       summary_confirmed: 'Leaky faucet in kitchen',
@@ -727,7 +756,12 @@ describe('assembleRecordBundle', () => {
       missing_fields: [],
       pets_present: 'unknown',
       needs_human_triage: false,
-      pinned_versions: { taxonomy_version: '1.0.0', schema_version: '1.0.0', model_id: 'test', prompt_version: '1.0.0' },
+      pinned_versions: {
+        taxonomy_version: '1.0.0',
+        schema_version: '1.0.0',
+        model_id: 'test',
+        prompt_version: '1.0.0',
+      },
       created_at: '2026-03-04T00:00:00.000Z',
       updated_at: '2026-03-04T00:00:00.000Z',
       row_version: 1,
@@ -778,14 +812,22 @@ describe('assembleRecordBundle', () => {
     expect(bundle!.unit_id).toBe('unit-1');
     expect(bundle!.summary).toBe('Leaky faucet in kitchen');
     expect(bundle!.classification).toEqual({ Category: 'maintenance', Priority: 'normal' });
-    expect(bundle!.urgency_basis).toEqual({ has_emergency: false, highest_severity: null, trigger_ids: [] });
+    expect(bundle!.urgency_basis).toEqual({
+      has_emergency: false,
+      highest_severity: null,
+      trigger_ids: [],
+    });
     expect(bundle!.status_history).toEqual(wo.status_history);
     expect(bundle!.communications).toHaveLength(1);
     expect(bundle!.communications[0].notification_id).toBe('notif-1');
     expect(bundle!.communications[0].channel).toBe('in_app');
     expect(bundle!.schedule.priority).toBe('normal');
     expect(bundle!.schedule.response_hours).toBe(24);
-    expect(bundle!.resolution).toEqual({ resolved: false, final_status: 'created', resolved_at: null });
+    expect(bundle!.resolution).toEqual({
+      resolved: false,
+      final_status: 'created',
+      resolved_at: null,
+    });
     expect(bundle!.exported_at).toBe(NOW);
   });
 
@@ -810,9 +852,21 @@ describe('assembleRecordBundle', () => {
     const wo = makeWorkOrder({
       status: WorkOrderStatus.RESOLVED,
       status_history: [
-        { status: WorkOrderStatus.CREATED, changed_at: '2026-03-04T00:00:00.000Z', actor: ActorType.SYSTEM },
-        { status: WorkOrderStatus.ACTION_REQUIRED, changed_at: '2026-03-04T01:00:00.000Z', actor: ActorType.SYSTEM },
-        { status: WorkOrderStatus.RESOLVED, changed_at: '2026-03-04T10:00:00.000Z', actor: ActorType.PM_USER },
+        {
+          status: WorkOrderStatus.CREATED,
+          changed_at: '2026-03-04T00:00:00.000Z',
+          actor: ActorType.SYSTEM,
+        },
+        {
+          status: WorkOrderStatus.ACTION_REQUIRED,
+          changed_at: '2026-03-04T01:00:00.000Z',
+          actor: ActorType.SYSTEM,
+        },
+        {
+          status: WorkOrderStatus.RESOLVED,
+          changed_at: '2026-03-04T10:00:00.000Z',
+          actor: ActorType.PM_USER,
+        },
       ],
     });
     await workOrderRepo.insertBatch([wo]);
@@ -844,7 +898,12 @@ Expected: FAIL — module not found
 Create `packages/core/src/record-bundle/record-bundle-assembler.ts`:
 
 ```typescript
-import type { RecordBundle, CommunicationEntry, ResolutionInfo, NotificationEvent } from '@wo-agent/schemas';
+import type {
+  RecordBundle,
+  CommunicationEntry,
+  ResolutionInfo,
+  NotificationEvent,
+} from '@wo-agent/schemas';
 import { WorkOrderStatus } from '@wo-agent/schemas';
 import type { RecordBundleDeps } from './types.js';
 import { computeSlaMetadata } from './sla-calculator.js';
@@ -866,7 +925,7 @@ export async function assembleRecordBundle(
   // 1. Communications from notification events
   const notifications = await deps.notificationRepo.queryByConversation(wo.conversation_id);
   const communications: CommunicationEntry[] = notifications
-    .filter(n => n.work_order_ids.includes(workOrderId))
+    .filter((n) => n.work_order_ids.includes(workOrderId))
     .map(toCommunicationEntry);
 
   // 2. SLA schedule
@@ -918,15 +977,23 @@ function toCommunicationEntry(n: NotificationEvent): CommunicationEntry {
 
 function computeResolution(
   currentStatus: string,
-  statusHistory: readonly { readonly status: string; readonly changed_at: string; readonly actor: string }[],
+  statusHistory: readonly {
+    readonly status: string;
+    readonly changed_at: string;
+    readonly actor: string;
+  }[],
 ): ResolutionInfo {
   const isTerminal = TERMINAL_STATUSES.includes(currentStatus);
   if (!isTerminal) {
-    return { resolved: false, final_status: currentStatus as ResolutionInfo['final_status'], resolved_at: null };
+    return {
+      resolved: false,
+      final_status: currentStatus as ResolutionInfo['final_status'],
+      resolved_at: null,
+    };
   }
 
   // Find the last entry with the terminal status
-  const terminalEntry = [...statusHistory].reverse().find(e => e.status === currentStatus);
+  const terminalEntry = [...statusHistory].reverse().find((e) => e.status === currentStatus);
 
   return {
     resolved: currentStatus === WorkOrderStatus.RESOLVED,
@@ -954,7 +1021,13 @@ In `packages/core/src/index.ts`, add at the end:
 ```typescript
 // --- Record Bundle (Phase 11) ---
 export { assembleRecordBundle, computeSlaMetadata } from './record-bundle/index.js';
-export type { RecordBundleDeps, SlaPolicies, SlaPolicyEntry, SlaOverride, ComputeSlaInput } from './record-bundle/index.js';
+export type {
+  RecordBundleDeps,
+  SlaPolicies,
+  SlaPolicyEntry,
+  SlaOverride,
+  ComputeSlaInput,
+} from './record-bundle/index.js';
 ```
 
 **Step 6: Run test to verify it passes**
@@ -974,6 +1047,7 @@ git commit -m "feat(core): add RecordBundleAssembler service (phase 11)"
 ## Task 5: Expose repos from orchestrator factory
 
 **Files:**
+
 - Modify: `apps/web/src/lib/orchestrator-factory.ts`
 
 **Step 1: Read the current factory to understand the singleton structure**
@@ -985,7 +1059,12 @@ The factory creates all stores inside `getOrchestrator()` and they're captured i
 In `apps/web/src/lib/orchestrator-factory.ts`, extract the stores to module-level variables and add getter functions. Add these after the existing imports:
 
 ```typescript
-import { InMemoryNotificationStore, InMemoryNotificationPreferenceStore, MockSmsSender, NotificationService } from '@wo-agent/core';
+import {
+  InMemoryNotificationStore,
+  InMemoryNotificationPreferenceStore,
+  MockSmsSender,
+  NotificationService,
+} from '@wo-agent/core';
 ```
 
 Replace the single `dispatcher` variable with a deps holder pattern:
@@ -1021,21 +1100,38 @@ function ensureInitialized() {
       idGenerator,
       clock,
       issueSplitter: async (input) => ({
-        issues: [{ issue_id: randomUUID(), summary: input.raw_text.slice(0, 200), raw_excerpt: input.raw_text }],
+        issues: [
+          {
+            issue_id: randomUUID(),
+            summary: input.raw_text.slice(0, 200),
+            raw_excerpt: input.raw_text,
+          },
+        ],
         issue_count: 1,
       }),
       issueClassifier: async (input: IssueClassifierInput) => ({
         issue_id: input.issue_id,
         classification: {
-          Category: 'maintenance', Location: 'suite', Sub_Location: 'general',
-          Maintenance_Category: 'general_maintenance', Maintenance_Object: 'other_object',
-          Maintenance_Problem: 'not_working', Management_Category: 'other_mgmt_cat',
-          Management_Object: 'other_mgmt_obj', Priority: 'normal',
+          Category: 'maintenance',
+          Location: 'suite',
+          Sub_Location: 'general',
+          Maintenance_Category: 'general_maintenance',
+          Maintenance_Object: 'other_object',
+          Maintenance_Problem: 'not_working',
+          Management_Category: 'other_mgmt_cat',
+          Management_Object: 'other_mgmt_obj',
+          Priority: 'normal',
         },
         model_confidence: {
-          Category: 0.7, Location: 0.5, Sub_Location: 0.5,
-          Maintenance_Category: 0.6, Maintenance_Object: 0.5, Maintenance_Problem: 0.5,
-          Management_Category: 0.0, Management_Object: 0.0, Priority: 0.5,
+          Category: 0.7,
+          Location: 0.5,
+          Sub_Location: 0.5,
+          Maintenance_Category: 0.6,
+          Maintenance_Object: 0.5,
+          Maintenance_Problem: 0.5,
+          Management_Category: 0.0,
+          Management_Object: 0.0,
+          Priority: 0.5,
         },
         missing_fields: [],
         needs_human_triage: false,
@@ -1044,7 +1140,11 @@ function ensureInitialized() {
       cueDict: classificationCues as CueDictionary,
       taxonomy: loadTaxonomy(),
       unitResolver: {
-        resolve: async (unitId: string) => ({ unit_id: unitId, property_id: `prop-${unitId}`, client_id: `client-${unitId}` }),
+        resolve: async (unitId: string) => ({
+          unit_id: unitId,
+          property_id: `prop-${unitId}`,
+          client_id: `client-${unitId}`,
+        }),
       } satisfies UnitResolver,
       workOrderRepo,
       idempotencyStore: new InMemoryIdempotencyStore(),
@@ -1092,6 +1192,7 @@ git commit -m "refactor(web): expose repo getters from factory (phase 11)"
 ## Task 6: Create the API route `GET /work-orders/:id/record-bundle`
 
 **Files:**
+
 - Create: `apps/web/src/app/api/work-orders/[id]/record-bundle/route.ts`
 
 **Step 1: Create the route file**
@@ -1106,10 +1207,7 @@ import slaPoliciesJson from '@wo-agent/schemas/sla_policies.json' with { type: '
 
 const slaPolicies = slaPoliciesJson as SlaPolicies;
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   // 1. Auth
   const authResult = await authenticateRequest(request);
   if (authResult instanceof NextResponse) return authResult;
@@ -1179,6 +1277,7 @@ git commit -m "feat(web): add GET /work-orders/:id/record-bundle route (phase 11
 ## Task 7: E2E integration test — full flow through assembler
 
 **Files:**
+
 - Create: `packages/core/src/__tests__/record-bundle/e2e-record-bundle.test.ts`
 
 This test walks the full conversation flow (dispatch actions through the orchestrator) and then verifies the record bundle assembles correctly from the resulting work orders and notifications.
@@ -1187,7 +1286,18 @@ This test walks the full conversation flow (dispatch actions through the orchest
 
 ```typescript
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createDispatcher, InMemoryEventStore, InMemoryWorkOrderStore, InMemoryIdempotencyStore, InMemoryNotificationStore, InMemoryNotificationPreferenceStore, MockSmsSender, NotificationService, assembleRecordBundle, createSession } from '../../index.js';
+import {
+  createDispatcher,
+  InMemoryEventStore,
+  InMemoryWorkOrderStore,
+  InMemoryIdempotencyStore,
+  InMemoryNotificationStore,
+  InMemoryNotificationPreferenceStore,
+  MockSmsSender,
+  NotificationService,
+  assembleRecordBundle,
+  createSession,
+} from '../../index.js';
 import type { OrchestratorDependencies, SessionStore } from '../../orchestrator/types.js';
 import type { ConversationSession } from '../../session/types.js';
 import type { CueDictionary, IssueClassifierInput, UnitInfo } from '@wo-agent/schemas';
@@ -1212,16 +1322,22 @@ describe('E2E: Record bundle through full intake flow', () => {
   let workOrderRepo: InMemoryWorkOrderStore;
   let notificationRepo: InMemoryNotificationStore;
 
-  function makeId() { return `id-${++counter}`; }
+  function makeId() {
+    return `id-${++counter}`;
+  }
   const clock = () => '2026-03-04T12:00:00.000Z';
 
   class InMemorySessionStore implements SessionStore {
     private sessions = new Map<string, ConversationSession>();
-    async get(id: string) { return this.sessions.get(id) ?? null; }
-    async getByTenantUser(userId: string) {
-      return [...this.sessions.values()].filter(s => s.tenant_user_id === userId);
+    async get(id: string) {
+      return this.sessions.get(id) ?? null;
     }
-    async save(session: ConversationSession) { this.sessions.set(session.conversation_id, session); }
+    async getByTenantUser(userId: string) {
+      return [...this.sessions.values()].filter((s) => s.tenant_user_id === userId);
+    }
+    async save(session: ConversationSession) {
+      this.sessions.set(session.conversation_id, session);
+    }
   }
 
   function makeDeps(): OrchestratorDependencies {
@@ -1250,16 +1366,26 @@ describe('E2E: Record bundle through full intake flow', () => {
       issueClassifier: async (input: IssueClassifierInput) => ({
         issue_id: input.issue_id,
         classification: {
-          Category: 'maintenance', Location: 'suite', Sub_Location: 'kitchen',
-          Maintenance_Category: 'plumbing', Maintenance_Object: 'faucet',
-          Maintenance_Problem: 'leak', Management_Category: 'other_mgmt_cat',
-          Management_Object: 'other_mgmt_obj', Priority: 'normal',
+          Category: 'maintenance',
+          Location: 'suite',
+          Sub_Location: 'kitchen',
+          Maintenance_Category: 'plumbing',
+          Maintenance_Object: 'faucet',
+          Maintenance_Problem: 'leak',
+          Management_Category: 'other_mgmt_cat',
+          Management_Object: 'other_mgmt_obj',
+          Priority: 'normal',
         },
         model_confidence: {
-          Category: 0.95, Location: 0.9, Sub_Location: 0.85,
-          Maintenance_Category: 0.92, Maintenance_Object: 0.88,
-          Maintenance_Problem: 0.90, Management_Category: 0.0,
-          Management_Object: 0.0, Priority: 0.8,
+          Category: 0.95,
+          Location: 0.9,
+          Sub_Location: 0.85,
+          Maintenance_Category: 0.92,
+          Maintenance_Object: 0.88,
+          Maintenance_Problem: 0.9,
+          Management_Category: 0.0,
+          Management_Object: 0.0,
+          Priority: 0.8,
         },
         missing_fields: [],
         needs_human_triage: false,
@@ -1269,7 +1395,9 @@ describe('E2E: Record bundle through full intake flow', () => {
       taxonomy: loadTaxonomy(),
       unitResolver: {
         resolve: async (unitId: string): Promise<UnitInfo> => ({
-          unit_id: unitId, property_id: 'prop-1', client_id: 'client-1',
+          unit_id: unitId,
+          property_id: 'prop-1',
+          client_id: 'client-1',
         }),
       },
       workOrderRepo,
@@ -1281,7 +1409,9 @@ describe('E2E: Record bundle through full intake flow', () => {
     };
   }
 
-  beforeEach(() => { counter = 0; });
+  beforeEach(() => {
+    counter = 0;
+  });
 
   it('produces a valid record bundle after confirm-submission', async () => {
     const deps = makeDeps();
@@ -1356,13 +1486,16 @@ describe('E2E: Record bundle through full intake flow', () => {
     expect(r5.session.state).toBe(ConversationState.SUBMITTED);
 
     // 6. Find the created WO
-    const allWos = await workOrderRepo.getByIssueGroup(
-      r5.response.artifacts?.[0]?.ref ?? '',
-    );
+    const allWos = await workOrderRepo.getByIssueGroup(r5.response.artifacts?.[0]?.ref ?? '');
     // Fallback: if artifacts don't expose it, scan by tenant
-    const wos = allWos.length > 0
-      ? allWos
-      : [await workOrderRepo.getById(r5.response.pending_side_effects?.[0]?.idempotency_key ?? '')].filter(Boolean);
+    const wos =
+      allWos.length > 0
+        ? allWos
+        : [
+            await workOrderRepo.getById(
+              r5.response.pending_side_effects?.[0]?.idempotency_key ?? '',
+            ),
+          ].filter(Boolean);
 
     expect(wos.length).toBeGreaterThan(0);
     const woId = wos[0]!.work_order_id;
@@ -1424,6 +1557,7 @@ Expected: No errors
 **Step 4: Fix any issues discovered**
 
 If tests fail, fix the root cause. Common issues:
+
 - Missing `conversation_id` in test fixtures for existing WO tests
 - Import path issues for `sla_policies.json`
 - Schema registration order in `validator.ts`
@@ -1440,6 +1574,7 @@ git commit -m "fix(core): address test regressions from phase 11 changes"
 ## Task 9: Validate schema output with `validateRecordBundle`
 
 **Files:**
+
 - Modify: `packages/core/src/__tests__/record-bundle/assembler.test.ts`
 
 **Step 1: Add schema validation to assembler test**
@@ -1479,20 +1614,21 @@ git commit -m "test(core): validate assembler output against JSON Schema (phase 
 
 ## Summary
 
-| Task | What | Files |
-|------|------|-------|
-| 0 | Add `conversation_id` to WorkOrder | schema, type, wo-creator |
-| 1 | Create RecordBundle JSON Schema | `record_bundle.schema.json`, validator.ts |
-| 2 | RecordBundle TypeScript type + validator | type, validator, barrel |
-| 3 | SLA calculator | `sla-calculator.ts` + tests |
-| 4 | RecordBundleAssembler | assembler + barrel + tests |
-| 5 | Expose repos from factory | `orchestrator-factory.ts` |
-| 6 | API route GET /work-orders/:id/record-bundle | route.ts |
-| 7 | E2E integration test | e2e test |
-| 8 | Full test suite validation | verification |
-| 9 | Schema validation of assembler output | additional test |
+| Task | What                                         | Files                                     |
+| ---- | -------------------------------------------- | ----------------------------------------- |
+| 0    | Add `conversation_id` to WorkOrder           | schema, type, wo-creator                  |
+| 1    | Create RecordBundle JSON Schema              | `record_bundle.schema.json`, validator.ts |
+| 2    | RecordBundle TypeScript type + validator     | type, validator, barrel                   |
+| 3    | SLA calculator                               | `sla-calculator.ts` + tests               |
+| 4    | RecordBundleAssembler                        | assembler + barrel + tests                |
+| 5    | Expose repos from factory                    | `orchestrator-factory.ts`                 |
+| 6    | API route GET /work-orders/:id/record-bundle | route.ts                                  |
+| 7    | E2E integration test                         | e2e test                                  |
+| 8    | Full test suite validation                   | verification                              |
+| 9    | Schema validation of assembler output        | additional test                           |
 
 **Skills referenced:**
+
 - `@append-only-events` — event tables are INSERT+SELECT only
 - `@schema-first-development` — JSON Schema validates all outputs
 - `@project-conventions` — repo layout, naming, test patterns

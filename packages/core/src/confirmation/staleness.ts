@@ -56,8 +56,7 @@ export function checkStaleness(input: StalenessInput): StalenessResult {
 
   // Compute age
   const ageMs =
-    new Date(input.currentTime).getTime() -
-    new Date(input.confirmationEnteredAt).getTime();
+    new Date(input.currentTime).getTime() - new Date(input.confirmationEnteredAt).getTime();
   const isOverThreshold = ageMs > STALENESS_THRESHOLD_MS;
 
   if (isOverThreshold) {

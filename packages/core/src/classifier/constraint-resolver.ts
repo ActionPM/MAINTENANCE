@@ -16,7 +16,7 @@ export function resolveValidOptions(
   classification: Record<string, string>,
   constraints: TaxonomyConstraints,
 ): string[] | null {
-  const relevantEdges = CONSTRAINT_EDGES.filter(e => e.childField === targetField);
+  const relevantEdges = CONSTRAINT_EDGES.filter((e) => e.childField === targetField);
   if (relevantEdges.length === 0) return null;
 
   const constraintSets: string[][] = [];
@@ -37,7 +37,7 @@ export function resolveValidOptions(
   let result = constraintSets[0];
   for (let i = 1; i < constraintSets.length; i++) {
     const set = new Set(constraintSets[i]);
-    result = result.filter(v => set.has(v));
+    result = result.filter((v) => set.has(v));
   }
 
   return result;
@@ -54,9 +54,10 @@ export function resolveValidOptions(
 export function resolveConstraintImpliedFields(
   classification: Record<string, string>,
   constraints: TaxonomyConstraints,
+  _taxonomyVersion?: string,
 ): Record<string, string> {
   const implied: Record<string, string> = {};
-  const childFields = new Set(CONSTRAINT_EDGES.map(e => e.childField));
+  const childFields = new Set(CONSTRAINT_EDGES.map((e) => e.childField));
 
   for (const targetField of childFields) {
     const currentValue = classification[targetField];

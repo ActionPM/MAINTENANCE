@@ -22,7 +22,13 @@ export const CRITICAL_SLICES: readonly SliceDefinition[] = [
   { name: 'emergency', filter: (e) => e.slice_tags.includes('emergency') },
   { name: 'building_access', filter: (e) => e.slice_tags.includes('building_access') },
   { name: 'pest_control', filter: (e) => e.slice_tags.includes('pest_control') },
-  { name: 'ood', filter: (e) => e.slice_tags.includes('ood') || e.slice_tags.includes('off_topic') || e.slice_tags.includes('gibberish') },
+  {
+    name: 'ood',
+    filter: (e) =>
+      e.slice_tags.includes('ood') ||
+      e.slice_tags.includes('off_topic') ||
+      e.slice_tags.includes('gibberish'),
+  },
 ];
 
 export const INPUT_QUALITY_SLICES: readonly SliceDefinition[] = [
