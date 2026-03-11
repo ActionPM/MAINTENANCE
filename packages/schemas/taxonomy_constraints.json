@@ -314,6 +314,7 @@
       "drain",
       "pipe",
       "shower",
+      "bathtub",
       "other_object",
       "needs_object",
       "other_maintenance_object"
@@ -324,16 +325,28 @@
       "switch",
       "outlet",
       "light",
+      "smoke_detector",
+      "exhaust_fan",
       "other_object",
       "needs_object",
       "other_maintenance_object"
     ],
-    "hvac": ["radiator", "thermostat", "other_object", "needs_object", "other_maintenance_object"],
+    "hvac": [
+      "radiator",
+      "thermostat",
+      "exhaust_fan",
+      "other_object",
+      "needs_object",
+      "other_maintenance_object"
+    ],
     "carpentry": [
       "door",
       "cabinet",
       "shelf",
       "baseboard",
+      "window",
+      "screen",
+      "blind",
       "other_object",
       "needs_object",
       "other_maintenance_object"
@@ -383,6 +396,12 @@
       "wall",
       "ceiling",
       "light",
+      "window",
+      "screen",
+      "blind",
+      "smoke_detector",
+      "exhaust_fan",
+      "bathtub",
       "other_object",
       "needs_object",
       "other_maintenance_object"
@@ -473,6 +492,12 @@
     "range_hood": ["not_working", "broken_damaged", "other_problem"],
     "roof": ["leak", "broken_damaged", "other_problem"],
     "grout": ["broken_damaged", "other_problem"],
+    "bathtub": ["leak", "drain", "clog", "not_working", "broken_damaged", "other_problem"],
+    "window": ["broken_damaged", "not_working", "noise_vibration", "missing", "other_problem"],
+    "smoke_detector": ["not_working", "missing", "noise_vibration", "safety_risk", "other_problem"],
+    "exhaust_fan": ["not_working", "broken_damaged", "noise_vibration", "other_problem"],
+    "screen": ["broken_damaged", "missing", "other_problem"],
+    "blind": ["broken_damaged", "not_working", "missing", "other_problem"],
     "other_object": [
       "leak",
       "drain",
@@ -486,6 +511,8 @@
       "safety_risk",
       "smell",
       "low_pressure",
+      "noise_vibration",
+      "missing",
       "other_problem"
     ],
     "no_object": [
@@ -501,6 +528,8 @@
       "safety_risk",
       "smell",
       "low_pressure",
+      "noise_vibration",
+      "missing",
       "other_problem"
     ],
     "needs_object": [
@@ -516,6 +545,8 @@
       "safety_risk",
       "smell",
       "low_pressure",
+      "noise_vibration",
+      "missing",
       "other_problem"
     ],
     "other_maintenance_object": [
@@ -531,6 +562,8 @@
       "safety_risk",
       "smell",
       "low_pressure",
+      "noise_vibration",
+      "missing",
       "other_problem"
     ]
   },
@@ -715,6 +748,27 @@
     "range_hood": ["kitchen"],
     "roof": ["roof"],
     "grout": ["kitchen", "bathroom", "entrance_lobby", "pool"],
+    "bathtub": ["bathroom"],
+    "window": [
+      "kitchen",
+      "bathroom",
+      "bedroom",
+      "common_living_dining",
+      "hallways_stairwells",
+      "entrance_lobby"
+    ],
+    "smoke_detector": [
+      "kitchen",
+      "bathroom",
+      "bedroom",
+      "common_living_dining",
+      "hallways_stairwells",
+      "entrance_lobby",
+      "parking_garage"
+    ],
+    "exhaust_fan": ["kitchen", "bathroom", "laundry", "mechanical_room"],
+    "screen": ["kitchen", "bathroom", "bedroom", "common_living_dining", "balcony"],
+    "blind": ["kitchen", "bathroom", "bedroom", "common_living_dining"],
     "other_object": [
       "kitchen",
       "bathroom",

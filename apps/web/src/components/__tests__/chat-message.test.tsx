@@ -37,6 +37,11 @@ describe('ChatMessage', () => {
 
   it('displays formatted time', () => {
     render(<ChatMessage role="agent" content="Hi" timestamp="2026-03-04T10:30:00Z" />);
-    expect(screen.getByText(/10:30/)).toBeInTheDocument();
+    // toLocaleTimeString is timezone-dependent; just verify the time span renders
+    const expected = new Date('2026-03-04T10:30:00Z').toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    expect(screen.getByText(expected)).toBeInTheDocument();
   });
 });
