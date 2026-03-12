@@ -110,7 +110,7 @@ function internalAlertSms(
 
 // --- Helper: dedupe phone numbers in a plan's contact chain ---
 
-function dedupePhones(plan: EscalationPlan): readonly string[] {
+function _dedupePhones(plan: EscalationPlan): readonly string[] {
   const seen = new Set<string>();
   const result: string[] = [];
   for (const contact of plan.contact_chain) {
@@ -144,7 +144,7 @@ export interface StartIncidentInput {
 export async function startIncident(
   input: StartIncidentInput,
   deps: EscalationCoordinatorDeps,
-  ctx?: ObservabilityContext,
+  _ctx?: ObservabilityContext,
 ): Promise<EscalationIncident> {
   _logger = deps.logger;
   if (!deps.config.emergencyRoutingEnabled) {
@@ -407,7 +407,7 @@ export interface CallOutcomeInput {
 export async function processCallOutcome(
   input: CallOutcomeInput,
   deps: EscalationCoordinatorDeps,
-  ctx?: ObservabilityContext,
+  _ctx?: ObservabilityContext,
 ): Promise<void> {
   _logger = deps.logger;
   const incident = await deps.incidentStore.getById(input.incidentId);
@@ -491,8 +491,8 @@ export async function processReply(
   // Find active incident that contacted this phone number
   // In production, we'd look up by phone → incident mapping.
   // For now, scan all active incidents.
-  const reply = input.body.trim().toUpperCase();
-  const now = deps.clock();
+  const _reply = input.body.trim().toUpperCase();
+  const _now = deps.clock();
 
   // This is a simplified lookup — production would use an index.
   // For the coordinator, we assume the caller resolves the incident.
@@ -511,7 +511,7 @@ export interface ProcessReplyForIncidentInput {
 export async function processReplyForIncident(
   input: ProcessReplyForIncidentInput,
   deps: EscalationCoordinatorDeps,
-  ctx?: ObservabilityContext,
+  _ctx?: ObservabilityContext,
 ): Promise<void> {
   _logger = deps.logger;
   const { incident, fromPhone, reply, rawBody, escalationPlans, summary } = input;
@@ -625,7 +625,7 @@ export async function processReplyForIncident(
 export async function processDue(
   escalationPlans: EscalationPlans,
   deps: EscalationCoordinatorDeps,
-  ctx?: ObservabilityContext,
+  _ctx?: ObservabilityContext,
 ): Promise<number> {
   _logger = deps.logger;
   if (!deps.config.emergencyRoutingEnabled) {
