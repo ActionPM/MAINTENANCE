@@ -4,10 +4,11 @@ import { getWorkOrderRepo, getNotificationRepo } from '@/lib/orchestrator-factor
 import { assembleRecordBundle } from '@wo-agent/core';
 import type { SlaPolicies } from '@wo-agent/core';
 import slaPoliciesJson from '@wo-agent/schemas/sla_policies.json' with { type: 'json' };
+import { withObservedRoute } from '@/lib/observability/with-observed-route';
 
 const slaPolicies = slaPoliciesJson as SlaPolicies;
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export const GET = withObservedRoute('work-orders:record-bundle', async (request: NextRequest, _ctx, { params }: { params: Promise<{ id: string }> }) => {
   // 1. Auth
   const authResult = await authenticateRequest(request);
   if (authResult instanceof NextResponse) return authResult;
@@ -23,10 +24,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       { status: 404 },
     );
   }
+  // Ownership check — return NOT_FOUND to avoid leaking record existence
   if (wo.tenant_user_id !== authResult.tenant_user_id) {
     return NextResponse.json(
-      { errors: [{ code: 'FORBIDDEN', message: 'Not authorized to view this work order' }] },
-      { status: 403 },
+      { errors: [{ code: 'NOT_FOUND', message: 'Work order not found' }] },
+      { status: 404 },
+    );
+  }
+
+  // Unit membership check — tenant must still have access to the WO's unit
+  const unitSet = new Set(authResult.authorized_unit_ids);
+  if (!unitSet.has(wo.unit_id)) {
+    return NextResponse.json(
+      { errors: [{ code: 'NOT_FOUND', message: 'Work order not found' }] },
+      { status: 404 },
     );
   }
 
@@ -47,4 +58,4 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 
   return NextResponse.json(bundle);
-}
+});

@@ -1,6 +1,11 @@
 import { ActionType, ActorType, ConversationState } from '@wo-agent/schemas';
 import type { OrchestratorActionRequest } from '@wo-agent/schemas';
-import { isValidTransition, isPhotoAction, ALL_SYSTEM_EVENTS } from '../state-machine/index.js';
+import {
+  isValidTransition,
+  isPhotoAction,
+  isEmergencyAction,
+  ALL_SYSTEM_EVENTS,
+} from '../state-machine/index.js';
 import { SystemEvent } from '../state-machine/system-events.js';
 import {
   updateSessionState,
@@ -32,6 +37,21 @@ const AUTO_FIRE_MAP: Partial<Record<ConversationState, string>> = {
 export function createDispatcher(deps: OrchestratorDependencies) {
   return async function dispatch(request: OrchestratorActionRequest): Promise<DispatchResult> {
     const { action_type, auth_context } = request;
+    const request_id = request.request_id ?? deps.idGenerator();
+    const startTime = Date.now();
+    const logger = deps.logger;
+    const timestamp = deps.clock();
+    const conversation_id = request.conversation_id ?? undefined;
+
+    logger?.log({
+      component: 'dispatcher',
+      event: 'action_received',
+      action_type,
+      conversation_id,
+      request_id,
+      severity: 'info',
+      timestamp,
+    });
 
     // Guard: reject system events from client-facing requests (spec §11.2)
     if (SYSTEM_EVENT_SET.has(action_type)) {
@@ -46,6 +66,16 @@ export function createDispatcher(deps: OrchestratorDependencies) {
           model_id: '',
           prompt_version: '',
         },
+      });
+      logger?.log({
+        component: 'dispatcher',
+        event: 'action_rejected',
+        action_type,
+        request_id,
+        error_code: 'SYSTEM_EVENT_REJECTED',
+        severity: 'warn',
+        duration_ms: Date.now() - startTime,
+        timestamp: deps.clock(),
       });
       return {
         response: buildResponse({
@@ -84,6 +114,8 @@ export function createDispatcher(deps: OrchestratorDependencies) {
         session,
         request: { ...request, conversation_id: conversationId },
         deps,
+        request_id,
+        logger: deps.logger,
       });
 
       // Write event
@@ -102,6 +134,28 @@ export function createDispatcher(deps: OrchestratorDependencies) {
       await deps.eventRepo.insert(event);
 
       await deps.sessionStore.save(handlerResult.session);
+
+      const createDuration = Date.now() - startTime;
+      logger?.log({
+        component: 'dispatcher',
+        event: 'action_completed',
+        action_type,
+        conversation_id: conversationId,
+        request_id,
+        state_after: handlerResult.newState,
+        severity: 'info',
+        duration_ms: createDuration,
+        timestamp: deps.clock(),
+      });
+      await deps.metricsRecorder?.record({
+        metric_name: 'orchestrator_action_latency_ms',
+        metric_value: createDuration,
+        component: 'dispatcher',
+        action_type,
+        request_id,
+        conversation_id: conversationId,
+        timestamp: deps.clock(),
+      });
 
       return {
         response: buildResponse(handlerResult),
@@ -135,10 +189,39 @@ export function createDispatcher(deps: OrchestratorDependencies) {
       };
     }
 
+    // Ownership guard: reject if the authenticated tenant does not own this session.
+    // Returns NOT_FOUND (not FORBIDDEN) to avoid leaking record existence.
+    // Positioned after session load and before any handler dispatch so that
+    // all code paths — including photo actions and auto-fired chained events —
+    // are covered by a single enforcement point.
+    if (session.tenant_user_id !== auth_context.tenant_user_id) {
+      const errorSession = createSession({
+        conversation_id: request.conversation_id!,
+        tenant_user_id: auth_context.tenant_user_id,
+        tenant_account_id: auth_context.tenant_account_id,
+        authorized_unit_ids: auth_context.authorized_unit_ids,
+        pinned_versions: {
+          taxonomy_version: '',
+          schema_version: '',
+          model_id: '',
+          prompt_version: '',
+        },
+      });
+      return {
+        response: buildResponse({
+          newState: errorSession.state,
+          session: errorSession,
+          uiMessages: [],
+          errors: [{ code: 'CONVERSATION_NOT_FOUND', message: 'Conversation not found' }],
+        }),
+        session: errorSession,
+      };
+    }
+
     // Photo actions: valid from any state, no state change
     if (isPhotoAction(action_type)) {
       const handler = getActionHandler(action_type);
-      const handlerResult = await handler({ session, request, deps });
+      const handlerResult = await handler({ session, request, deps, request_id, logger: deps.logger });
 
       const event: ConversationEvent = {
         event_id: deps.idGenerator(),
@@ -163,8 +246,88 @@ export function createDispatcher(deps: OrchestratorDependencies) {
       };
     }
 
+    // Emergency sidecar actions: valid from any non-terminal state,
+    // guarded by escalation_state === 'pending_confirmation' (plan §3.1, §3.9)
+    if (isEmergencyAction(action_type)) {
+      const TERMINAL_STATES: ReadonlySet<ConversationState> = new Set([
+        ConversationState.SUBMITTED,
+        ConversationState.INTAKE_EXPIRED,
+      ]);
+
+      if (TERMINAL_STATES.has(session.state)) {
+        return {
+          response: buildResponse({
+            newState: session.state,
+            session,
+            uiMessages: [],
+            errors: [
+              {
+                code: 'INVALID_TRANSITION',
+                message: `Action ${action_type} is not valid from terminal state ${session.state}`,
+              },
+            ],
+          }),
+          session,
+        };
+      }
+
+      if (session.escalation_state !== 'pending_confirmation') {
+        return {
+          response: buildResponse({
+            newState: session.state,
+            session,
+            uiMessages: [],
+            errors: [
+              {
+                code: 'ESCALATION_STATE_MISMATCH',
+                message: `Action ${action_type} requires escalation_state 'pending_confirmation', got '${session.escalation_state}'`,
+              },
+            ],
+          }),
+          session,
+        };
+      }
+
+      const handler = getActionHandler(action_type);
+      const handlerResult = await handler({ session, request, deps, request_id, logger: deps.logger });
+
+      const event: ConversationEvent = {
+        event_id: deps.idGenerator(),
+        conversation_id: session.conversation_id,
+        event_type: (handlerResult.eventType as ConversationEvent['event_type']) ?? 'emergency_action',
+        prior_state: session.state,
+        new_state: session.state, // sidecar — state does not change
+        action_type,
+        actor: request.actor,
+        payload: handlerResult.eventPayload ?? null,
+        pinned_versions: null,
+        created_at: deps.clock(),
+      };
+      await deps.eventRepo.insert(event);
+
+      const updatedSession = touchActivity(handlerResult.session);
+      await deps.sessionStore.save(updatedSession);
+
+      return {
+        response: buildResponse({ ...handlerResult, session: updatedSession }),
+        session: updatedSession,
+      };
+    }
+
     // Validate transition
     if (!isValidTransition(session.state, action_type)) {
+      logger?.log({
+        component: 'dispatcher',
+        event: 'action_rejected',
+        action_type,
+        conversation_id: session.conversation_id,
+        request_id,
+        state_before: session.state,
+        error_code: 'INVALID_TRANSITION',
+        severity: 'warn',
+        duration_ms: Date.now() - startTime,
+        timestamp: deps.clock(),
+      });
       return {
         response: buildResponse({
           newState: session.state,
@@ -183,7 +346,7 @@ export function createDispatcher(deps: OrchestratorDependencies) {
 
     // Dispatch to handler
     const handler = getActionHandler(action_type);
-    const handlerResult = await handler({ session, request, deps });
+    const handlerResult = await handler({ session, request, deps, request_id, logger: deps.logger });
 
     // Write events and apply state for the initial handler result
     let currentResult = handlerResult;
@@ -200,12 +363,24 @@ export function createDispatcher(deps: OrchestratorDependencies) {
     // automatically. This implements spec §11.2 chaining.
     const autoFireEvent = AUTO_FIRE_MAP[currentResult.newState as ConversationState];
     if (autoFireEvent) {
+      logger?.log({
+        component: 'dispatcher',
+        event: 'auto_fire_triggered',
+        action_type: autoFireEvent,
+        conversation_id: session.conversation_id,
+        request_id,
+        state_before: currentResult.newState,
+        severity: 'info',
+        timestamp: deps.clock(),
+      });
       const chainHandler = getActionHandler(autoFireEvent);
       const chainSession = await latestUpdatedSession;
       const chainResult = await chainHandler({
         session: chainSession,
         request: { ...request, action_type: autoFireEvent as any },
         deps,
+        request_id,
+        logger: deps.logger,
       });
 
       // Write events for the chained handler result.
@@ -233,6 +408,29 @@ export function createDispatcher(deps: OrchestratorDependencies) {
     }
 
     await deps.sessionStore.save(finalSession);
+
+    const actionDuration = Date.now() - startTime;
+    logger?.log({
+      component: 'dispatcher',
+      event: 'action_completed',
+      action_type,
+      conversation_id: session.conversation_id,
+      request_id,
+      state_before: session.state,
+      state_after: finalSession.state,
+      severity: 'info',
+      duration_ms: actionDuration,
+      timestamp: deps.clock(),
+    });
+    await deps.metricsRecorder?.record({
+      metric_name: 'orchestrator_action_latency_ms',
+      metric_value: actionDuration,
+      component: 'dispatcher',
+      action_type,
+      request_id,
+      conversation_id: session.conversation_id,
+      timestamp: deps.clock(),
+    });
 
     return {
       response: buildResponse({ ...currentResult, session: finalSession }),

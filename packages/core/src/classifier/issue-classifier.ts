@@ -1,5 +1,6 @@
 import type { IssueClassifierInput, IssueClassifierOutput, Taxonomy } from '@wo-agent/schemas';
 import { validateClassifierOutput, validateClassificationAgainstTaxonomy } from '@wo-agent/schemas';
+import type { MetricsRecorder, ObservabilityContext } from '../observability/types.js';
 
 export enum ClassifierErrorCode {
   SCHEMA_VALIDATION_FAILED = 'SCHEMA_VALIDATION_FAILED',
@@ -29,6 +30,7 @@ export interface ClassifierResult {
 export type LlmClassifierFn = (
   input: IssueClassifierInput,
   retryContext?: { retryHint: string; constraint?: string },
+  ...rest: unknown[]
 ) => Promise<unknown>;
 
 /**
@@ -46,6 +48,8 @@ export async function callIssueClassifier(
   llmCall: LlmClassifierFn,
   taxonomy: Taxonomy,
   taxonomyVersion?: string,
+  metricsRecorder?: MetricsRecorder,
+  obsCtx?: ObservabilityContext,
 ): Promise<ClassifierResult> {
   // --- Phase 1: Schema + taxonomy value validation with one retry ---
   let validated: IssueClassifierOutput | null = null;
@@ -54,7 +58,9 @@ export async function callIssueClassifier(
   for (let attempt = 0; attempt < 2; attempt++) {
     let raw: unknown;
     try {
-      raw = await llmCall(input, attempt > 0 ? { retryHint: 'schema_errors' } : undefined);
+      raw = obsCtx
+        ? await llmCall(input, attempt > 0 ? { retryHint: 'schema_errors' } : undefined, obsCtx)
+        : await llmCall(input, attempt > 0 ? { retryHint: 'schema_errors' } : undefined);
     } catch (err) {
       throw new ClassifierError(
         ClassifierErrorCode.LLM_CALL_FAILED,
@@ -67,6 +73,14 @@ export async function callIssueClassifier(
     const schemaResult = validateClassifierOutput(raw);
     if (!schemaResult.valid) {
       lastSchemaError = schemaResult.errors;
+      await metricsRecorder?.record({
+        metric_name: 'schema_validation_failure_total',
+        metric_value: 1,
+        component: 'classifier',
+        request_id: obsCtx?.request_id,
+        tags: { issue_id: input.issue_id },
+        timestamp: new Date().toISOString(),
+      });
       continue;
     }
 
@@ -78,6 +92,14 @@ export async function callIssueClassifier(
     );
     if (domainResult.invalidValues.length > 0) {
       lastSchemaError = domainResult.invalidValues;
+      await metricsRecorder?.record({
+        metric_name: 'schema_validation_failure_total',
+        metric_value: 1,
+        component: 'classifier',
+        request_id: obsCtx?.request_id,
+        tags: { issue_id: input.issue_id },
+        timestamp: new Date().toISOString(),
+      });
       continue;
     }
 
@@ -113,10 +135,9 @@ export async function callIssueClassifier(
 
   let retryRaw: unknown;
   try {
-    retryRaw = await llmCall(input, {
-      retryHint: 'domain_constraint',
-      constraint,
-    });
+    retryRaw = obsCtx
+      ? await llmCall(input, { retryHint: 'domain_constraint', constraint }, obsCtx)
+      : await llmCall(input, { retryHint: 'domain_constraint', constraint });
   } catch {
     return {
       status: 'needs_human_triage',
@@ -128,6 +149,14 @@ export async function callIssueClassifier(
   // Validate retry output through full pipeline
   const retrySchema = validateClassifierOutput(retryRaw);
   if (!retrySchema.valid) {
+    await metricsRecorder?.record({
+      metric_name: 'schema_validation_failure_total',
+      metric_value: 1,
+      component: 'classifier',
+      request_id: obsCtx?.request_id,
+      tags: { issue_id: input.issue_id },
+      timestamp: new Date().toISOString(),
+    });
     return {
       status: 'needs_human_triage',
       conflicting: [validated],

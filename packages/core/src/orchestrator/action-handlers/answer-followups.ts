@@ -43,6 +43,9 @@ export async function handleAnswerFollowups(
   ctx: ActionHandlerContext,
 ): Promise<ActionHandlerResult> {
   const { session, request, deps } = ctx;
+  const obsCtx = ctx.request_id
+    ? { request_id: ctx.request_id, timestamp: deps.clock() }
+    : undefined;
   const tenantInput = request.tenant_input as {
     answers: Array<{ question_id: string; answer: unknown; received_at?: string }>;
   };
@@ -167,6 +170,8 @@ export async function handleAnswerFollowups(
         deps.issueClassifier,
         taxonomy,
         taxonomyVersion,
+        deps.metricsRecorder,
+        obsCtx,
       );
     } catch {
       return {
@@ -225,6 +230,8 @@ export async function handleAnswerFollowups(
             deps.issueClassifier,
             taxonomy,
             taxonomyVersion,
+            deps.metricsRecorder,
+            obsCtx,
           );
           if (retryResult.status === 'ok' && retryResult.output) {
             const retryHierarchy = validateHierarchicalConstraints(
@@ -378,6 +385,8 @@ export async function handleAnswerFollowups(
         followUpInput,
         deps.followUpGenerator,
         capsCheck.remainingQuestionBudget,
+        deps.metricsRecorder,
+        obsCtx,
       );
       if (followUpResult.status === 'ok') {
         nextQuestions = followUpResult.output!.questions;

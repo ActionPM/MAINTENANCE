@@ -71,6 +71,9 @@ export async function handleStartClassification(
 ): Promise<ActionHandlerResult> {
   const { session, deps } = ctx;
   const issues = session.split_issues;
+  const obsCtx = ctx.request_id
+    ? { request_id: ctx.request_id, timestamp: deps.clock() }
+    : undefined;
 
   if (!issues || issues.length === 0) {
     return {
@@ -121,6 +124,8 @@ export async function handleStartClassification(
         deps.issueClassifier,
         taxonomy,
         taxonomyVersion,
+        deps.metricsRecorder,
+        obsCtx,
       );
     } catch (_err) {
       anyLlmError = true;
@@ -168,6 +173,8 @@ export async function handleStartClassification(
             deps.issueClassifier,
             taxonomy,
             taxonomyVersion,
+            deps.metricsRecorder,
+            obsCtx,
           );
           if (retryResult.status === 'ok' && retryResult.output) {
             const retryHierarchy = validateHierarchicalConstraints(
@@ -336,6 +343,8 @@ export async function handleStartClassification(
         followUpInput,
         deps.followUpGenerator,
         capsCheck.remainingQuestionBudget,
+        deps.metricsRecorder,
+        obsCtx,
       );
 
       if (followUpResult.status === 'llm_fail') {

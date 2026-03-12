@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getERPAdapter, getERPSyncService } from '../../../../../lib/orchestrator-factory.js';
+import { withObservedRoute } from '@/lib/observability/with-observed-route';
 
 /**
  * Test-only endpoint to simulate ERP status advancement (spec §23).
@@ -8,7 +9,7 @@ import { getERPAdapter, getERPSyncService } from '../../../../../lib/orchestrato
  *
  * Advances the WO to the next status in the lifecycle and syncs.
  */
-export async function POST(request: NextRequest) {
+export const POST = withObservedRoute('erp:test:advance-status', async (request: NextRequest) => {
   // Guard: test-only endpoint, only enabled in development/test
   const ALLOWED_ENVS = new Set(['development', 'test']);
   if (!ALLOWED_ENVS.has(process.env.NODE_ENV ?? '')) {
@@ -44,4 +45,4 @@ export async function POST(request: NextRequest) {
     const message = err instanceof Error ? err.message : 'Unknown error';
     return NextResponse.json({ error: message }, { status: 400 });
   }
-}
+});

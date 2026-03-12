@@ -93,8 +93,16 @@ export async function handleSubmitInitialMessage(
     if (needsConfirmation) {
       sessionAfterRisk = setEscalationState(sessionAfterRisk, 'pending_confirmation');
       riskQuickReplies.push(
-        { label: 'Yes, this is an emergency', value: 'confirm_emergency' },
-        { label: 'No, not an emergency', value: 'decline_emergency' },
+        {
+          label: 'Yes, this is an emergency',
+          value: 'confirm_emergency',
+          action_type: 'CONFIRM_EMERGENCY',
+        },
+        {
+          label: 'No, not an emergency',
+          value: 'decline_emergency',
+          action_type: 'DECLINE_EMERGENCY',
+        },
       );
     }
   }
@@ -108,8 +116,17 @@ export async function handleSubmitInitialMessage(
     prompt_version: session.pinned_versions.prompt_version,
   };
 
+  const obsCtx = ctx.request_id
+    ? { request_id: ctx.request_id, timestamp: deps.clock() }
+    : undefined;
+
   try {
-    const splitResult = await callIssueSplitter(splitterInput, deps.issueSplitter);
+    const splitResult = await callIssueSplitter(
+      splitterInput,
+      deps.issueSplitter,
+      deps.metricsRecorder,
+      obsCtx,
+    );
     const updatedSession = setSplitIssues(sessionAfterRisk, splitResult.issues);
 
     const issueList = splitResult.issues.map((issue, i) => `${i + 1}. ${issue.summary}`).join('\n');

@@ -1,5 +1,6 @@
 import { validateIssueSplitterOutput } from '@wo-agent/schemas';
 import type { IssueSplitterInput, IssueSplitterOutput } from '@wo-agent/schemas';
+import type { MetricsRecorder, ObservabilityContext } from '../observability/types.js';
 
 export enum SplitterErrorCode {
   SCHEMA_VALIDATION_FAILED = 'SCHEMA_VALIDATION_FAILED',
@@ -18,7 +19,12 @@ export class SplitterError extends Error {
   }
 }
 
-type LlmSplitterFn = (input: IssueSplitterInput) => Promise<unknown>;
+type LlmSplitterFn = (input: IssueSplitterInput, ...rest: unknown[]) => Promise<unknown>;
+
+export interface SplitterObservability {
+  readonly metricsRecorder?: MetricsRecorder;
+  readonly obsCtx?: ObservabilityContext;
+}
 
 /**
  * Call the IssueSplitter LLM tool with schema validation and one retry (spec §2.3).
@@ -34,13 +40,15 @@ type LlmSplitterFn = (input: IssueSplitterInput) => Promise<unknown>;
 export async function callIssueSplitter(
   input: IssueSplitterInput,
   llmCall: LlmSplitterFn,
+  metricsRecorder?: MetricsRecorder,
+  obsCtx?: ObservabilityContext,
 ): Promise<IssueSplitterOutput> {
   let lastError: unknown;
 
   for (let attempt = 0; attempt < 2; attempt++) {
     let raw: unknown;
     try {
-      raw = await llmCall(input);
+      raw = obsCtx ? await llmCall(input, obsCtx) : await llmCall(input);
     } catch (err) {
       throw new SplitterError(
         SplitterErrorCode.LLM_CALL_FAILED,
@@ -52,6 +60,14 @@ export async function callIssueSplitter(
     const validation = validateIssueSplitterOutput(raw);
     if (!validation.valid) {
       lastError = validation.errors;
+      await metricsRecorder?.record({
+        metric_name: 'schema_validation_failure_total',
+        metric_value: 1,
+        component: 'splitter',
+        request_id: obsCtx?.request_id,
+        conversation_id: input.conversation_id,
+        timestamp: new Date().toISOString(),
+      });
       continue;
     }
 

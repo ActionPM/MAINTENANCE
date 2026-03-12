@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
+import { withObservedRoute } from '@/lib/observability/with-observed-route';
 
-export async function GET() {
+export const GET = withObservedRoute('health', async () => {
   return NextResponse.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
@@ -11,4 +12,4 @@ export async function GET() {
       notifications: 'stub',
     },
   });
-}
+});

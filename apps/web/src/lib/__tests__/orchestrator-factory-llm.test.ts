@@ -18,7 +18,7 @@ describe('orchestrator-factory LLM wiring', () => {
     process.env = { ...originalEnv };
     // Reset the global singleton between tests
     const g = globalThis as any;
-    delete g.__wo_deps;
+    delete g.__woAgentDeps;
   });
 
   afterEach(() => {

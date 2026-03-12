@@ -9,3 +9,6 @@ export {
   PostgresNotificationPreferenceStore,
 } from './repos/pg-notification-store.js';
 export { PostgresIdempotencyStore } from './repos/pg-idempotency-store.js';
+export { PostgresEscalationIncidentStore } from './repos/pg-escalation-incident-store.js';
+export { PgOperationalMetricsStore } from './repos/pg-operational-metrics-store.js';
+export { PgAlertCooldownStore } from './repos/pg-alert-cooldown-store.js';

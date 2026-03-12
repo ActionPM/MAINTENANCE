@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getERPAdapter } from '../../../../lib/orchestrator-factory.js';
+import { withObservedRoute } from '@/lib/observability/with-observed-route';
 
-export async function GET() {
+export const GET = withObservedRoute('health:erp', async () => {
   try {
     const adapter = getERPAdapter();
     const result = await adapter.healthCheck();
@@ -10,4 +11,4 @@ export async function GET() {
   } catch {
     return NextResponse.json({ healthy: false }, { status: 503 });
   }
-}
+});

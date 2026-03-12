@@ -6,6 +6,7 @@ import type {
 import { validateFollowUpOutput, taxonomyConstraints } from '@wo-agent/schemas';
 import { resolveValidOptions } from '../classifier/constraint-resolver.js';
 import { truncateQuestions } from './caps.js';
+import type { MetricsRecorder, ObservabilityContext } from '../observability/types.js';
 
 export enum FollowUpGeneratorErrorCode {
   SCHEMA_VALIDATION_FAILED = 'SCHEMA_VALIDATION_FAILED',
@@ -32,6 +33,7 @@ export interface FollowUpGeneratorResult {
 type LlmFollowUpFn = (
   input: FollowUpGeneratorInput,
   retryContext?: { retryHint: string },
+  ...rest: unknown[]
 ) => Promise<unknown>;
 
 /**
@@ -49,6 +51,8 @@ export async function callFollowUpGenerator(
   input: FollowUpGeneratorInput,
   llmCall: LlmFollowUpFn,
   remainingBudget: number,
+  metricsRecorder?: MetricsRecorder,
+  obsCtx?: ObservabilityContext,
 ): Promise<FollowUpGeneratorResult> {
   const eligibleFields = new Set(input.fields_needing_input);
   let validated: FollowUpGeneratorOutput | null = null;
@@ -57,7 +61,9 @@ export async function callFollowUpGenerator(
   for (let attempt = 0; attempt < 2; attempt++) {
     let raw: unknown;
     try {
-      raw = await llmCall(input, attempt > 0 ? { retryHint: 'schema_errors' } : undefined);
+      raw = obsCtx
+        ? await llmCall(input, attempt > 0 ? { retryHint: 'schema_errors' } : undefined, obsCtx)
+        : await llmCall(input, attempt > 0 ? { retryHint: 'schema_errors' } : undefined);
     } catch (err) {
       throw new FollowUpGeneratorError(
         FollowUpGeneratorErrorCode.LLM_CALL_FAILED,
@@ -69,6 +75,14 @@ export async function callFollowUpGenerator(
     const schemaResult = validateFollowUpOutput(raw);
     if (!schemaResult.valid) {
       lastError = schemaResult.errors;
+      await metricsRecorder?.record({
+        metric_name: 'schema_validation_failure_total',
+        metric_value: 1,
+        component: 'followup_generator',
+        request_id: obsCtx?.request_id,
+        tags: { issue_id: input.issue_id },
+        timestamp: new Date().toISOString(),
+      });
       continue;
     }
 

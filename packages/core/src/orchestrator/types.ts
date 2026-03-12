@@ -17,8 +17,12 @@ import type { UnitResolver } from '../unit-resolver/types.js';
 import type { WorkOrderRepository } from '../work-order/types.js';
 import type { IdempotencyStore } from '../idempotency/types.js';
 import type { ContactExecutor } from '../risk/emergency-router.js';
+import type { EscalationIncidentStore } from '../risk/escalation-incident-store.js';
+import type { VoiceCallProvider, SmsProvider } from '../risk/provider-types.js';
+import type { EscalationCoordinatorConfig } from '../risk/escalation-coordinator.js';
 import type { NotificationService } from '../notifications/notification-service.js';
 import type { ERPAdapter } from '../erp/types.js';
+import type { Logger, MetricsRecorder, AlertSink } from '../observability/types.js';
 
 /**
  * Dependencies injected into the orchestrator.
@@ -29,14 +33,16 @@ export interface OrchestratorDependencies {
   readonly sessionStore: SessionStore;
   readonly idGenerator: () => string;
   readonly clock: () => string; // ISO 8601
-  readonly issueSplitter: (input: IssueSplitterInput) => Promise<IssueSplitterOutput>;
+  readonly issueSplitter: (input: IssueSplitterInput, ...rest: unknown[]) => Promise<IssueSplitterOutput>;
   readonly issueClassifier: (
     input: IssueClassifierInput,
     retryContext?: { retryHint: string; constraint?: string },
+    ...rest: unknown[]
   ) => Promise<unknown>;
   readonly followUpGenerator: (
     input: FollowUpGeneratorInput,
     retryContext?: { retryHint: string },
+    ...rest: unknown[]
   ) => Promise<unknown>;
   readonly cueDict: CueDictionary;
   readonly taxonomy: Taxonomy;
@@ -48,8 +54,16 @@ export interface OrchestratorDependencies {
   readonly riskProtocols: RiskProtocols;
   readonly escalationPlans: EscalationPlans;
   readonly contactExecutor: ContactExecutor;
+  readonly escalationIncidentStore?: EscalationIncidentStore;
+  readonly emergencyRoutingEnabled?: boolean;
+  readonly voiceProvider?: VoiceCallProvider;
+  readonly smsProvider?: SmsProvider;
+  readonly escalationConfig?: EscalationCoordinatorConfig;
   readonly notificationService?: NotificationService;
   readonly erpAdapter?: ERPAdapter;
+  readonly logger?: Logger;
+  readonly metricsRecorder?: MetricsRecorder;
+  readonly alertSink?: AlertSink;
 }
 
 /**
@@ -77,6 +91,8 @@ export interface ActionHandlerContext {
   readonly session: ConversationSession;
   readonly request: OrchestratorActionRequest;
   readonly deps: OrchestratorDependencies;
+  readonly request_id?: string;
+  readonly logger?: Logger;
 }
 
 /**

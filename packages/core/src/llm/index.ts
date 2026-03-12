@@ -6,3 +6,4 @@ export { extractJsonFromResponse } from './parse-response.js';
 export { createSplitterAdapter } from './adapters/splitter-adapter.js';
 export { createClassifierAdapter } from './adapters/classifier-adapter.js';
 export { createFollowUpAdapter } from './adapters/followup-adapter.js';
+export { withObservedLlmCall } from './with-observed-llm-call.js';

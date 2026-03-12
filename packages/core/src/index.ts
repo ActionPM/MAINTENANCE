@@ -8,6 +8,8 @@ export {
   TRANSITION_MATRIX,
   PHOTO_ACTIONS,
   isPhotoAction,
+  EMERGENCY_ACTIONS,
+  isEmergencyAction,
   isValidTransition,
   getPossibleTargets,
   resolveSelectUnit,
@@ -57,6 +59,7 @@ export {
   setSessionScope,
   setRiskTriggers,
   setEscalationState,
+  setBuildingId,
 } from './session/index.js';
 export type {
   ConversationSession,
@@ -181,15 +184,47 @@ export {
   buildRiskDetectedEvent,
   buildEscalationAttemptEvent,
   buildEscalationResultEvent,
+  buildEmergencyConfirmationRequestedEvent,
+  buildEmergencyConfirmedEvent,
+  buildEmergencyDeclinedEvent,
+  buildIncidentStartedEvent,
+  buildVoiceCallInitiatedEvent,
+  buildVoiceCallCompletedEvent,
+  buildSmsPromptSentEvent,
+  buildSmsReplyReceivedEvent,
+  buildStandDownSentEvent,
+  buildCycleExhaustedEvent,
+  buildInternalAlertSentEvent,
+  buildIncidentClosedEvent,
   routeEmergency,
+  InMemoryEscalationIncidentStore,
+  MockVoiceProvider,
+  MockSmsProvider,
+  startIncident,
+  processCallOutcome,
+  processReplyForIncident,
+  processDue,
+  incidentRef,
+  DEFAULT_COORDINATOR_CONFIG,
 } from './risk/index.js';
 export type {
   RiskEvent,
+  RiskEventType,
   RiskDetectedInput,
   EscalationAttemptInput,
   EscalationResultInput,
   ContactExecutor,
   RouteEmergencyInput,
+  EscalationIncidentStore,
+  VoiceCallProvider,
+  SmsProvider,
+  RecordedCall,
+  RecordedSms,
+  EscalationCoordinatorConfig,
+  EscalationCoordinatorDeps,
+  StartIncidentInput,
+  CallOutcomeInput,
+  ProcessReplyForIncidentInput,
 } from './risk/index.js';
 
 // --- Notifications (Phase 10) ---
@@ -265,6 +300,38 @@ export type {
   CreateLlmDepsConfig,
   LlmDependencies,
 } from './llm/index.js';
+
+// --- Observability (Spec §25) ---
+export {
+  StdoutJsonLogger,
+  NoopLogger,
+  InMemoryLogger,
+  NoopMetricsRecorder,
+  InMemoryMetricsRecorder,
+  NoopAlertSink,
+  InMemoryAlertSink,
+  MisconfiguredAlertSink,
+  SmsAlertSink,
+  AlertDeliveryError,
+  InMemoryAlertCooldownStore,
+  evaluateAlerts,
+  DEFAULT_ALERT_EVALUATOR_CONFIG,
+} from './observability/index.js';
+export type {
+  ObservabilityContext,
+  LogEntry,
+  Logger,
+  MetricObservation,
+  MetricsRecorder,
+  MetricsQueryStore,
+  AlertPayload,
+  AlertSink,
+  AlertCooldownStore,
+  SmsAlertSinkConfig,
+  AlertEvaluatorConfig,
+  AlertEvaluatorDeps,
+  AlertEvaluationResult,
+} from './observability/index.js';
 
 // --- Orchestrator (Phase 3) ---
 export { createDispatcher, buildResponse, getActionHandler } from './orchestrator/index.js';

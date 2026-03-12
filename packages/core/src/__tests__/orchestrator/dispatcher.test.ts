@@ -64,6 +64,7 @@ function makeDeps(): OrchestratorDependencies & {
         unit_id: unitId,
         property_id: `prop-for-${unitId}`,
         client_id: `client-for-${unitId}`,
+        building_id: 'bldg-1',
       }),
     },
     workOrderRepo: new InMemoryWorkOrderStore(),
@@ -160,7 +161,7 @@ describe('createDispatcher', () => {
   });
 
   it('writes a conversation event on successful dispatch', async () => {
-    await dispatch({
+    const result = await dispatch({
       conversation_id: null,
       action_type: ActionType.CREATE_CONVERSATION,
       actor: ActorType.TENANT,
@@ -172,7 +173,8 @@ describe('createDispatcher', () => {
       },
     });
 
-    const events = await deps.eventRepo.query({ conversation_id: 'id-1' });
+    const convId = result.response.conversation_snapshot.conversation_id;
+    const events = await deps.eventRepo.query({ conversation_id: convId });
     expect(events.length).toBeGreaterThan(0);
     expect(events[0].event_type).toBe('state_transition');
   });
@@ -201,5 +203,114 @@ describe('createDispatcher', () => {
 
     expect(result.response.conversation_snapshot.state).toBe('intake_started');
     expect(result.response.errors).toEqual([]);
+  });
+
+  // --- Ownership guard tests (MVP Identity & Access — rollout step 3) ---
+
+  it('rejects action on conversation owned by another tenant_user_id', async () => {
+    const session = createSession({
+      conversation_id: 'conv-1',
+      tenant_user_id: 'user-1',
+      tenant_account_id: 'acct-1',
+      authorized_unit_ids: ['u1'],
+      pinned_versions: testVersions,
+    });
+    deps.sessionStore.seed(session);
+
+    const result = await dispatch({
+      conversation_id: 'conv-1',
+      action_type: ActionType.SELECT_UNIT,
+      actor: ActorType.TENANT,
+      tenant_input: { unit_id: 'u1' },
+      auth_context: {
+        tenant_user_id: 'user-OTHER',
+        tenant_account_id: 'acct-other',
+        authorized_unit_ids: ['u2'],
+      },
+    });
+
+    expect(result.response.errors).toHaveLength(1);
+    expect(result.response.errors[0].code).toBe('CONVERSATION_NOT_FOUND');
+  });
+
+  it('returns NOT_FOUND (not FORBIDDEN) on ownership mismatch to avoid leaking record existence', async () => {
+    const session = createSession({
+      conversation_id: 'conv-1',
+      tenant_user_id: 'user-1',
+      tenant_account_id: 'acct-1',
+      authorized_unit_ids: ['u1'],
+      pinned_versions: testVersions,
+    });
+    deps.sessionStore.seed(session);
+
+    const result = await dispatch({
+      conversation_id: 'conv-1',
+      action_type: ActionType.SELECT_UNIT,
+      actor: ActorType.TENANT,
+      tenant_input: { unit_id: 'u1' },
+      auth_context: {
+        tenant_user_id: 'attacker',
+        tenant_account_id: 'acct-attacker',
+        authorized_unit_ids: ['u99'],
+      },
+    });
+
+    // Must NOT contain 'FORBIDDEN' — only 'CONVERSATION_NOT_FOUND'
+    const errorCodes = result.response.errors.map((e) => e.code);
+    expect(errorCodes).not.toContain('FORBIDDEN');
+    expect(errorCodes).toContain('CONVERSATION_NOT_FOUND');
+  });
+
+  it('ownership guard covers photo actions — wrong tenant is rejected before handler runs', async () => {
+    const session = createSession({
+      conversation_id: 'conv-1',
+      tenant_user_id: 'user-1',
+      tenant_account_id: 'acct-1',
+      authorized_unit_ids: ['u1'],
+      pinned_versions: testVersions,
+    });
+    deps.sessionStore.seed(session);
+
+    const result = await dispatch({
+      conversation_id: 'conv-1',
+      action_type: ActionType.UPLOAD_PHOTO_INIT,
+      actor: ActorType.TENANT,
+      tenant_input: { filename: 'evil.jpg', content_type: 'image/jpeg', size_bytes: 1024 },
+      auth_context: {
+        tenant_user_id: 'user-OTHER',
+        tenant_account_id: 'acct-other',
+        authorized_unit_ids: ['u2'],
+      },
+    });
+
+    expect(result.response.errors).toHaveLength(1);
+    expect(result.response.errors[0].code).toBe('CONVERSATION_NOT_FOUND');
+  });
+
+  it('allows action when tenant_user_id matches session owner', async () => {
+    const session = createSession({
+      conversation_id: 'conv-1',
+      tenant_user_id: 'user-1',
+      tenant_account_id: 'acct-1',
+      authorized_unit_ids: ['u1'],
+      pinned_versions: testVersions,
+    });
+    deps.sessionStore.seed(session);
+
+    const result = await dispatch({
+      conversation_id: 'conv-1',
+      action_type: ActionType.SELECT_UNIT,
+      actor: ActorType.TENANT,
+      tenant_input: { unit_id: 'u1' },
+      auth_context: {
+        tenant_user_id: 'user-1',
+        tenant_account_id: 'acct-1',
+        authorized_unit_ids: ['u1'],
+      },
+    });
+
+    // Should succeed — no CONVERSATION_NOT_FOUND error
+    const errorCodes = result.response.errors.map((e) => e.code);
+    expect(errorCodes).not.toContain('CONVERSATION_NOT_FOUND');
   });
 });

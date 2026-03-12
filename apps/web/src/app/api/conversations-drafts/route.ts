@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authenticateRequest } from '@/middleware/auth';
+import { withObservedRoute } from '@/lib/observability/with-observed-route';
 
-export async function GET(request: NextRequest) {
-  const authResult = await authenticateRequest(request);
-  if (authResult instanceof NextResponse) return authResult;
-
-  // Stub: GET /conversations/drafts — full implementation in later phases
-  // Would use filterResumableDrafts from @wo-agent/core
-  return NextResponse.json({ drafts: [] });
-}
+/**
+ * GET /api/conversations-drafts (DEPRECATED)
+ *
+ * Redirects to the spec-correct path: /api/conversations/drafts
+ */
+export const GET = withObservedRoute('conversations-drafts:redirect', async (request: NextRequest) => {
+  const url = new URL('/api/conversations/drafts', request.url);
+  return NextResponse.redirect(url, 301);
+});

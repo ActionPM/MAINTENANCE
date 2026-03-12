@@ -3,8 +3,9 @@ import { ActionType, ActorType } from '@wo-agent/schemas';
 import { authenticateRequest } from '@/middleware/auth';
 import { checkRateLimit } from '@/middleware/rate-limiter';
 import { getOrchestrator } from '@/lib/orchestrator-factory';
+import { withObservedRoute } from '@/lib/observability/with-observed-route';
 
-export async function POST(request: NextRequest) {
+export const POST = withObservedRoute('photos:complete', async (request: NextRequest, ctx) => {
   const authResult = await authenticateRequest(request);
   if (authResult instanceof NextResponse) return authResult;
 
@@ -23,7 +24,8 @@ export async function POST(request: NextRequest) {
     actor: ActorType.TENANT,
     tenant_input: { photo_id: body.photo_id, storage_key: body.storage_key, sha256: body.sha256 },
     auth_context: authResult,
+    request_id: ctx.request_id,
   });
 
   return NextResponse.json(result.response);
-}
+});

@@ -1,4 +1,5 @@
 import type { NotificationPreference } from '@wo-agent/schemas';
+import type { MetricsRecorder } from '../observability/types.js';
 import type { NotificationRepository, NotificationPreferenceStore, SmsSender } from './types.js';
 import { buildWoCreatedNotificationEvent } from './event-builder.js';
 
@@ -10,6 +11,7 @@ export interface NotificationServiceDeps {
   readonly smsSender: SmsSender;
   readonly idGenerator: () => string;
   readonly clock: () => string;
+  readonly metricsRecorder?: MetricsRecorder;
 }
 
 export interface NotifyWoCreatedInput {
@@ -128,6 +130,13 @@ export class NotificationService {
           status: 'failed',
           failed_at: now,
           failure_reason: smsResult.error ?? 'Unknown error',
+        });
+        await this.deps.metricsRecorder?.record({
+          metric_name: 'notification_delivery_failure_total',
+          metric_value: 1,
+          component: 'notification_service',
+          conversation_id: input.conversationId,
+          timestamp: now,
         });
         smsFailed = true;
       }
