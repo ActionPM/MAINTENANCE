@@ -221,7 +221,13 @@ export function createDispatcher(deps: OrchestratorDependencies) {
     // Photo actions: valid from any state, no state change
     if (isPhotoAction(action_type)) {
       const handler = getActionHandler(action_type);
-      const handlerResult = await handler({ session, request, deps, request_id, logger: deps.logger });
+      const handlerResult = await handler({
+        session,
+        request,
+        deps,
+        request_id,
+        logger: deps.logger,
+      });
 
       const event: ConversationEvent = {
         event_id: deps.idGenerator(),
@@ -289,12 +295,19 @@ export function createDispatcher(deps: OrchestratorDependencies) {
       }
 
       const handler = getActionHandler(action_type);
-      const handlerResult = await handler({ session, request, deps, request_id, logger: deps.logger });
+      const handlerResult = await handler({
+        session,
+        request,
+        deps,
+        request_id,
+        logger: deps.logger,
+      });
 
       const event: ConversationEvent = {
         event_id: deps.idGenerator(),
         conversation_id: session.conversation_id,
-        event_type: (handlerResult.eventType as ConversationEvent['event_type']) ?? 'emergency_action',
+        event_type:
+          (handlerResult.eventType as ConversationEvent['event_type']) ?? 'emergency_action',
         prior_state: session.state,
         new_state: session.state, // sidecar — state does not change
         action_type,
@@ -346,7 +359,13 @@ export function createDispatcher(deps: OrchestratorDependencies) {
 
     // Dispatch to handler
     const handler = getActionHandler(action_type);
-    const handlerResult = await handler({ session, request, deps, request_id, logger: deps.logger });
+    const handlerResult = await handler({
+      session,
+      request,
+      deps,
+      request_id,
+      logger: deps.logger,
+    });
 
     // Write events and apply state for the initial handler result
     let currentResult = handlerResult;

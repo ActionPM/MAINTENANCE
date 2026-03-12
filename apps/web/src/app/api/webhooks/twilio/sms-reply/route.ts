@@ -46,9 +46,7 @@ export const POST = withObservedRoute('webhooks:twilio:sms-reply', async (req: N
   const text = await req.text();
   const params: Record<string, string> = {};
   for (const pair of text.split('&')) {
-    const [key, value] = pair
-      .split('=')
-      .map((s) => decodeURIComponent(s.replace(/\+/g, ' ')));
+    const [key, value] = pair.split('=').map((s) => decodeURIComponent(s.replace(/\+/g, ' ')));
     if (key) params[key] = value ?? '';
   }
 

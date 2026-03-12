@@ -55,11 +55,7 @@ import type {
   ContactExecutor,
 } from '@wo-agent/core';
 import type { ConversationSession } from '@wo-agent/core';
-import type {
-  CueDictionary,
-  EscalationPlans,
-  IssueClassifierInput,
-} from '@wo-agent/schemas';
+import type { CueDictionary, EscalationPlans, IssueClassifierInput } from '@wo-agent/schemas';
 import { loadTaxonomy, loadRiskProtocols, loadEscalationPlans } from '@wo-agent/schemas';
 import classificationCues from '@wo-agent/schemas/classification_cues.json' with { type: 'json' };
 import { MockERPAdapter } from '@wo-agent/mock-erp';
@@ -197,15 +193,11 @@ function createEscalationConfig(): EscalationCoordinatorConfig {
   return {
     maxCyclesDefault: parseInt(process.env.EMERGENCY_MAX_CYCLES_DEFAULT ?? '3', 10),
     callTimeoutSeconds: parseInt(process.env.EMERGENCY_CALL_TIMEOUT_SECONDS ?? '60', 10),
-    smsReplyTimeoutSeconds: parseInt(
-      process.env.EMERGENCY_SMS_REPLY_TIMEOUT_SECONDS ?? '120',
-      10,
-    ),
+    smsReplyTimeoutSeconds: parseInt(process.env.EMERGENCY_SMS_REPLY_TIMEOUT_SECONDS ?? '120', 10),
     internalAlertNumber: process.env.EMERGENCY_INTERNAL_ALERT_NUMBER ?? '',
     webhookBaseUrl: process.env.TWILIO_WEBHOOK_BASE_URL ?? '',
     emergencyRoutingEnabled: process.env.EMERGENCY_ROUTING_ENABLED === 'true',
-    processingLockDurationMs:
-      DEFAULT_COORDINATOR_CONFIG.processingLockDurationMs,
+    processingLockDurationMs: DEFAULT_COORDINATOR_CONFIG.processingLockDurationMs,
   };
 }
 
@@ -536,19 +528,23 @@ export function getAlertEvaluatorDeps(): AlertEvaluatorDeps | null {
     logger: d.logger,
     config: {
       llmErrorSpikeThreshold: parseInt(
-        process.env.ALERT_LLM_ERROR_SPIKE_THRESHOLD ?? String(DEFAULT_ALERT_EVALUATOR_CONFIG.llmErrorSpikeThreshold),
+        process.env.ALERT_LLM_ERROR_SPIKE_THRESHOLD ??
+          String(DEFAULT_ALERT_EVALUATOR_CONFIG.llmErrorSpikeThreshold),
         10,
       ),
       schemaFailureSpikeThreshold: parseInt(
-        process.env.ALERT_SCHEMA_FAILURE_SPIKE_THRESHOLD ?? String(DEFAULT_ALERT_EVALUATOR_CONFIG.schemaFailureSpikeThreshold),
+        process.env.ALERT_SCHEMA_FAILURE_SPIKE_THRESHOLD ??
+          String(DEFAULT_ALERT_EVALUATOR_CONFIG.schemaFailureSpikeThreshold),
         10,
       ),
       asyncBacklogThreshold: parseInt(
-        process.env.ALERT_ASYNC_BACKLOG_THRESHOLD ?? String(DEFAULT_ALERT_EVALUATOR_CONFIG.asyncBacklogThreshold),
+        process.env.ALERT_ASYNC_BACKLOG_THRESHOLD ??
+          String(DEFAULT_ALERT_EVALUATOR_CONFIG.asyncBacklogThreshold),
         10,
       ),
       cooldownMinutes: parseInt(
-        process.env.ALERT_COOLDOWN_MINUTES ?? String(DEFAULT_ALERT_EVALUATOR_CONFIG.cooldownMinutes),
+        process.env.ALERT_COOLDOWN_MINUTES ??
+          String(DEFAULT_ALERT_EVALUATOR_CONFIG.cooldownMinutes),
         10,
       ),
       windowMinutes: DEFAULT_ALERT_EVALUATOR_CONFIG.windowMinutes,

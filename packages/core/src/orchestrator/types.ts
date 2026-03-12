@@ -33,7 +33,10 @@ export interface OrchestratorDependencies {
   readonly sessionStore: SessionStore;
   readonly idGenerator: () => string;
   readonly clock: () => string; // ISO 8601
-  readonly issueSplitter: (input: IssueSplitterInput, ...rest: unknown[]) => Promise<IssueSplitterOutput>;
+  readonly issueSplitter: (
+    input: IssueSplitterInput,
+    ...rest: unknown[]
+  ) => Promise<IssueSplitterOutput>;
   readonly issueClassifier: (
     input: IssueClassifierInput,
     retryContext?: { retryHint: string; constraint?: string },

@@ -35,7 +35,10 @@ function makeDeps(overrides?: Partial<AlertEvaluatorDeps>): AlertEvaluatorDeps {
   };
 }
 
-function makeOverdueIncident(id: string, status: 'active' | 'exhausted_retrying' = 'active'): EscalationIncident {
+function makeOverdueIncident(
+  id: string,
+  status: 'active' | 'exhausted_retrying' = 'active',
+): EscalationIncident {
   const oneHourAgo = new Date(Date.now() - 3600_000).toISOString();
   const twoHoursAgo = new Date(Date.now() - 7200_000).toISOString();
   return {
@@ -114,7 +117,7 @@ describe('Alert Evaluator', () => {
     const result = await evaluateAlerts(deps);
 
     expect(result.alertsEmitted).toContain('schema_failure_spike');
-    expect(alertSink.alerts.find(a => a.alert_name === 'schema_failure_spike')).toBeDefined();
+    expect(alertSink.alerts.find((a) => a.alert_name === 'schema_failure_spike')).toBeDefined();
   });
 
   it('emits async_backlog alert when overdue incidents exceed threshold', async () => {
@@ -130,7 +133,9 @@ describe('Alert Evaluator', () => {
     const result = await evaluateAlerts(deps);
 
     expect(result.alertsEmitted).toContain('async_backlog_threshold_exceeded');
-    expect(alertSink.alerts.find(a => a.alert_name === 'async_backlog_threshold_exceeded')).toBeDefined();
+    expect(
+      alertSink.alerts.find((a) => a.alert_name === 'async_backlog_threshold_exceeded'),
+    ).toBeDefined();
   });
 
   it('suppresses duplicate alerts within cooldown window', async () => {
@@ -181,7 +186,7 @@ describe('Alert Evaluator', () => {
     const deps = makeDeps({ logger });
     await evaluateAlerts(deps);
 
-    const summary = logger.entries.find(e => e.event === 'evaluation_completed');
+    const summary = logger.entries.find((e) => e.event === 'evaluation_completed');
     expect(summary).toBeDefined();
     expect(summary!.component).toBe('alert_evaluator');
   });
@@ -203,7 +208,9 @@ describe('Alert Evaluator', () => {
 
     // Use SmsAlertSink with a provider that always throws
     const failingProvider = {
-      sendSms: async () => { throw new Error('Twilio unreachable'); },
+      sendSms: async () => {
+        throw new Error('Twilio unreachable');
+      },
     };
     const failingSink = new SmsAlertSink({
       smsProvider: failingProvider,
@@ -224,7 +231,7 @@ describe('Alert Evaluator', () => {
     expect(result2.alertsSuppressed).not.toContain('llm_error_spike');
 
     // Verify delivery failure was logged
-    const failureLogs = logger.entries.filter(e => e.event === 'alert_delivery_failed');
+    const failureLogs = logger.entries.filter((e) => e.event === 'alert_delivery_failed');
     expect(failureLogs.length).toBeGreaterThanOrEqual(2);
   });
 
@@ -251,7 +258,7 @@ describe('Alert Evaluator', () => {
     expect(result1.alertsEmitted).not.toContain('llm_error_spike');
 
     // Verify MisconfiguredAlertSink logged the delivery impossibility
-    const impossibleLogs = logger.entries.filter(e => e.event === 'alert_delivery_impossible');
+    const impossibleLogs = logger.entries.filter((e) => e.event === 'alert_delivery_impossible');
     expect(impossibleLogs).toHaveLength(1);
     expect(impossibleLogs[0].error_code).toBe('TWILIO_CREDENTIALS_MISSING');
 

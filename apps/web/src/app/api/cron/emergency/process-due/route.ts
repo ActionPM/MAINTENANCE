@@ -31,10 +31,7 @@ export const GET = withObservedRoute('cron:emergency:process-due', async (req: N
 
   const coordDeps = getEscalationCoordinatorDeps();
   if (!coordDeps) {
-    return NextResponse.json(
-      { error: 'Escalation providers not configured' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'Escalation providers not configured' }, { status: 500 });
   }
 
   try {

@@ -4,12 +4,7 @@
  * through dispatcher → action handlers → LLM wrappers.
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  ActionType,
-  ActorType,
-  ConversationState,
-  loadTaxonomy,
-} from '@wo-agent/schemas';
+import { ActionType, ActorType, ConversationState, loadTaxonomy } from '@wo-agent/schemas';
 import type { AuthContext, CueDictionary } from '@wo-agent/schemas';
 import { createDispatcher } from '../../orchestrator/dispatcher.js';
 import { InMemoryEventStore } from '../../events/in-memory-event-store.js';
@@ -42,11 +37,15 @@ const testVersions = {
 
 class InMemorySessionStore implements SessionStore {
   private sessions = new Map<string, ConversationSession>();
-  async get(id: string) { return this.sessions.get(id) ?? null; }
-  async getByTenantUser(userId: string) {
-    return [...this.sessions.values()].filter(s => s.tenant_user_id === userId);
+  async get(id: string) {
+    return this.sessions.get(id) ?? null;
   }
-  async save(session: ConversationSession) { this.sessions.set(session.conversation_id, session); }
+  async getByTenantUser(userId: string) {
+    return [...this.sessions.values()].filter((s) => s.tenant_user_id === userId);
+  }
+  async save(session: ConversationSession) {
+    this.sessions.set(session.conversation_id, session);
+  }
 }
 
 const AUTH: AuthContext = {
@@ -71,21 +70,34 @@ describe('Observability E2E', () => {
       idGenerator: () => `id-${++idCounter}`,
       clock: () => '2026-03-12T12:00:00.000Z',
       issueSplitter: async (input) => ({
-        issues: [{ issue_id: 'iss-1', summary: input.raw_text.slice(0, 50), raw_excerpt: input.raw_text }],
+        issues: [
+          { issue_id: 'iss-1', summary: input.raw_text.slice(0, 50), raw_excerpt: input.raw_text },
+        ],
         issue_count: 1,
       }),
       issueClassifier: async () => ({
         issue_id: 'iss-1',
         classification: {
-          Category: 'maintenance', Location: 'suite', Sub_Location: 'bathroom',
-          Maintenance_Category: 'plumbing', Maintenance_Object: 'toilet',
-          Maintenance_Problem: 'leaking', Management_Category: 'other_mgmt_cat',
-          Management_Object: 'other_mgmt_obj', Priority: 'normal',
+          Category: 'maintenance',
+          Location: 'suite',
+          Sub_Location: 'bathroom',
+          Maintenance_Category: 'plumbing',
+          Maintenance_Object: 'toilet',
+          Maintenance_Problem: 'leaking',
+          Management_Category: 'other_mgmt_cat',
+          Management_Object: 'other_mgmt_obj',
+          Priority: 'normal',
         },
         model_confidence: {
-          Category: 0.95, Location: 0.9, Sub_Location: 0.85,
-          Maintenance_Category: 0.9, Maintenance_Object: 0.85,
-          Maintenance_Problem: 0.9, Management_Category: 0, Management_Object: 0, Priority: 0.8,
+          Category: 0.95,
+          Location: 0.9,
+          Sub_Location: 0.85,
+          Maintenance_Category: 0.9,
+          Maintenance_Object: 0.85,
+          Maintenance_Problem: 0.9,
+          Management_Category: 0,
+          Management_Object: 0,
+          Priority: 0.8,
         },
         missing_fields: [],
         needs_human_triage: false,
@@ -95,7 +107,10 @@ describe('Observability E2E', () => {
       taxonomy,
       unitResolver: {
         resolve: async (unitId: string) => ({
-          unit_id: unitId, property_id: 'prop-1', client_id: 'client-1', building_id: 'bldg-1',
+          unit_id: unitId,
+          property_id: 'prop-1',
+          client_id: 'client-1',
+          building_id: 'bldg-1',
         }),
       },
       workOrderRepo: new InMemoryWorkOrderStore(),
@@ -141,12 +156,12 @@ describe('Observability E2E', () => {
     expect(result.response.conversation_snapshot.state).toBe(ConversationState.INTAKE_STARTED);
 
     // Check that dispatcher logged action_received and action_completed
-    const received = logger.entries.find(e => e.event === 'action_received');
+    const received = logger.entries.find((e) => e.event === 'action_received');
     expect(received).toBeDefined();
     expect(received!.action_type).toBe(ActionType.CREATE_CONVERSATION);
     expect(received!.request_id).toBeDefined();
 
-    const completed = logger.entries.find(e => e.event === 'action_completed');
+    const completed = logger.entries.find((e) => e.event === 'action_completed');
     expect(completed).toBeDefined();
     expect(completed!.duration_ms).toBeTypeOf('number');
   });
@@ -161,7 +176,7 @@ describe('Observability E2E', () => {
     });
 
     const latencyObs = metrics.observations.find(
-      o => o.metric_name === 'orchestrator_action_latency_ms',
+      (o) => o.metric_name === 'orchestrator_action_latency_ms',
     );
     expect(latencyObs).toBeDefined();
     expect(latencyObs!.action_type).toBe(ActionType.CREATE_CONVERSATION);
@@ -197,12 +212,12 @@ describe('Observability E2E', () => {
     });
 
     // Should have multiple action logs
-    const actionLogs = logger.entries.filter(e => e.event === 'action_completed');
+    const actionLogs = logger.entries.filter((e) => e.event === 'action_completed');
     expect(actionLogs.length).toBeGreaterThanOrEqual(3);
 
     // Should have multiple latency metrics
     const latencyMetrics = metrics.observations.filter(
-      o => o.metric_name === 'orchestrator_action_latency_ms',
+      (o) => o.metric_name === 'orchestrator_action_latency_ms',
     );
     expect(latencyMetrics.length).toBeGreaterThanOrEqual(3);
   });

@@ -9,7 +9,12 @@ import type {
 import type { EscalationIncidentStore } from './escalation-incident-store.js';
 import type { VoiceCallProvider, SmsProvider } from './provider-types.js';
 import type { RiskEvent } from './event-builder.js';
-import type { Logger, MetricsRecorder, AlertSink, ObservabilityContext } from '../observability/types.js';
+import type {
+  Logger,
+  MetricsRecorder,
+  AlertSink,
+  ObservabilityContext,
+} from '../observability/types.js';
 import {
   buildIncidentStartedEvent,
   buildVoiceCallInitiatedEvent,
@@ -148,7 +153,12 @@ export async function startIncident(
 ): Promise<EscalationIncident> {
   _logger = deps.logger;
   if (!deps.config.emergencyRoutingEnabled) {
-    log({ component: 'escalation_coordinator', event: 'start_rejected', detail: 'routing_disabled', conversation_id: input.conversationId });
+    log({
+      component: 'escalation_coordinator',
+      event: 'start_rejected',
+      detail: 'routing_disabled',
+      conversation_id: input.conversationId,
+    });
     throw new Error('Emergency routing is disabled');
   }
 
@@ -629,7 +639,11 @@ export async function processDue(
 ): Promise<number> {
   _logger = deps.logger;
   if (!deps.config.emergencyRoutingEnabled) {
-    log({ component: 'escalation_coordinator', event: 'process_due_skipped', detail: 'routing_disabled' });
+    log({
+      component: 'escalation_coordinator',
+      event: 'process_due_skipped',
+      detail: 'routing_disabled',
+    });
     return 0;
   }
 

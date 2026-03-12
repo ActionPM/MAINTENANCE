@@ -107,10 +107,7 @@ export type {
   ResolutionInfo,
 } from './types/record-bundle.js';
 
-export {
-  EscalationIncidentStatus,
-  EscalationAttemptOutcome,
-} from './types/risk.js';
+export { EscalationIncidentStatus, EscalationAttemptOutcome } from './types/risk.js';
 export type {
   RiskSeverity,
   TriggerGrammar,

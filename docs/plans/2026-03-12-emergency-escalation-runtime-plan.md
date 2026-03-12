@@ -12,17 +12,17 @@
 
 The repo already contains first-generation building blocks for risk handling:
 
-| Component | File | What it does | What it can't do |
-|---|---|---|---|
-| Trigger scanner | `packages/core/src/risk/trigger-scanner.ts` | Deterministic keyword/regex/taxonomy matching | Nothing missing — this is complete |
-| Mitigation engine | `packages/core/src/risk/mitigation.ts` | Template lookup + safety message rendering | Nothing missing |
-| Emergency router | `packages/core/src/risk/emergency-router.ts` | Synchronous call-until-answered through contact chain | Async workflow, retries, SMS acceptance, stand-down |
-| Event builders | `packages/core/src/risk/event-builder.ts` | Append-only `risk_detected`, `escalation_attempt`, `escalation_result` events | Incident lifecycle events |
-| Risk scan integration | `packages/core/src/orchestrator/action-handlers/submit-initial-message.ts` (lines 58–100) | Scans text before splitter, sets `escalation_state: 'pending_confirmation'`, renders mitigation messages, shows confirm/decline quick replies | No handler processes the quick-reply response |
-| Risk types | `packages/schemas/src/types/risk.ts` | `EscalationState`, `EscalationAttempt`, `EscalationResult`, `ContactChainEntry` | `answered: boolean` is too simple; no incident model |
-| Session fields | `packages/core/src/session/types.ts` (lines 58–63) | `risk_triggers`, `escalation_state`, `escalation_plan_id` | No `building_id` |
-| Risk data files | `packages/schemas/risk_protocols.json`, `packages/schemas/emergency_escalation_plans.json` | 5 triggers, 5 mitigation templates, 1 example plan | Plans are not loaded in production factory |
-| Factory wiring | `apps/web/src/lib/orchestrator-factory.ts` (lines 237–243) | Injects empty `{ plans: [] }` and `async () => false` executor | Dead code — escalation cannot execute |
+| Component             | File                                                                                       | What it does                                                                                                                                  | What it can't do                                     |
+| --------------------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| Trigger scanner       | `packages/core/src/risk/trigger-scanner.ts`                                                | Deterministic keyword/regex/taxonomy matching                                                                                                 | Nothing missing — this is complete                   |
+| Mitigation engine     | `packages/core/src/risk/mitigation.ts`                                                     | Template lookup + safety message rendering                                                                                                    | Nothing missing                                      |
+| Emergency router      | `packages/core/src/risk/emergency-router.ts`                                               | Synchronous call-until-answered through contact chain                                                                                         | Async workflow, retries, SMS acceptance, stand-down  |
+| Event builders        | `packages/core/src/risk/event-builder.ts`                                                  | Append-only `risk_detected`, `escalation_attempt`, `escalation_result` events                                                                 | Incident lifecycle events                            |
+| Risk scan integration | `packages/core/src/orchestrator/action-handlers/submit-initial-message.ts` (lines 58–100)  | Scans text before splitter, sets `escalation_state: 'pending_confirmation'`, renders mitigation messages, shows confirm/decline quick replies | No handler processes the quick-reply response        |
+| Risk types            | `packages/schemas/src/types/risk.ts`                                                       | `EscalationState`, `EscalationAttempt`, `EscalationResult`, `ContactChainEntry`                                                               | `answered: boolean` is too simple; no incident model |
+| Session fields        | `packages/core/src/session/types.ts` (lines 58–63)                                         | `risk_triggers`, `escalation_state`, `escalation_plan_id`                                                                                     | No `building_id`                                     |
+| Risk data files       | `packages/schemas/risk_protocols.json`, `packages/schemas/emergency_escalation_plans.json` | 5 triggers, 5 mitigation templates, 1 example plan                                                                                            | Plans are not loaded in production factory           |
+| Factory wiring        | `apps/web/src/lib/orchestrator-factory.ts` (lines 237–243)                                 | Injects empty `{ plans: [] }` and `async () => false` executor                                                                                | Dead code — escalation cannot execute                |
 
 The current `ContactExecutor` type signature (`(contact: ContactChainEntry) => Promise<boolean>`) models a single synchronous call attempt. The required runtime behavior is an asynchronous, multi-step workflow where acceptance arrives minutes later via an inbound SMS webhook. That requires a fundamentally different execution model.
 
@@ -71,6 +71,7 @@ What's missing is an **action handler** that processes the tenant's emergency co
 **Design decision:** Add `CONFIRM_EMERGENCY` and `DECLINE_EMERGENCY` as new action types. These are **sidecar actions** — they do not change the conversation state. They change only the session's `escalation_state` field. They should be valid from any non-terminal conversation state when `escalation_state === 'pending_confirmation'`.
 
 Implementation approach:
+
 - Add `CONFIRM_EMERGENCY` and `DECLINE_EMERGENCY` to the `ActionType` enum in `packages/schemas/src/action-types.ts`
 - Add them to the photo-action-like "valid from any state" set (they bypass the transition matrix)
 - Add a dispatcher guard: reject if `session.escalation_state !== 'pending_confirmation'`
@@ -98,6 +99,7 @@ The orchestrator never blocks waiting for a responder to answer.
 The escalation plan is selected by `building_id`, but `UnitResolver` currently returns only `unit_id`, `property_id`, `client_id` ([unit-resolver/types.ts](packages/core/src/unit-resolver/types.ts)).
 
 Required changes:
+
 - Add `building_id` to `UnitInfo` interface
 - Return `building_id` from every `UnitResolver` implementation (stub, mock, production)
 - Persist `building_id` on the session (add field to `ConversationSession`)
@@ -133,12 +135,14 @@ export const EscalationAttemptOutcome = {
 **Mutable `escalation_incidents` store:**
 
 Justified because:
+
 - Delayed retries need durable scheduling state
 - Inbound SMS replies need idempotent claim handling
 - Stand-down notifications need fast lookup of who was already contacted
 - Reconstructing workflow state from append-only events on every webhook hit is impractical
 
 Incident fields:
+
 - `incident_id`, `conversation_id`, `building_id`, `plan_id`
 - `status` (EscalationIncidentStatus)
 - `cycle_number`, `max_cycles`
@@ -157,6 +161,7 @@ Incident fields:
 **Append-only risk event expansion:**
 
 Keep existing event types and add:
+
 - `emergency_confirmation_requested`
 - `emergency_confirmed`
 - `emergency_declined`
@@ -177,6 +182,7 @@ Replace the current synchronous `routeEmergency()` with an **escalation coordina
 The coordinator is a set of pure functions (no internal state) that operate on the `EscalationIncident` record. Each function reads the incident, performs the next action, writes the updated state, and returns.
 
 Entry points:
+
 1. **`startIncident()`** — called by the `CONFIRM_EMERGENCY` handler. Creates the incident record, initiates the first contact attempt.
 2. **`processCallOutcome()`** — called by the voice-status webhook. If call was not answered, sends SMS fallback.
 3. **`processReply()`** — called by the SMS webhook. On ACCEPT: claim incident (CAS on `row_version`), send stand-downs. On IGNORE: advance to next contact.
@@ -199,6 +205,7 @@ Vercel explicitly warns that cron invocations can overlap and can be delivered m
 **Twilio for Phase 1** (voice + SMS through one provider).
 
 New abstractions:
+
 ```typescript
 export interface VoiceCallProvider {
   placeCall(to: string, twiml: string, statusCallbackUrl: string): Promise<{ callSid: string }>;
@@ -213,18 +220,20 @@ Twilio-specific implementation lives in `apps/web/src/lib/emergency/` (not in co
 
 **Webhook surfaces:**
 
-| Route | Purpose | Security |
-|---|---|---|
-| `POST /api/webhooks/twilio/voice-status` | Voice call completion/no-answer/failure | Twilio request signature validation |
-| `POST /api/webhooks/twilio/sms-reply` | Inbound `ACCEPT` / `IGNORE` replies | Twilio request signature validation |
-| `GET /api/cron/emergency/process-due` | Cron-triggered: process timed-out contacts, advance chain, schedule retries | `Authorization: Bearer ${CRON_SECRET}` |
+| Route                                    | Purpose                                                                     | Security                               |
+| ---------------------------------------- | --------------------------------------------------------------------------- | -------------------------------------- |
+| `POST /api/webhooks/twilio/voice-status` | Voice call completion/no-answer/failure                                     | Twilio request signature validation    |
+| `POST /api/webhooks/twilio/sms-reply`    | Inbound `ACCEPT` / `IGNORE` replies                                         | Twilio request signature validation    |
+| `GET /api/cron/emergency/process-due`    | Cron-triggered: process timed-out contacts, advance chain, schedule retries | `Authorization: Bearer ${CRON_SECRET}` |
 
 **Webhook security:** All Twilio webhooks must validate the `X-Twilio-Signature` header against the request URL and params using the Twilio auth token. This prevents spoofed ACCEPT replies.
 
 **Vercel Cron:** The `process-due` route is triggered by a Vercel Cron Job. Per [Vercel's cron documentation](https://vercel.com/docs/cron-jobs/manage-cron-jobs), cron-secured Route Handlers must be **GET** handlers. Vercel sends an `Authorization: Bearer ${CRON_SECRET}` header that the route must validate. Configure in `vercel.json`:
+
 ```json
 { "crons": [{ "path": "/api/cron/emergency/process-due", "schedule": "* * * * *" }] }
 ```
+
 Recommended interval: every 60 seconds (`* * * * *`).
 
 ### 3.7 Suggested copy
@@ -330,6 +339,7 @@ Work in this dependency order. Each track lists concrete file targets and tasks.
 2.1. Add new types to `packages/schemas/src/types/risk.ts`: `EscalationIncidentStatus`, `EscalationAttemptOutcome`, `EscalationContactAttempt` (replaces boolean `answered`), `EscalationIncident`.
 
 2.2. Define `EscalationIncidentStore` interface in `packages/core/src/risk/types.ts`:
+
 ```typescript
 export interface EscalationIncidentStore {
   create(incident: EscalationIncident): Promise<void>;
@@ -393,6 +403,7 @@ export interface EscalationIncidentStore {
 4.6. Implement internal alert logic. Sends SMS to `EMERGENCY_INTERNAL_ALERT_NUMBER` on each cycle exhaustion.
 
 4.7. Unit tests for each coordinator function:
+
 - Plan selection by trusted `building_id`
 - Phone number dedupe within cycle
 - Call timeout → SMS fallback
@@ -432,6 +443,7 @@ export interface EscalationIncidentStore {
 **(b) Client-side synthesis (read path).** `GET /conversations/:id` returns `ConversationSnapshot` only — no `ui_directive`. That contract is snapshot-only by design (spec-gap-tracker S12-01, MVP access plan §C.1) and must not be widened here. Instead, the client synthesizes the confirmation prompt: when the snapshot's `risk_summary.escalation_state === 'pending_confirmation'`, `apps/web/src/components/chat-shell.tsx` renders the confirm/decline quick replies directly from snapshot state, without requiring them in a server directive. This keeps the read endpoint contract stable while ensuring the tenant always sees the emergency confirmation UI.
 
 5.8. Integration tests:
+
 - Emergency keyword → risk scan → tenant confirms → incident created → escalation_state changes
 - Tenant declines → no incident created, escalation_state reset
 - Full cycle: confirm → voice call → SMS fallback → ACCEPT → stand-down
@@ -451,19 +463,20 @@ export interface EscalationIncidentStore {
 6.1. Add structured log points in coordinator (call placed, SMS sent, reply received, incident claimed, cycle exhausted, internal alert).
 
 6.2. Configure `EMERGENCY_ROUTING_ENABLED` feature flag with **fail-closed** behavior. When false:
+
 - `CONFIRM_EMERGENCY` handler returns an explicit error (`EMERGENCY_ROUTING_UNAVAILABLE`) with a safe message: "Emergency routing is not currently available. If this is a life-threatening emergency, please call 911." Writes an `emergency_routing_disabled` audit event. Does **not** advance `escalation_state` to `routing` — leaves it at `pending_confirmation` so the tenant sees a clear failure, not a silent no-op.
 - `DECLINE_EMERGENCY` works normally regardless of the flag.
 - The cron processor skips all incidents when the flag is off.
 - `startIncident()` refuses to execute and throws if called with the flag off (defense-in-depth).
 - Any in-progress incidents are effectively paused until the flag is re-enabled.
 
-6.3. Add Vercel Cron Job config for `process-due` route (every 60s).
+  6.3. Add Vercel Cron Job config for `process-due` route (every 60s).
 
-6.4. Update `docs/spec-gap-tracker.md`: close S17-02 (router wired), S17-03 (confirmation action), S02-07 (deterministic escalation), S01-10 (per-building chain). Update S17-04 to note routing confirmation is covered but mitigation gating remains open. Add new rows for any remaining gaps.
+  6.4. Update `docs/spec-gap-tracker.md`: close S17-02 (router wired), S17-03 (confirmation action), S02-07 (deterministic escalation), S01-10 (per-building chain). Update S17-04 to note routing confirmation is covered but mitigation gating remains open. Add new rows for any remaining gaps.
 
-6.5. Write operator runbook: how to configure a building plan, how to add/remove contacts, how to read escalation audit events, how to use the kill switch.
+  6.5. Write operator runbook: how to configure a building plan, how to add/remove contacts, how to read escalation audit events, how to use the kill switch.
 
-6.6. Update `docs/spec.md` §17 with the final runtime behavior.
+  6.6. Update `docs/spec.md` §17 with the final runtime behavior.
 
 ---
 
@@ -592,15 +605,15 @@ Reviewers should confirm these before implementation starts:
 
 These gap tracker rows will be affected:
 
-| ID | Current Status | Target Status | Action |
-|---|---|---|---|
-| S17-02 | PARTIAL | DONE | Wire real plans + coordinator into factory |
-| S17-03 | PARTIAL | DONE | Add CONFIRM_EMERGENCY / DECLINE_EMERGENCY handlers |
-| S17-04 | PARTIAL | PARTIAL | Routing confirmation gate added (dispatcher guard + `CONFIRM_EMERGENCY`). Mitigation-gating aspect of `requires_confirmation` (suppressing mitigation display until type confirmed) remains a separate concern — tracked but not closed by this plan |
-| S02-07 | PARTIAL | DONE | Full deterministic escalation pipeline wired |
-| S01-10 | PARTIAL | DONE | Per-building chain with real provider execution |
-| S25-01 | MISSING | PARTIAL | Structured logs for escalation (full logging out of scope) |
-| S25-04 | MISSING | PARTIAL | Internal alert on exhaustion (full alerting out of scope) |
+| ID     | Current Status | Target Status | Action                                                                                                                                                                                                                                               |
+| ------ | -------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S17-02 | PARTIAL        | DONE          | Wire real plans + coordinator into factory                                                                                                                                                                                                           |
+| S17-03 | PARTIAL        | DONE          | Add CONFIRM_EMERGENCY / DECLINE_EMERGENCY handlers                                                                                                                                                                                                   |
+| S17-04 | PARTIAL        | PARTIAL       | Routing confirmation gate added (dispatcher guard + `CONFIRM_EMERGENCY`). Mitigation-gating aspect of `requires_confirmation` (suppressing mitigation display until type confirmed) remains a separate concern — tracked but not closed by this plan |
+| S02-07 | PARTIAL        | DONE          | Full deterministic escalation pipeline wired                                                                                                                                                                                                         |
+| S01-10 | PARTIAL        | DONE          | Per-building chain with real provider execution                                                                                                                                                                                                      |
+| S25-01 | MISSING        | PARTIAL       | Structured logs for escalation (full logging out of scope)                                                                                                                                                                                           |
+| S25-04 | MISSING        | PARTIAL       | Internal alert on exhaustion (full alerting out of scope)                                                                                                                                                                                            |
 
 ---
 

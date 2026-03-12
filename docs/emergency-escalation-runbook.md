@@ -10,9 +10,9 @@ This runbook covers day-to-day operation of the emergency escalation system. For
 
 The escalation system is gated by the `EMERGENCY_ROUTING_ENABLED` environment variable.
 
-| Value | Behavior |
-|---|---|
-| `true` | Escalation is live. `CONFIRM_EMERGENCY` creates incidents and triggers voice/SMS workflow. |
+| Value              | Behavior                                                                                                                                                                                                                    |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `true`             | Escalation is live. `CONFIRM_EMERGENCY` creates incidents and triggers voice/SMS workflow.                                                                                                                                  |
 | `false` (or unset) | **Fail-closed.** `CONFIRM_EMERGENCY` returns `EMERGENCY_ROUTING_UNAVAILABLE` error with safe 911 message. Cron processor skips all incidents. `startIncident()` throws if called. `DECLINE_EMERGENCY` still works normally. |
 
 **To disable escalation immediately:** Set `EMERGENCY_ROUTING_ENABLED=false` in the Vercel environment and redeploy. In-progress incidents are effectively paused until re-enabled.
@@ -72,6 +72,7 @@ Add an entry to the `plans` array:
 ```
 
 **Important:**
+
 - `building_id` must match the value returned by `UnitResolver.resolve()` for units in that building.
 - Phone numbers must be in E.164 format (e.g., `+15551234567`).
 - Use at least 2 contacts per plan to exercise chain advancement and stand-down.
@@ -113,21 +114,21 @@ Reorder entries in the `contact_chain` array. The system contacts them top-to-bo
 
 All escalation actions are recorded as append-only risk events. Key event types:
 
-| Event Type | Meaning |
-|---|---|
-| `risk_detected` | Trigger scanner found emergency keywords |
-| `emergency_confirmation_requested` | Tenant shown confirm/decline prompt |
-| `emergency_confirmed` | Tenant confirmed — incident created |
-| `emergency_declined` | Tenant declined — no incident |
-| `escalation_incident_started` | Incident record created, first contact attempt starting |
-| `voice_call_initiated` | Voice call placed to a contact |
-| `voice_call_completed` | Voice call outcome received |
-| `sms_prompt_sent` | SMS prompt sent to contact |
-| `sms_reply_received` | Inbound SMS reply received |
-| `stand_down_sent` | Stand-down SMS sent to previously contacted |
-| `cycle_exhausted` | All contacts in chain have been tried |
-| `internal_alert_sent` | Internal ops alert fired |
-| `escalation_incident_closed` | Incident resolved (accepted or exhausted) |
+| Event Type                         | Meaning                                                 |
+| ---------------------------------- | ------------------------------------------------------- |
+| `risk_detected`                    | Trigger scanner found emergency keywords                |
+| `emergency_confirmation_requested` | Tenant shown confirm/decline prompt                     |
+| `emergency_confirmed`              | Tenant confirmed — incident created                     |
+| `emergency_declined`               | Tenant declined — no incident                           |
+| `escalation_incident_started`      | Incident record created, first contact attempt starting |
+| `voice_call_initiated`             | Voice call placed to a contact                          |
+| `voice_call_completed`             | Voice call outcome received                             |
+| `sms_prompt_sent`                  | SMS prompt sent to contact                              |
+| `sms_reply_received`               | Inbound SMS reply received                              |
+| `stand_down_sent`                  | Stand-down SMS sent to previously contacted             |
+| `cycle_exhausted`                  | All contacts in chain have been tried                   |
+| `internal_alert_sent`              | Internal ops alert fired                                |
+| `escalation_incident_closed`       | Incident resolved (accepted or exhausted)               |
 
 ### Querying events
 
@@ -202,6 +203,7 @@ The due-incident processor runs via Vercel Cron Job:
 ### Incident stuck in active state
 
 If an incident appears stuck:
+
 1. Check if `processing_lock_until` is in the future (a cron run may be in progress or crashed).
 2. The lock expires after 90 seconds. The next cron run will pick it up.
 3. Check for `accept_cas_conflict` logs indicating concurrent processing.

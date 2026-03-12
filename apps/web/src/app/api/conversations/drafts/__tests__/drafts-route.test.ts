@@ -127,9 +127,7 @@ describe('GET /api/conversations/drafts', () => {
 
   it('includes conversation_id, state, unit_id, timestamps in each draft', async () => {
     mockAuth.mockResolvedValue(ALICE_AUTH);
-    mockSessionStore.getByTenantUser.mockResolvedValue([
-      makeSession({ unit_id: 'unit-101' }),
-    ]);
+    mockSessionStore.getByTenantUser.mockResolvedValue([makeSession({ unit_id: 'unit-101' })]);
 
     const res = await GET(makeRequest() as any);
     const body = await res.json();

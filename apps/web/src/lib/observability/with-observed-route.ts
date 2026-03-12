@@ -19,10 +19,7 @@ type RouteHandler = (
  * Logs request_started, request_completed, and request_failed events.
  * Passes request_id to the inner handler so it can propagate to dispatch calls.
  */
-export function withObservedRoute(
-  routeName: string,
-  handler: RouteHandler,
-) {
+export function withObservedRoute(routeName: string, handler: RouteHandler) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return async function observedHandler(request: NextRequest, ...args: any[]) {
     const ctx = createRequestContext();
@@ -71,10 +68,7 @@ export function withObservedRoute(
         duration_ms,
       });
 
-      return NextResponse.json(
-        { error: 'Internal server error' },
-        { status: 500 },
-      );
+      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   };
 }

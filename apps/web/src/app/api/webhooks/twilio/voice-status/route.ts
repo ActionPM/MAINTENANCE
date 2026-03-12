@@ -22,9 +22,7 @@ export const POST = withObservedRoute('webhooks:twilio:voice-status', async (req
   const text = await req.text();
   const params: Record<string, string> = {};
   for (const pair of text.split('&')) {
-    const [key, value] = pair
-      .split('=')
-      .map((s) => decodeURIComponent(s.replace(/\+/g, ' ')));
+    const [key, value] = pair.split('=').map((s) => decodeURIComponent(s.replace(/\+/g, ' ')));
     if (key) params[key] = value ?? '';
   }
 
@@ -48,8 +46,7 @@ export const POST = withObservedRoute('webhooks:twilio:voice-status', async (req
     });
   }
   const contactIndexParam = req.nextUrl.searchParams.get('contactIndex');
-  const contactIndex =
-    contactIndexParam !== null ? parseInt(contactIndexParam, 10) : undefined;
+  const contactIndex = contactIndexParam !== null ? parseInt(contactIndexParam, 10) : undefined;
 
   const coordDeps = getEscalationCoordinatorDeps();
   if (!coordDeps) {

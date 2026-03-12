@@ -556,11 +556,11 @@ Emergency routing is gated by the `EMERGENCY_ROUTING_ENABLED` environment variab
 
 ### 17.4) Webhook and cron surfaces
 
-| Route | Method | Purpose |
-|---|---|---|
-| `/api/webhooks/twilio/voice-status` | POST | Voice call completion callback (Twilio signature validated) |
-| `/api/webhooks/twilio/sms-reply` | POST | Inbound ACCEPT/IGNORE replies (Twilio signature validated) |
-| `/api/cron/emergency/process-due` | GET | Cron-triggered: process timeouts, advance chain, schedule retries (Bearer token auth) |
+| Route                               | Method | Purpose                                                                               |
+| ----------------------------------- | ------ | ------------------------------------------------------------------------------------- |
+| `/api/webhooks/twilio/voice-status` | POST   | Voice call completion callback (Twilio signature validated)                           |
+| `/api/webhooks/twilio/sms-reply`    | POST   | Inbound ACCEPT/IGNORE replies (Twilio signature validated)                            |
+| `/api/cron/emergency/process-due`   | GET    | Cron-triggered: process timeouts, advance chain, schedule retries (Bearer token auth) |
 
 ### 17.5) Observability
 

@@ -12,36 +12,36 @@
 
 ## Disposition Summary
 
-| Disposition | Tracker IDs | Handling rule |
-| --- | --- | --- |
-| `must_fix` | `S09-02`, `S24-02`, `S24-03`, `S24-11`, `S24-12`, `S07-05`, `S17-02` | Implement or explicitly de-scope from the supported product surface |
-| `accepted_deviation` | `S07-02`, `S18-05`, `S24-16`, `S24-17`, `S24-18`, `S25-03` | Make an explicit architectural/product decision, then update the governing docs to match |
-| `doc_only` | `S27-12`, `S27-13`, `S27-14`, `S27-16`, `S27-17`, `S27-18` | Reconcile documentation without treating these as code-completion blockers |
+| Disposition          | Tracker IDs                                                          | Handling rule                                                                            |
+| -------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `must_fix`           | `S09-02`, `S24-02`, `S24-03`, `S24-11`, `S24-12`, `S07-05`, `S17-02` | Implement or explicitly de-scope from the supported product surface                      |
+| `accepted_deviation` | `S07-02`, `S18-05`, `S24-16`, `S24-17`, `S24-18`, `S25-03`           | Make an explicit architectural/product decision, then update the governing docs to match |
+| `doc_only`           | `S27-12`, `S27-13`, `S27-14`, `S27-16`, `S27-17`, `S27-18`           | Reconcile documentation without treating these as code-completion blockers               |
 
 ## Active Workstreams (`must_fix`)
 
-| Workstream | Tracker IDs | Why first | Exit criteria |
-| --- | --- | --- | --- |
-| 1. Ownership and required read APIs | `S09-02`, `S24-02`, `S24-03`, `S24-11`, `S24-12` | These are the highest-risk tenant-facing gaps: cross-tenant access risk and missing read paths | Conversation ownership is enforced in the dispatcher and all required conversation/work-order read routes exist on the documented paths |
-| 2. Classification audit fidelity | `S07-05` | The current production persistence path weakens the audit trail by dropping `issue_id` structure from classification events | Classification-domain identifiers survive persistence and remain queryable in the stored event stream |
-| 3. Risk runtime decision | `S17-02` | Emergency escalation cannot remain implicitly supported while the production factory injects empty plans and a no-op executor | Emergency routing is either wired end-to-end or explicitly removed from the supported runtime scope and governing docs |
+| Workstream                          | Tracker IDs                                      | Why first                                                                                                                     | Exit criteria                                                                                                                           |
+| ----------------------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| 1. Ownership and required read APIs | `S09-02`, `S24-02`, `S24-03`, `S24-11`, `S24-12` | These are the highest-risk tenant-facing gaps: cross-tenant access risk and missing read paths                                | Conversation ownership is enforced in the dispatcher and all required conversation/work-order read routes exist on the documented paths |
+| 2. Classification audit fidelity    | `S07-05`                                         | The current production persistence path weakens the audit trail by dropping `issue_id` structure from classification events   | Classification-domain identifiers survive persistence and remain queryable in the stored event stream                                   |
+| 3. Risk runtime decision            | `S17-02`                                         | Emergency escalation cannot remain implicitly supported while the production factory injects empty plans and a no-op executor | Emergency routing is either wired end-to-end or explicitly removed from the supported runtime scope and governing docs                  |
 
 Detailed execution plan for Workstream 1: `docs/plans/2026-03-11-mvp-identity-access-plan.md`
 
 ## Decision Tracks (`accepted_deviation`)
 
-| Topic | Tracker IDs | Decision to ratify |
-| --- | --- | --- |
-| Event-table shape | `S07-02` | Keep the generic append-only event log as an MVP simplification, or move back toward seven domain tables |
-| Session concurrency contract | `S18-05` | Keep last-write-wins for sessions as an intentional single-writer assumption, or add optimistic locking and keep the current docs |
-| Secondary API surface | `S24-16`, `S24-17`, `S24-18`, `S25-03` | Treat notification/preferences/overrides/health sub-routes as deferred scope, or restore them as committed endpoints |
+| Topic                        | Tracker IDs                            | Decision to ratify                                                                                                                |
+| ---------------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Event-table shape            | `S07-02`                               | Keep the generic append-only event log as an MVP simplification, or move back toward seven domain tables                          |
+| Session concurrency contract | `S18-05`                               | Keep last-write-wins for sessions as an intentional single-writer assumption, or add optimistic locking and keep the current docs |
+| Secondary API surface        | `S24-16`, `S24-17`, `S24-18`, `S25-03` | Treat notification/preferences/overrides/health sub-routes as deferred scope, or restore them as committed endpoints              |
 
 ## Documentation Track (`doc_only`)
 
-| Topic | Tracker IDs | Documentation outcome |
-| --- | --- | --- |
-| Required governance artifacts | `S27-12`, `S27-13`, `S27-14` | Author the required docs and RFC location without tying them to runtime sequencing |
-| Source-of-truth alignment | `S27-16`, `S27-17`, `S27-18` | Pick one planning convention, one canonical spec/taxonomy path, and one accurate orchestrator description |
+| Topic                         | Tracker IDs                  | Documentation outcome                                                                                     |
+| ----------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Required governance artifacts | `S27-12`, `S27-13`, `S27-14` | Author the required docs and RFC location without tying them to runtime sequencing                        |
+| Source-of-truth alignment     | `S27-16`, `S27-17`, `S27-18` | Pick one planning convention, one canonical spec/taxonomy path, and one accurate orchestrator description |
 
 ## Execution Order
 

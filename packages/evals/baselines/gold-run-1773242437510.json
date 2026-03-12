@@ -853,12 +853,7 @@
         "Management_Object": 0.6900000000000001,
         "Priority": 0.29000000000000004
       },
-      "fieldsNeedingInput": [
-        "Category",
-        "Location",
-        "Sub_Location",
-        "Priority"
-      ],
+      "fieldsNeedingInput": ["Category", "Location", "Sub_Location", "Priority"],
       "hierarchyValid": true
     },
     {
@@ -936,12 +931,7 @@
         "Management_Object": 0.6900000000000001,
         "Priority": 0.29000000000000004
       },
-      "fieldsNeedingInput": [
-        "Category",
-        "Location",
-        "Sub_Location",
-        "Priority"
-      ],
+      "fieldsNeedingInput": ["Category", "Location", "Sub_Location", "Priority"],
       "hierarchyValid": true
     },
     {

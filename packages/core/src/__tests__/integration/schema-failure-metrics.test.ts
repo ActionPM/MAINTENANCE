@@ -12,7 +12,11 @@ import { callIssueClassifier } from '../../classifier/issue-classifier.js';
 import { callFollowUpGenerator } from '../../followup/followup-generator.js';
 import { InMemoryMetricsRecorder } from '../../observability/index.js';
 import { loadTaxonomy } from '@wo-agent/schemas';
-import type { IssueSplitterInput, IssueClassifierInput, FollowUpGeneratorInput } from '@wo-agent/schemas';
+import type {
+  IssueSplitterInput,
+  IssueClassifierInput,
+  FollowUpGeneratorInput,
+} from '@wo-agent/schemas';
 
 const taxonomy = loadTaxonomy();
 

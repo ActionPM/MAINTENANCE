@@ -6,7 +6,10 @@ import { withObservedRoute } from '@/lib/observability/with-observed-route';
  *
  * Redirects to the spec-correct path: /api/conversations/drafts
  */
-export const GET = withObservedRoute('conversations-drafts:redirect', async (request: NextRequest) => {
-  const url = new URL('/api/conversations/drafts', request.url);
-  return NextResponse.redirect(url, 301);
-});
+export const GET = withObservedRoute(
+  'conversations-drafts:redirect',
+  async (request: NextRequest) => {
+    const url = new URL('/api/conversations/drafts', request.url);
+    return NextResponse.redirect(url, 301);
+  },
+);

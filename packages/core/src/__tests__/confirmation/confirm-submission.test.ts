@@ -118,7 +118,12 @@ function makeCtx(
       cueDict: { version: '1.0.0', fields: {} },
       taxonomy: { version: '1.0.0', categories: {} } as any,
       unitResolver: {
-        resolve: async () => ({ unit_id: 'unit-1', property_id: 'prop-1', client_id: 'client-1', building_id: 'bldg-1' }),
+        resolve: async () => ({
+          unit_id: 'unit-1',
+          property_id: 'prop-1',
+          client_id: 'client-1',
+          building_id: 'bldg-1',
+        }),
       } satisfies UnitResolver,
       workOrderRepo: new InMemoryWorkOrderStore(),
       idempotencyStore: new InMemoryIdempotencyStore(),

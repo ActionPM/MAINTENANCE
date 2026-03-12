@@ -266,7 +266,11 @@ describe('Unit-scope edge cases', () => {
       property_id: 'prop-1',
       status: WorkOrderStatus.CREATED,
       status_history: [
-        { status: WorkOrderStatus.CREATED, changed_at: '2026-01-01T00:00:00Z', actor: ActorType.SYSTEM },
+        {
+          status: WorkOrderStatus.CREATED,
+          changed_at: '2026-01-01T00:00:00Z',
+          actor: ActorType.SYSTEM,
+        },
       ],
       raw_text: 'test',
       summary_confirmed: 'test',
@@ -283,9 +287,27 @@ describe('Unit-scope edge cases', () => {
     };
 
     await store.insertBatch([
-      { ...baseWO, work_order_id: 'wo-1', tenant_user_id: 'alice', tenant_account_id: 'acme', unit_id: 'u1' },
-      { ...baseWO, work_order_id: 'wo-2', tenant_user_id: 'alice', tenant_account_id: 'acme', unit_id: 'u2' },
-      { ...baseWO, work_order_id: 'wo-3', tenant_user_id: 'bob', tenant_account_id: 'acme', unit_id: 'u1' },
+      {
+        ...baseWO,
+        work_order_id: 'wo-1',
+        tenant_user_id: 'alice',
+        tenant_account_id: 'acme',
+        unit_id: 'u1',
+      },
+      {
+        ...baseWO,
+        work_order_id: 'wo-2',
+        tenant_user_id: 'alice',
+        tenant_account_id: 'acme',
+        unit_id: 'u2',
+      },
+      {
+        ...baseWO,
+        work_order_id: 'wo-3',
+        tenant_user_id: 'bob',
+        tenant_account_id: 'acme',
+        unit_id: 'u1',
+      },
     ]);
 
     // Alice with only u1 access should see only wo-1

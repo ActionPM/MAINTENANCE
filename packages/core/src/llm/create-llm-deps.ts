@@ -22,9 +22,15 @@ export interface CreateLlmDepsConfig {
 }
 
 export interface LlmDependencies {
-  readonly issueSplitter: (input: IssueSplitterInput, ...rest: unknown[]) => Promise<IssueSplitterOutput>;
+  readonly issueSplitter: (
+    input: IssueSplitterInput,
+    ...rest: unknown[]
+  ) => Promise<IssueSplitterOutput>;
   readonly issueClassifier: (input: IssueClassifierInput, ...rest: unknown[]) => Promise<unknown>;
-  readonly followUpGenerator: (input: FollowUpGeneratorInput, ...rest: unknown[]) => Promise<unknown>;
+  readonly followUpGenerator: (
+    input: FollowUpGeneratorInput,
+    ...rest: unknown[]
+  ) => Promise<unknown>;
 }
 
 /**
@@ -51,9 +57,24 @@ export function createLlmDependencies(config: CreateLlmDepsConfig): LlmDependenc
 
   if (config.logger || config.metricsRecorder) {
     return {
-      issueSplitter: withObservedLlmCall(rawSplitter as AdapterFn<IssueSplitterInput, IssueSplitterOutput>, config.logger, config.metricsRecorder, 'splitter'),
-      issueClassifier: withObservedLlmCall(rawClassifier as AdapterFn<IssueClassifierInput, unknown>, config.logger, config.metricsRecorder, 'classifier'),
-      followUpGenerator: withObservedLlmCall(rawFollowUp as AdapterFn<FollowUpGeneratorInput, unknown>, config.logger, config.metricsRecorder, 'followup'),
+      issueSplitter: withObservedLlmCall(
+        rawSplitter as AdapterFn<IssueSplitterInput, IssueSplitterOutput>,
+        config.logger,
+        config.metricsRecorder,
+        'splitter',
+      ),
+      issueClassifier: withObservedLlmCall(
+        rawClassifier as AdapterFn<IssueClassifierInput, unknown>,
+        config.logger,
+        config.metricsRecorder,
+        'classifier',
+      ),
+      followUpGenerator: withObservedLlmCall(
+        rawFollowUp as AdapterFn<FollowUpGeneratorInput, unknown>,
+        config.logger,
+        config.metricsRecorder,
+        'followup',
+      ),
     };
   }
 

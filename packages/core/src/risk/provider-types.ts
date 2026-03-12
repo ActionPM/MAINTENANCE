@@ -4,11 +4,7 @@
  * Phase 1: Twilio. Voice calls are alerting only (no DTMF/IVR).
  */
 export interface VoiceCallProvider {
-  placeCall(
-    to: string,
-    twiml: string,
-    statusCallbackUrl: string,
-  ): Promise<{ callSid: string }>;
+  placeCall(to: string, twiml: string, statusCallbackUrl: string): Promise<{ callSid: string }>;
 }
 
 /**

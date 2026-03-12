@@ -51,9 +51,10 @@ describe('Twilio form body parsing', () => {
 
 describe('parseReply logic', () => {
   /** Mirrors the parseReply function from sms-reply route. */
-  function parseReply(
-    body: string,
-  ): { action: 'ACCEPT' | 'IGNORE' | 'unknown'; ref: string | null } {
+  function parseReply(body: string): {
+    action: 'ACCEPT' | 'IGNORE' | 'unknown';
+    ref: string | null;
+  } {
     const parts = body.trim().split(/\s+/);
     const action = parts[0]?.toUpperCase();
     const ref = parts[1] ?? null;

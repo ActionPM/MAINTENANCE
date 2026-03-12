@@ -29,8 +29,7 @@ export class InMemoryMetricsRecorder implements MetricsRecorder, MetricsQuerySto
 
   async queryCount(metricName: string, windowMinutes: number): Promise<number> {
     const cutoff = new Date(Date.now() - windowMinutes * 60_000).toISOString();
-    return this.observations.filter(
-      (o) => o.metric_name === metricName && o.timestamp >= cutoff,
-    ).length;
+    return this.observations.filter((o) => o.metric_name === metricName && o.timestamp >= cutoff)
+      .length;
   }
 }

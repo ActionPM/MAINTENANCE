@@ -108,7 +108,7 @@ describe('GET /api/conversations/:id', () => {
     expect(body.errors[0].code).toBe('NOT_FOUND');
   });
 
-  it('does not return another tenant\'s session (returns 404)', async () => {
+  it("does not return another tenant's session (returns 404)", async () => {
     mockAuth.mockResolvedValue(BOB_AUTH);
     mockSessionStore.get.mockResolvedValue(makeSession({ tenant_user_id: 'tu-alice' }));
 

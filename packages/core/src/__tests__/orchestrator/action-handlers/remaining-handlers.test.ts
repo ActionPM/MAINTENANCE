@@ -250,7 +250,13 @@ describe('handleConfirmSubmission', () => {
         fieldsNeedingInput: [],
       },
     ]);
-    session = { ...session, unit_id: 'u1', property_id: 'prop-1', client_id: 'client-1', building_id: 'bldg-1' };
+    session = {
+      ...session,
+      unit_id: 'u1',
+      property_id: 'prop-1',
+      client_id: 'client-1',
+      building_id: 'bldg-1',
+    };
     (ctx as any).session = session;
     const result = await handleConfirmSubmission(ctx);
     expect(result.newState).toBe(ConversationState.SUBMITTED);

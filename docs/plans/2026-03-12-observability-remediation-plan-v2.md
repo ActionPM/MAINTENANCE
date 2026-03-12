@@ -14,15 +14,15 @@ Close the three remaining Section 25 spec gaps:
 
 **What exists:**
 
-| Component | Status | Notes |
-|---|---|---|
-| `request-context.ts` | Dead scaffold | Generates `request_id` + timestamp; never used by any route or core code |
+| Component                      | Status           | Notes                                                                                 |
+| ------------------------------ | ---------------- | ------------------------------------------------------------------------------------- |
+| `request-context.ts`           | Dead scaffold    | Generates `request_id` + timestamp; never used by any route or core code              |
 | Escalation coordinator logging | Live, structured | Only module with JSON logs; 15+ event types, but no `request_id`, no shared interface |
-| API route logging | Ad hoc | `console.error`/`console.warn` in 3 webhook/cron routes; 20+ routes have zero logging |
-| Dispatcher logging | None | Zero log lines in `dispatcher.ts` or any of 13 action handlers |
-| LLM adapter logging | None | 3 adapters (splitter, classifier, followup) call LLM silently |
-| Metrics store | None | No metrics collection of any kind |
-| Alert evaluator | None | Emergency SMS on cycle exhaustion exists but nothing for spikes/backlog |
+| API route logging              | Ad hoc           | `console.error`/`console.warn` in 3 webhook/cron routes; 20+ routes have zero logging |
+| Dispatcher logging             | None             | Zero log lines in `dispatcher.ts` or any of 13 action handlers                        |
+| LLM adapter logging            | None             | 3 adapters (splitter, classifier, followup) call LLM silently                         |
+| Metrics store                  | None             | No metrics collection of any kind                                                     |
+| Alert evaluator                | None             | Emergency SMS on cycle exhaustion exists but nothing for spikes/backlog               |
 
 **Key architecture facts:**
 
@@ -41,6 +41,7 @@ Close the three remaining Section 25 spec gaps:
 ### D1: `request_id` flows on the request; sinks flow on deps; per-call context flows explicitly into LLM and async boundaries
 
 **Decision:** Three-layer propagation:
+
 1. **Sinks** (`logger`, `metricsRecorder`, `alertSink`) are added as optional fields on `OrchestratorDependencies`. Created once at factory init. Stateless services.
 2. **`request_id`** is added to `OrchestratorActionRequest` (with matching JSON schema update). The dispatcher extracts it and includes it in all log/metric calls within its scope.
 3. **`[v2r]` Per-call `ObservabilityContext`** is threaded explicitly into LLM adapter calls and escalation coordinator methods. LLM adapters are created once, but each invocation receives an optional `ObservabilityContext` parameter so logs and metrics are request-correlated. The escalation coordinator receives context at `startIncident()` / `processDue()` call boundaries (not at construction time, since it handles async work that outlives the original request).
@@ -62,6 +63,7 @@ Close the three remaining Section 25 spec gaps:
 ### D3: `[v2r]` Metrics has two interfaces: async `MetricsRecorder` (write) and `MetricsQueryStore` (read)
 
 **Decision:** Split the metrics contract:
+
 - `MetricsRecorder` interface: `{ record(obs: MetricObservation): Promise<void> }` — async, returns a promise so callers can optionally await durability. Injected into dispatcher, LLM wrappers, notification service, escalation coordinator.
 - `MetricsQueryStore` interface: `{ queryWindow(metricName: string, windowMinutes: number): Promise<number>; queryCount(metricName: string, windowMinutes: number): Promise<number> }` — used only by the alert evaluator.
 - `PgOperationalMetricsStore` implements both interfaces.
@@ -73,6 +75,7 @@ Close the three remaining Section 25 spec gaps:
 ### D4: `[v2r]` Alert cooldown state persists in DB, keyed by `alert_name:scope`
 
 **Decision:** `alert_cooldowns` table with composite key `(alert_name, scope)`:
+
 ```sql
 CREATE TABLE IF NOT EXISTS alert_cooldowns (
   alert_name       TEXT NOT NULL,
@@ -104,6 +107,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 **Goal:** Define the shared interfaces, wire them into deps, make `request_id` available to the dispatcher, and fix the JSON schema drift. All existing tests still pass with noop sinks. Zero behavioral change.
 
 #### Task 0.1 — Observability type definitions
+
 - **Files:** Create `packages/core/src/observability/types.ts`
 - **Work:**
   - Define `ObservabilityContext` type: `{ request_id: string; timestamp: string }`
@@ -117,6 +121,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 - **Test criteria:** Types compile. No runtime behavior to test yet.
 
 #### Task 0.2 — Noop and in-memory implementations
+
 - **Files:** Create `packages/core/src/observability/logger.ts`, `packages/core/src/observability/metrics.ts`, `packages/core/src/observability/alerts.ts`
 - **Work:**
   - `StdoutJsonLogger` implements `Logger` — writes `JSON.stringify(entry)` to stdout
@@ -129,11 +134,13 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 - **Test criteria:** Unit tests for each: logger collects/formats, recorder collects and supports window queries, noop doesn't throw.
 
 #### Task 0.3 — Barrel export
+
 - **Files:** Create `packages/core/src/observability/index.ts`, update `packages/core/src/index.ts`
 - **Work:** Re-export all types, interfaces, and implementations.
 - **Test criteria:** `import { Logger, StdoutJsonLogger, MetricsRecorder } from '@wo-agent/core'` resolves.
 
 #### Task 0.4 — Add sinks to OrchestratorDependencies and extend ActionHandlerContext
+
 - **Files:** Modify `packages/core/src/orchestrator/types.ts`
 - **Work:**
   - Add optional fields to `OrchestratorDependencies`: `logger?: Logger`, `metricsRecorder?: MetricsRecorder`, `alertSink?: AlertSink`
@@ -141,6 +148,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 - **Test criteria:** All existing tests compile and pass (fields are optional, so no injection required yet).
 
 #### Task 0.5 — `[v2r]` Add `request_id` to OrchestratorActionRequest (TypeScript + JSON schema in lockstep)
+
 - **Files:** Modify `packages/schemas/src/types/orchestrator-action.ts` **and** `packages/schemas/orchestrator_action.schema.json`
 - **Work:**
   - Add optional `request_id?: string` field to the TypeScript `OrchestratorActionRequest` type
@@ -150,6 +158,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 - **Test criteria:** Schema validation passes for requests with and without `request_id`. Emergency action types now validate. Run `pnpm --filter @wo-agent/schemas test` to confirm no regressions.
 
 #### Task 0.6 — Thread request_id through dispatcher
+
 - **Files:** Modify `packages/core/src/orchestrator/dispatcher.ts`
 - **Work:**
   - At top of `dispatch()`, extract `request_id` from `request.request_id ?? deps.idGenerator()`
@@ -158,6 +167,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 - **Test criteria:** Existing dispatcher tests pass. New test: `request_id` from request appears in handler context.
 
 #### Task 0.7 — Wire sinks in orchestrator-factory
+
 - **Files:** Modify `apps/web/src/lib/orchestrator-factory.ts`
 - **Work:**
   - Create `StdoutJsonLogger` instance
@@ -167,6 +177,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 - **Test criteria:** `pnpm --filter @wo-agent/web build` succeeds. Factory creates sinks without error.
 
 #### Task 0.8 — Promote request-context.ts
+
 - **Files:** Modify `apps/web/src/middleware/request-context.ts`
 - **Work:**
   - Import `ObservabilityContext` from `@wo-agent/core`
@@ -183,6 +194,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 **Goal:** Every dispatcher action emits `action_received`, `action_completed`, `action_failed` logs with state, error codes, and duration.
 
 #### Task 1a.1 — Instrument dispatcher
+
 - **Files:** Modify `packages/core/src/orchestrator/dispatcher.ts`
 - **Work:**
   - At action start: `deps.logger?.log({ component: 'dispatcher', event: 'action_received', action_type, conversation_id, request_id, state_before: session.state, severity: 'info' })`
@@ -193,6 +205,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 - **Test criteria:** Test with `InMemoryLogger`: dispatch a valid action → 2 log entries (received + completed). Dispatch invalid → received + failed. Auto-fire → logs for both parent and chained action.
 
 #### Task 1a.2 — Populate logger on ActionHandlerContext in dispatcher
+
 - **Files:** Modify `packages/core/src/orchestrator/dispatcher.ts` (handler call site)
 - **Work:**
   - When building `ActionHandlerContext`, populate `logger: deps.logger` (type already declared in Task 0.4; `request_id` already populated in Task 0.6)
@@ -208,6 +221,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 **Goal:** Every API route emits `request_started`, `request_completed`, `request_failed` with `request_id`, method, route, status, duration.
 
 #### Task 1b.1 — Create route observation wrapper
+
 - **Files:** Create `apps/web/src/lib/observability/with-observed-route.ts`
 - **Work:**
   - Higher-order function: `withObservedRoute(routeName, handler)` wraps a Next.js route handler
@@ -220,6 +234,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 - **Test criteria:** Unit test with mock handler: success → 2 log entries; throw → started + failed.
 
 #### Task 1b.2 — Wrap conversation action routes (13 routes)
+
 - **Files:** Modify all routes under `apps/web/src/app/api/conversations/[id]/*/route.ts`
 - **Work:**
   - Wrap each route handler with `withObservedRoute()`
@@ -228,6 +243,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 - **Test criteria:** `pnpm --filter @wo-agent/web build` passes. Spot-check 2-3 routes with integration test: request → response includes `request_id` header or log output.
 
 #### Task 1b.3 — Wrap remaining routes (10+ routes)
+
 - **Files:** Modify routes: `conversations/route.ts` (POST create), `conversations/[id]/route.ts` (GET), `conversations/drafts/route.ts`, `work-orders/route.ts`, `work-orders/[id]/route.ts`, `work-orders/[id]/record-bundle/route.ts`, `photos/init/route.ts`, `photos/complete/route.ts`, `analytics/route.ts`, `health/route.ts`, `health/erp/route.ts`, cron and webhook routes
 - **Work:** Same wrapper pattern as 1b.2.
 - **Test criteria:** Build passes. No unwrapped routes remain.
@@ -243,6 +259,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 `[v2r]` **Key design constraint:** LLM adapters are created once at factory init via `createLlmDependencies()` and stored in `OrchestratorDependencies`. They are singletons — the `request_id` of the triggering request is not available at creation time. The wrapper must accept `ObservabilityContext` as an **optional parameter at call time**, not at wrapping time.
 
 #### Task 1c.1 — Create observed LLM adapter wrapper with per-call context
+
 - **Files:** Create `packages/core/src/llm/with-observed-llm-call.ts`
 - **Work:**
   - Higher-order function: `withObservedLlmCall(adapter, logger, metricsRecorder, toolName)` returns a new adapter function with the **same signature plus an optional trailing `ObservabilityContext` parameter**
@@ -255,6 +272,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 - **Test criteria:** Unit test with `InMemoryLogger` and a mock adapter: success → 2 logs with `request_id`; failure → started + failed with `request_id`; no context → logs still emitted without `request_id`.
 
 #### Task 1c.2 — Extend LlmDependencies type signatures for optional context
+
 - **Files:** Modify `packages/core/src/llm/create-llm-deps.ts`, `packages/core/src/orchestrator/types.ts`
 - **Work:**
   - `[v2r]` Change `LlmDependencies` function signatures to accept an optional trailing `ObservabilityContext` parameter:
@@ -267,6 +285,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 - **Test criteria:** Existing LLM adapter tests pass (context param is optional). Existing action handler calls compile without changes (they don't pass context yet).
 
 #### Task 1c.3 — `[v2r]` Thread ObservabilityContext from action handlers into LLM calls
+
 - **Files:** Modify `packages/core/src/orchestrator/action-handlers/submit-initial-message.ts`, `start-classification.ts`, `answer-followups.ts`
 - **Work:**
   - These three handlers call `deps.issueSplitter(input)`, `deps.issueClassifier(input, retryCtx)`, `deps.followUpGenerator(input, retryCtx)` respectively
@@ -289,6 +308,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 `[v2r]` **Key design constraint:** The escalation coordinator processes async work (cron ticks, webhook callbacks) that outlives the original tenant request. The `request_id` on these logs comes from the **cron/webhook trigger's** request context, not from the original conversation dispatch. Each public method (`startIncident`, `processDue`, `processCallOutcome`, `processReply`) accepts an optional `ObservabilityContext` from the caller.
 
 #### Task 1d.1 — Refactor escalation coordinator logging
+
 - **Files:** Modify `packages/core/src/risk/escalation-coordinator.ts`
 - **Work:**
   - Accept optional `Logger` in `EscalationCoordinatorDeps`
@@ -299,6 +319,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 - **Test criteria:** Existing escalation tests pass. New test with `InMemoryLogger`: incident start → log entries captured via interface with `request_id`.
 
 #### Task 1d.2 — Wire logger into escalation deps and pass context from cron/webhook routes
+
 - **Files:** Modify `apps/web/src/lib/orchestrator-factory.ts` (escalation deps section), modify `apps/web/src/app/api/cron/emergency/process-due/route.ts`, modify webhook routes (`voice-status`, `sms-reply`)
 - **Work:**
   - Pass the shared `StdoutJsonLogger` into escalation coordinator deps
@@ -314,6 +335,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 **Goal:** Postgres-backed append-only metrics table with async write and windowed query support.
 
 #### Task 2a.1 — DB migration
+
 - **Files:** Create `packages/db/src/migrations/008-operational-metrics.sql`
 - **Work:**
   ```sql
@@ -335,15 +357,17 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 - **Test criteria:** Migration runs cleanly on a fresh DB (CI).
 
 #### Task 2a.2 — `[v2r]` Postgres metrics store implementing both interfaces
+
 - **Files:** Create `packages/db/src/repos/pg-operational-metrics-store.ts`, update `packages/db/src/index.ts`
 - **Work:**
   - `PgOperationalMetricsStore` implements both `MetricsRecorder` and `MetricsQueryStore` from core
   - `record(obs): Promise<void>` → INSERT row, returns promise (callers choose whether to await)
   - `queryWindow(metricName, windowMinutes): Promise<number>` → SELECT SUM(metric_value) within time window
-  - `queryCount(metricName, windowMinutes): Promise<number>` → SELECT COUNT(*) within time window
+  - `queryCount(metricName, windowMinutes): Promise<number>` → SELECT COUNT(\*) within time window
 - **Test criteria:** Integration test with test DB: insert 5 observations, `queryWindow` returns correct sum, `queryCount` returns correct count. Verify `record()` returns a promise that resolves after the INSERT completes.
 
 #### Task 2a.3 — Wire Postgres recorder in factory
+
 - **Files:** Modify `apps/web/src/lib/orchestrator-factory.ts`
 - **Work:**
   - If `DATABASE_URL` exists: create `PgOperationalMetricsStore`, use it as both `MetricsRecorder` (injected into deps) and `MetricsQueryStore` (available for alert evaluator)
@@ -363,6 +387,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 `[v2r]` **Await strategy:** `MetricsRecorder.record()` is async. In the LLM wrapper and dispatcher, metric writes are collected as promises and `Promise.all`-awaited at the end of the action/call boundary (not fire-and-forget). This ensures Vercel doesn't terminate the function before writes land. In the route wrapper (PR 3), any pending metric writes are awaited before sending the response.
 
 #### Task 2b.1 — LLM metrics
+
 - **Files:** Modify `packages/core/src/llm/with-observed-llm-call.ts` (from PR 4)
 - **Work:**
   - On every LLM call: `await metricsRecorder.record({ metric_name: 'llm_call_latency_ms', metric_value: duration, component: toolName, request_id: ctx?.request_id })`
@@ -371,6 +396,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 - **Test criteria:** `InMemoryMetricsRecorder` captures expected observations after mock LLM call.
 
 #### Task 2b.2 — Orchestrator action metrics
+
 - **Files:** Modify `packages/core/src/orchestrator/dispatcher.ts`
 - **Work:**
   - On action complete: `await deps.metricsRecorder?.record({ metric_name: 'orchestrator_action_latency_ms', metric_value: duration, action_type })`
@@ -379,6 +405,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 - **Test criteria:** Dispatch action → `InMemoryMetricsRecorder` contains latency + state duration observations.
 
 #### Task 2b.3 — Abandonment and escalation metrics
+
 - **Files:** Modify `packages/core/src/orchestrator/action-handlers/abandon.ts`, `packages/core/src/risk/escalation-coordinator.ts`
 - **Work:**
   - On ABANDON action: `await deps.metricsRecorder?.record({ metric_name: 'conversation_abandoned_total', metric_value: 1 })`
@@ -386,6 +413,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 - **Test criteria:** Abandon action → metric recorded. Escalation exhaustion → metric recorded.
 
 #### Task 2b.4 — Notification failure metrics
+
 - **Files:** Modify `packages/core/src/notifications/notification-service.ts`
 - **Work:**
   - Accept optional `MetricsRecorder` in constructor/config
@@ -401,6 +429,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 **Goal:** Real operator notifications for critical failures. Cooldown-protected. Cron-evaluated for windowed conditions.
 
 #### Task 3.1 — SMS alert sink
+
 - **Files:** Create `packages/core/src/observability/sms-alert-sink.ts`
 - **Work:**
   - Implements `AlertSink`
@@ -410,6 +439,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 - **Test criteria:** Unit test: emit alert → SMS provider called with formatted message. Logger entry recorded. Metric observation recorded.
 
 #### Task 3.2 — `[v2r]` Alert cooldown store with composite key
+
 - **Files:** Create `packages/db/src/migrations/009-alert-cooldowns.sql`, create `packages/db/src/repos/pg-alert-cooldown-store.ts`
 - **Work:**
   ```sql
@@ -421,6 +451,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
     PRIMARY KEY (alert_name, scope)
   );
   ```
+
   - `shouldAlert(alertName, scope, cooldownMinutes)` → check if `(alert_name, scope)` last alert was > cooldown ago
   - `recordAlert(alertName, scope)` → upsert `last_alerted_at` for `(alert_name, scope)`
   - In-memory implementation for tests: `InMemoryAlertCooldownStore`
@@ -428,13 +459,14 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 - **Test criteria:** Record alert for `('llm_error_spike', 'classifier')` → immediate re-check for same key returns false. Check for `('llm_error_spike', 'splitter')` returns true (independent cooldown). Wait past cooldown → returns true.
 
 #### Task 3.3 — `[v2r]` Alert evaluator with explicit data source separation
+
 - **Files:** Create `packages/core/src/observability/alert-evaluator.ts`
 - **Work:**
   - `evaluateAlerts(deps)` — the main evaluation function
   - **`[v2r]` deps type:**
     ```typescript
     interface AlertEvaluatorDeps {
-      metricsQuery: MetricsQueryStore;           // for windowed metric queries
+      metricsQuery: MetricsQueryStore; // for windowed metric queries
       escalationIncidentStore: EscalationIncidentStore; // for live backlog query
       alertSink: AlertSink;
       cooldownStore: AlertCooldownStore;
@@ -453,6 +485,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 - **Test criteria:** Seed `InMemoryMetricsRecorder` with spike data → evaluator emits alert via `InMemoryAlertSink`. Seed below threshold → no alert. Cooldown active → no duplicate. Seed overdue incidents → backlog alert emitted.
 
 #### Task 3.4 — `[v2r]` Add alert sink to escalation coordinator (additive, not replacement)
+
 - **Files:** Modify `packages/core/src/risk/escalation-coordinator.ts`
 - **Work:**
   - Accept optional `AlertSink` in `EscalationCoordinatorDeps`
@@ -462,6 +495,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 - **Test criteria:** Existing escalation exhaustion tests pass unchanged. New test: with both `InMemoryAlertSink` and mock `SmsProvider` → both SMS **and** alert sink are called. Test with `NoopAlertSink` → direct SMS still fires.
 
 #### Task 3.5 — `[v2r]` Cron route for alert evaluation (GET, matching existing pattern)
+
 - **Files:** Create `apps/web/src/app/api/cron/observability/evaluate-alerts/route.ts`
 - **Work:**
   - **`[v2r]` `GET` handler** (not POST), matching the validated Vercel cron pattern in `process-due/route.ts`
@@ -472,6 +506,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 - **Test criteria:** Unit test: valid cron secret → evaluator called. Invalid secret → 401. Feature flag off → `{ skipped: true }`.
 
 #### Task 3.6 — Wire real alert sink in factory
+
 - **Files:** Modify `apps/web/src/lib/orchestrator-factory.ts`
 - **Work:**
   - If `OPS_ALERT_PHONE_NUMBERS` env var exists: create `SmsAlertSink` with real SMS provider
@@ -481,12 +516,14 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 - **Test criteria:** Build passes. Factory selects correct sink based on env. `getAlertEvaluatorDeps()` returns null if `DATABASE_URL` is unset (no metrics to query).
 
 #### Task 3.7 — Vercel cron config
+
 - **Files:** Modify `apps/web/vercel.json`
 - **Work:**
   - Add cron entry: `{ "path": "/api/cron/observability/evaluate-alerts", "schedule": "*/5 * * * *" }`
 - **Test criteria:** `vercel.json` is valid JSON. Cron path matches route.
 
 #### Task 3.8 — `[v2r]` Add `countOverdue()` to EscalationIncidentStore
+
 - **Files:** Modify `packages/core/src/risk/escalation-incident-store.ts` (interface), modify `packages/core/src/risk/in-memory-incident-store.ts`, modify `packages/db/src/repos/pg-escalation-incident-store.ts`
 - **Work:**
   - Add `countOverdue(): Promise<number>` to the `EscalationIncidentStore` interface
@@ -504,6 +541,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 **Goal:** Comprehensive test coverage for the full observability stack. Update tracker to DONE.
 
 #### Task 4.1 — Integration test: full request → log → metric → alert flow
+
 - **Files:** Create `packages/core/src/__tests__/integration/observability-e2e.test.ts`
 - **Work:**
   - Wire dispatcher with `InMemoryLogger`, `InMemoryMetricsRecorder`, `InMemoryAlertSink`
@@ -513,6 +551,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 - **Test criteria:** Test passes. Covers the full observability contract end-to-end.
 
 #### Task 4.2 — Integration test: alert evaluator with seeded metrics
+
 - **Files:** Create `packages/core/src/__tests__/integration/alert-evaluator.test.ts`
 - **Work:**
   - Seed `InMemoryMetricsRecorder` with various spike scenarios
@@ -522,6 +561,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 - **Test criteria:** All scenarios pass.
 
 #### Task 4.3 — Update spec-gap-tracker
+
 - **Files:** Modify `docs/spec-gap-tracker.md`
 - **Work:**
   - Move `S25-01` to `DONE` with evidence: route wrapper, dispatcher instrumentation, LLM wrapper, escalation normalization
@@ -554,6 +594,7 @@ PR 1 (Track 0)  ─── contract + wiring ────────────
 ```
 
 **Parallelization:**
+
 - PRs 2, 3, 4, 5 can proceed in parallel after PR 1 merges (they instrument different boundaries)
 - PR 6 can proceed in parallel with Track 1 PRs (DB schema is independent)
 - PR 7 depends on PR 6 (needs the metrics store) and PRs 2/4 (instruments the same code that logging touched)
@@ -562,24 +603,24 @@ PR 1 (Track 0)  ─── contract + wiring ────────────
 
 ## Env Vars (new)
 
-| Variable | Required | Default | Purpose |
-|---|---|---|---|
-| `OPS_ALERT_PHONE_NUMBERS` | No | — | Comma-separated phone numbers for ops alerts. No value = NoopAlertSink. |
-| `ALERT_LLM_ERROR_SPIKE_THRESHOLD` | No | `10` | LLM errors in 15-min window to trigger alert |
-| `ALERT_SCHEMA_FAILURE_SPIKE_THRESHOLD` | No | `5` | Schema failures in 15-min window to trigger alert |
-| `ALERT_ASYNC_BACKLOG_THRESHOLD` | No | `3` | Past-due escalation incidents to trigger alert |
-| `ALERT_COOLDOWN_MINUTES` | No | `30` | Minimum minutes between repeated alerts of same type |
+| Variable                               | Required | Default | Purpose                                                                 |
+| -------------------------------------- | -------- | ------- | ----------------------------------------------------------------------- |
+| `OPS_ALERT_PHONE_NUMBERS`              | No       | —       | Comma-separated phone numbers for ops alerts. No value = NoopAlertSink. |
+| `ALERT_LLM_ERROR_SPIKE_THRESHOLD`      | No       | `10`    | LLM errors in 15-min window to trigger alert                            |
+| `ALERT_SCHEMA_FAILURE_SPIKE_THRESHOLD` | No       | `5`     | Schema failures in 15-min window to trigger alert                       |
+| `ALERT_ASYNC_BACKLOG_THRESHOLD`        | No       | `3`     | Past-due escalation incidents to trigger alert                          |
+| `ALERT_COOLDOWN_MINUTES`               | No       | `30`    | Minimum minutes between repeated alerts of same type                    |
 
 ## Risks and Mitigations
 
-| Risk | Mitigation |
-|---|---|
-| Changing `OrchestratorDependencies` breaks tests | All new fields are optional. Existing tests pass without changes. |
-| `[v2r]` JSON schema drift widens if TS types and JSON schema diverge | PR 1 Task 0.5 updates both in lockstep. Emergency action type drift is fixed in the same task. CI schema validation tests catch future divergence. |
-| `[v2r]` LLM adapter signature change breaks callers | New `ObservabilityContext` param is optional and trailing. Existing calls compile without changes. Only 3 action handlers are updated (PR 4 Task 1c.3). |
+| Risk                                                                        | Mitigation                                                                                                                                                                        |
+| --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Changing `OrchestratorDependencies` breaks tests                            | All new fields are optional. Existing tests pass without changes.                                                                                                                 |
+| `[v2r]` JSON schema drift widens if TS types and JSON schema diverge        | PR 1 Task 0.5 updates both in lockstep. Emergency action type drift is fixed in the same task. CI schema validation tests catch future divergence.                                |
+| `[v2r]` LLM adapter signature change breaks callers                         | New `ObservabilityContext` param is optional and trailing. Existing calls compile without changes. Only 3 action handlers are updated (PR 4 Task 1c.3).                           |
 | `[v2r]` Async `MetricsRecorder.record()` not awaited, writes lost on Vercel | Route wrapper awaits pending metric writes before responding. Dispatcher and LLM wrapper await at action/call boundaries. `NoopMetricsRecorder` resolves synchronously for tests. |
-| `[v2r]` Misconfigured env loses emergency alerts | Direct SMS path preserved unconditionally (D6). `AlertSink` is additive. `NoopAlertSink` fallback only affects the *additional* ops channel, never the primary on-call SMS. |
-| Metrics table grows unbounded | Add retention policy (DELETE rows older than 30 days) as a follow-up migration. Not blocking for MVP. |
-| Alert storms on first enable | Conservative default thresholds + 30-min cooldown with composite `(alert_name, scope)` keys. `OBSERVABILITY_ALERTS_ENABLED` kill switch on the cron route. |
-| Vercel cold starts reset in-memory alert state | Cooldown state persists in Postgres (D4). |
-| Logging adds latency to hot paths | `Logger.log()` is synchronous stdout write (fast). `MetricsRecorder.record()` is a single INSERT, awaited at boundaries. |
+| `[v2r]` Misconfigured env loses emergency alerts                            | Direct SMS path preserved unconditionally (D6). `AlertSink` is additive. `NoopAlertSink` fallback only affects the _additional_ ops channel, never the primary on-call SMS.       |
+| Metrics table grows unbounded                                               | Add retention policy (DELETE rows older than 30 days) as a follow-up migration. Not blocking for MVP.                                                                             |
+| Alert storms on first enable                                                | Conservative default thresholds + 30-min cooldown with composite `(alert_name, scope)` keys. `OBSERVABILITY_ALERTS_ENABLED` kill switch on the cron route.                        |
+| Vercel cold starts reset in-memory alert state                              | Cooldown state persists in Postgres (D4).                                                                                                                                         |
+| Logging adds latency to hot paths                                           | `Logger.log()` is synchronous stdout write (fast). `MetricsRecorder.record()` is a single INSERT, awaited at boundaries.                                                          |
