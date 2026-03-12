@@ -55,6 +55,8 @@ export interface ConversationSession {
   readonly property_id: string | null;
   /** Client ID derived from unit_id via UnitResolver (spec §2.5) */
   readonly client_id: string | null;
+  /** Building ID derived from unit_id via UnitResolver — used for escalation plan selection */
+  readonly building_id: string | null;
   /** Matched risk triggers from deterministic scan (spec §17) */
   readonly risk_triggers: readonly MatchedTrigger[];
   /** Current escalation state */

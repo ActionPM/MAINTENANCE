@@ -23,6 +23,9 @@ export class InMemoryWorkOrderStore implements WorkOrderRepository {
   async listAll(filters?: WorkOrderListFilters): Promise<readonly WorkOrder[]> {
     let results = [...this.store.values()];
 
+    if (filters?.tenant_user_id) {
+      results = results.filter((wo) => wo.tenant_user_id === filters.tenant_user_id);
+    }
     if (filters?.client_id) {
       results = results.filter((wo) => wo.client_id === filters.client_id);
     }

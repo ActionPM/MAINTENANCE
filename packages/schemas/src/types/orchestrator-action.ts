@@ -63,6 +63,10 @@ export interface TenantInputUploadPhotoComplete {
   readonly sha256: string;
 }
 
+export interface TenantInputConfirmEmergency {}
+
+export interface TenantInputDeclineEmergency {}
+
 export interface TenantInputResume {}
 
 export interface TenantInputAbandon {}
@@ -81,6 +85,8 @@ export type TenantInput =
   | TenantInputConfirmSubmission
   | TenantInputUploadPhotoInit
   | TenantInputUploadPhotoComplete
+  | TenantInputConfirmEmergency
+  | TenantInputDeclineEmergency
   | TenantInputResume
   | TenantInputAbandon;
 
@@ -90,6 +96,7 @@ interface OrchestratorActionRequestBase {
   readonly conversation_id: string | null;
   readonly actor: ActorType;
   readonly idempotency_key?: string;
+  readonly request_id?: string;
   readonly auth_context: AuthContext;
 }
 
@@ -145,6 +152,14 @@ export type OrchestratorActionRequest =
   | (OrchestratorActionRequestBase & {
       readonly action_type: 'UPLOAD_PHOTO_COMPLETE';
       readonly tenant_input: TenantInputUploadPhotoComplete;
+    })
+  | (OrchestratorActionRequestBase & {
+      readonly action_type: 'CONFIRM_EMERGENCY';
+      readonly tenant_input: TenantInputConfirmEmergency;
+    })
+  | (OrchestratorActionRequestBase & {
+      readonly action_type: 'DECLINE_EMERGENCY';
+      readonly tenant_input: TenantInputDeclineEmergency;
     })
   | (OrchestratorActionRequestBase & {
       readonly action_type: 'RESUME';

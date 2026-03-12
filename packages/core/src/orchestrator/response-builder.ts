@@ -59,17 +59,41 @@ export function buildResponse(result: ActionHandlerResult): OrchestratorActionRe
     last_activity_at: result.session.last_activity_at,
   };
 
+  // Rehydrate emergency confirmation quick replies from session state (plan §5.7a).
+  // When escalation_state === 'pending_confirmation', always include confirm/decline
+  // quick replies regardless of which handler produced the response.
+  let quickReplies = result.quickReplies?.map((qr) => ({
+    label: qr.label,
+    value: qr.value,
+    action_type: qr.action_type as any,
+  }));
+
+  if (
+    result.session.escalation_state === 'pending_confirmation' &&
+    !quickReplies?.some((qr) => qr.action_type === 'CONFIRM_EMERGENCY')
+  ) {
+    const emergencyReplies = [
+      {
+        label: 'Yes, this is an emergency',
+        value: 'confirm_emergency',
+        action_type: 'CONFIRM_EMERGENCY' as any,
+      },
+      {
+        label: 'No, not an emergency',
+        value: 'decline_emergency',
+        action_type: 'DECLINE_EMERGENCY' as any,
+      },
+    ];
+    quickReplies = [...emergencyReplies, ...(quickReplies ?? [])];
+  }
+
   const directive: UIDirective = {
     messages: result.uiMessages.map((m) => ({
       role: m.role,
       content: m.content,
       timestamp: result.session.last_activity_at,
     })),
-    quick_replies: result.quickReplies?.map((qr) => ({
-      label: qr.label,
-      value: qr.value,
-      action_type: qr.action_type as any,
-    })),
+    quick_replies: quickReplies,
   };
 
   return {

@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/emergency/process-due",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/observability/evaluate-alerts",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}

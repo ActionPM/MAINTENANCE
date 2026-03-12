@@ -119,6 +119,7 @@ describe('E2E: Record bundle through full intake flow', () => {
           unit_id: unitId,
           property_id: 'prop-1',
           client_id: 'client-1',
+          building_id: 'bldg-1',
         }),
       },
       workOrderRepo,

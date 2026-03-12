@@ -51,6 +51,7 @@ function makeSession(state: ConversationState): ConversationSession {
     confirmation_presented: true,
     property_id: 'prop-1',
     client_id: 'client-1',
+    building_id: 'bldg-1',
     risk_triggers: [],
     escalation_state: 'none' as const,
     escalation_plan_id: null,

@@ -8,6 +8,7 @@ export type EventType =
   | 'message_received'
   | 'action_executed'
   | 'photo_attached'
+  | 'emergency_action'
   | 'error_occurred';
 
 /**

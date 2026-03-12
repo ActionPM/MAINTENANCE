@@ -47,6 +47,7 @@ export function createSession(input: CreateSessionInput): ConversationSession {
     confirmation_presented: false,
     property_id: null,
     client_id: null,
+    building_id: null,
     risk_triggers: [],
     escalation_state: 'none',
     escalation_plan_id: null,
@@ -245,6 +246,17 @@ export function setSessionScope(
   scope: ScopeInput,
 ): ConversationSession {
   return { ...session, property_id: scope.property_id, client_id: scope.client_id };
+}
+
+/**
+ * Set building ID on the session (derived from UnitResolver).
+ * Used for escalation plan selection.
+ */
+export function setBuildingId(
+  session: ConversationSession,
+  buildingId: string,
+): ConversationSession {
+  return { ...session, building_id: buildingId };
 }
 
 export function setRiskTriggers(

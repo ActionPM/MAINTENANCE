@@ -61,6 +61,7 @@ describe('SELECT_UNIT resolves scope via UnitResolver', () => {
           unit_id: unitId,
           property_id: `prop-for-${unitId}`,
           client_id: `client-for-${unitId}`,
+          building_id: 'bldg-1',
         }),
       },
       workOrderRepo: new InMemoryWorkOrderStore(),
@@ -91,6 +92,7 @@ describe('SELECT_UNIT resolves scope via UnitResolver', () => {
 
     expect(selectResult.session.property_id).toBe('prop-for-unit-A');
     expect(selectResult.session.client_id).toBe('client-for-unit-A');
+    expect(selectResult.session.building_id).toBe('bldg-1');
   });
 
   it('returns error if UnitResolver returns null', async () => {

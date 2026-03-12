@@ -24,7 +24,7 @@
 1. **Taxonomy is authoritative** — no free-text categories, ever. Every category value must exist in `taxonomy.json`.
 2. **Split first** — the classifier CANNOT run until split is finalized. Enforce in orchestrator: reject `START_CLASSIFICATION` unless state === `split_finalized`.
 3. **Schema-lock all model outputs** — every LLM response is validated against its JSON Schema. Invalid → deterministic retry (1x) → fail safe. Never trust raw model output.
-4. **No side effects without tenant confirmation** — WO creation, notifications, and escalation only happen after explicit tenant `CONFIRM_SUBMISSION`.
+4. **No side effects without tenant confirmation** — WO creation, notifications, and escalation only happen after explicit confirmation: `CONFIRM_SUBMISSION` for work orders, `CONFIRM_EMERGENCY` for escalation (spec §17.1).
 5. **Unit/property derived from membership** — server derives authorized units from `tenant_user_id`. Tenant cannot set `unit_id` or `property_id` directly.
 6. **Append-only events** — event tables are INSERT + SELECT only. Corrections append new events; effective state is the latest approved event. No UPDATE, no DELETE.
 7. **Emergency escalation is deterministic** — model suggests risk, deterministic code confirms and routes. Never let the LLM execute escalation directly.
@@ -55,9 +55,9 @@ Do NOT skip ahead. Each phase depends on the previous.
 | 5     | Classifier + `classification_cues.json` + category gating retry + confidence heuristic + tests | `IssueClassifier` tool, cue dict, confidence calc   |
 | 6     | Follow-up generator + termination caps + `followup_events` + tests                             | `FollowUpGenerator` tool                            |
 | 7     | Tenant confirmation UI + staleness checks                                                      | Confirmation gate, staleness logic                  |
-| 8     | Transactional WO creation + idempotency + optimistic locking                                   | WO service, `row_version`                           |
+| 8     | Transactional WO creation + idempotency + work-order optimistic locking                        | WO service, `row_version`                           |
 | 9     | Risk protocols + mitigation templates + emergency router + exhaustion path                     | Risk engine, emergency chain                        |
-| 10    | Notifications (batch/dedupe/prefs/consent)                                                     | Notification service                                |
+| 10    | Notifications (delivery path first; tenant history/prefs can follow)                           | Notification service                                |
 | 11    | Record bundle export (JSON)                                                                    | Export endpoint                                     |
 | 12    | Mock ERP adapter + simulated status updates                                                    | `ERPAdapter` interface + mock                       |
 | 13    | Analytics slicing endpoints                                                                    | Analytics API                                       |
@@ -231,17 +231,21 @@ If caps exhausted and still incomplete → create WO with `needs_human_triage`, 
 
 ## Database Rules
 
-### Event tables (append-only)
+### Event domains (append-only)
 
 `conversation_events`, `classification_events`, `followup_events`, `work_order_events`, `risk_events`, `notification_events`, `human_override_events`
 
+- These names define the logical event domains and payload contracts.
+- Accepted MVP decision: physical storage may consolidate conversation-scoped domains into a generic append-only stream instead of seven separate tables.
+- Even in the consolidated model, persisted rows must preserve domain identifiers such as `issue_id` and `work_order_id`.
 - App role: INSERT + SELECT only — no UPDATE, no DELETE grants
 - Optional trigger guards for extra safety
 - Every event has an `event_id` and `created_at`
 
 ### Mutable tables
 
-- Use `row_version` for optimistic locking
+- Use `row_version` for optimistic locking on concurrency-sensitive mutable records, especially work orders
+- Accepted MVP decision: conversation sessions may remain dispatcher-mediated last-write-wins instead of `row_version`/CAS
 - Every side effect needs an `idempotency_key`
 - Multi-WO creation in one DB transaction
 
@@ -344,7 +348,7 @@ packages/
 - Writing UPDATE/DELETE on event tables — only INSERT + SELECT
 - Skipping schema validation on "simple" LLM responses — validate everything
 - Conflating conversation state with WO status — they are independent lifecycles
-- Allowing side effects before `CONFIRM_SUBMISSION` — WO creation, notifications, escalation all require confirmation
+- Allowing side effects before confirmation — WO creation/notifications require `CONFIRM_SUBMISSION`, escalation requires `CONFIRM_EMERGENCY`
 - Hardcoding taxonomy values in application code — always read from `taxonomy.json`
 - Forgetting idempotency keys on side-effect actions
 - Accepting model confidence at face value — clamp to [0.2, 0.95] and blend with cue_strength

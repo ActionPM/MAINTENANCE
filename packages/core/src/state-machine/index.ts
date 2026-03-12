@@ -5,6 +5,8 @@ export {
   TRANSITION_MATRIX,
   PHOTO_ACTIONS,
   isPhotoAction,
+  EMERGENCY_ACTIONS,
+  isEmergencyAction,
   type TransitionTrigger,
 } from './transition-matrix.js';
 

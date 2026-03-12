@@ -22,6 +22,8 @@ export interface WorkOrderEvent {
  * All fields optional — omitted fields mean "no filter".
  */
 export interface WorkOrderListFilters {
+  /** Filter to WOs owned by this tenant user (ownership scope). */
+  readonly tenant_user_id?: string;
   readonly client_id?: string;
   readonly property_id?: string;
   readonly unit_id?: string;

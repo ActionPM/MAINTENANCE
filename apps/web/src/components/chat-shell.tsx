@@ -51,6 +51,10 @@ export function ChatShell({ token, unitIds }: ChatShellProps) {
           return conv.confirmSubmission();
         case 'SELECT_UNIT':
           return conv.selectUnit(reply.value);
+        case 'CONFIRM_EMERGENCY':
+          return conv.confirmEmergency();
+        case 'DECLINE_EMERGENCY':
+          return conv.declineEmergency();
         case 'RESUME':
           return conv.resumeConversation(conv.conversationId!);
         default:
@@ -75,7 +79,29 @@ export function ChatShell({ token, unitIds }: ChatShellProps) {
   }
 
   const messages = (directive as any)?.messages ?? [];
-  const quickReplies = (directive as any)?.quick_replies ?? [];
+  let quickReplies = (directive as any)?.quick_replies ?? [];
+
+  // Client-side synthesis: rehydrate emergency confirmation quick replies from
+  // snapshot state on reload/resume (plan §5.7b). The GET read path returns
+  // snapshot-only (no ui_directive), so the client reconstructs these.
+  if (
+    snapshot?.risk_summary?.escalation_state === 'pending_confirmation' &&
+    !quickReplies.some((r: any) => r.action_type === 'CONFIRM_EMERGENCY')
+  ) {
+    quickReplies = [
+      {
+        label: 'Yes, this is an emergency',
+        value: 'confirm_emergency',
+        action_type: 'CONFIRM_EMERGENCY',
+      },
+      {
+        label: 'No, not an emergency',
+        value: 'decline_emergency',
+        action_type: 'DECLINE_EMERGENCY',
+      },
+      ...quickReplies,
+    ];
+  }
 
   return (
     <div className={styles.shell}>

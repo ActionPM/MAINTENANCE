@@ -95,6 +95,7 @@ describe('e2e toilet leak scenario', () => {
       confirmation_presented: false,
       property_id: 'prop-1',
       client_id: 'client-1',
+      building_id: 'bldg-1',
       risk_triggers: [],
       escalation_state: 'none',
       escalation_plan_id: null,

@@ -102,6 +102,16 @@ export function useConversation(token: string) {
     return dispatch(api.confirmSubmission, token, conversationId);
   }, [token, conversationId]);
 
+  const confirmEmergency = useCallback(() => {
+    if (!conversationId) return Promise.resolve();
+    return dispatch(api.confirmEmergency, token, conversationId);
+  }, [token, conversationId]);
+
+  const declineEmergency = useCallback(() => {
+    if (!conversationId) return Promise.resolve();
+    return dispatch(api.declineEmergency, token, conversationId);
+  }, [token, conversationId]);
+
   const resumeConversation = useCallback(
     (id: string) => dispatch(api.resumeConversation, token, id),
     [token],
@@ -123,6 +133,8 @@ export function useConversation(token: string) {
     addIssue,
     answerFollowups,
     confirmSubmission,
+    confirmEmergency,
+    declineEmergency,
     resumeConversation,
   };
 }

@@ -17,6 +17,20 @@ export function isPhotoAction(trigger: TransitionTrigger): trigger is ActionType
 }
 
 /**
+ * Emergency sidecar actions: valid from any non-terminal state when
+ * escalation_state === 'pending_confirmation'. Don't change conversation state.
+ * Handled as a special case outside the matrix (plan §3.1, §3.9).
+ */
+export const EMERGENCY_ACTIONS: ReadonlySet<ActionType> = new Set([
+  ActionType.CONFIRM_EMERGENCY,
+  ActionType.DECLINE_EMERGENCY,
+]);
+
+export function isEmergencyAction(trigger: TransitionTrigger): trigger is ActionType {
+  return EMERGENCY_ACTIONS.has(trigger as ActionType);
+}
+
+/**
  * States a conversation can resume to from intake_abandoned (spec §11.2).
  * The actual target is resolved by a guard using the stored prior_state.
  */

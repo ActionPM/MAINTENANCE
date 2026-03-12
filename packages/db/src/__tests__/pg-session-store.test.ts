@@ -59,6 +59,7 @@ describe('PostgresSessionStore', () => {
       confirmation_presented: false,
       property_id: null,
       client_id: null,
+      building_id: null,
       risk_triggers: [],
       escalation_state: { status: 'none' },
       escalation_plan_id: null,

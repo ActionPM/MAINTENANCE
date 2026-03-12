@@ -117,6 +117,7 @@ describe('E2E: Notification flow through dispatcher', () => {
           unit_id: unitId,
           property_id: 'prop-1',
           client_id: 'client-1',
+          building_id: 'bldg-1',
         }),
       },
       workOrderRepo: new InMemoryWorkOrderStore(),

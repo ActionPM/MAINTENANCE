@@ -20,6 +20,7 @@ export {
   setSessionScope,
   setRiskTriggers,
   setEscalationState,
+  setBuildingId,
   type ExpirationConfig,
   type ConfirmationTrackingInput,
   type ScopeInput,

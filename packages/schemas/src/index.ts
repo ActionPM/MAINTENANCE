@@ -60,6 +60,8 @@ export type {
   TenantInputConfirmSubmission,
   TenantInputUploadPhotoInit,
   TenantInputUploadPhotoComplete,
+  TenantInputConfirmEmergency,
+  TenantInputDeclineEmergency,
   TenantInputResume,
   TenantInputAbandon,
   UIMessage,
@@ -105,6 +107,10 @@ export type {
   ResolutionInfo,
 } from './types/record-bundle.js';
 
+export {
+  EscalationIncidentStatus,
+  EscalationAttemptOutcome,
+} from './types/risk.js';
 export type {
   RiskSeverity,
   TriggerGrammar,
@@ -120,6 +126,8 @@ export type {
   EscalationState,
   EscalationAttempt,
   EscalationResult,
+  EscalationContactAttempt,
+  EscalationIncident,
 } from './types/risk.js';
 
 export type {

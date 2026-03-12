@@ -1,0 +1,31 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { ActionType, ActorType } from '@wo-agent/schemas';
+import { authenticateRequest } from '@/middleware/auth';
+import { checkRateLimit } from '@/middleware/rate-limiter';
+import { getOrchestrator } from '@/lib/orchestrator-factory';
+import { withObservedRoute } from '@/lib/observability/with-observed-route';
+
+export const POST = withObservedRoute('conversations:confirm-emergency', async (request: NextRequest, ctx, { params }: { params: Promise<{ id: string }> }) => {
+  const authResult = await authenticateRequest(request);
+  if (authResult instanceof NextResponse) return authResult;
+
+  const rateLimitResult = checkRateLimit(
+    authResult.tenant_user_id,
+    'max_messages_per_minute_per_user',
+  );
+  if (rateLimitResult) return rateLimitResult;
+
+  const { id } = await params;
+
+  const dispatch = getOrchestrator();
+  const result = await dispatch({
+    conversation_id: id,
+    action_type: ActionType.CONFIRM_EMERGENCY,
+    actor: ActorType.TENANT,
+    tenant_input: {},
+    auth_context: authResult,
+    request_id: ctx.request_id,
+  });
+
+  return NextResponse.json(result.response);
+});

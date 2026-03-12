@@ -2,6 +2,7 @@ export interface UnitInfo {
   readonly unit_id: string;
   readonly property_id: string;
   readonly client_id: string;
+  readonly building_id: string;
 }
 
 /**

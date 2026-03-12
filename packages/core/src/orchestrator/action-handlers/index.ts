@@ -10,6 +10,8 @@ import { handleStartClassification } from './start-classification.js';
 import { handleAnswerFollowups } from './answer-followups.js';
 import { handleConfirmSubmission } from './confirm-submission.js';
 import { handlePhotoUpload } from './photo-upload.js';
+import { handleConfirmEmergency } from './confirm-emergency.js';
+import { handleDeclineEmergency } from './decline-emergency.js';
 import { handleResume } from './resume.js';
 import { handleAbandon } from './abandon.js';
 
@@ -29,6 +31,8 @@ const HANDLER_MAP: Record<string, ActionHandler> = {
   [ActionType.CONFIRM_SUBMISSION]: handleConfirmSubmission,
   [ActionType.UPLOAD_PHOTO_INIT]: handlePhotoUpload,
   [ActionType.UPLOAD_PHOTO_COMPLETE]: handlePhotoUpload,
+  [ActionType.CONFIRM_EMERGENCY]: handleConfirmEmergency,
+  [ActionType.DECLINE_EMERGENCY]: handleDeclineEmergency,
   [ActionType.RESUME]: handleResume,
   [ActionType.ABANDON]: handleAbandon,
   [SystemEvent.START_CLASSIFICATION]: handleStartClassification,

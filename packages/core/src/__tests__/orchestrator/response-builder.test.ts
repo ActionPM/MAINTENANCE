@@ -34,6 +34,7 @@ const mockSession: ConversationSession = {
   confirmation_presented: false,
   property_id: null,
   client_id: null,
+  building_id: null,
   risk_triggers: [],
   escalation_state: 'none' as const,
   escalation_plan_id: null,

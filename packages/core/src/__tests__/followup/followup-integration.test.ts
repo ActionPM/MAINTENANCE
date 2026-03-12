@@ -159,6 +159,7 @@ function makeDeps(overrides?: {
         unit_id: unitId,
         property_id: `prop-for-${unitId}`,
         client_id: `client-for-${unitId}`,
+        building_id: 'bldg-1',
       }),
     },
     workOrderRepo: new InMemoryWorkOrderStore(),

@@ -1,6 +1,6 @@
 import type { TenantInputSelectUnit } from '@wo-agent/schemas';
 import { resolveSelectUnit } from '../../state-machine/guards.js';
-import { setSessionUnit, setSessionScope } from '../../session/session.js';
+import { setSessionUnit, setSessionScope, setBuildingId } from '../../session/session.js';
 import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
 
 export async function handleSelectUnit(ctx: ActionHandlerContext): Promise<ActionHandlerResult> {
@@ -47,6 +47,7 @@ export async function handleSelectUnit(ctx: ActionHandlerContext): Promise<Actio
     property_id: unitInfo.property_id,
     client_id: unitInfo.client_id,
   });
+  updatedSession = setBuildingId(updatedSession, unitInfo.building_id);
 
   return {
     newState: targetState,

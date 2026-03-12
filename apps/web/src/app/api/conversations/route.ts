@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { ActionType, ActorType } from '@wo-agent/schemas';
 import { authenticateRequest } from '@/middleware/auth';
 import { checkRateLimit } from '@/middleware/rate-limiter';

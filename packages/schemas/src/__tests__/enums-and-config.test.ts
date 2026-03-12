@@ -126,8 +126,8 @@ describe('WorkOrderStatus', () => {
 });
 
 describe('ActionType', () => {
-  it('defines exactly 15 action types', () => {
-    expect(ALL_ACTION_TYPES).toHaveLength(15);
+  it('defines exactly 17 action types', () => {
+    expect(ALL_ACTION_TYPES).toHaveLength(17);
   });
 
   it('includes all spec §10.3 action types', () => {

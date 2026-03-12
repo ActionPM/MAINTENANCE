@@ -70,6 +70,10 @@ export class PostgresWorkOrderStore implements WorkOrderRepository {
     const values: unknown[] = [];
     let idx = 1;
 
+    if (filters?.tenant_user_id) {
+      conditions.push(`tenant_user_id = $${idx++}`);
+      values.push(filters.tenant_user_id);
+    }
     if (filters?.client_id) {
       conditions.push(`client_id = $${idx++}`);
       values.push(filters.client_id);

@@ -148,7 +148,7 @@ Issue group is linkage only; **no aggregate group status** stored.
 
 ## 7) Append-only events and immutability
 
-Event tables (append-only):
+Logical event domains (append-only):
 
 - `conversation_events`
 - `classification_events`
@@ -157,6 +157,12 @@ Event tables (append-only):
 - `risk_events`
 - `notification_events`
 - `human_override_events`
+
+Accepted MVP decision (2026-03-11):
+
+- These names define the event domains and payload contracts, not a hard requirement for seven physical tables in the first release.
+- MVP may consolidate conversation-scoped event domains into a generic append-only event stream if each row preserves `event_type` plus the relevant domain identifiers such as `issue_id` and `work_order_id`.
+- A later move to seven dedicated physical tables remains allowed, but it is not required for MVP compliance.
 
 ### 7.1 Follow-up event minimum schema
 
@@ -508,13 +514,66 @@ Follow-ups must be recorded in `followup_events` with the schema in §7.1.
 - Emergency router executes per-building chain; logs attempts.
 - Exhaustion sets escalation_state=exhausted, triggers internal secondary alert, provides safe tenant message, optional retries.
 
+### 17.1) Emergency confirmation action types
+
+Emergency confirmation uses two **sidecar action types** that operate orthogonally to the main conversation state machine:
+
+- **`CONFIRM_EMERGENCY`** — Tenant confirms the emergency. Sets `escalation_state` from `pending_confirmation` to `routing`, creates an escalation incident, and kicks off the async escalation coordinator. This is an explicit exception to non-negotiable #4 ("no side effects before CONFIRM_SUBMISSION"): emergency escalation may execute before work order submission, but only after explicit tenant confirmation.
+- **`DECLINE_EMERGENCY`** — Tenant declines the emergency. Sets `escalation_state` from `pending_confirmation` to `none`. Returns safety messaging. No escalation incident is created.
+
+Both are **sidecar actions**: they do not change the conversation `state` field. They are valid from any non-terminal conversation state when `session.escalation_state === 'pending_confirmation'`. They are rejected if `escalation_state` is any other value.
+
+These actions are the second named exception set in the transition matrix (alongside photo actions). The dispatcher enforces that no more than these two named exception sets exist.
+
+Quick-reply payloads for emergency confirmation include `action_type: 'CONFIRM_EMERGENCY'` and `action_type: 'DECLINE_EMERGENCY'` so the client dispatches them correctly. On reload/resume, the client synthesizes these quick replies from `risk_summary.escalation_state === 'pending_confirmation'` in the conversation snapshot.
+
+### 17.2) Escalation runtime behavior
+
+The escalation coordinator implements an asynchronous, multi-step workflow:
+
+1. **Tenant confirms emergency** → `CONFIRM_EMERGENCY` handler creates an `EscalationIncident` record and initiates the first contact attempt.
+2. **For each contact in the building's chain:**
+   - Place a voice call (alerting only — no DTMF/IVR).
+   - On call completion (answered or not), send an SMS prompt: "Reply ACCEPT to take ownership or IGNORE to pass."
+   - Wait for SMS reply (default: 120 seconds).
+3. **ACCEPT reply** → Incident claimed. Stand-down SMS sent to all previously contacted phones (excluding acceptor). Incident closed.
+4. **IGNORE reply** → Advance to next contact in chain.
+5. **No reply (timeout)** → Advance to next contact in chain (processed by cron).
+6. **Chain exhausted** → Internal alert SMS sent to ops number. Cycle counter incremented. If below max cycles (default: 3), retry from top of chain after configured delay. If max cycles reached, incident closed as `exhausted_final`.
+
+**Acceptance canonicality:** Acceptance is keyed by phone number (E.164), not contact_id. `accepted_by_phone` is the authoritative acceptance identity. Phone numbers are deduped within each retry cycle.
+
+**Concurrent safety:** The incident store uses compare-and-swap (CAS) on `row_version` for all updates. Cron runs claim incidents with a processing lock (default: 90 seconds) before acting. Provider actions are tagged with idempotency keys to prevent duplicate calls/SMS on overlapping cron runs.
+
+### 17.3) Feature flag and fail-closed behavior
+
+Emergency routing is gated by the `EMERGENCY_ROUTING_ENABLED` environment variable. When `false` or unset:
+
+- `CONFIRM_EMERGENCY` returns `EMERGENCY_ROUTING_UNAVAILABLE` error with safe 911 messaging. Writes an audit event. Does not advance `escalation_state` (remains at `pending_confirmation`).
+- `DECLINE_EMERGENCY` works normally.
+- Cron processor skips all incidents.
+- `startIncident()` throws if called (defense-in-depth).
+
+### 17.4) Webhook and cron surfaces
+
+| Route | Method | Purpose |
+|---|---|---|
+| `/api/webhooks/twilio/voice-status` | POST | Voice call completion callback (Twilio signature validated) |
+| `/api/webhooks/twilio/sms-reply` | POST | Inbound ACCEPT/IGNORE replies (Twilio signature validated) |
+| `/api/cron/emergency/process-due` | GET | Cron-triggered: process timeouts, advance chain, schedule retries (Bearer token auth) |
+
+### 17.5) Observability
+
+The escalation coordinator emits structured JSON logs (`component: 'escalation_coordinator'`) for: incident started, call placed/failed, SMS sent/failed, reply received, incident claimed, CAS conflicts, cycle exhaustion, internal alerts, cron execution. All risk actions are recorded as append-only events in the conversation event log.
+
 ---
 
 ## 18) Concurrency, idempotency, and atomicity
 
 - Idempotency keys for WO creation and notifications.
 - Multi-WO creation is one DB transaction.
-- Optimistic locking with row_version.
+- Optimistic locking with `row_version` is required for mutable business records that may be concurrently edited, especially work orders.
+- Accepted MVP decision (2026-03-11): conversation session persistence may remain dispatcher-mediated last-write-wins instead of `row_version`/CAS, as long as session writes stay behind the orchestrator boundary and this behavior is documented.
 - Work orders independent post-creation; no group status stored.
 
 ---
@@ -570,6 +629,8 @@ Mock returns EXT-uuid and simulates transitions via polling or test endpoint.
 
 ### 24.1 Endpoints
 
+Required MVP surface:
+
 Conversations:
 
 - POST /conversations
@@ -598,6 +659,12 @@ Photos:
 - POST /photos/init
 - POST /photos/complete
 
+Analytics:
+
+- GET /analytics
+
+Deferred secondary/admin surface (accepted MVP decision, 2026-03-11):
+
 Notifications:
 
 - GET /notifications
@@ -606,7 +673,6 @@ Notifications:
 Overrides (minimal):
 
 - POST /overrides
-- GET /analytics
 
 ### 24.2 Payload schema rule (authoritative)
 
@@ -618,7 +684,8 @@ Every endpoint request body maps directly to `OrchestratorActionRequest.tenant_i
 
 - Structured JSON logs with request_id, ids, action, state, latency, error codes.
 - Metrics: LLM latency/errors, state durations, abandonment rate, escalation exhaustion, notification failures, schema failures.
-- Health checks: /health, /health/db, /health/llm, /health/storage, /health/notifications
+- Required MVP health check: `/health`
+- Optional dependency-specific health sub-routes: `/health/db`, `/health/llm`, `/health/storage`, `/health/notifications`, or adapter-specific routes such as `/health/erp`
 - Alerts: escalation exhausted, LLM error spike, schema failures spike, async backlog.
 
 ---
@@ -657,9 +724,9 @@ AGENTS.md must include non-negotiables, commands, plan-first, TDD, taxonomy gove
 5. Classifier + **classification_cues.json** + category gating retry + confidence heuristic + tests
 6. Follow-up generator + termination caps + followup_events + tests
 7. Tenant confirmation UI + staleness checks
-8. Transactional WO creation + idempotency + optimistic locking
+8. Transactional WO creation + idempotency + work-order optimistic locking
 9. Risk protocols + mitigation templates + emergency router + exhaustion path
-10. Notifications (batch/dedupe/prefs/consent)
+10. Notifications (delivery path first; tenant history/prefs can follow)
 11. Record bundle export (JSON)
 12. Mock ERP adapter + simulated status updates
 13. Analytics slicing endpoints + dashboards (MVP-lite)

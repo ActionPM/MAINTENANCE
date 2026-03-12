@@ -88,7 +88,7 @@ describe('Integration — barrel import', () => {
     expect(ALL_CONVERSATION_STATES).toHaveLength(14);
     expect(RESUMABLE_STATES.size).toBe(7);
     expect(ALL_WORK_ORDER_STATUSES).toHaveLength(5);
-    expect(ALL_ACTION_TYPES).toHaveLength(15);
+    expect(ALL_ACTION_TYPES).toHaveLength(17);
     expect(ALL_ACTOR_TYPES).toHaveLength(4);
     expect(DEFAULT_RATE_LIMITS).toBeDefined();
     expect(DEFAULT_CONFIDENCE_CONFIG).toBeDefined();

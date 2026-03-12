@@ -9,31 +9,31 @@
           "role": "building_manager",
           "contact_id": "contact-bm-001",
           "name": "Example Building Manager",
-          "phone": "+16475550101"
+          "phone": "+16479855458"
         },
         {
           "role": "property_manager",
           "contact_id": "contact-pm-001",
           "name": "Example Property Manager",
-          "phone": "+16475550102"
+          "phone": "+16479855458"
         },
         {
           "role": "senior_property_manager",
           "contact_id": "contact-spm-001",
           "name": "Example Senior PM",
-          "phone": "+16475550103"
+          "phone": "+16479855458"
         },
         {
           "role": "fallback_after_hours",
           "contact_id": "contact-fallback-001",
           "name": "After-Hours Emergency Line",
-          "phone": "+18005550199"
+          "phone": "+16479855458"
         }
       ],
       "exhaustion_behavior": {
         "internal_alert": true,
         "tenant_message_template": "We were unable to reach building management. Your emergency has been logged and an internal alert has been raised. If this is a life-threatening emergency, please call 911.",
-        "retry_after_minutes": 15
+        "retry_after_minutes": 5
       }
     }
   ]

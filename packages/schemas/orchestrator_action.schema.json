@@ -31,6 +31,8 @@
         "CONFIRM_SUBMISSION",
         "UPLOAD_PHOTO_INIT",
         "UPLOAD_PHOTO_COMPLETE",
+        "CONFIRM_EMERGENCY",
+        "DECLINE_EMERGENCY",
         "RESUME",
         "ABANDON"
       ]
@@ -159,6 +161,14 @@
       "type": "object",
       "additionalProperties": false
     },
+    "TenantInputConfirmEmergency": {
+      "type": "object",
+      "additionalProperties": false
+    },
+    "TenantInputDeclineEmergency": {
+      "type": "object",
+      "additionalProperties": false
+    },
     "OrchestratorActionRequest": {
       "type": "object",
       "properties": {
@@ -169,6 +179,7 @@
         "actor": { "$ref": "#/definitions/ActorType" },
         "tenant_input": {},
         "idempotency_key": { "type": "string" },
+        "request_id": { "type": "string" },
         "auth_context": { "$ref": "#/definitions/AuthContext" }
       },
       "required": ["action_type", "actor", "tenant_input", "auth_context"],
@@ -298,6 +309,28 @@
           "then": {
             "properties": {
               "tenant_input": { "$ref": "#/definitions/TenantInputUploadPhotoComplete" }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "action_type": { "const": "CONFIRM_EMERGENCY" } },
+            "required": ["action_type"]
+          },
+          "then": {
+            "properties": {
+              "tenant_input": { "$ref": "#/definitions/TenantInputConfirmEmergency" }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "action_type": { "const": "DECLINE_EMERGENCY" } },
+            "required": ["action_type"]
+          },
+          "then": {
+            "properties": {
+              "tenant_input": { "$ref": "#/definitions/TenantInputDeclineEmergency" }
             }
           }
         },

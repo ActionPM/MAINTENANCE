@@ -167,6 +167,28 @@ export function confirmSubmission(
   });
 }
 
+// --- Emergency ---
+
+export function confirmEmergency(
+  token: string,
+  conversationId: string,
+): Promise<OrchestratorActionResponse> {
+  return request(`/api/conversations/${conversationId}/confirm-emergency`, token, {
+    method: 'POST',
+    body: '{}',
+  });
+}
+
+export function declineEmergency(
+  token: string,
+  conversationId: string,
+): Promise<OrchestratorActionResponse> {
+  return request(`/api/conversations/${conversationId}/decline-emergency`, token, {
+    method: 'POST',
+    body: '{}',
+  });
+}
+
 // --- Resume & drafts ---
 
 export function resumeConversation(
