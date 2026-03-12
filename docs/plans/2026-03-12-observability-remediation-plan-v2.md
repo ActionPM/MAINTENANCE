@@ -442,6 +442,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
 
 - **Files:** Create `packages/db/src/migrations/009-alert-cooldowns.sql`, create `packages/db/src/repos/pg-alert-cooldown-store.ts`
 - **Work:**
+
   ```sql
   CREATE TABLE IF NOT EXISTS alert_cooldowns (
     alert_name       TEXT NOT NULL,
@@ -456,6 +457,7 @@ CREATE TABLE IF NOT EXISTS alert_cooldowns (
   - `recordAlert(alertName, scope)` → upsert `last_alerted_at` for `(alert_name, scope)`
   - In-memory implementation for tests: `InMemoryAlertCooldownStore`
   - Default `scope` is `'_global'` — callers that don't need per-component granularity omit it
+
 - **Test criteria:** Record alert for `('llm_error_spike', 'classifier')` → immediate re-check for same key returns false. Check for `('llm_error_spike', 'splitter')` returns true (independent cooldown). Wait past cooldown → returns true.
 
 #### Task 3.3 — `[v2r]` Alert evaluator with explicit data source separation
