@@ -20,3 +20,5 @@ export { callIssueClassifier, ClassifierError, ClassifierErrorCode } from './iss
 export type { ClassifierResult } from './issue-classifier.js';
 
 export { resolveValidOptions, resolveConstraintImpliedFields } from './constraint-resolver.js';
+
+export type { ClassificationEvent } from './classification-event.js';

@@ -1,0 +1,18 @@
+{
+  "manifest_id": "gold-b-v0.1",
+  "dataset_type": "gold-b",
+  "taxonomy_version": "2.0.0",
+  "schema_version": "1.0.0",
+  "example_count": 30,
+  "purpose": "Confidence band tuning — examples with ambiguous or borderline classifications to calibrate confidence thresholds",
+  "slice_coverage": {
+    "borderline_maintenance_management": 6,
+    "ambiguous_location": 5,
+    "multi_field_uncertainty": 5,
+    "low_information_density": 4,
+    "high_confidence_baseline": 5,
+    "category_contradiction": 5
+  },
+  "created_at": "2026-03-13T00:00:00Z",
+  "description": "Gold Set B — confidence tuning dataset with ambiguous examples designed to stress-test confidence band thresholds (spec §14.3)"
+}

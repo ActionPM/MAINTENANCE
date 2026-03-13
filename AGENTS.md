@@ -4,10 +4,16 @@
 
 ### Source of Truth
 
-- Build spec: `docs/spec.md` (authoritative; see final section for precedence rules)
-- Schemas: `packages/schemas/` (all model outputs validate against these)
-- Taxonomy: `packages/schemas/taxonomy.json` (verbatim; no free-text categories)
-- This file: implementation guardrails — does NOT override the spec
+| Artifact            | Canonical path                   | Mirrors / notes                                                                                           |
+| ------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Build spec          | `docs/spec.md`                   | Root `SPEC.MD` is the original hand-off snapshot (frozen); `docs/spec.md` has all MVP deferral amendments |
+| Schemas             | `packages/schemas/`              | All model outputs validate against these                                                                  |
+| Taxonomy            | `packages/schemas/taxonomy.json` | `docs/taxonomy.json` is a convenience copy; always update the canonical path first                        |
+| Plans               | `docs/plans/`                    | One directory, no root `PLANS.md` needed                                                                  |
+| RFCs                | `docs/rfcs/`                     | Taxonomy governance and design proposals                                                                  |
+| Security boundaries | `docs/security-boundaries.md`    | Trust zones, auth model, data isolation                                                                   |
+| Retention policy    | `docs/retention-policy.md`       | Event retention, PII, session lifecycle                                                                   |
+| This file           | `AGENTS.md`                      | Implementation guardrails — does NOT override the spec                                                    |
 
 ### Authority Order (when anything is ambiguous)
 
@@ -335,8 +341,7 @@ packages/
 
 ### Code patterns
 
-- Orchestrator is a pure function: `(state, action) → (newState, sideEffects[])`
-- Side effects are executed AFTER state transition succeeds
+- Orchestrator dispatches to per-action-type handlers. Each handler validates the transition, performs its work (including LLM calls, event persistence, notifications, and WO creation), and returns the new state + response. Side effects are executed inline within the handler, not deferred. The dispatcher is the sole entry point — no other component may transition state, call LLM tools, create work orders, send notifications, or write events.
 - All LLM calls go through the validation pipeline (parse → schema → domain → accept/retry/fail)
 - Never import LLM tools directly outside the orchestrator
 - Use typed discriminated unions for action types

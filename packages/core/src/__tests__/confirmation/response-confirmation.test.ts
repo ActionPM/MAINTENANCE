@@ -55,6 +55,7 @@ function makeSession(state: ConversationState): ConversationSession {
     risk_triggers: [],
     escalation_state: 'none' as const,
     escalation_plan_id: null,
+    queued_messages: [],
   };
 }
 

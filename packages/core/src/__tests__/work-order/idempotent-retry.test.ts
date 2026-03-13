@@ -67,6 +67,7 @@ function makeSession(overrides: Partial<ConversationSession> = {}): Conversation
     risk_triggers: [],
     escalation_state: 'none' as const,
     escalation_plan_id: null,
+    queued_messages: [],
     ...overrides,
   };
 }

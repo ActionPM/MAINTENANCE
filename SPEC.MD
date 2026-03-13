@@ -1,7 +1,9 @@
 # Service Request Intake and Triage Agent
 
-**Final hand-off build spec (single source of truth)**  
-Version: 2026-02-23 (America/Toronto)  
+> **Note:** This is the original hand-off spec snapshot. The canonical, actively maintained copy lives at [`docs/spec.md`](docs/spec.md). All MVP deferral amendments and runtime clarifications are applied there. Treat `docs/spec.md` as the single source of truth.
+
+**Final hand-off build spec (single source of truth)**
+Version: 2026-02-23 (America/Toronto)
 Stack: TypeScript + Next.js + PostgreSQL + pnpm workspaces + JSON Schema + Object storage (presigned uploads)
 
 ---

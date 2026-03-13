@@ -88,17 +88,20 @@ function buildCtx(message: string, overrides?: Record<string, unknown>): ActionH
 }
 
 describe('submit-initial-message risk scanning', () => {
-  it('includes mitigation message when emergency keyword detected', async () => {
+  it('suppresses mitigation for requires_confirmation triggers until emergency confirmed (S17-04)', async () => {
     const ctx = buildCtx('There is fire in my kitchen');
     const result = await handleSubmitInitialMessage(ctx);
 
     // Normal split flow still works
     expect(result.newState).toBe(ConversationState.SPLIT_PROPOSED);
 
-    // Mitigation message included
+    // Mitigation message is NOT shown for requires_confirmation triggers
     const allContent = result.uiMessages.map((m) => m.content).join(' ');
-    expect(allContent).toContain('Fire Safety');
-    expect(allContent).toContain('911');
+    expect(allContent).not.toContain('Fire Safety');
+    expect(allContent).not.toContain('911');
+
+    // But escalation state is set and quick replies are offered
+    expect(result.session.escalation_state).toBe('pending_confirmation');
   });
 
   it('stores risk triggers on session', async () => {
@@ -138,7 +141,7 @@ describe('submit-initial-message risk scanning', () => {
     expect(qrLabels.some((l) => l.toLowerCase().includes('emergency'))).toBe(true);
   });
 
-  it('preserves risk mitigation and session triggers when splitter fails', async () => {
+  it('preserves risk triggers on session when splitter fails (mitigation suppressed for requires_confirmation)', async () => {
     const ctx = buildCtx('There is fire in my kitchen', {
       issueSplitter: vi.fn().mockRejectedValue(new Error('LLM timeout')),
     });
@@ -151,10 +154,9 @@ describe('submit-initial-message risk scanning', () => {
     expect(result.session.risk_triggers).toHaveLength(1);
     expect(result.session.risk_triggers[0].trigger.trigger_id).toBe('fire-001');
 
-    // Mitigation messages still in UI output
+    // Mitigation messages suppressed for requires_confirmation triggers (S17-04)
     const allContent = result.uiMessages.map((m) => m.content).join(' ');
-    expect(allContent).toContain('Fire Safety');
-    expect(allContent).toContain('911');
+    expect(allContent).not.toContain('Fire Safety');
 
     // Risk event payload still included
     expect(result.eventPayload?.risk_detected).toBe(true);

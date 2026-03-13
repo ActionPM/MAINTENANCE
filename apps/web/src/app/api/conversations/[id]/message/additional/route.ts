@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ActionType, ActorType } from '@wo-agent/schemas';
+import { ActionType, ActorType, DEFAULT_RATE_LIMITS } from '@wo-agent/schemas';
 import { authenticateRequest } from '@/middleware/auth';
 import { checkRateLimit } from '@/middleware/rate-limiter';
 import { getOrchestrator } from '@/lib/orchestrator-factory';
@@ -19,6 +19,24 @@ export const POST = withObservedRoute(
 
     const body = await request.json();
     const { id } = await params;
+
+    // S08-05: server-side message length enforcement (spec §8)
+    if (
+      typeof body.message === 'string' &&
+      body.message.length > DEFAULT_RATE_LIMITS.max_message_chars
+    ) {
+      return NextResponse.json(
+        {
+          errors: [
+            {
+              code: 'MESSAGE_TOO_LONG',
+              message: `Message exceeds maximum length of ${DEFAULT_RATE_LIMITS.max_message_chars} characters`,
+            },
+          ],
+        },
+        { status: 400 },
+      );
+    }
 
     const dispatch = getOrchestrator();
     const result = await dispatch({

@@ -67,6 +67,8 @@ export interface OrchestratorDependencies {
   readonly logger?: Logger;
   readonly metricsRecorder?: MetricsRecorder;
   readonly alertSink?: AlertSink;
+  /** LLM model ID for version pinning (spec §5.2). Falls back to DEFAULT_MODEL_ID. */
+  readonly modelId?: string;
 }
 
 /**
@@ -112,6 +114,12 @@ export interface IntermediateStep {
 /**
  * Return type from an action handler.
  */
+export interface ArtifactInput {
+  readonly artifact_type: string;
+  readonly hash: string;
+  readonly presented_to_tenant: boolean;
+}
+
 export interface ActionHandlerResult {
   readonly newState: ConversationState;
   readonly session: ConversationSession;
@@ -119,6 +127,7 @@ export interface ActionHandlerResult {
   readonly uiMessages: readonly UIMessageInput[];
   readonly quickReplies?: readonly QuickReplyInput[];
   readonly sideEffects?: readonly SideEffectInput[];
+  readonly artifacts?: readonly ArtifactInput[];
   readonly errors?: readonly ErrorInput[];
   readonly eventPayload?: Record<string, unknown>;
   readonly eventType?: string;

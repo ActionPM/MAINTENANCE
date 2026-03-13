@@ -1,8 +1,4 @@
-import { readFileSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import taxonomyData from '../taxonomy.json';
 
 export interface Taxonomy {
   readonly Category: readonly string[];
@@ -44,9 +40,7 @@ const MANAGEMENT_FIELDS: readonly TaxonomyFieldName[] = [
 export { MAINTENANCE_FIELDS, MANAGEMENT_FIELDS };
 
 export function loadTaxonomy(): Taxonomy {
-  const filePath = resolve(__dirname, '..', 'taxonomy.json');
-  const raw = readFileSync(filePath, 'utf-8');
-  const parsed = JSON.parse(raw) as Taxonomy;
+  const parsed = taxonomyData as unknown as Taxonomy;
 
   for (const field of TAXONOMY_FIELD_NAMES) {
     if (!Array.isArray(parsed[field]) || parsed[field].length === 0) {

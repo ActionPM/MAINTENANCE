@@ -210,6 +210,7 @@ export interface ConversationSnapshot {
     }[];
   };
   readonly work_order_ids?: readonly string[];
+  readonly queued_messages?: readonly string[];
   readonly risk_summary?: {
     readonly has_emergency: boolean;
     readonly highest_severity: string;

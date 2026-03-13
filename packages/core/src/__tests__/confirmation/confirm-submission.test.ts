@@ -74,6 +74,7 @@ function makeSession(overrides: Partial<ConversationSession> = {}): Conversation
     risk_triggers: [],
     escalation_state: 'none' as const,
     escalation_plan_id: null,
+    queued_messages: [],
     ...overrides,
   };
 }
@@ -255,5 +256,16 @@ describe('handleConfirmSubmission', () => {
     const result = await handleConfirmSubmission(ctx);
     expect(result.newState).toBe(ConversationState.SPLIT_FINALIZED);
     expect(result.finalSystemAction).toBe('STALENESS_DETECTED');
+  });
+
+  it('surfaces informational prompt when queued_messages exist after submission', async () => {
+    const ctx = makeCtx({
+      queued_messages: ["parking garage door broken and won't close properly"],
+    });
+    const result = await handleConfirmSubmission(ctx);
+    expect(result.newState).toBe(ConversationState.SUBMITTED);
+    expect(
+      result.uiMessages.some((m) => m.content.includes('You mentioned another issue earlier')),
+    ).toBe(true);
   });
 });

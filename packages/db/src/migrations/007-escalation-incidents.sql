@@ -32,10 +32,11 @@ CREATE TABLE IF NOT EXISTS escalation_incidents (
 );
 
 -- Query: getDueIncidents — find incidents ready for processing
+-- Note: processing_lock_until check is done at query time, not in the index predicate,
+-- because now() is not immutable and cannot be used in partial index predicates.
 CREATE INDEX IF NOT EXISTS idx_escalation_incidents_due
   ON escalation_incidents (next_action_at)
-  WHERE status IN ('active', 'exhausted_retrying')
-    AND (processing_lock_until IS NULL OR processing_lock_until < now());
+  WHERE status IN ('active', 'exhausted_retrying');
 
 -- Query: getActiveByConversation
 CREATE INDEX IF NOT EXISTS idx_escalation_incidents_conversation

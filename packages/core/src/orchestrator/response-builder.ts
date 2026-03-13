@@ -54,6 +54,9 @@ export function buildResponse(result: ActionHandlerResult): OrchestratorActionRe
     ...(confirmationPayload ? { confirmation_payload: confirmationPayload } : {}),
     ...(workOrderIds ? { work_order_ids: workOrderIds } : {}),
     ...(riskSummary ? { risk_summary: riskSummary } : {}),
+    ...(result.session.queued_messages?.length
+      ? { queued_messages: result.session.queued_messages }
+      : {}),
     pinned_versions: result.session.pinned_versions,
     created_at: result.session.created_at,
     last_activity_at: result.session.last_activity_at,
@@ -96,10 +99,19 @@ export function buildResponse(result: ActionHandlerResult): OrchestratorActionRe
     quick_replies: quickReplies,
   };
 
+  // Build artifacts from handler results. Each artifact gets a unique ID and timestamp.
+  const artifacts = (result.artifacts ?? []).map((a, i) => ({
+    artifact_id: `${result.session.conversation_id}-artifact-${i}`,
+    artifact_type: a.artifact_type,
+    hash: a.hash,
+    created_at: result.session.last_activity_at,
+    presented_to_tenant: a.presented_to_tenant,
+  }));
+
   return {
     conversation_snapshot: snapshot,
     ui_directive: directive,
-    artifacts: [],
+    artifacts,
     pending_side_effects: result.sideEffects ?? [],
     errors: result.errors ?? [],
   };

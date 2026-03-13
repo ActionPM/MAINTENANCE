@@ -1,4 +1,9 @@
-import { ActionType, ActorType, ConversationState } from '@wo-agent/schemas';
+import {
+  ActionType,
+  ActorType,
+  ConversationState,
+  resolveCurrentVersions,
+} from '@wo-agent/schemas';
 import type { OrchestratorActionRequest } from '@wo-agent/schemas';
 import {
   isValidTransition,
@@ -101,12 +106,7 @@ export function createDispatcher(deps: OrchestratorDependencies) {
         tenant_user_id: auth_context.tenant_user_id,
         tenant_account_id: auth_context.tenant_account_id,
         authorized_unit_ids: auth_context.authorized_unit_ids,
-        pinned_versions: {
-          taxonomy_version: '1.0.0',
-          schema_version: '1.0.0',
-          model_id: 'default',
-          prompt_version: '1.0.0',
-        },
+        pinned_versions: resolveCurrentVersions(deps.modelId),
       });
 
       const handler = getActionHandler(action_type);

@@ -99,6 +99,7 @@ describe('e2e toilet leak scenario', () => {
       risk_triggers: [],
       escalation_state: 'none',
       escalation_plan_id: null,
+      queued_messages: [],
       ...overrides,
     };
   }

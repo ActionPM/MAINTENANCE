@@ -1,8 +1,4 @@
-import { readFileSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
+import constraintsData from '../taxonomy_constraints.json';
 
 export interface TaxonomyConstraints {
   readonly version: string;
@@ -50,9 +46,7 @@ export function deriveConstraintEdges(constraints: TaxonomyConstraints): Constra
 }
 
 export function loadTaxonomyConstraints(): TaxonomyConstraints {
-  const filePath = resolve(__dirname, '..', 'taxonomy_constraints.json');
-  const raw = readFileSync(filePath, 'utf-8');
-  return JSON.parse(raw) as TaxonomyConstraints;
+  return constraintsData as unknown as TaxonomyConstraints;
 }
 
 export const taxonomyConstraints: TaxonomyConstraints = loadTaxonomyConstraints();

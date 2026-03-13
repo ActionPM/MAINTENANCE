@@ -77,11 +77,12 @@ export async function handleSubmitInitialMessage(
     });
     await deps.eventRepo.insert(riskEvent);
 
-    // Render mitigation messages
-    const mitigationMessages = renderMitigationMessages(
-      riskScan.triggers_matched,
-      deps.riskProtocols,
+    // Render mitigation messages — suppress requires_confirmation triggers
+    // until after CONFIRM_EMERGENCY (spec §17, S17-04).
+    const immediatelyDisplayable = riskScan.triggers_matched.filter(
+      (m) => !m.trigger.requires_confirmation,
     );
+    const mitigationMessages = renderMitigationMessages(immediatelyDisplayable, deps.riskProtocols);
     for (const msg of mitigationMessages) {
       riskMessages.push({ role: 'system', content: msg });
     }

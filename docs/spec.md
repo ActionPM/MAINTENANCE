@@ -56,9 +56,13 @@ Call-until-answered behavior; log every attempt; define exhaustion behavior.
 - Tone/frustration score and history summary.
 - Signals never change taxonomy outputs or priority automatically.
 
+Accepted MVP deferral (2026-03-13): Tone/frustration scoring and history summary are informational signals that do not affect the intake pipeline (spec §1.7: "never change taxonomy outputs or priority"). These are deferred past MVP. HVT flag (3 open WOs) is implemented.
+
 ### 1.8 Languages
 
 MVP English; design supports French later without taxonomy drift.
+
+Accepted MVP deferral (2026-03-13): French language support and i18n infrastructure are deferred past MVP. The taxonomy is English-only and immutable during MVP. The design constraint — that adding languages must not cause taxonomy drift — is documented. No i18n implementation is required for MVP.
 
 ### 1.9 Jurisdiction/compliance
 
@@ -187,6 +191,8 @@ Accepted MVP decision (2026-03-11):
 ```
 
 Corrections are appended events; effective classification is the latest approved override.
+
+Accepted MVP deferral (2026-03-13): The PM/human override workflow — including the override submission API route (`POST /overrides`), dedicated `human_override_events` table, reason-coded override events, and the effective-classification derivation from the latest approved override — is deferred past MVP. MVP retains: the `human_override_events` event domain in the type system, the append-only correction model, and the type definitions for override events. The full PM override UI and submission path will be implemented alongside the admin/PM-facing surface.
 
 Immutability enforcement:
 
@@ -587,6 +593,8 @@ The escalation coordinator emits structured JSON logs (`component: 'escalation_c
   - during intake (conversation attachments linked to WOs upon submission)
   - after submission (must target a work_order_id)
 
+Accepted MVP deferral (2026-03-13): The full photo pipeline — object storage integration, presigned URL generation, SHA-256 verification of uploaded bytes, async scanning with PM visibility gating, draft-to-WO photo linking at submission, and post-submission WO-scoped uploads — is deferred past MVP. MVP retains: photo schema definitions, draft photo ID tracking on sessions, per-conversation upload count enforcement, declared size validation, and the UPLOAD_PHOTO_INIT / UPLOAD_PHOTO_COMPLETE action types in the state machine. The storage backend and end-to-end flow will be implemented when object storage infrastructure is provisioned.
+
 ---
 
 ## 20) Notifications
@@ -695,6 +703,7 @@ Every endpoint request body maps directly to `OrchestratorActionRequest.tenant_i
 - Gold sets A/B/C.
 - Human override loop stored as events with reason codes.
 - Versions pinned per conversation; CI gates prompt/model changes; canary + rollback.
+- **MVP deferral — canary deployment:** Vercel provides instant rollback. A formal canary deployment process (progressive traffic shifting, automated rollback triggers) is deferred past MVP. The CI eval gate (`evals.yml`) and Vercel instant-rollback capability provide sufficient deployment safety for the initial pilot.
 
 ---
 
@@ -702,16 +711,16 @@ Every endpoint request body maps directly to `OrchestratorActionRequest.tenant_i
 
 Recommended tree:
 
-- AGENTS.md, PLANS.md
+- AGENTS.md
 - apps/web
 - packages/schemas
 - packages/core
 - packages/evals
 - packages/adapters/mock
-- docs
+- docs/ (spec, plans/, rfcs/, security-boundaries, retention-policy)
 - CI workflow
 
-AGENTS.md must include non-negotiables, commands, plan-first, TDD, taxonomy governance.
+Plans live in `docs/plans/` (no root `PLANS.md`). AGENTS.md must include non-negotiables, commands, plan-first, TDD, taxonomy governance, and canonical source-of-truth table.
 
 ---
 

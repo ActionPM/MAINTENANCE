@@ -142,15 +142,18 @@ describe('Risk + Emergency integration', () => {
       auth_context: AUTH,
     });
 
-    // Risk mitigation should be in UI messages
+    // S17-04: Mitigation suppressed for requires_confirmation triggers until confirmed
     const messages = submitResult.response.ui_directive.messages ?? [];
     const allContent = messages.map((m) => m.content).join(' ');
-    expect(allContent).toContain('Fire Safety');
-    expect(allContent).toContain('911');
+    expect(allContent).not.toContain('Fire Safety');
 
-    // Risk summary in snapshot
+    // Risk summary in snapshot and escalation state should be pending_confirmation
     expect(submitResult.response.conversation_snapshot.risk_summary).toBeDefined();
     expect(submitResult.response.conversation_snapshot.risk_summary!.has_emergency).toBe(true);
+
+    // Quick replies should include emergency confirmation
+    const qrLabels = submitResult.response.ui_directive.quick_replies?.map((qr) => qr.label) ?? [];
+    expect(qrLabels.some((l) => l.toLowerCase().includes('emergency'))).toBe(true);
   });
 
   it('benign message has no risk data', async () => {

@@ -133,6 +133,7 @@ export type {
   ComputeAllInput,
   DetermineFieldsOptions,
   ClassifierResult,
+  ClassificationEvent,
 } from './classifier/index.js';
 
 // --- Follow-up (Phase 6) ---

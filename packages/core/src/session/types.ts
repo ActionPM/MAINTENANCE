@@ -63,6 +63,8 @@ export interface ConversationSession {
   readonly escalation_state: EscalationState;
   /** Escalation plan ID if emergency routing is active */
   readonly escalation_plan_id: string | null;
+  /** Messages queued as potential new issues during follow-ups (spec §12.2) */
+  readonly queued_messages: readonly string[];
 }
 
 export interface CreateSessionInput {

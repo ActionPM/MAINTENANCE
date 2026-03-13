@@ -1,11 +1,14 @@
 import Ajv, { type ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';
-import { readFileSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const schemasDir = resolve(__dirname, '..');
+import orchestratorActionSchema from '../orchestrator_action.schema.json';
+import issueSplitSchema from '../issue_split.schema.json';
+import classificationSchema from '../classification.schema.json';
+import followupRequestSchema from '../followup_request.schema.json';
+import followupsSchema from '../followups.schema.json';
+import workOrderSchema from '../work_order.schema.json';
+import photoSchema from '../photo.schema.json';
+import recordBundleSchema from '../record_bundle.schema.json';
 
 export interface ValidationError {
   readonly path: string;
@@ -19,20 +22,18 @@ export interface ValidationResult<T> {
   readonly errors?: readonly ValidationError[];
 }
 
-function loadJsonFile(filename: string): unknown {
-  const filePath = resolve(schemasDir, filename);
-  return JSON.parse(readFileSync(filePath, 'utf-8'));
-}
-
-const SCHEMA_FILES = [
-  'orchestrator_action.schema.json',
-  'issue_split.schema.json',
-  'classification.schema.json',
-  'followup_request.schema.json',
-  'followups.schema.json',
-  'work_order.schema.json',
-  'photo.schema.json',
-  'record_bundle.schema.json',
+const SCHEMA_ENTRIES: readonly [string, Record<string, unknown>][] = [
+  [
+    'orchestrator_action.schema.json',
+    orchestratorActionSchema as unknown as Record<string, unknown>,
+  ],
+  ['issue_split.schema.json', issueSplitSchema as unknown as Record<string, unknown>],
+  ['classification.schema.json', classificationSchema as unknown as Record<string, unknown>],
+  ['followup_request.schema.json', followupRequestSchema as unknown as Record<string, unknown>],
+  ['followups.schema.json', followupsSchema as unknown as Record<string, unknown>],
+  ['work_order.schema.json', workOrderSchema as unknown as Record<string, unknown>],
+  ['photo.schema.json', photoSchema as unknown as Record<string, unknown>],
+  ['record_bundle.schema.json', recordBundleSchema as unknown as Record<string, unknown>],
 ] as const;
 
 function createAjvInstance(): Ajv {
@@ -43,9 +44,8 @@ function createAjvInstance(): Ajv {
   });
   addFormats(ajv);
 
-  for (const file of SCHEMA_FILES) {
-    const schema = loadJsonFile(file) as Record<string, unknown>;
-    ajv.addSchema(schema, file);
+  for (const [name, schema] of SCHEMA_ENTRIES) {
+    ajv.addSchema(schema, name);
   }
 
   return ajv;

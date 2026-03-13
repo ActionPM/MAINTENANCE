@@ -426,7 +426,8 @@
           "required": ["taxonomy_version", "schema_version", "model_id", "prompt_version"]
         },
         "created_at": { "type": "string", "format": "date-time" },
-        "last_activity_at": { "type": "string", "format": "date-time" }
+        "last_activity_at": { "type": "string", "format": "date-time" },
+        "queued_messages": { "type": "array", "items": { "type": "string" } }
       },
       "required": ["conversation_id", "state", "pinned_versions"],
       "additionalProperties": false

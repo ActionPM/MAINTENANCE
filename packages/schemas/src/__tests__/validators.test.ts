@@ -248,6 +248,17 @@ describe('validateOrchestratorActionResponse', () => {
     expect(result.valid).toBe(false);
   });
 
+  it('accepts response with queued_messages on snapshot', () => {
+    const result = validateOrchestratorActionResponse({
+      ...baseResponse,
+      conversation_snapshot: {
+        ...baseResponse.conversation_snapshot,
+        queued_messages: ["My parking garage door is broken and won't close"],
+      },
+    });
+    expect(result.valid).toBe(true);
+  });
+
   // --- Task 5d: state enum sync guard ---
 
   it('schema ConversationSnapshot state enum matches ConversationState values', () => {

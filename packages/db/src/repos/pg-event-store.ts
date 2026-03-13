@@ -4,6 +4,7 @@ import type { EventRepository } from '@wo-agent/core';
 import type { ConversationEvent, EventQuery } from '@wo-agent/core';
 import type { ConfirmationEvent, StalenessEvent } from '@wo-agent/core';
 import type { RiskEvent } from '@wo-agent/core';
+import type { ClassificationEvent } from '@wo-agent/core';
 
 type AnyEvent =
   | ConversationEvent
@@ -11,7 +12,8 @@ type AnyEvent =
   | ConfirmationEvent
   | StalenessEvent
   | RiskEvent
-  | NotificationEvent;
+  | NotificationEvent
+  | ClassificationEvent;
 
 /* ------------------------------------------------------------------ */
 /*  Structural type guards                                            */
@@ -19,6 +21,10 @@ type AnyEvent =
 
 function isNotificationEvent(e: AnyEvent): e is NotificationEvent {
   return 'notification_id' in e;
+}
+
+function isClassificationEvent(e: AnyEvent): e is ClassificationEvent {
+  return 'issue_id' in e && !('turn_number' in e) && !('notification_id' in e);
 }
 
 function isFollowUpEvent(e: AnyEvent): e is FollowUpEvent {
@@ -39,6 +45,9 @@ export class PostgresEventStore implements EventRepository {
   async insert(event: AnyEvent): Promise<void> {
     if (isNotificationEvent(event)) {
       return this.insertNotification(event);
+    }
+    if (isClassificationEvent(event)) {
+      return this.insertClassification(event);
     }
     if (isFollowUpEvent(event)) {
       return this.insertFollowUp(event);
@@ -106,6 +115,26 @@ export class PostgresEventStore implements EventRepository {
        VALUES ($1, $2, $3, NULL, NULL, NULL, 'system', $4, NULL, $5)
        ON CONFLICT (event_id) DO NOTHING`,
       [e.event_id, e.conversation_id, eventType, JSON.stringify(payload), e.created_at],
+    );
+  }
+
+  /**
+   * ClassificationEvent → conversation_events.
+   * Preserves issue_id as a discrete queryable field inside the JSONB payload
+   * so classification-event audit queries can filter by issue_id without
+   * scanning the entire payload (S07-05).
+   */
+  private async insertClassification(e: ClassificationEvent): Promise<void> {
+    const payload = {
+      ...e.payload,
+      issue_id: e.issue_id,
+    };
+    await this.pool.query(
+      `INSERT INTO conversation_events
+        (event_id, conversation_id, event_type, prior_state, new_state, action_type, actor, payload, pinned_versions, created_at)
+       VALUES ($1, $2, $3, NULL, NULL, NULL, 'system', $4, NULL, $5)
+       ON CONFLICT (event_id) DO NOTHING`,
+      [e.event_id, e.conversation_id, e.event_type, JSON.stringify(payload), e.created_at],
     );
   }
 

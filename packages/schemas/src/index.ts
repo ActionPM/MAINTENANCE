@@ -40,6 +40,14 @@ export type { RateLimitConfig } from './rate-limits.js';
 export { DEFAULT_CONFIDENCE_CONFIG, DEFAULT_FOLLOWUP_CAPS } from './confidence-config.js';
 export type { ConfidenceConfig, FollowUpCaps } from './confidence-config.js';
 export type { PinnedVersions } from './version-pinning.js';
+export {
+  resolveCurrentVersions,
+  assertPinnedVersionsIntact,
+  TAXONOMY_VERSION,
+  SCHEMA_VERSION,
+  PROMPT_VERSION,
+  DEFAULT_MODEL_ID,
+} from './version-pinning.js';
 
 // --- Types ---
 export type {

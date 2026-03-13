@@ -394,6 +394,7 @@ function ensureInitialized(): FactoryDeps {
       logger,
       metricsRecorder,
       alertSink,
+      modelId: process.env.LLM_DEFAULT_MODEL,
     };
 
     const analyticsService = new AnalyticsService({

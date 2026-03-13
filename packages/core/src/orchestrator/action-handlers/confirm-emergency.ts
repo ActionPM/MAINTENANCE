@@ -1,6 +1,7 @@
 import { setEscalationState } from '../../session/session.js';
 import { startIncident } from '../../risk/escalation-coordinator.js';
 import { DEFAULT_COORDINATOR_CONFIG } from '../../risk/escalation-coordinator.js';
+import { renderMitigationMessages } from '../../risk/mitigation.js';
 import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
 
 /**
@@ -200,6 +201,19 @@ export async function handleConfirmEmergency(
 
     const updatedSession = setEscalationState(session, 'routing', plan.plan_id);
 
+    // S17-04: Now that the tenant has confirmed the emergency, render
+    // previously-suppressed mitigation messages for requires_confirmation triggers.
+    const confirmedTriggers = (session.risk_triggers ?? []).filter(
+      (m) => m.trigger.requires_confirmation,
+    );
+    const mitigationMsgs =
+      confirmedTriggers.length > 0
+        ? renderMitigationMessages(confirmedTriggers, deps.riskProtocols).map((msg) => ({
+            role: 'system' as const,
+            content: msg,
+          }))
+        : [];
+
     return {
       newState: session.state,
       session: updatedSession,
@@ -209,6 +223,7 @@ export async function handleConfirmEmergency(
           content:
             'Emergency confirmed. We are contacting the emergency response team for your building now. You will be notified when someone accepts responsibility.',
         },
+        ...mitigationMsgs,
       ],
       eventType: 'emergency_action',
       eventPayload: {

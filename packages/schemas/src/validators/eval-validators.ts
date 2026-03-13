@@ -1,29 +1,25 @@
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
-import { readFileSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { loadTaxonomy } from '../taxonomy.js';
 import { validateClassificationAgainstTaxonomy } from './taxonomy-cross-validator.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const schemasDir = resolve(__dirname, '..', '..');
+import evalExampleSchema from '../../eval_example.schema.json';
+import evalManifestSchema from '../../eval_dataset_manifest.schema.json';
+import evalRunSchema from '../../eval_run.schema.json';
+import evalReportSchema from '../../eval_report.schema.json';
 
-function loadSchema(filename: string): Record<string, unknown> {
-  const filePath = resolve(schemasDir, filename);
-  return JSON.parse(readFileSync(filePath, 'utf-8')) as Record<string, unknown>;
-}
+const EVAL_SCHEMA_ENTRIES: readonly [string, Record<string, unknown>][] = [
+  ['eval_example.schema.json', evalExampleSchema as unknown as Record<string, unknown>],
+  ['eval_dataset_manifest.schema.json', evalManifestSchema as unknown as Record<string, unknown>],
+  ['eval_run.schema.json', evalRunSchema as unknown as Record<string, unknown>],
+  ['eval_report.schema.json', evalReportSchema as unknown as Record<string, unknown>],
+];
 
 function createEvalAjv(): Ajv {
   const ajv = new Ajv({ allErrors: true, strict: false, allowUnionTypes: true });
   addFormats(ajv);
-  for (const file of [
-    'eval_example.schema.json',
-    'eval_dataset_manifest.schema.json',
-    'eval_run.schema.json',
-    'eval_report.schema.json',
-  ] as const) {
-    ajv.addSchema(loadSchema(file), file);
+  for (const [name, schema] of EVAL_SCHEMA_ENTRIES) {
+    ajv.addSchema(schema, name);
   }
   return ajv;
 }

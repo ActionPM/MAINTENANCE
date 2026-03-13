@@ -40,3 +40,5 @@ apps/web/public/dev.htm
 
 # Claude Code local settings
 .claude/settings.local.json
+.vercel
+.env*.local

@@ -51,6 +51,7 @@ export function createSession(input: CreateSessionInput): ConversationSession {
     risk_triggers: [],
     escalation_state: 'none',
     escalation_plan_id: null,
+    queued_messages: [],
   };
 }
 
@@ -257,6 +258,17 @@ export function setBuildingId(
   buildingId: string,
 ): ConversationSession {
   return { ...session, building_id: buildingId };
+}
+
+/**
+ * Queue a message as a potential new issue during follow-ups (spec §12.2).
+ */
+export function queueMessage(session: ConversationSession, message: string): ConversationSession {
+  return {
+    ...session,
+    queued_messages: [...session.queued_messages, message],
+    last_activity_at: new Date().toISOString(),
+  };
 }
 
 export function setRiskTriggers(

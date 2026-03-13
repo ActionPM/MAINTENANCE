@@ -8,6 +8,23 @@ import type { RateLimitConfig } from '@wo-agent/schemas';
  */
 const windows = new Map<string, { count: number; resetAt: number }>();
 
+/**
+ * Emit a structured security event on rate-limit violation (spec §8, S08-08).
+ * Writes to stdout as JSON for structured log aggregation.
+ */
+function emitSecurityEvent(userId: string, limitKey: string, count: number, limit: number): void {
+  const event = {
+    event_type: 'security.rate_limit_exceeded',
+    severity: 'warn',
+    user_id: userId,
+    limit_key: limitKey,
+    request_count: count,
+    limit,
+    timestamp: new Date().toISOString(),
+  };
+  console.log(JSON.stringify(event));
+}
+
 export function checkRateLimit(
   userId: string,
   limitKey: keyof RateLimitConfig,
@@ -25,6 +42,7 @@ export function checkRateLimit(
 
   window.count++;
   if (window.count > limit) {
+    emitSecurityEvent(userId, limitKey, window.count, limit);
     return NextResponse.json(
       { errors: [{ code: 'RATE_LIMITED', message: 'Too many requests. Please wait a moment.' }] },
       { status: 429 },

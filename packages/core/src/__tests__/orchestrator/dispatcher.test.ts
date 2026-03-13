@@ -1,5 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { ConversationState, ActionType, ActorType, loadTaxonomy } from '@wo-agent/schemas';
+import {
+  ConversationState,
+  ActionType,
+  ActorType,
+  loadTaxonomy,
+  TAXONOMY_VERSION,
+  SCHEMA_VERSION,
+  PROMPT_VERSION,
+  DEFAULT_MODEL_ID,
+} from '@wo-agent/schemas';
 import type { CueDictionary } from '@wo-agent/schemas';
 import { createDispatcher } from '../../orchestrator/dispatcher.js';
 import { InMemoryEventStore } from '../../events/in-memory-event-store.js';
@@ -41,6 +50,7 @@ class InMemorySessionStore implements SessionStore {
 function makeDeps(): OrchestratorDependencies & {
   sessionStore: InMemorySessionStore;
   eventRepo: InMemoryEventStore;
+  modelId?: string;
 } {
   let counter = 0;
   return {
@@ -106,6 +116,46 @@ describe('createDispatcher', () => {
 
     expect(result.response.conversation_snapshot.state).toBe('intake_started');
     expect(result.response.errors).toEqual([]);
+  });
+
+  it('pins dynamic versions on CREATE_CONVERSATION (spec §5.2)', async () => {
+    const result = await dispatch({
+      conversation_id: null,
+      action_type: ActionType.CREATE_CONVERSATION,
+      actor: ActorType.TENANT,
+      tenant_input: {},
+      auth_context: {
+        tenant_user_id: 'user-1',
+        tenant_account_id: 'acct-1',
+        authorized_unit_ids: ['u1'],
+      },
+    });
+
+    const pinned = result.session.pinned_versions;
+    expect(pinned.taxonomy_version).toBe(TAXONOMY_VERSION);
+    expect(pinned.schema_version).toBe(SCHEMA_VERSION);
+    expect(pinned.prompt_version).toBe(PROMPT_VERSION);
+    // No modelId on deps → falls back to DEFAULT_MODEL_ID
+    expect(pinned.model_id).toBe(DEFAULT_MODEL_ID);
+  });
+
+  it('uses deps.modelId for pinned model_id when provided', async () => {
+    deps.modelId = 'claude-opus-4-20250514';
+    dispatch = createDispatcher(deps);
+
+    const result = await dispatch({
+      conversation_id: null,
+      action_type: ActionType.CREATE_CONVERSATION,
+      actor: ActorType.TENANT,
+      tenant_input: {},
+      auth_context: {
+        tenant_user_id: 'user-1',
+        tenant_account_id: 'acct-1',
+        authorized_unit_ids: ['u1'],
+      },
+    });
+
+    expect(result.session.pinned_versions.model_id).toBe('claude-opus-4-20250514');
   });
 
   it('rejects invalid transitions with typed error', async () => {

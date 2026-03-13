@@ -38,6 +38,7 @@ const mockSession: ConversationSession = {
   risk_triggers: [],
   escalation_state: 'none' as const,
   escalation_plan_id: null,
+  queued_messages: [],
 };
 
 describe('buildResponse', () => {
@@ -129,5 +130,32 @@ describe('buildResponse', () => {
     });
 
     expect(response.conversation_snapshot.issues).toBeUndefined();
+  });
+
+  it('includes queued_messages in snapshot when non-empty', () => {
+    const session: ConversationSession = {
+      ...mockSession,
+      queued_messages: ['parking garage door broken', 'hallway light out'],
+    };
+    const response = buildResponse({
+      newState: ConversationState.NEEDS_TENANT_INPUT,
+      session,
+      uiMessages: [{ role: 'agent', content: 'Noted.' }],
+    });
+
+    expect(response.conversation_snapshot.queued_messages).toEqual([
+      'parking garage door broken',
+      'hallway light out',
+    ]);
+  });
+
+  it('omits queued_messages from snapshot when empty', () => {
+    const response = buildResponse({
+      newState: ConversationState.NEEDS_TENANT_INPUT,
+      session: mockSession,
+      uiMessages: [{ role: 'agent', content: 'Noted.' }],
+    });
+
+    expect(response.conversation_snapshot.queued_messages).toBeUndefined();
   });
 });

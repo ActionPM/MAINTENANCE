@@ -223,4 +223,62 @@ describe('PostgresEventStore', () => {
     await store.query({ conversation_id: 'c-1' });
     expect(pool.lastQuery!.text).toContain('ASC');
   });
+
+  it('insert() routes ClassificationEvent with issue_id preserved in payload', async () => {
+    const event = {
+      event_id: 'cls-1',
+      conversation_id: 'c-1',
+      event_type: 'classification_constraint_resolution' as const,
+      issue_id: 'iss-42',
+      payload: { resolved_fields: { Category: 'maintenance' } },
+      created_at: '2026-03-04T00:00:00Z',
+    };
+
+    await store.insert(event);
+
+    expect(pool.lastQuery!.text).toContain('INSERT INTO conversation_events');
+    expect(pool.lastQuery!.values[0]).toBe('cls-1');
+    expect(pool.lastQuery!.values[2]).toBe('classification_constraint_resolution');
+
+    // KEY ASSERTION: issue_id is a discrete top-level field in the persisted JSONB payload
+    const payload = JSON.parse(pool.lastQuery!.values[3] as string);
+    expect(payload.issue_id).toBe('iss-42');
+    expect(payload.resolved_fields).toEqual({ Category: 'maintenance' });
+  });
+
+  it('insert() ClassificationEvent: canonical issue_id wins over payload.issue_id', async () => {
+    const event = {
+      event_id: 'cls-overwrite',
+      conversation_id: 'c-1',
+      event_type: 'classification_constraint_resolution' as const,
+      issue_id: 'canonical-issue',
+      payload: { issue_id: 'rogue-issue', resolved_fields: { Category: 'maintenance' } },
+      created_at: '2026-03-04T00:00:00Z',
+    };
+
+    await store.insert(event);
+
+    const payload = JSON.parse(pool.lastQuery!.values[3] as string);
+    // The top-level e.issue_id MUST win — payload.issue_id must not overwrite it
+    expect(payload.issue_id).toBe('canonical-issue');
+    expect(payload.resolved_fields).toEqual({ Category: 'maintenance' });
+  });
+
+  it('insert() routes ClassificationEvent (hierarchy violation) with issue_id in payload', async () => {
+    const event = {
+      event_id: 'cls-2',
+      conversation_id: 'c-1',
+      event_type: 'classification_hierarchy_violation_unresolved' as const,
+      issue_id: 'iss-99',
+      payload: { violations: ['cat_mismatch'] },
+      created_at: '2026-03-04T00:00:00Z',
+    };
+
+    await store.insert(event);
+
+    const payload = JSON.parse(pool.lastQuery!.values[3] as string);
+    expect(payload.issue_id).toBe('iss-99');
+    expect(payload.violations).toEqual(['cat_mismatch']);
+    expect(pool.lastQuery!.values[2]).toBe('classification_hierarchy_violation_unresolved');
+  });
 });

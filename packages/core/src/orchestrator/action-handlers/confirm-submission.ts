@@ -249,10 +249,22 @@ export async function handleConfirmSubmission(
     }
   }
 
+  const uiMessages: { role: 'agent'; content: string }[] = [
+    { role: 'agent', content: "Your request has been submitted. We'll be in touch." },
+  ];
+
+  // Surface queued messages (spec §12.2 — offer immediate next intake after submission)
+  if (session.queued_messages.length > 0) {
+    uiMessages.push({
+      role: 'agent',
+      content: 'You mentioned another issue earlier. You can start a new request to address it.',
+    });
+  }
+
   return {
     newState: ConversationState.SUBMITTED,
     session,
-    uiMessages: [{ role: 'agent', content: "Your request has been submitted. We'll be in touch." }],
+    uiMessages,
     sideEffects: [
       {
         effect_type: 'create_work_orders',
