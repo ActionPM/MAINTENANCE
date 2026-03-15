@@ -376,7 +376,7 @@ function ensureInitialized(): FactoryDeps {
           unit_id: unitId,
           property_id: `prop-${unitId}`,
           client_id: `client-${unitId}`,
-          building_id: 'bldg-default',
+          building_id: 'example-building-001',
         }),
       } satisfies UnitResolver,
       workOrderRepo: stores.workOrderRepo,

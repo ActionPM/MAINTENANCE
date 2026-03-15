@@ -3,7 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS notification_preferences (
   preference_id               UUID PRIMARY KEY,
-  tenant_account_id           UUID NOT NULL UNIQUE,
+  tenant_account_id           TEXT NOT NULL UNIQUE,
   in_app_enabled              BOOLEAN NOT NULL DEFAULT true,
   sms_enabled                 BOOLEAN NOT NULL DEFAULT false,
   sms_consent                 JSONB,

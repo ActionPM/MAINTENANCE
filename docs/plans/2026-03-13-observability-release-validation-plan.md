@@ -19,6 +19,11 @@ One caveat: I did not re-run the full repo test matrix this morning, so the pack
 
 Close the gap between "release-ready in code" and "ready to ship with confidence in staging," then move directly into the remaining `P1` item if staging checks are clean.
 
+Rotation note:
+
+- `CRON_SECRET` should be rotated when it has been shared outside the secret store.
+- `DATABASE_URL` is required for the Postgres-backed observability path, but password rotation is only required if a real live connection string was exposed. Placeholder/example values in repo docs do not count as credential exposure.
+
 ## Morning Execution Order
 
 ### 1. Deployment config audit

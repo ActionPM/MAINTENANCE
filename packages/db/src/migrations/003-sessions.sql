@@ -6,7 +6,7 @@
 
 CREATE TABLE IF NOT EXISTS sessions (
   conversation_id  UUID PRIMARY KEY,
-  tenant_user_id   UUID NOT NULL,
+  tenant_user_id   TEXT NOT NULL,
   state            TEXT NOT NULL,
   data             JSONB NOT NULL,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
