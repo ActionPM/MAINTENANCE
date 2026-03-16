@@ -18,6 +18,10 @@ export class TwilioSmsProvider implements SmsProvider {
   }
 
   async sendSms(to: string, body: string): Promise<{ messageSid: string }> {
+    if (samePhoneNumber(to, this.config.fromNumber)) {
+      throw new Error('Refusing to send Twilio SMS when To and From resolve to the same number');
+    }
+
     const url = `https://api.twilio.com/2010-04-01/Accounts/${this.config.accountSid}/Messages.json`;
 
     const params = new URLSearchParams({
@@ -45,4 +49,17 @@ export class TwilioSmsProvider implements SmsProvider {
     const data = (await res.json()) as { sid: string };
     return { messageSid: data.sid };
   }
+}
+
+function samePhoneNumber(left: string, right: string): boolean {
+  const normalize = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    if (digits.length === 10) return `1${digits}`;
+    return digits;
+  };
+
+  const normalizedLeft = normalize(left);
+  const normalizedRight = normalize(right);
+  if (!normalizedLeft || !normalizedRight) return false;
+  return normalizedLeft === normalizedRight;
 }

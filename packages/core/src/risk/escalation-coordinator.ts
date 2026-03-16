@@ -54,6 +54,7 @@ export interface EscalationCoordinatorConfig {
   readonly maxCyclesDefault: number;
   readonly callTimeoutSeconds: number;
   readonly smsReplyTimeoutSeconds: number;
+  readonly outboundFromNumber: string;
   readonly internalAlertNumber: string;
   readonly webhookBaseUrl: string;
   readonly emergencyRoutingEnabled: boolean;
@@ -64,6 +65,7 @@ export const DEFAULT_COORDINATOR_CONFIG: EscalationCoordinatorConfig = {
   maxCyclesDefault: 3,
   callTimeoutSeconds: 60,
   smsReplyTimeoutSeconds: 120,
+  outboundFromNumber: '',
   internalAlertNumber: '',
   webhookBaseUrl: '',
   emergencyRoutingEnabled: false,
@@ -93,6 +95,19 @@ function voiceScript(buildingName: string): string {
 
 export function incidentRef(incidentId: string): string {
   return incidentId.slice(0, 8);
+}
+
+function normalizePhoneNumber(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 10) return `1${digits}`;
+  return digits;
+}
+
+function samePhoneNumber(left: string, right: string): boolean {
+  const normalizedLeft = normalizePhoneNumber(left);
+  const normalizedRight = normalizePhoneNumber(right);
+  if (!normalizedLeft || !normalizedRight) return false;
+  return normalizedLeft === normalizedRight;
 }
 
 function smsPrompt(buildingName: string, summary: string, incidentId: string): string {
@@ -135,6 +150,10 @@ function addSeconds(iso: string, seconds: number): string {
 
 function addMinutes(iso: string, minutes: number): string {
   return addSeconds(iso, minutes * 60);
+}
+
+function buildWebhookUrl(baseUrl: string, pathAndQuery: string): string {
+  return `${baseUrl.replace(/\/+$/, '')}${pathAndQuery}`;
 }
 
 // --- 4.1: startIncident ---
@@ -261,6 +280,39 @@ async function attemptContact(
     return handleCycleExhaustion(incident, plan, summary, deps);
   }
 
+  if (samePhoneNumber(contact.phone, deps.config.outboundFromNumber)) {
+    const advanced: EscalationIncident = {
+      ...incident,
+      current_contact_index: incident.current_contact_index + 1,
+      updated_at: deps.clock(),
+    };
+    const skippedSaved = await deps.incidentStore.update(advanced, incident.row_version);
+    if (!skippedSaved) {
+      log({
+        component: 'escalation_coordinator',
+        event: 'cas_conflict',
+        incident_id: incident.incident_id,
+        detail: 'self-target skip update lost - concurrent modification',
+      });
+      return incident;
+    }
+    log({
+      component: 'escalation_coordinator',
+      event: 'contact_skipped_invalid_self_target',
+      incident_id: incident.incident_id,
+      conversation_id: incident.conversation_id,
+      contact_id: contact.contact_id,
+      phone: contact.phone,
+      detail: 'contact matches outbound sender number',
+    });
+    return attemptContact(
+      { ...advanced, row_version: incident.row_version + 1 },
+      plan,
+      summary,
+      deps,
+    );
+  }
+
   // Phone number dedupe: skip if already contacted in this cycle
   if (incident.contacted_phone_numbers.includes(contact.phone)) {
     const advanced: EscalationIncident = {
@@ -278,7 +330,12 @@ async function attemptContact(
       });
       return incident;
     }
-    return attemptContact(advanced, plan, summary, deps);
+    return attemptContact(
+      { ...advanced, row_version: incident.row_version + 1 },
+      plan,
+      summary,
+      deps,
+    );
   }
 
   // Build idempotency tag
@@ -293,7 +350,10 @@ async function attemptContact(
 
   // Place voice call
   const twiml = voiceScript(buildingName);
-  const statusCallbackUrl = `${deps.config.webhookBaseUrl}/api/webhooks/twilio/voice-status?incidentId=${encodeURIComponent(incident.incident_id)}&contactIndex=${incident.current_contact_index}`;
+  const statusCallbackUrl = buildWebhookUrl(
+    deps.config.webhookBaseUrl,
+    `/api/webhooks/twilio/voice-status?incidentId=${encodeURIComponent(incident.incident_id)}&contactIndex=${incident.current_contact_index}`,
+  );
 
   let callSid: string | undefined;
   try {
@@ -397,8 +457,9 @@ async function attemptContact(
       incident_id: incident.incident_id,
       detail: 'attemptContact update lost — concurrent modification',
     });
+    return updated;
   }
-  return updated;
+  return { ...updated, row_version: incident.row_version + 1 };
 }
 
 // --- 4.2: processCallOutcome ---
@@ -679,7 +740,12 @@ export async function processDue(
 
     if (!contact) {
       // Chain exhausted for this cycle
-      await handleCycleExhaustion(locked, plan, incident.summary, deps);
+      await handleCycleExhaustion(
+        { ...locked, row_version: incident.row_version + 1 },
+        plan,
+        incident.summary,
+        deps,
+      );
     } else {
       // SMS reply timeout — advance to next contact
       const advanced: EscalationIncident = {
@@ -798,7 +864,20 @@ async function handleCycleExhaustion(
   );
 
   // Send internal alert on each cycle exhaustion
-  if (deps.config.internalAlertNumber) {
+  if (
+    deps.config.internalAlertNumber &&
+    samePhoneNumber(deps.config.internalAlertNumber, deps.config.outboundFromNumber)
+  ) {
+    log({
+      component: 'escalation_coordinator',
+      event: 'internal_alert_skipped_invalid_self_target',
+      incident_id: incident.incident_id,
+      conversation_id: incident.conversation_id,
+      cycle_number: incident.cycle_number,
+      phone: deps.config.internalAlertNumber,
+      detail: 'internal alert recipient matches outbound sender number',
+    });
+  } else if (deps.config.internalAlertNumber) {
     try {
       await deps.smsProvider.sendSms(
         deps.config.internalAlertNumber,
