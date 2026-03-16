@@ -1,6 +1,6 @@
 # Emergency Escalation — Operator Runbook
 
-**Last updated:** 2026-03-12
+**Last updated:** 2026-03-16
 
 This runbook covers day-to-day operation of the emergency escalation system. For architectural design, see the plan at `docs/plans/2026-03-12-emergency-escalation-runtime-plan.md`. For spec requirements, see `docs/spec.md` §17.
 
@@ -32,6 +32,8 @@ EMERGENCY_MAX_CYCLES_DEFAULT=3           # Default retry ceiling
 EMERGENCY_CALL_TIMEOUT_SECONDS=60        # Voice call ring timeout
 EMERGENCY_SMS_REPLY_TIMEOUT_SECONDS=120  # Time to wait for SMS reply before advancing
 CRON_SECRET=...                          # Bearer token for Vercel Cron Job auth
+USE_DEMO_UNIT_RESOLVER=false             # Set "true" ONLY for local dev / demos (see §9)
+DEMO_BUILDING_ID=example-building-001    # Building ID returned by demo resolver (ignored if flag is off)
 ```
 
 ---
@@ -172,7 +174,54 @@ The due-incident processor runs via Vercel Cron Job:
 
 ---
 
-## 8. Troubleshooting
+## 8. Safety Guards (added 2026-03-16)
+
+### Self-call prevention
+
+The system prevents Twilio from calling or texting its own outbound number. This is enforced at **three layers**:
+
+1. **SMS provider** (`twilio-sms.ts`): Normalizes both numbers and throws before calling the Twilio API if `To == From`.
+2. **Voice provider** (`twilio-voice.ts`): Same guard for `placeCall()`.
+3. **Escalation coordinator**: Skips any contact whose phone matches `outboundFromNumber`, advances to the next contact in the chain, and logs a structured `self_target_skipped` event. Also skips internal alert SMS when the internal alert number matches the outbound sender.
+
+Phone normalization strips formatting differences (e.g., `+1 (555) 111-1111` vs `+15551111111`), so mismatched formats cannot bypass the guard.
+
+**If you see `self_target_skipped` in logs**, it means a contact in an escalation plan has the same phone number as `TWILIO_FROM_NUMBER`. Update the plan to use a different number for that contact.
+
+### Webhook signature validation
+
+Both Twilio webhook routes validate the `x-twilio-signature` header using HMAC-SHA1 with constant-time comparison:
+
+- **SMS reply route** (`POST /api/webhooks/twilio/sms-reply`): Returns 403 if signature is invalid.
+- **Voice status route** (`POST /api/webhooks/twilio/voice-status`): Returns 403 if signature is invalid.
+- Both return 500 if `TWILIO_AUTH_TOKEN` is not set.
+
+The signature is computed per the Twilio spec: HMAC-SHA1 of `URL + sorted(key+value)` using the auth token as the key.
+
+### Row-version (CAS) propagation
+
+The escalation coordinator uses optimistic concurrency control (compare-and-swap) on incident records. As of 2026-03-16, recursive calls within `attemptContact()` and `handleCycleExhaustion()` correctly propagate `row_version + 1` after each successful CAS update. This prevents silent locking failures on rapid-fire escalation chains.
+
+**No operator action required** — this was a code-level fix with no configuration changes.
+
+---
+
+## 9. Demo Resolver Isolation (added 2026-03-16)
+
+The `UnitResolver` — which maps a tenant's selected unit to a `building_id` for escalation plan lookup — has a stub implementation for local dev and demos.
+
+| `USE_DEMO_UNIT_RESOLVER` | Behavior                                                                                                 |
+| ------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `true`                   | Stub active: maps any `unit_id` to `{ building_id: DEMO_BUILDING_ID, property_id: 'demo-property-001' }` |
+| `false` or absent        | **Fail-closed**: returns `null` for all units. `SELECT_UNIT` will reject with `UNIT_NOT_FOUND`.          |
+
+**Production must never set `USE_DEMO_UNIT_RESOLVER=true`.** The stub bypasses real unit-to-building resolution and would route all tenants to the same escalation plan.
+
+If `DEMO_BUILDING_ID` is not set when the flag is on, it defaults to `example-building-001` and logs a warning if no matching escalation plan exists.
+
+---
+
+## 10. Troubleshooting
 
 ### Escalation not starting
 

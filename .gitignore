@@ -42,3 +42,18 @@ apps/web/public/dev.htm
 .claude/settings.local.json
 .vercel
 .env*.local
+
+# Obsidian Vault (ActionPM2 — may be symlinked or copied into repo root)
+ActionPM2/
+.obsidian/
+00_Map/
+01_Product/
+02_System/
+03_Domain/
+04_Entities/
+05_Taxonomy/
+06_Rep Reference/
+07_Maps Excalidraw/
+97_Agents/
+99_Templates/
+XX-Archive/
