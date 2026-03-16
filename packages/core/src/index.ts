@@ -111,6 +111,10 @@ export {
 } from './splitter/index.js';
 export type { IssueConstraintResult } from './splitter/index.js';
 
+// --- Disambiguator (S12-03) ---
+export { callDisambiguator } from './disambiguator/index.js';
+export type { DisambiguatorCallResult } from './disambiguator/index.js';
+
 // --- Classifier (Phase 5) ---
 export {
   computeCueScores,

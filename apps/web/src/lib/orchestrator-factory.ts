@@ -411,6 +411,7 @@ function ensureInitialized(): FactoryDeps {
           };
         }),
       followUpGenerator: llmDeps?.followUpGenerator ?? (async () => ({ questions: [] })),
+      messageDisambiguator: llmDeps?.messageDisambiguator,
       cueDict: classificationCues as CueDictionary,
       taxonomy,
       unitResolver,

@@ -60,6 +60,7 @@ Do NOT skip ahead. Each phase depends on the previous.
 | 4     | Splitter + split confirmation UI flows + tests                                                 | `IssueSplitter` tool, split actions                 |
 | 5     | Classifier + `classification_cues.json` + category gating retry + confidence heuristic + tests | `IssueClassifier` tool, cue dict, confidence calc   |
 | 6     | Follow-up generator + termination caps + `followup_events` + tests                             | `FollowUpGenerator` tool                            |
+| 6b    | Message disambiguator + queued-text handoff (spec §12.2) + tests                               | `MessageDisambiguator` tool                         |
 | 7     | Tenant confirmation UI + staleness checks                                                      | Confirmation gate, staleness logic                  |
 | 8     | Transactional WO creation + idempotency + work-order optimistic locking                        | WO service, `row_version`                           |
 | 9     | Risk protocols + mitigation templates + emergency router + exhaustion path                     | Risk engine, emergency chain                        |
@@ -85,6 +86,7 @@ Do NOT skip ahead. Each phase depends on the previous.
 - [ ] `sla_policies.json`
 - [ ] `photo.schema.json`
 - [ ] `classification_cues.json` — keyword/regex cues for confidence `cue_strength`
+- [ ] `disambiguator.schema.json` — message disambiguator output validation
 
 ### `docs/`
 
@@ -152,13 +154,14 @@ Response → `OrchestratorActionResponse` always.
 
 ## LLM Tool Contracts
 
-### Three bounded tools
+### Four bounded tools
 
 1. **IssueSplitter** — takes raw text, returns structured issue list
 2. **IssueClassifier** — takes one issue, returns taxonomy enums + confidence
 3. **FollowUpGenerator** — takes classification gaps, returns targeted questions
+4. **MessageDisambiguator** — takes a message during follow-ups/confirmation, classifies as clarification or new issue (spec §12.2)
 
-### Output validation pattern (use for ALL three)
+### Output validation pattern (use for ALL four)
 
 ```
 LLM call → JSON parse → Schema validate → domain validate → accept or retry(1x) → fail safe
@@ -323,7 +326,7 @@ packages/
 - `/schema-first-development` — **mandatory** before creating any new module, endpoint, or data structure. Enforces non-negotiables, authority order, and schema validation gates. Do not skip this.
 - `/state-machine-implementation` — **mandatory** when implementing or modifying conversation states, transitions, or orchestrator actions. Contains the full authoritative transition matrix. Every transition must match it exactly.
 - `/append-only-events` — **mandatory** when writing any database migration, query, or data access code. Enforces INSERT+SELECT only on event tables, correction-as-new-event pattern, and all 7 event table schemas.
-- `/llm-tool-contracts` — **mandatory** when implementing IssueSplitter, IssueClassifier, or FollowUpGenerator. Contains full I/O contracts, the validation pipeline, confidence heuristic formula, cue dictionary scoring, and category gating error path.
+- `/llm-tool-contracts` — **mandatory** when implementing IssueSplitter, IssueClassifier, FollowUpGenerator, or MessageDisambiguator. Contains full I/O contracts, the validation pipeline, confidence heuristic formula, cue dictionary scoring, and category gating error path.
 - Use brainstorm skill before any creative/feature work
 
 ### Planning

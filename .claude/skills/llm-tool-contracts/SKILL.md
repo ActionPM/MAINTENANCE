@@ -1,11 +1,11 @@
 ---
 name: llm-tool-contracts
-description: Use when implementing IssueSplitter, IssueClassifier, or FollowUpGenerator. Enforces schema-lock rules, retry logic, confidence heuristic, cue dictionaries, and the split-first ordering rule.
+description: Use when implementing IssueSplitter, IssueClassifier, FollowUpGenerator, or MessageDisambiguator. Enforces schema-lock rules, retry logic, confidence heuristic, cue dictionaries, and the split-first ordering rule.
 ---
 
 # LLM Tool Contracts
 
-You are implementing one of the three bounded LLM tools for the **Service Request Intake & Triage Agent**. These tools are the ONLY interface between the LLM and the system. Every rule below is non-negotiable.
+You are implementing one of the four bounded LLM tools for the **Service Request Intake & Triage Agent**. These tools are the ONLY interface between the LLM and the system. Every rule below is non-negotiable.
 
 ---
 
@@ -30,7 +30,7 @@ There are no shortcuts. A single-issue message still goes through the splitter (
 
 ---
 
-## The Three Tools
+## The Four Tools
 
 ### 1. IssueSplitter
 
@@ -183,7 +183,44 @@ interface FollowUpGeneratorOutput {
 
 ---
 
-## The Validation Pipeline (applies to ALL three tools)
+### 4. MessageDisambiguator
+
+**Purpose:** Determines whether a tenant message during follow-ups or confirmation is clarification of existing issues or a wholly new issue (spec §12.2).
+
+**When called:** During `SUBMIT_ADDITIONAL_MESSAGE` when conversation is in `needs_tenant_input` or `tenant_confirmation_pending`. Only called when a real LLM client is available (ANTHROPIC_API_KEY set). Falls back to length heuristic otherwise.
+
+**Input contract:**
+
+```typescript
+interface DisambiguatorInput {
+  message: string; // the tenant's new message
+  current_issues: SplitIssue[]; // from the finalized split
+  pending_questions: FollowUpQuestion[] | null; // current follow-up questions
+  conversation_state: ConversationState; // needs_tenant_input or tenant_confirmation_pending
+  model_id: string; // pinned
+  prompt_version: string; // pinned
+  conversation_id: string;
+}
+```
+
+**Output contract (must validate against `disambiguator.schema.json`):**
+
+```typescript
+interface DisambiguatorOutput {
+  classification: 'clarification' | 'new_issue';
+  reasoning: string; // brief explanation
+}
+```
+
+**Fail-safe behavior (differs from other tools):**
+
+- The disambiguator **never throws**. On any failure (LLM exception, schema validation failure after retry), it returns `{ classification: 'clarification', reasoning: 'fail-safe', isFailSafe: true }`.
+- When `isFailSafe` is true, the handler falls back to the length heuristic — so LLM failure cannot suppress currently-detected new issues.
+- The `isFailSafe` flag is an internal control-plane field (`DisambiguatorCallResult`), NOT part of the schema-locked LLM output.
+
+---
+
+## The Validation Pipeline (applies to ALL four tools)
 
 Every LLM tool call follows the same pipeline. No exceptions. No shortcuts for "simple" calls.
 
@@ -513,7 +550,7 @@ const input: IssueClassifierInput = {
 
 ## Tool Isolation Rules
 
-1. **Only the orchestrator calls LLM tools.** No endpoint handler, UI component, or service may invoke IssueSplitter, IssueClassifier, or FollowUpGenerator directly.
+1. **Only the orchestrator calls LLM tools.** No endpoint handler, UI component, or service may invoke IssueSplitter, IssueClassifier, FollowUpGenerator, or MessageDisambiguator directly.
 
 2. **Tools have no side effects.** They take input, return output. They do not:
    - Write to the database

@@ -29,3 +29,4 @@ export {
   validateEvalReport,
 } from './eval-validators.js';
 export type { EvalValidationResult } from './eval-validators.js';
+export { validateDisambiguatorOutput } from './disambiguator.js';

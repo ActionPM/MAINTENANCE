@@ -6,9 +6,11 @@ import type {
   OrchestratorActionRequest,
   OrchestratorActionResponse,
   FollowUpGeneratorInput,
+  DisambiguatorInput,
   RiskProtocols,
   EscalationPlans,
 } from '@wo-agent/schemas';
+import type { DisambiguatorCallResult } from '../disambiguator/disambiguator.js';
 import type { CueDictionary, Taxonomy, ConfidenceConfig, FollowUpCaps } from '@wo-agent/schemas';
 import type { EventRepository } from '../events/event-repository.js';
 import type { ConversationSession } from '../session/types.js';
@@ -47,6 +49,10 @@ export interface OrchestratorDependencies {
     retryContext?: { retryHint: string },
     ...rest: unknown[]
   ) => Promise<unknown>;
+  readonly messageDisambiguator?: (
+    input: DisambiguatorInput,
+    ...rest: unknown[]
+  ) => Promise<DisambiguatorCallResult>;
   readonly cueDict: CueDictionary;
   readonly taxonomy: Taxonomy;
   readonly confidenceConfig?: ConfidenceConfig;

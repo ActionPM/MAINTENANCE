@@ -50,4 +50,60 @@ describe('StatusIndicator', () => {
     await user.click(screen.getByRole('button', { name: /resume/i }));
     expect(onResume).toHaveBeenCalled();
   });
+
+  // --- S12-03: queued-text handoff ---
+
+  it('renders "Continue with new issue" button when submitted with queued messages', () => {
+    const onStartQueued = vi.fn();
+    render(
+      <StatusIndicator
+        state="submitted"
+        queuedMessages={['kitchen sink leaking too']}
+        onStartQueued={onStartQueued}
+      />,
+    );
+
+    expect(screen.getByText(/you mentioned another issue/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /continue with new issue/i })).toBeInTheDocument();
+  });
+
+  it('calls onStartQueued when button is clicked', async () => {
+    const onStartQueued = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <StatusIndicator
+        state="submitted"
+        queuedMessages={['kitchen sink leaking too']}
+        onStartQueued={onStartQueued}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /continue with new issue/i }));
+    expect(onStartQueued).toHaveBeenCalledOnce();
+  });
+
+  it('does not render queued section when queuedMessages is empty', () => {
+    render(<StatusIndicator state="submitted" queuedMessages={[]} onStartQueued={vi.fn()} />);
+
+    expect(screen.queryByText(/you mentioned another issue/i)).not.toBeInTheDocument();
+  });
+
+  it('does not render queued section when queuedMessages is undefined', () => {
+    render(<StatusIndicator state="submitted" />);
+
+    expect(screen.queryByText(/you mentioned another issue/i)).not.toBeInTheDocument();
+  });
+
+  it('disables the queued button when disabled prop is true', () => {
+    render(
+      <StatusIndicator
+        state="submitted"
+        queuedMessages={['sink leaking']}
+        onStartQueued={vi.fn()}
+        disabled={true}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: /continue with new issue/i })).toBeDisabled();
+  });
 });

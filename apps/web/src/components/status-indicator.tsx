@@ -5,9 +5,12 @@ import styles from './status-indicator.module.css';
 interface StatusIndicatorProps {
   state: string;
   workOrderIds?: readonly string[];
+  queuedMessages?: readonly string[];
   onRetry?: () => void;
   onResume?: () => void;
   onStartOver?: () => void;
+  onStartQueued?: () => void;
+  disabled?: boolean;
 }
 
 const MESSAGES: Record<string, string> = {
@@ -30,9 +33,12 @@ const PROCESSING_STATES = new Set([
 export function StatusIndicator({
   state,
   workOrderIds,
+  queuedMessages,
   onRetry,
   onResume,
   onStartOver,
+  onStartQueued,
+  disabled,
 }: StatusIndicatorProps) {
   const message = MESSAGES[state] ?? state;
   const isProcessing = PROCESSING_STATES.has(state);
@@ -57,6 +63,17 @@ export function StatusIndicator({
             </li>
           ))}
         </ul>
+      )}
+
+      {isSuccess && queuedMessages && queuedMessages.length > 0 && onStartQueued && (
+        <div className={styles.queuedSection}>
+          <p className={styles.queuedMessage}>
+            You mentioned another issue. Would you like to continue with it?
+          </p>
+          <button className={styles.actionBtn} onClick={onStartQueued} disabled={disabled}>
+            Continue with new issue
+          </button>
+        </div>
       )}
 
       {state === 'llm_error_retryable' && onRetry && (

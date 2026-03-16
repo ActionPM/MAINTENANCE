@@ -1,4 +1,5 @@
 import { ConversationState } from '@wo-agent/schemas';
+import type { DisambiguatorInput } from '@wo-agent/schemas';
 import { queueMessage } from '../../session/session.js';
 import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
 
@@ -8,14 +9,13 @@ const NEW_ISSUE_DETECTION_STATES: ReadonlySet<ConversationState> = new Set([
 ]);
 
 /**
- * Heuristic: if the session is in needs_tenant_input or tenant_confirmation_pending
- * and the message doesn't reference any pending follow-up question fields,
- * treat it as a potential new issue (spec §12.2).
+ * Heuristic fallback: used when the LLM disambiguator is not available
+ * (no ANTHROPIC_API_KEY) or when the disambiguator returns a fail-safe result.
  *
  * In tenant_confirmation_pending there are no pending_followup_questions, so
  * we rely on a length-only heuristic (>100 chars). Short new issues like
  * "kitchen sink leaking too" (25 chars) will NOT be detected — reliable
- * short-message disambiguation would require an LLM call.
+ * short-message disambiguation requires the LLM disambiguator.
  */
 function isLikelyNewIssue(message: string, ctx: ActionHandlerContext): boolean {
   if (!NEW_ISSUE_DETECTION_STATES.has(ctx.session.state)) return false;
@@ -41,28 +41,76 @@ function isLikelyNewIssue(message: string, ctx: ActionHandlerContext): boolean {
   return message.length > 100;
 }
 
+/**
+ * Determine whether the message is a new issue using the LLM disambiguator
+ * if available, with heuristic fallback.
+ *
+ * If the disambiguator returns isFailSafe=true (LLM failed), we fall back
+ * to the heuristic so that currently-detected long new issues are never
+ * suppressed by a failing LLM.
+ */
+async function isNewIssue(message: string, ctx: ActionHandlerContext): Promise<boolean> {
+  if (!NEW_ISSUE_DETECTION_STATES.has(ctx.session.state)) return false;
+
+  // If no disambiguator wired, fall back to heuristic
+  if (!ctx.deps.messageDisambiguator) {
+    return isLikelyNewIssue(message, ctx);
+  }
+
+  const versions = ctx.session.pinned_versions;
+  const input: DisambiguatorInput = {
+    message,
+    current_issues: ctx.session.split_issues ?? [],
+    pending_questions: ctx.session.pending_followup_questions ?? null,
+    conversation_state: ctx.session.state,
+    model_id: versions.model_id,
+    prompt_version: versions.prompt_version,
+    conversation_id: ctx.session.conversation_id,
+  };
+
+  const obsCtx = ctx.request_id
+    ? { request_id: ctx.request_id, timestamp: ctx.deps.clock?.() ?? new Date().toISOString() }
+    : undefined;
+
+  const result = obsCtx
+    ? await ctx.deps.messageDisambiguator(input, obsCtx)
+    : await ctx.deps.messageDisambiguator(input);
+
+  // If the LLM failed (isFailSafe), fall back to heuristic —
+  // never suppress currently-detected issues due to LLM failure.
+  if (result.isFailSafe) {
+    return isLikelyNewIssue(message, ctx);
+  }
+
+  return result.classification === 'new_issue';
+}
+
+function makeQueuedResult(ctx: ActionHandlerContext, message: string): ActionHandlerResult {
+  const updatedSession = queueMessage(ctx.session, message);
+  return {
+    newState: ctx.session.state,
+    session: updatedSession,
+    uiMessages: [
+      {
+        role: 'agent',
+        content:
+          "It looks like you may have a new issue. I've noted it — let's finish the current one first, and then we'll address it.",
+      },
+    ],
+    eventPayload: { message, queued_as_new_issue: true },
+    eventType: 'message_received',
+  };
+}
+
 /** SUBMIT_ADDITIONAL_MESSAGE: stays in current state, queues message (spec §12.2). */
 export async function handleSubmitAdditionalMessage(
   ctx: ActionHandlerContext,
 ): Promise<ActionHandlerResult> {
   const message = (ctx.request.tenant_input as { message?: string }).message ?? '';
 
-  // S12-03: Detect new issue during follow-ups
-  if (isLikelyNewIssue(message, ctx)) {
-    const updatedSession = queueMessage(ctx.session, message);
-    return {
-      newState: ctx.session.state,
-      session: updatedSession,
-      uiMessages: [
-        {
-          role: 'agent',
-          content:
-            "It looks like you may have a new issue. I've noted it — let's finish the current one first, and then we'll address it.",
-        },
-      ],
-      eventPayload: { message, queued_as_new_issue: true },
-      eventType: 'message_received',
-    };
+  // S12-03: Detect new issue during follow-ups or confirmation
+  if (await isNewIssue(message, ctx)) {
+    return makeQueuedResult(ctx, message);
   }
 
   return {

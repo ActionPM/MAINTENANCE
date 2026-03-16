@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { ConversationState, resolveCurrentVersions } from '@wo-agent/schemas';
 import type { FollowUpQuestion } from '@wo-agent/schemas';
+import type { DisambiguatorCallResult } from '../../disambiguator/disambiguator.js';
 import { handleSubmitAdditionalMessage } from '../../orchestrator/action-handlers/submit-additional-message.js';
 import type { ActionHandlerContext } from '../../orchestrator/types.js';
 import type { ConversationSession } from '../../session/types.js';
@@ -150,5 +151,145 @@ describe('handleSubmitAdditionalMessage — new issue detection (S12-03)', () =>
     // >100 chars overrides any keyword content
     expect(result.eventPayload?.queued_as_new_issue).toBe(true);
     expect(result.session.queued_messages).toHaveLength(1);
+  });
+});
+
+// --- LLM disambiguator path (S12-03 full close-out) ---
+
+function makeCtxWithDisambiguator(
+  session: ConversationSession,
+  message: string,
+  result: DisambiguatorCallResult,
+): ActionHandlerContext {
+  return {
+    session,
+    request: {
+      conversation_id: session.conversation_id,
+      action_type: 'SUBMIT_ADDITIONAL_MESSAGE',
+      actor: 'tenant',
+      tenant_input: { message },
+      auth_context: {
+        tenant_user_id: session.tenant_user_id,
+        tenant_account_id: session.tenant_account_id,
+        authorized_unit_ids: session.authorized_unit_ids as string[],
+      },
+    },
+    deps: {
+      messageDisambiguator: vi.fn().mockResolvedValue(result),
+    } as any,
+    request_id: 'req-1',
+  };
+}
+
+describe('handleSubmitAdditionalMessage — LLM disambiguator path (S12-03)', () => {
+  it('queues short message when disambiguator returns new_issue', async () => {
+    const session = makeSession({
+      split_issues: [
+        { issue_id: 'i1', summary: 'Broken faucet', raw_excerpt: 'bathroom faucet broken' },
+      ],
+    });
+    const shortNewIssue = 'kitchen sink leaking too';
+
+    const result = await handleSubmitAdditionalMessage(
+      makeCtxWithDisambiguator(session, shortNewIssue, {
+        classification: 'new_issue',
+        reasoning: 'Kitchen sink is a different fixture from bathroom faucet.',
+        isFailSafe: false,
+      }),
+    );
+
+    expect(result.eventPayload?.queued_as_new_issue).toBe(true);
+    expect(result.session.queued_messages).toHaveLength(1);
+    expect(result.session.queued_messages[0]).toBe(shortNewIssue);
+  });
+
+  it('does not queue when disambiguator returns clarification', async () => {
+    const session = makeSession();
+    const result = await handleSubmitAdditionalMessage(
+      makeCtxWithDisambiguator(session, 'it started yesterday', {
+        classification: 'clarification',
+        reasoning: 'Provides timing context for the existing issue.',
+        isFailSafe: false,
+      }),
+    );
+
+    expect(result.eventPayload?.queued_as_new_issue).toBeUndefined();
+  });
+
+  it('falls back to heuristic when disambiguator returns fail-safe (long msg)', async () => {
+    const session = makeSession({
+      state: ConversationState.TENANT_CONFIRMATION_PENDING,
+      pending_followup_questions: null,
+    });
+    const longMsg =
+      'Also, I wanted to mention that the parking garage door has been broken for three days now. ' +
+      'Every time I try to use my remote it does not respond and I have to wait for another resident.';
+
+    const result = await handleSubmitAdditionalMessage(
+      makeCtxWithDisambiguator(session, longMsg, {
+        classification: 'clarification',
+        reasoning: 'fail-safe',
+        isFailSafe: true,
+      }),
+    );
+
+    // Fail-safe → heuristic → long message → queued
+    expect(result.eventPayload?.queued_as_new_issue).toBe(true);
+    expect(result.session.queued_messages).toHaveLength(1);
+  });
+
+  it('falls back to heuristic when disambiguator returns fail-safe (short msg)', async () => {
+    const session = makeSession({
+      state: ConversationState.TENANT_CONFIRMATION_PENDING,
+      pending_followup_questions: null,
+    });
+
+    const result = await handleSubmitAdditionalMessage(
+      makeCtxWithDisambiguator(session, 'sink leaking too', {
+        classification: 'clarification',
+        reasoning: 'fail-safe',
+        isFailSafe: true,
+      }),
+    );
+
+    // Fail-safe → heuristic → short message → NOT queued (heuristic limitation)
+    expect(result.eventPayload?.queued_as_new_issue).toBeUndefined();
+  });
+
+  it('falls back to heuristic when no disambiguator in deps', async () => {
+    // This is the same as the existing heuristic tests above —
+    // confirms no regression when ANTHROPIC_API_KEY is absent.
+    const session = makeSession();
+    const longNewIssue =
+      'Also, I wanted to mention that the parking garage door has been broken for three days now. ' +
+      'Every time I try to use my remote it does not respond and I have to wait for another resident to open it.';
+    const result = await handleSubmitAdditionalMessage(makeCtx(session, longNewIssue));
+
+    expect(result.eventPayload?.queued_as_new_issue).toBe(true);
+  });
+
+  it('does not call disambiguator in non-detection states', async () => {
+    const session = makeSession({ state: ConversationState.SPLIT_PROPOSED });
+    const disambiguator = vi.fn();
+    const ctx: ActionHandlerContext = {
+      session,
+      request: {
+        conversation_id: session.conversation_id,
+        action_type: 'SUBMIT_ADDITIONAL_MESSAGE',
+        actor: 'tenant',
+        tenant_input: { message: 'something' },
+        auth_context: {
+          tenant_user_id: session.tenant_user_id,
+          tenant_account_id: session.tenant_account_id,
+          authorized_unit_ids: session.authorized_unit_ids as string[],
+        },
+      },
+      deps: { messageDisambiguator: disambiguator } as any,
+      request_id: 'req-1',
+    };
+
+    await handleSubmitAdditionalMessage(ctx);
+
+    expect(disambiguator).not.toHaveBeenCalled();
   });
 });
