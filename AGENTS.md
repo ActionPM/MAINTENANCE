@@ -60,6 +60,7 @@ Do NOT skip ahead. Each phase depends on the previous.
 | 4     | Splitter + split confirmation UI flows + tests                                                 | `IssueSplitter` tool, split actions                 |
 | 5     | Classifier + `classification_cues.json` + category gating retry + confidence heuristic + tests | `IssueClassifier` tool, cue dict, confidence calc   |
 | 6     | Follow-up generator + termination caps + `followup_events` + tests                             | `FollowUpGenerator` tool                            |
+| 6b    | Message disambiguator + queued-text handoff (spec §12.2) + tests                               | `MessageDisambiguator` tool                         |
 | 7     | Tenant confirmation UI + staleness checks                                                      | Confirmation gate, staleness logic                  |
 | 8     | Transactional WO creation + idempotency + work-order optimistic locking                        | WO service, `row_version`                           |
 | 9     | Risk protocols + mitigation templates + emergency router + exhaustion path                     | Risk engine, emergency chain                        |
@@ -85,6 +86,7 @@ Do NOT skip ahead. Each phase depends on the previous.
 - [ ] `sla_policies.json`
 - [ ] `photo.schema.json`
 - [ ] `classification_cues.json` — keyword/regex cues for confidence `cue_strength`
+- [ ] `disambiguator.schema.json` — message disambiguator output validation
 
 ### `docs/`
 

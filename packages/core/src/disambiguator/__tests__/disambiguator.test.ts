@@ -88,28 +88,25 @@ describe('callDisambiguator', () => {
     );
   });
 
-  it('records metric on LLM exception', async () => {
+  it('does not emit its own metric on LLM exception (wrapper handles it)', async () => {
     const llmCall = vi.fn().mockRejectedValue(new Error('API error'));
     const metricsRecorder = { record: vi.fn().mockResolvedValue(undefined) };
 
     await callDisambiguator(input, llmCall, metricsRecorder as any);
 
-    expect(metricsRecorder.record).toHaveBeenCalledWith(
-      expect.objectContaining({
-        metric_name: 'llm_call_failure_total',
-        component: 'disambiguator',
-      }),
-    );
+    // callDisambiguator does not emit llm_call_error_total — that is the
+    // responsibility of withObservedLlmCall which wraps the raw adapter.
+    expect(metricsRecorder.record).not.toHaveBeenCalled();
   });
 
-  it('passes observability context to LLM call when provided', async () => {
+  it('passes rest args through to LLM call', async () => {
     const llmCall = vi.fn().mockResolvedValue({
       classification: 'clarification',
       reasoning: 'test',
     });
     const obsCtx = { request_id: 'req-1', timestamp: '2026-01-01T00:00:00Z' };
 
-    await callDisambiguator(input, llmCall, undefined, obsCtx as any);
+    await callDisambiguator(input, llmCall, undefined, obsCtx);
 
     expect(llmCall).toHaveBeenCalledWith(input, obsCtx);
   });

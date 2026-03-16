@@ -68,7 +68,13 @@ async function isNewIssue(message: string, ctx: ActionHandlerContext): Promise<b
     conversation_id: ctx.session.conversation_id,
   };
 
-  const result = await ctx.deps.messageDisambiguator(input);
+  const obsCtx = ctx.request_id
+    ? { request_id: ctx.request_id, timestamp: ctx.deps.clock?.() ?? new Date().toISOString() }
+    : undefined;
+
+  const result = obsCtx
+    ? await ctx.deps.messageDisambiguator(input, obsCtx)
+    : await ctx.deps.messageDisambiguator(input);
 
   // If the LLM failed (isFailSafe), fall back to heuristic —
   // never suppress currently-detected issues due to LLM failure.

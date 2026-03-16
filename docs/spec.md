@@ -732,6 +732,7 @@ Plans live in `docs/plans/` (no root `PLANS.md`). AGENTS.md must include non-neg
 4. Splitter + split confirmation UI flows + tests
 5. Classifier + **classification_cues.json** + category gating retry + confidence heuristic + tests
 6. Follow-up generator + termination caps + followup_events + tests
+   6b. Message disambiguator + queued-text handoff (spec §12.2) + tests
 7. Tenant confirmation UI + staleness checks
 8. Transactional WO creation + idempotency + work-order optimistic locking
 9. Risk protocols + mitigation templates + emergency router + exhaustion path
@@ -757,6 +758,7 @@ In `packages/schemas/`:
 - `sla_policies.json`
 - `photo.schema.json`
 - `classification_cues.json` (required for confidence cue_strength)
+- `disambiguator.schema.json` (message disambiguator output validation)
 
 In `docs/`:
 

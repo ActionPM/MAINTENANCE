@@ -1,6 +1,6 @@
 import { validateDisambiguatorOutput } from '@wo-agent/schemas';
 import type { DisambiguatorInput, DisambiguatorOutput } from '@wo-agent/schemas';
-import type { MetricsRecorder, ObservabilityContext } from '../observability/types.js';
+import type { MetricsRecorder } from '../observability/types.js';
 
 /**
  * Internal result wrapper — adds isFailSafe flag for the handler.
@@ -39,22 +39,15 @@ export async function callDisambiguator(
   input: DisambiguatorInput,
   llmCall: LlmDisambiguatorFn,
   metricsRecorder?: MetricsRecorder,
-  obsCtx?: ObservabilityContext,
+  ...rest: unknown[]
 ): Promise<DisambiguatorCallResult> {
   for (let attempt = 0; attempt < 2; attempt++) {
     let raw: unknown;
     try {
-      raw = obsCtx ? await llmCall(input, obsCtx) : await llmCall(input);
+      raw = await llmCall(input, ...rest);
     } catch {
-      // LLM exception — fail safe immediately, no retry
-      await metricsRecorder?.record({
-        metric_name: 'llm_call_failure_total',
-        metric_value: 1,
-        component: 'disambiguator',
-        request_id: obsCtx?.request_id,
-        conversation_id: input.conversation_id,
-        timestamp: new Date().toISOString(),
-      });
+      // LLM exception — fail safe immediately, no retry.
+      // llm_call_error_total is already emitted by withObservedLlmCall wrapper.
       return FAIL_SAFE_RESULT;
     }
 
@@ -64,7 +57,6 @@ export async function callDisambiguator(
         metric_name: 'schema_validation_failure_total',
         metric_value: 1,
         component: 'disambiguator',
-        request_id: obsCtx?.request_id,
         conversation_id: input.conversation_id,
         timestamp: new Date().toISOString(),
       });

@@ -68,14 +68,26 @@ export function createLlmDependencies(config: CreateLlmDepsConfig): LlmDependenc
   // second params (retryContext) pass through transparently via ...rest.
   type AdapterFn<I, O> = (input: I, ...rest: unknown[]) => Promise<O>;
 
-  // Wrap the disambiguator adapter with callDisambiguator for validation/retry/fail-safe.
-  // callDisambiguator never throws — it returns DisambiguatorCallResult with isFailSafe.
-  const wrappedDisambiguator = (input: DisambiguatorInput): Promise<DisambiguatorCallResult> =>
-    callDisambiguator(
-      input,
-      rawDisambiguator as AdapterFn<DisambiguatorInput, unknown>,
-      config.metricsRecorder,
-    );
+  // Wrap the disambiguator: first withObservedLlmCall (for logging, latency,
+  // and llm_call_error_total alerting), then callDisambiguator (for schema
+  // validation, retry, and fail-safe). When the LLM throws, the observability
+  // wrapper logs + emits llm_call_error_total, then re-throws; callDisambiguator
+  // catches the re-throw and returns fail-safe.
+  const observedDisambiguator =
+    config.logger || config.metricsRecorder
+      ? withObservedLlmCall(
+          rawDisambiguator as AdapterFn<DisambiguatorInput, unknown>,
+          config.logger,
+          config.metricsRecorder,
+          'disambiguator',
+        )
+      : (rawDisambiguator as AdapterFn<DisambiguatorInput, unknown>);
+
+  const wrappedDisambiguator = (
+    input: DisambiguatorInput,
+    ...rest: unknown[]
+  ): Promise<DisambiguatorCallResult> =>
+    callDisambiguator(input, observedDisambiguator, config.metricsRecorder, ...rest);
 
   if (config.logger || config.metricsRecorder) {
     return {
