@@ -106,6 +106,71 @@ describe('useConversation', () => {
     expect(result.current.status).toBe('ready');
   });
 
+  // --- S12-03: startWithQueuedText ---
+
+  it('startWithQueuedText chains create → selectUnit → submitInitialMessage', async () => {
+    const r1 = makeResponse('intake_started');
+    const r2 = makeResponse('unit_selected');
+    const r3 = makeResponse('split_proposed');
+    vi.mocked(api.createConversation).mockResolvedValueOnce(r1 as any);
+    vi.mocked(api.selectUnit).mockResolvedValueOnce(r2 as any);
+    vi.mocked(api.submitInitialMessage).mockResolvedValueOnce(r3 as any);
+
+    const { result } = renderHook(() => useConversation('token'));
+
+    await act(async () => {
+      await result.current.startWithQueuedText(['kitchen sink leaking'], 'unit-1');
+    });
+
+    expect(api.createConversation).toHaveBeenCalledWith('token');
+    expect(api.selectUnit).toHaveBeenCalledWith('token', 'conv-1', 'unit-1');
+    expect(api.submitInitialMessage).toHaveBeenCalledWith(
+      'token',
+      'conv-1',
+      'kitchen sink leaking',
+    );
+    expect(result.current.response?.conversation_snapshot.state).toBe('split_proposed');
+    expect(result.current.status).toBe('ready');
+  });
+
+  it('startWithQueuedText joins multiple messages with newline', async () => {
+    const r1 = makeResponse('intake_started');
+    const r2 = makeResponse('unit_selected');
+    const r3 = makeResponse('split_proposed');
+    vi.mocked(api.createConversation).mockResolvedValueOnce(r1 as any);
+    vi.mocked(api.selectUnit).mockResolvedValueOnce(r2 as any);
+    vi.mocked(api.submitInitialMessage).mockResolvedValueOnce(r3 as any);
+
+    const { result } = renderHook(() => useConversation('token'));
+
+    await act(async () => {
+      await result.current.startWithQueuedText(['sink leaking', 'light broken'], 'unit-1');
+    });
+
+    expect(api.submitInitialMessage).toHaveBeenCalledWith(
+      'token',
+      'conv-1',
+      'sink leaking\nlight broken',
+    );
+  });
+
+  it('startWithQueuedText sets error on mid-chain failure', async () => {
+    const r1 = makeResponse('intake_started');
+    vi.mocked(api.createConversation).mockResolvedValueOnce(r1 as any);
+    vi.mocked(api.selectUnit).mockRejectedValueOnce(
+      new api.ApiError(404, 'UNIT_NOT_FOUND', 'Unit not found'),
+    );
+
+    const { result } = renderHook(() => useConversation('token'));
+
+    await act(async () => {
+      await result.current.startWithQueuedText(['sink leaking'], 'bad-unit');
+    });
+
+    expect(result.current.status).toBe('error');
+    expect(result.current.error).toBe('Unit not found');
+  });
+
   it('selectUnit dispatches and updates response', async () => {
     const r1 = makeResponse('intake_started');
     const r2 = makeResponse('unit_selected');

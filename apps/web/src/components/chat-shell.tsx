@@ -160,9 +160,20 @@ export function ChatShell({ token, unitIds }: ChatShellProps) {
           <StatusIndicator
             state={state}
             workOrderIds={(snapshot as any)?.work_order_ids}
+            queuedMessages={(snapshot as any)?.queued_messages}
             onRetry={() => conv.resumeConversation(conv.conversationId!)}
             onResume={() => conv.resumeConversation(conv.conversationId!)}
             onStartOver={conv.startConversation}
+            onStartQueued={
+              (snapshot as any)?.queued_messages?.length > 0 && (snapshot as any)?.unit_id
+                ? () =>
+                    conv.startWithQueuedText(
+                      (snapshot as any).queued_messages,
+                      (snapshot as any).unit_id,
+                    )
+                : undefined
+            }
+            disabled={isLoading}
           />
         )}
 

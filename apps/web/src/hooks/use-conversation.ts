@@ -117,6 +117,25 @@ export function useConversation(token: string) {
     [token],
   );
 
+  const startWithQueuedText = useCallback(
+    async (messages: readonly string[], unitId: string) => {
+      setStatus('loading');
+      setError(null);
+      try {
+        const created = await api.createConversation(token);
+        const newId = created.conversation_snapshot.conversation_id;
+        await api.selectUnit(token, newId, unitId);
+        const result = await api.submitInitialMessage(token, newId, messages.join('\n'));
+        setResponse(result);
+        setStatus('ready');
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+        setStatus('error');
+      }
+    },
+    [token],
+  );
+
   return {
     response,
     status,
@@ -136,5 +155,6 @@ export function useConversation(token: string) {
     confirmEmergency,
     declineEmergency,
     resumeConversation,
+    startWithQueuedText,
   };
 }

@@ -14,7 +14,7 @@ vi.mock('@anthropic-ai/sdk', () => {
 });
 
 describe('createLlmDependencies', () => {
-  it('returns issueSplitter, issueClassifier, and followUpGenerator functions', () => {
+  it('returns all four LLM dependency functions', () => {
     const deps = createLlmDependencies({
       apiKey: 'test-key',
       taxonomy: { Category: ['maintenance'], Location: ['suite'] } as any,
@@ -23,6 +23,7 @@ describe('createLlmDependencies', () => {
     expect(deps.issueSplitter).toBeTypeOf('function');
     expect(deps.issueClassifier).toBeTypeOf('function');
     expect(deps.followUpGenerator).toBeTypeOf('function');
+    expect(deps.messageDisambiguator).toBeTypeOf('function');
   });
 
   it('uses provided model as default', () => {

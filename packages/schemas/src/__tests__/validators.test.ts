@@ -17,6 +17,7 @@ import { validateClassificationAgainstTaxonomy } from '../validators/taxonomy-cr
 import { validateCueDictionary } from '../validators/cue-dictionary-validator.js';
 import { validateOrchestratorActionDomain } from '../validators/orchestrator-action-domain.js';
 import { validateIssueSplitDomain } from '../validators/issue-split-domain.js';
+import { validateDisambiguatorOutput } from '../validators/disambiguator.js';
 import { taxonomy } from '../taxonomy.js';
 import { ALL_CONVERSATION_STATES } from '../conversation-states.js';
 import { readFileSync } from 'node:fs';
@@ -1123,5 +1124,60 @@ describe('validateCueDictionary', () => {
     const cues = JSON.parse(raw);
     const result = validateCueDictionary(cues, taxonomy);
     expect(result.valid).toBe(true);
+  });
+});
+
+// --- DisambiguatorOutput validator ---
+
+describe('validateDisambiguatorOutput', () => {
+  it('accepts valid clarification output', () => {
+    const result = validateDisambiguatorOutput({
+      classification: 'clarification',
+      reasoning: 'The message provides details about the existing kitchen leak issue.',
+    });
+    expect(result.valid).toBe(true);
+    expect(result.data!.classification).toBe('clarification');
+  });
+
+  it('accepts valid new_issue output', () => {
+    const result = validateDisambiguatorOutput({
+      classification: 'new_issue',
+      reasoning:
+        'The message describes a parking garage door problem unrelated to the kitchen leak.',
+    });
+    expect(result.valid).toBe(true);
+    expect(result.data!.classification).toBe('new_issue');
+  });
+
+  it('rejects invalid classification value', () => {
+    const result = validateDisambiguatorOutput({
+      classification: 'maybe_new',
+      reasoning: 'Not sure.',
+    });
+    expect(result.valid).toBe(false);
+  });
+
+  it('rejects missing reasoning', () => {
+    const result = validateDisambiguatorOutput({
+      classification: 'clarification',
+    });
+    expect(result.valid).toBe(false);
+  });
+
+  it('rejects empty reasoning', () => {
+    const result = validateDisambiguatorOutput({
+      classification: 'new_issue',
+      reasoning: '',
+    });
+    expect(result.valid).toBe(false);
+  });
+
+  it('rejects extra properties', () => {
+    const result = validateDisambiguatorOutput({
+      classification: 'clarification',
+      reasoning: 'This is a clarification.',
+      confidence: 0.9,
+    });
+    expect(result.valid).toBe(false);
   });
 });

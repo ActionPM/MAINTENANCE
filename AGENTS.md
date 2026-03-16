@@ -152,13 +152,14 @@ Response → `OrchestratorActionResponse` always.
 
 ## LLM Tool Contracts
 
-### Three bounded tools
+### Four bounded tools
 
 1. **IssueSplitter** — takes raw text, returns structured issue list
 2. **IssueClassifier** — takes one issue, returns taxonomy enums + confidence
 3. **FollowUpGenerator** — takes classification gaps, returns targeted questions
+4. **MessageDisambiguator** — takes a message during follow-ups/confirmation, classifies as clarification or new issue (spec §12.2)
 
-### Output validation pattern (use for ALL three)
+### Output validation pattern (use for ALL four)
 
 ```
 LLM call → JSON parse → Schema validate → domain validate → accept or retry(1x) → fail safe
@@ -323,7 +324,7 @@ packages/
 - `/schema-first-development` — **mandatory** before creating any new module, endpoint, or data structure. Enforces non-negotiables, authority order, and schema validation gates. Do not skip this.
 - `/state-machine-implementation` — **mandatory** when implementing or modifying conversation states, transitions, or orchestrator actions. Contains the full authoritative transition matrix. Every transition must match it exactly.
 - `/append-only-events` — **mandatory** when writing any database migration, query, or data access code. Enforces INSERT+SELECT only on event tables, correction-as-new-event pattern, and all 7 event table schemas.
-- `/llm-tool-contracts` — **mandatory** when implementing IssueSplitter, IssueClassifier, or FollowUpGenerator. Contains full I/O contracts, the validation pipeline, confidence heuristic formula, cue dictionary scoring, and category gating error path.
+- `/llm-tool-contracts` — **mandatory** when implementing IssueSplitter, IssueClassifier, FollowUpGenerator, or MessageDisambiguator. Contains full I/O contracts, the validation pipeline, confidence heuristic formula, cue dictionary scoring, and category gating error path.
 - Use brainstorm skill before any creative/feature work
 
 ### Planning

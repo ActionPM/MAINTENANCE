@@ -153,6 +153,33 @@ describe('ChatShell', () => {
     expect(screen.getByText('Hello!')).toBeInTheDocument();
   });
 
+  it('passes queued messages to StatusIndicator in submitted state', async () => {
+    const resp = makeResponse('submitted', {
+      unit_id: 'unit-1',
+      work_order_ids: ['wo-1'],
+      queued_messages: ['kitchen sink leaking too'],
+    });
+    vi.mocked(api.createConversation).mockResolvedValueOnce(resp as any);
+    const user = userEvent.setup();
+    render(<ChatShell token="tok" unitIds={['unit-1']} />);
+
+    await user.click(screen.getByRole('button', { name: /start/i }));
+    expect(screen.getByText(/you mentioned another issue/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /continue with new issue/i })).toBeInTheDocument();
+  });
+
+  it('does not show queued section when submitted without queued messages', async () => {
+    const resp = makeResponse('submitted', {
+      work_order_ids: ['wo-1'],
+    });
+    vi.mocked(api.createConversation).mockResolvedValueOnce(resp as any);
+    const user = userEvent.setup();
+    render(<ChatShell token="tok" unitIds={['unit-1']} />);
+
+    await user.click(screen.getByRole('button', { name: /start/i }));
+    expect(screen.queryByText(/you mentioned another issue/i)).not.toBeInTheDocument();
+  });
+
   it('dispatches quick reply action based on action_type', async () => {
     const resp = {
       ...makeResponse('split_proposed', {

@@ -9,6 +9,7 @@ import followupsSchema from '../followups.schema.json';
 import workOrderSchema from '../work_order.schema.json';
 import photoSchema from '../photo.schema.json';
 import recordBundleSchema from '../record_bundle.schema.json';
+import disambiguatorSchema from '../disambiguator.schema.json';
 
 export interface ValidationError {
   readonly path: string;
@@ -34,6 +35,7 @@ const SCHEMA_ENTRIES: readonly [string, Record<string, unknown>][] = [
   ['work_order.schema.json', workOrderSchema as unknown as Record<string, unknown>],
   ['photo.schema.json', photoSchema as unknown as Record<string, unknown>],
   ['record_bundle.schema.json', recordBundleSchema as unknown as Record<string, unknown>],
+  ['disambiguator.schema.json', disambiguatorSchema as unknown as Record<string, unknown>],
 ] as const;
 
 function createAjvInstance(): Ajv {

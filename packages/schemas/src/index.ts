@@ -83,6 +83,8 @@ export type {
 
 export type { IssueSplitterInput, IssueSplitterOutput, SplitIssue } from './types/issue-split.js';
 
+export type { DisambiguatorInput, DisambiguatorOutput } from './types/disambiguator.js';
+
 export type {
   IssueClassifierInput,
   IssueClassifierOutput,
@@ -168,6 +170,7 @@ export {
 } from './validators/followups.js';
 export { validateWorkOrder } from './validators/work-order.js';
 export { validateRecordBundle } from './validators/record-bundle.js';
+export { validateDisambiguatorOutput } from './validators/disambiguator.js';
 export { validatePhoto } from './validators/photo.js';
 
 // --- Domain validators ---

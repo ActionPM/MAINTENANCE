@@ -86,7 +86,7 @@ Canada-wide with policy-driven compliance and jurisdiction overrides (RentSafeTO
 
 - In-app Chat UI
 - Orchestrator (deterministic state machine + tool calls + side effects)
-- Bounded LLM tools (schema-locked): IssueSplitter, IssueClassifier, FollowUpGenerator
+- Bounded LLM tools (schema-locked): IssueSplitter, IssueClassifier, FollowUpGenerator, MessageDisambiguator
 - Risk Engine (deterministic) + Mitigation Templates
 - Emergency Router (deterministic contact chain + exhaustion handling)
 - Work Order Service (canonical records + status history)
