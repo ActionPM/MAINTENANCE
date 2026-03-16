@@ -213,7 +213,7 @@ function createEscalationConfig(): EscalationCoordinatorConfig {
  *   for every unit until a real DB-backed resolver is implemented. SELECT_UNIT
  *   will reject with UNIT_NOT_FOUND, making the gap explicit.
  */
-function createUnitResolver(escalationPlans: EscalationPlans): UnitResolver {
+export function createUnitResolver(escalationPlans: EscalationPlans): UnitResolver {
   if (process.env.USE_DEMO_UNIT_RESOLVER !== 'true') {
     return {
       resolve: async () => null,
