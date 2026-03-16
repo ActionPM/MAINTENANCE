@@ -54,6 +54,24 @@ describe('POST /api/webhooks/twilio/sms-reply', () => {
     mockGetEscalationPlans.mockReturnValue({ version: '1.0', plans: [] });
   });
 
+  it('returns 403 when Twilio signature is invalid', async () => {
+    mockValidateTwilioSignature.mockReturnValue(false);
+
+    const res = await POST(makeRequest('From=%2B16479855458&Body=ACCEPT') as any);
+
+    expect(res.status).toBe(403);
+    expect(mockProcessReplyForIncident).not.toHaveBeenCalled();
+  });
+
+  it('returns 500 when TWILIO_AUTH_TOKEN is not set', async () => {
+    delete process.env.TWILIO_AUTH_TOKEN;
+
+    const res = await POST(makeRequest('From=%2B16479855458&Body=ACCEPT') as any);
+
+    expect(res.status).toBe(500);
+    expect(mockValidateTwilioSignature).not.toHaveBeenCalled();
+  });
+
   it('returns confirmation TwiML when ACCEPT makes the sender the accepted responder', async () => {
     const incident = {
       incident_id: '2436b467-b19b-4bc5-b8e9-6cbcab635bea',
