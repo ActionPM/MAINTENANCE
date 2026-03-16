@@ -5,6 +5,7 @@ import {
   startIncident,
   processCallOutcome,
   processReplyForIncident,
+  processDue,
   incidentRef,
 } from '../../risk/escalation-coordinator.js';
 import { InMemoryEscalationIncidentStore } from '../../risk/in-memory-incident-store.js';
@@ -14,8 +15,8 @@ const PLAN: EscalationPlan = {
   plan_id: 'plan-1',
   building_id: 'bldg-1',
   contact_chain: [
-    { role: 'super', contact_id: 'c1', name: 'Alice', phone: '+15551111' },
-    { role: 'manager', contact_id: 'c2', name: 'Bob', phone: '+15552222' },
+    { role: 'super', contact_id: 'c1', name: 'Alice', phone: '+15551111111' },
+    { role: 'manager', contact_id: 'c2', name: 'Bob', phone: '+15552222222' },
   ],
   exhaustion_behavior: {
     internal_alert: true,
@@ -41,6 +42,7 @@ function createDeps(overrides?: Partial<EscalationCoordinatorDeps>): EscalationC
       maxCyclesDefault: 3,
       callTimeoutSeconds: 60,
       smsReplyTimeoutSeconds: 120,
+      outboundFromNumber: '',
       internalAlertNumber: '',
       webhookBaseUrl: 'https://example.com',
       emergencyRoutingEnabled: true,
@@ -75,17 +77,17 @@ describe('startIncident', () => {
     expect(incident.status).toBe('active');
     expect(incident.conversation_id).toBe('conv-1');
     expect(incident.summary).toBe('Pipe burst in unit 101');
-    expect(incident.contacted_phone_numbers).toContain('+15551111');
+    expect(incident.contacted_phone_numbers).toContain('+15551111111');
 
     // Voice call should have been placed
     const calls = (deps.voiceProvider as MockVoiceProvider).calls;
     expect(calls).toHaveLength(1);
-    expect(calls[0].to).toBe('+15551111');
+    expect(calls[0].to).toBe('+15551111111');
 
     // SMS should have been sent inline
     const smsList = (deps.smsProvider as MockSmsProvider).messages;
     expect(smsList).toHaveLength(1);
-    expect(smsList[0].to).toBe('+15551111');
+    expect(smsList[0].to).toBe('+15551111111');
     expect(smsList[0].body).toContain('ACCEPT');
     expect(smsList[0].body).toContain('IGNORE');
   });
@@ -96,6 +98,7 @@ describe('startIncident', () => {
         maxCyclesDefault: 3,
         callTimeoutSeconds: 60,
         smsReplyTimeoutSeconds: 120,
+        outboundFromNumber: '',
         internalAlertNumber: '',
         webhookBaseUrl: 'https://example.com',
         emergencyRoutingEnabled: false,
@@ -128,6 +131,78 @@ describe('startIncident', () => {
         deps,
       ),
     ).rejects.toThrow('No escalation plan found');
+  });
+
+  it('skips a contact whose phone matches the outbound sender number', async () => {
+    const deps = createDeps({
+      config: {
+        maxCyclesDefault: 3,
+        callTimeoutSeconds: 60,
+        smsReplyTimeoutSeconds: 120,
+        outboundFromNumber: '+1 (555) 111-1111',
+        internalAlertNumber: '',
+        webhookBaseUrl: 'https://example.com',
+        emergencyRoutingEnabled: true,
+        processingLockDurationMs: 90000,
+      },
+    });
+
+    const incident = await startIncident(
+      {
+        conversationId: 'conv-1',
+        buildingId: 'bldg-1',
+        escalationPlans: PLANS,
+        summary: 'Gas leak',
+      },
+      deps,
+    );
+
+    const calls = (deps.voiceProvider as MockVoiceProvider).calls;
+    const smsList = (deps.smsProvider as MockSmsProvider).messages;
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0].to).toBe('+15552222222');
+    expect(smsList).toHaveLength(1);
+    expect(smsList[0].to).toBe('+15552222222');
+    expect(incident.current_contact_index).toBe(1);
+    expect(incident.contacted_phone_numbers).toEqual(['+15552222222']);
+  });
+
+  it('skips the internal alert SMS when it matches the outbound sender number', async () => {
+    const deps = createDeps({
+      config: {
+        maxCyclesDefault: 3,
+        callTimeoutSeconds: 60,
+        smsReplyTimeoutSeconds: 120,
+        outboundFromNumber: '+15559999999',
+        internalAlertNumber: '+1 (555) 999-9999',
+        webhookBaseUrl: 'https://example.com',
+        emergencyRoutingEnabled: true,
+        processingLockDurationMs: 90000,
+      },
+    });
+    const emptyPlan: EscalationPlan = {
+      plan_id: 'plan-empty',
+      building_id: 'bldg-empty',
+      contact_chain: [],
+      exhaustion_behavior: {
+        internal_alert: true,
+        tenant_message_template: 'All contacts exhausted',
+        retry_after_minutes: 5,
+      },
+    };
+
+    await startIncident(
+      {
+        conversationId: 'conv-empty',
+        buildingId: 'bldg-empty',
+        escalationPlans: { version: '1.0', plans: [emptyPlan] },
+        summary: 'No one is on the contact chain',
+      },
+      deps,
+    );
+
+    expect((deps.smsProvider as MockSmsProvider).messages).toHaveLength(0);
   });
 });
 
@@ -172,7 +247,7 @@ describe('processCallOutcome with contactIndex', () => {
     const final = await deps.incidentStore.getById(incident.incident_id);
     expect(final!.attempts).toHaveLength(1);
     expect(final!.attempts[0].contact_id).toBe('c1');
-    expect(final!.attempts[0].phone).toBe('+15551111');
+    expect(final!.attempts[0].phone).toBe('+15551111111');
   });
 
   it('falls back to current_contact_index when contactIndex is omitted', async () => {
@@ -224,7 +299,7 @@ describe('processReplyForIncident — ACCEPT idempotency', () => {
     await processReplyForIncident(
       {
         incident: stored,
-        fromPhone: '+15551111',
+        fromPhone: '+15551111111',
         reply: 'ACCEPT',
         rawBody: `ACCEPT ${incidentRef(stored.incident_id)}`,
         escalationPlans: PLANS,
@@ -240,7 +315,7 @@ describe('processReplyForIncident — ACCEPT idempotency', () => {
     await processReplyForIncident(
       {
         incident: stored, // stale version
-        fromPhone: '+15552222',
+        fromPhone: '+15552222222',
         reply: 'ACCEPT',
         rawBody: `ACCEPT ${incidentRef(stored.incident_id)}`,
         escalationPlans: PLANS,
@@ -251,7 +326,7 @@ describe('processReplyForIncident — ACCEPT idempotency', () => {
 
     // Still accepted by first responder
     const final = await deps.incidentStore.getById(incident.incident_id);
-    expect(final!.accepted_by_phone).toBe('+15551111');
+    expect(final!.accepted_by_phone).toBe('+15551111111');
   });
 });
 
@@ -291,6 +366,37 @@ describe('voice callback URL includes contactIndex', () => {
 
     const calls = (deps.voiceProvider as MockVoiceProvider).calls;
     expect(calls[0].statusCallbackUrl).toContain('contactIndex=0');
+  });
+
+  it('normalizes a trailing slash in webhookBaseUrl', async () => {
+    const deps = createDeps({
+      config: {
+        maxCyclesDefault: 3,
+        callTimeoutSeconds: 60,
+        smsReplyTimeoutSeconds: 120,
+        outboundFromNumber: '',
+        internalAlertNumber: '',
+        webhookBaseUrl: 'https://example.com/',
+        emergencyRoutingEnabled: true,
+        processingLockDurationMs: 90000,
+      },
+    });
+
+    await startIncident(
+      {
+        conversationId: 'conv-1',
+        buildingId: 'bldg-1',
+        escalationPlans: PLANS,
+        summary: 'Test',
+      },
+      deps,
+    );
+
+    const calls = (deps.voiceProvider as MockVoiceProvider).calls;
+    expect(calls[0].statusCallbackUrl).toContain(
+      'https://example.com/api/webhooks/twilio/voice-status?',
+    );
+    expect(calls[0].statusCallbackUrl).not.toContain('.com//api/');
   });
 });
 
@@ -348,7 +454,12 @@ describe('duplicate incident prevention (one-active-per-conversation)', () => {
     const stored = await deps.incidentStore.getById(first.incident_id);
     if (!stored) throw new Error('not found');
     await deps.incidentStore.update(
-      { ...stored, status: 'accepted', accepted_by_phone: '+15551111', updated_at: deps.clock() },
+      {
+        ...stored,
+        status: 'accepted',
+        accepted_by_phone: '+15551111111',
+        updated_at: deps.clock(),
+      },
       stored.row_version,
     );
 
@@ -365,5 +476,81 @@ describe('duplicate incident prevention (one-active-per-conversation)', () => {
 
     expect(second.incident_id).not.toBe(first.incident_id);
     expect(second.status).toBe('active');
+  });
+});
+
+describe('processDue exhaustion transitions', () => {
+  it('moves an overdue incident to exhausted_retrying after chain exhaustion', async () => {
+    const deps = createDeps();
+    const overdue: EscalationIncident = {
+      incident_id: 'inc-overdue-retry',
+      conversation_id: 'conv-overdue-retry',
+      building_id: 'bldg-1',
+      plan_id: 'plan-1',
+      summary: 'Gas leak',
+      status: 'active',
+      cycle_number: 1,
+      max_cycles: 3,
+      current_contact_index: PLAN.contact_chain.length,
+      next_action_at: '2026-03-12T09:00:00.000Z',
+      processing_lock_until: null,
+      last_provider_action: null,
+      accepted_by_phone: null,
+      accepted_by_contact_id: null,
+      accepted_at: null,
+      contacted_phone_numbers: ['+15551111111'],
+      internal_alert_sent_cycles: [],
+      attempts: [],
+      row_version: 0,
+      created_at: '2026-03-12T09:00:00.000Z',
+      updated_at: '2026-03-12T09:00:00.000Z',
+    };
+    await deps.incidentStore.create(overdue);
+
+    const processed = await processDue(PLANS, deps);
+    const updated = await deps.incidentStore.getById(overdue.incident_id);
+
+    expect(processed).toBe(1);
+    expect(updated!.status).toBe('exhausted_retrying');
+    expect(updated!.cycle_number).toBe(2);
+    expect(updated!.current_contact_index).toBe(0);
+    expect(updated!.processing_lock_until).toBeNull();
+    expect(updated!.internal_alert_sent_cycles).toEqual([1]);
+  });
+
+  it('moves an overdue incident to exhausted_final when max cycles are exhausted', async () => {
+    const deps = createDeps();
+    const overdue: EscalationIncident = {
+      incident_id: 'inc-overdue-final',
+      conversation_id: 'conv-overdue-final',
+      building_id: 'bldg-1',
+      plan_id: 'plan-1',
+      summary: 'Gas leak',
+      status: 'active',
+      cycle_number: 1,
+      max_cycles: 1,
+      current_contact_index: PLAN.contact_chain.length,
+      next_action_at: '2026-03-12T09:00:00.000Z',
+      processing_lock_until: null,
+      last_provider_action: null,
+      accepted_by_phone: null,
+      accepted_by_contact_id: null,
+      accepted_at: null,
+      contacted_phone_numbers: ['+15551111111'],
+      internal_alert_sent_cycles: [],
+      attempts: [],
+      row_version: 0,
+      created_at: '2026-03-12T09:00:00.000Z',
+      updated_at: '2026-03-12T09:00:00.000Z',
+    };
+    await deps.incidentStore.create(overdue);
+
+    const processed = await processDue(PLANS, deps);
+    const updated = await deps.incidentStore.getById(overdue.incident_id);
+
+    expect(processed).toBe(1);
+    expect(updated!.status).toBe('exhausted_final');
+    expect(updated!.processing_lock_until).toBeNull();
+    expect(updated!.internal_alert_sent_cycles).toEqual([1]);
   });
 });
