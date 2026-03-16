@@ -127,10 +127,7 @@ export const POST = withObservedRoute('webhooks:twilio:sms-reply', async (req: N
 
     if (action === 'ACCEPT') {
       const updatedIncident = await incidentStore.getById(incident.incident_id);
-      if (
-        updatedIncident?.status === 'accepted' &&
-        updatedIncident.accepted_by_phone === from
-      ) {
+      if (updatedIncident?.status === 'accepted' && updatedIncident.accepted_by_phone === from) {
         return xmlResponse('Accepted. You are now marked as the responder for this emergency.');
       }
     }

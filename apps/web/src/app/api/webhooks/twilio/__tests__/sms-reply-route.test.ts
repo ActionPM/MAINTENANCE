@@ -73,9 +73,7 @@ describe('POST /api/webhooks/twilio/sms-reply', () => {
       getById: vi.fn().mockResolvedValue(acceptedIncident),
     });
 
-    const res = await POST(
-      makeRequest('From=%2B16479855458&Body=ACCEPT') as any,
-    );
+    const res = await POST(makeRequest('From=%2B16479855458&Body=ACCEPT') as any);
 
     expect(res.status).toBe(200);
     expect(res.headers.get('Content-Type')).toBe('text/xml');

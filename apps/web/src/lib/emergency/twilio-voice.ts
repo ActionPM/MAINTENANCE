@@ -24,7 +24,9 @@ export class TwilioVoiceProvider implements VoiceCallProvider {
     statusCallbackUrl: string,
   ): Promise<{ callSid: string }> {
     if (samePhoneNumber(to, this.config.fromNumber)) {
-      throw new Error('Refusing to place a Twilio call when To and From resolve to the same number');
+      throw new Error(
+        'Refusing to place a Twilio call when To and From resolve to the same number',
+      );
     }
 
     const url = `https://api.twilio.com/2010-04-01/Accounts/${this.config.accountSid}/Calls.json`;
