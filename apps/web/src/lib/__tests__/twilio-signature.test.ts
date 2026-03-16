@@ -3,11 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { createHmac } from 'crypto';
 import { validateTwilioSignature } from '../emergency/twilio-signature.js';
 
-function computeSignature(
-  authToken: string,
-  url: string,
-  params: Record<string, string>,
-): string {
+function computeSignature(authToken: string, url: string, params: Record<string, string>): string {
   const sortedKeys = Object.keys(params).sort();
   let data = url;
   for (const key of sortedKeys) {
@@ -41,9 +37,9 @@ describe('validateTwilioSignature', () => {
   it('returns false when URL is tampered', () => {
     const signature = computeSignature(authToken, url, params);
 
-    expect(
-      validateTwilioSignature(authToken, signature, 'https://evil.com/hook', params),
-    ).toBe(false);
+    expect(validateTwilioSignature(authToken, signature, 'https://evil.com/hook', params)).toBe(
+      false,
+    );
   });
 
   it('sorts params by key for signature computation', () => {

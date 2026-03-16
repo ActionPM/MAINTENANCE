@@ -9,7 +9,11 @@ const testPlans = {
       plan_id: 'plan-1',
       building_id: 'building-abc',
       contact_chain: [{ role: 'manager', contact_id: 'c1', name: 'A', phone: '+15550000001' }],
-      exhaustion_behavior: { internal_alert: true, tenant_message_template: '', retry_after_minutes: 5 },
+      exhaustion_behavior: {
+        internal_alert: true,
+        tenant_message_template: '',
+        retry_after_minutes: 5,
+      },
     },
   ],
 };
@@ -65,8 +69,6 @@ describe('createUnitResolver', () => {
     const resolver = createUnitResolver(testPlans as any);
     const result = await resolver.resolve('unit-789');
 
-    expect(result).toEqual(
-      expect.objectContaining({ building_id: 'example-building-001' }),
-    );
+    expect(result).toEqual(expect.objectContaining({ building_id: 'example-building-001' }));
   });
 });
