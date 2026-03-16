@@ -159,4 +159,44 @@ The full path from risk detection through escalation is covered by layered tests
 
 **Overall:** All 172 test files pass (24 web, 119 core, 11 schemas, 9 db, 8 evals, 1 mock-erp). The emergency path has 87 dedicated tests covering risk detection through escalation, webhook signature validation, and demo resolver isolation.
 
-**Open item:** Live shared-environment validation (Vercel preview deployment with real Twilio credentials) has not yet been performed. The above results are from automated unit/integration tests with mocked providers. A live staging pass should be completed and logged as an appendix before final close-out.
+**Live staging:** Completed — see Appendix A.
+
+---
+
+## Appendix A: Live Shared-Environment Regression Pass
+
+**Date:** 2026-03-16 17:39–17:41 UTC
+**Environment:** Vercel preview deployment (PR #20)
+**URL:** `wo-agent-web-git-fix-twilio-emergency-0739bc-actionpms-projects.vercel.app`
+**Twilio credentials:** Live (real ACCOUNT_SID, AUTH_TOKEN, FROM_NUMBER)
+**Demo resolver:** `USE_DEMO_UNIT_RESOLVER=true`, `DEMO_BUILDING_ID=example-building-001`
+
+### Flow executed
+
+| Step | Action                                                                   | Result                                                                                                                                                |
+| ---- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | `POST /api/dev/auth/demo-login` (persona: alice)                         | 200 — JWT issued for `tu-demo-alice`                                                                                                                  |
+| 2    | `POST /api/conversations`                                                | 201 — conversation `709d7c94-6e08-43ed-b02f-8775dbd71804` created                                                                                     |
+| 3    | `POST /api/conversations/{id}/select-unit` (unit-101)                    | 200 — `state: unit_selected`, demo resolver mapped to `example-building-001`                                                                          |
+| 4    | `POST /api/conversations/{id}/message/initial` ("gas leak... emergency") | 200 — `risk_summary.has_emergency: true`, `trigger_ids: ["gas-001"]`, `escalation_state: pending_confirmation`, gas leak mitigation message delivered |
+| 5    | `POST /api/conversations/{id}/confirm-emergency`                         | 200 — `escalation_state: routing`, incident created, first contact called                                                                             |
+| 6    | Voice call received on contact phone                                     | Real Twilio call placed and completed                                                                                                                 |
+| 7    | SMS prompt received on contact phone                                     | ACCEPT/IGNORE prompt delivered                                                                                                                        |
+| 8    | Contact replied `ACCEPT` via SMS                                         | Webhook validated signature (no 403), incident claimed, confirmation TwiML returned to responder                                                      |
+
+### Safeguards verified in live environment
+
+| Safeguard                            | Evidence                                                                                                                                                |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Webhook signature validation**     | SMS reply and voice status webhooks accepted real Twilio signatures; would have returned 403 otherwise                                                  |
+| **Demo resolver isolation**          | `unit-101` correctly resolved to `example-building-001` via demo stub; first attempt without the flag returned `UNIT_NOT_FOUND` (fail-closed confirmed) |
+| **Emergency detection + mitigation** | Gas leak trigger detected, severity `emergency`, mitigation instructions delivered before escalation                                                    |
+| **Full escalation chain**            | Voice call → SMS prompt → ACCEPT → incident claimed — complete path with real Twilio                                                                    |
+
+### Self-call prevention (indirect)
+
+Self-call prevention could not be directly exercised in this pass because the test escalation plan contacts use a different phone number than `TWILIO_FROM_NUMBER`. The guard is exercised by 4 dedicated unit tests with mismatched phone formats. A direct live test would require temporarily configuring a contact with the same number as the outbound sender.
+
+### Conclusion
+
+The live staging pass confirms that the emergency escalation path works end-to-end on the Vercel preview deployment with real Twilio credentials. All webhook routes accepted authentic Twilio signatures, the demo resolver isolated correctly behind its feature flag, and the ACCEPT flow completed successfully.
