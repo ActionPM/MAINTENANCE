@@ -202,6 +202,45 @@ function createEscalationConfig(): EscalationCoordinatorConfig {
   };
 }
 
+/**
+ * Create UnitResolver. Gated on USE_DEMO_UNIT_RESOLVER:
+ *
+ * - USE_DEMO_UNIT_RESOLVER=true: Demo stub that returns DEMO_BUILDING_ID
+ *   (default 'example-building-001') for every unit. Must match a building_id
+ *   in emergency_escalation_plans.json for emergency routing to work.
+ *
+ * - USE_DEMO_UNIT_RESOLVER absent or not 'true': Fail-closed — returns null
+ *   for every unit until a real DB-backed resolver is implemented. SELECT_UNIT
+ *   will reject with UNIT_NOT_FOUND, making the gap explicit.
+ */
+function createUnitResolver(escalationPlans: EscalationPlans): UnitResolver {
+  if (process.env.USE_DEMO_UNIT_RESOLVER !== 'true') {
+    return {
+      resolve: async () => null,
+    };
+  }
+
+  const demoBuildingId = process.env.DEMO_BUILDING_ID ?? 'example-building-001';
+  const hasMatchingPlan = escalationPlans.plans.some((p) => p.building_id === demoBuildingId);
+  if (!hasMatchingPlan) {
+    console.warn(
+      `[orchestrator-factory] DEMO_BUILDING_ID="${demoBuildingId}" does not match any ` +
+        `building_id in emergency_escalation_plans.json. Emergency escalation will return ` +
+        `NO_ESCALATION_PLAN for all conversations. Valid values: ` +
+        `${escalationPlans.plans.map((p) => p.building_id).join(', ')}`,
+    );
+  }
+
+  return {
+    resolve: async (unitId: string) => ({
+      unit_id: unitId,
+      property_id: `prop-${unitId}`,
+      client_id: `client-${unitId}`,
+      building_id: demoBuildingId,
+    }),
+  };
+}
+
 // Persist singleton on globalThis so in-memory stores survive Next.js dev
 // module re-evaluations and per-route webpack bundles (same pattern as Prisma).
 interface FactoryDeps {
@@ -296,6 +335,8 @@ function ensureInitialized(): FactoryDeps {
     const escalationPlans = loadEscalationPlans();
     const escalationIncidentStore = stores.escalationIncidentStore;
     const escalationConfig = createEscalationConfig();
+
+    const unitResolver = createUnitResolver(escalationPlans);
     const routingEnabled = escalationConfig.emergencyRoutingEnabled;
     const voiceProvider = createVoiceProvider(routingEnabled);
     const smsProvider = createSmsProvider(routingEnabled);
@@ -372,14 +413,7 @@ function ensureInitialized(): FactoryDeps {
       followUpGenerator: llmDeps?.followUpGenerator ?? (async () => ({ questions: [] })),
       cueDict: classificationCues as CueDictionary,
       taxonomy,
-      unitResolver: {
-        resolve: async (unitId: string) => ({
-          unit_id: unitId,
-          property_id: `prop-${unitId}`,
-          client_id: `client-${unitId}`,
-          building_id: 'example-building-001',
-        }),
-      } satisfies UnitResolver,
+      unitResolver,
       workOrderRepo: stores.workOrderRepo,
       idempotencyStore: stores.idempotencyStore,
       notificationService,
