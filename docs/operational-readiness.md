@@ -5,7 +5,6 @@ Track deploy, infrastructure, performance, and runtime hardening concerns here. 
 ## Review Rule
 
 Update this document:
-
 - In the same PR as any code change that affects infrastructure, deployment, performance, or runtime security.
 - Before any launch or no-launch decision. Walk every `pre_launch` row; confirm statuses are current.
 - Before any scale-up milestone. Walk every `pre_scale` row the same way.
@@ -14,30 +13,30 @@ If a row's status, evidence, or limitation has changed and this document was not
 
 ## Metadata
 
-| Field             | Value                                        |
-| ----------------- | -------------------------------------------- |
-| Tracker owner     | ActionPM                                     |
-| Last updated      | 2026-03-17                                   |
-| Deployment target | Vercel (serverless) + Neon Postgres (pooled) |
+| Field             | Value                                         |
+| ----------------- | --------------------------------------------- |
+| Tracker owner     | ActionPM                                      |
+| Last updated      | 2026-03-17                                    |
+| Deployment target | Vercel (serverless) + Neon Postgres (pooled)  |
 
 ## Related Documents
 
-| Document                      | Scope                                                       |
-| ----------------------------- | ----------------------------------------------------------- |
-| `docs/spec.md`                | Product logic, state machine, data integrity, LLM contracts |
-| `docs/spec-gap-tracker.md`    | Compliance of code against spec requirements                |
-| **This document**             | Deploy, infra, performance, security hardening              |
-| `docs/security-boundaries.md` | Trust zones and auth model (overlaps on security items)     |
-| `docs/retention-policy.md`    | Data lifecycle (overlaps on storage items)                  |
+| Document                       | Scope                                                       |
+| ------------------------------ | ----------------------------------------------------------- |
+| `docs/spec.md`                 | Product logic, state machine, data integrity, LLM contracts |
+| `docs/spec-gap-tracker.md`     | Compliance of code against spec requirements                |
+| **This document**              | Deploy, infra, performance, security hardening              |
+| `docs/security-boundaries.md`  | Trust zones and auth model (overlaps on security items)     |
+| `docs/retention-policy.md`     | Data lifecycle (overlaps on storage items)                   |
 
 ## Status Definitions
 
-| Status     | Meaning                                                                                                                                                                             |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DONE`     | Implemented, verified, and adequate for any foreseeable scale on the current deployment target.                                                                                     |
+| Status     | Meaning                                                                                                        |
+| ---------- | -------------------------------------------------------------------------------------------------------------- |
+| `DONE`     | Implemented, verified, and adequate for any foreseeable scale on the current deployment target.                 |
 | `ADEQUATE` | Implemented with a known limitation that is acceptable for launch but **not acceptable at scale**. The limitation and the scale threshold at which it breaks are stated in the row. |
-| `GAP`      | Not implemented. Required before the milestone indicated in the row.                                                                                                                |
-| `DEFERRED` | Intentionally deferred with documented rationale. Acceptable risk at current stage; revisit at stated trigger.                                                                      |
+| `GAP`      | Not implemented. Required before the milestone indicated in the row.                                           |
+| `DEFERRED` | Intentionally deferred with documented rationale. Acceptable risk at current stage; revisit at stated trigger. |
 
 ## Gating Semantics
 
@@ -48,13 +47,13 @@ If a row's status, evidence, or limitation has changed and this document was not
 
 ## Summary Dashboard
 
-| Status     | Count  |
-| ---------- | ------ |
-| `DONE`     | 7      |
-| `ADEQUATE` | 8      |
-| `GAP`      | 4      |
-| `DEFERRED` | 5      |
-| **Total**  | **24** |
+| Status     | Count |
+| ---------- | ----- |
+| `DONE`     | 5     |
+| `ADEQUATE` | 7     |
+| `GAP`      | 7     |
+| `DEFERRED` | 4     |
+| **Total**  | **23** |
 
 ---
 
@@ -62,13 +61,13 @@ If a row's status, evidence, or limitation has changed and this document was not
 
 ### OR-01: Idempotency reserve + WO creation atomicity
 
-| Field             | Value       |
-| ----------------- | ----------- |
-| **Status**        | `ADEQUATE`  |
-| **Priority**      | P1          |
-| **Launch gate**   | `pre_scale` |
-| **Owner**         | ActionPM    |
-| **Last verified** | 2026-03-17  |
+| Field             | Value          |
+| ----------------- | -------------- |
+| **Status**        | `ADEQUATE`     |
+| **Priority**      | P1             |
+| **Launch gate**   | `pre_scale`    |
+| **Owner**         | ActionPM       |
+| **Last verified** | 2026-03-17     |
 
 **Current state:** Idempotency uses a two-phase reserve-then-complete protocol. In Postgres (`pg-idempotency-store.ts`), `tryReserve()` does an atomic `INSERT ON CONFLICT` and `complete()` does a guarded `UPDATE WHERE completed = false`. Work order batch insertion (`pg-wo-store.ts`) uses `BEGIN`/`COMMIT`/`ROLLBACK`.
 
@@ -82,13 +81,13 @@ If a row's status, evidence, or limitation has changed and this document was not
 
 ### OR-02: Session concurrent write protection
 
-| Field             | Value       |
-| ----------------- | ----------- |
-| **Status**        | `ADEQUATE`  |
-| **Priority**      | P2          |
-| **Launch gate**   | `pre_scale` |
-| **Owner**         | ActionPM    |
-| **Last verified** | 2026-03-17  |
+| Field             | Value          |
+| ----------------- | -------------- |
+| **Status**        | `ADEQUATE`     |
+| **Priority**      | P2             |
+| **Launch gate**   | `pre_scale`    |
+| **Owner**         | ActionPM       |
+| **Last verified** | 2026-03-17     |
 
 **Current state:** `pg-session-store.ts` uses `INSERT ... ON CONFLICT DO UPDATE` (last-write-wins). No `row_version` or CAS check.
 
@@ -106,29 +105,33 @@ If a row's status, evidence, or limitation has changed and this document was not
 
 ### OR-03: Query timeouts
 
-| Field             | Value      |
-| ----------------- | ---------- |
-| **Status**        | `DONE`     |
-| **Priority**      | —          |
-| **Launch gate**   | —          |
-| **Owner**         | ActionPM   |
-| **Last verified** | 2026-03-17 |
+| Field             | Value          |
+| ----------------- | -------------- |
+| **Status**        | `GAP`          |
+| **Priority**      | P1             |
+| **Launch gate**   | `pre_launch`   |
+| **Owner**         | ActionPM       |
+| **Last verified** | 2026-03-17     |
 
-**Current state:** `packages/db/src/pool.ts` configures `statement_timeout` as a Postgres session parameter via the `options` connection string. Default timeout is 5 000 ms. All 8 Postgres repo stores receive the pool via DI and inherit the timeout automatically. Migration runner uses a longer timeout (30 000 ms) for DDL operations. `PoolOptions` interface and `DEFAULT_POOL_OPTIONS` are exported from `@wo-agent/db` for consumers that need custom values.
+**Current state:** No `statement_timeout` configured at pool or query level. All Postgres queries in `packages/db/src/repos/` execute without timeout.
 
-**Evidence:** `pool.test.ts` asserts default, custom, and zero-timeout configurations. `migrate-timeout.test.ts` asserts the 30s migration timeout.
+**Risk:** A slow or stuck query blocks the entire Vercel function until the platform's hard timeout (10s Hobby, 60s Pro). The function is unresponsive during that window and counts toward concurrent execution limits.
+
+**Evidence:** `packages/db/src/pool.ts:12` creates pool with `connectionString` only. All repo methods use bare `pool.query()`.
+
+**Next action:** Add `statement_timeout` option to pool creation in `packages/db/src/pool.ts`.
 
 ---
 
 ### OR-04: Session query indexing
 
-| Field             | Value       |
-| ----------------- | ----------- |
-| **Status**        | `GAP`       |
-| **Priority**      | P2          |
-| **Launch gate**   | `pre_scale` |
-| **Owner**         | ActionPM    |
-| **Last verified** | 2026-03-17  |
+| Field             | Value          |
+| ----------------- | -------------- |
+| **Status**        | `GAP`          |
+| **Priority**      | P2             |
+| **Launch gate**   | `pre_scale`    |
+| **Owner**         | ActionPM       |
+| **Last verified** | 2026-03-17     |
 
 **Current state:** `pg-session-store.ts:16` runs `SELECT ... WHERE tenant_user_id = $1 ORDER BY last_activity_at DESC`. No index exists on `(tenant_user_id, last_activity_at)`. Migrations `001` through `010` have no index on `sessions` beyond the primary key.
 
@@ -140,13 +143,13 @@ If a row's status, evidence, or limitation has changed and this document was not
 
 ### OR-05: Event query pagination
 
-| Field             | Value       |
-| ----------------- | ----------- |
-| **Status**        | `GAP`       |
-| **Priority**      | P2          |
-| **Launch gate**   | `pre_scale` |
-| **Owner**         | ActionPM    |
-| **Last verified** | 2026-03-17  |
+| Field             | Value          |
+| ----------------- | -------------- |
+| **Status**        | `GAP`          |
+| **Priority**      | P2             |
+| **Launch gate**   | `pre_scale`    |
+| **Owner**         | ActionPM       |
+| **Last verified** | 2026-03-17     |
 
 **Current state:** `EventStore.query()` returns all matching events in memory. A conversation with 200+ events loads them all into a single response.
 
@@ -158,13 +161,13 @@ If a row's status, evidence, or limitation has changed and this document was not
 
 ### OR-06: Connection pool configuration
 
-| Field             | Value       |
-| ----------------- | ----------- |
-| **Status**        | `ADEQUATE`  |
-| **Priority**      | P2          |
-| **Launch gate**   | `pre_scale` |
-| **Owner**         | ActionPM    |
-| **Last verified** | 2026-03-17  |
+| Field             | Value          |
+| ----------------- | -------------- |
+| **Status**        | `ADEQUATE`     |
+| **Priority**      | P2             |
+| **Launch gate**   | `pre_scale`    |
+| **Owner**         | ActionPM       |
+| **Last verified** | 2026-03-17     |
 
 **Current state:** `packages/db/src/pool.ts:12` creates a Neon pool with `connectionString` only. No explicit `max`, `idleTimeoutMillis`, or `connectionTimeoutMillis`. Neon's serverless driver auto-manages WebSocket connections and is designed for short-lived invocations.
 
@@ -180,13 +183,13 @@ If a row's status, evidence, or limitation has changed and this document was not
 
 ### OR-07: CI quality gates
 
-| Field             | Value      |
-| ----------------- | ---------- |
-| **Status**        | `DONE`     |
-| **Priority**      | —          |
-| **Launch gate**   | —          |
-| **Owner**         | ActionPM   |
-| **Last verified** | 2026-03-17 |
+| Field             | Value          |
+| ----------------- | -------------- |
+| **Status**        | `DONE`         |
+| **Priority**      | —              |
+| **Launch gate**   | —              |
+| **Owner**         | ActionPM       |
+| **Last verified** | 2026-03-17     |
 
 **Current state:** `.github/workflows/ci.yml` runs lint, format check, typecheck, test, and build-web on every PR and push to `main`. Concurrency group cancels in-progress runs. Node 22, pnpm 10, `--frozen-lockfile`.
 
@@ -194,53 +197,51 @@ If a row's status, evidence, or limitation has changed and this document was not
 
 ### OR-08: Migration automation
 
-| Field             | Value        |
-| ----------------- | ------------ |
-| **Status**        | `ADEQUATE`   |
-| **Priority**      | P1           |
-| **Launch gate**   | `pre_launch` |
-| **Owner**         | ActionPM     |
-| **Last verified** | 2026-03-17   |
+| Field             | Value          |
+| ----------------- | -------------- |
+| **Status**        | `GAP`          |
+| **Priority**      | P1             |
+| **Launch gate**   | `pre_launch`   |
+| **Owner**         | ActionPM       |
+| **Last verified** | 2026-03-17     |
 
-**Current state:** Migrations run via a `migrate` job in `.github/workflows/ci.yml` on push to `main`, after all CI jobs pass (`needs: [lint, typecheck, build-web, test]`). Uses `DATABASE_URL` from GitHub secrets. Fails if secret is not configured (fail-closed). Preview deploys do not trigger migrations.
+**Current state:** Migrations run manually via `pnpm --filter @wo-agent/db migrate`. Not integrated into CI or deployment pipeline. No pre-deploy hook in Vercel.
 
-**Limitation:** Vercel's native GitHub integration deploys in parallel with CI. The migrate job does not block deploy. For additive migrations (new tables/columns), this is safe — old code doesn't reference new schema objects. For destructive migrations, the operator must coordinate manually.
+**Risk:** Deploy without running migrations causes schema mismatch and runtime errors on first request. Currently a single-person-remembered process.
 
-**Scale threshold:** Any migration that modifies existing columns or removes objects needed by the currently-deployed code.
+**Evidence:** `packages/db/package.json` has `"migrate"` script; no reference in `.github/workflows/ci.yml` or `apps/web/vercel.json`.
 
-**Next action:** Switch to `workflow_run`-triggered deploy workflow (`ci-cd-pipeline.md` Task 3.2/3.3) to achieve migrate-then-deploy ordering. This also eliminates the `DATABASE_URL` dual-source-of-truth concern (GitHub secrets + Vercel env vars).
-
-**Accepted by:** ActionPM, 2026-03-17. Rationale: all current migrations are additive (new tables/columns only); deploy-before-migrate does not break running code. Path to DONE documented.
+**Next action:** Add migration step to deployment — either via Vercel build command (requires `DATABASE_URL` in build env), a GitHub Actions job after `build-web`, or a `vercel.json` `buildCommand` chain.
 
 ---
 
 ### OR-09: Dependency scanning
 
-| Field             | Value        |
-| ----------------- | ------------ |
-| **Status**        | `GAP`        |
-| **Priority**      | P2           |
-| **Launch gate**   | `pre_launch` |
-| **Owner**         | ActionPM     |
-| **Last verified** | 2026-03-17   |
+| Field             | Value          |
+| ----------------- | -------------- |
+| **Status**        | `GAP`          |
+| **Priority**      | P2             |
+| **Launch gate**   | `pre_launch`   |
+| **Owner**         | ActionPM       |
+| **Last verified** | 2026-03-17     |
 
-**Current state:** `.github/dependabot.yml` added with two ecosystems: npm (weekly version updates, minor/patch grouped) and github-actions (weekly). Root `directory: /` — assumes Dependabot reads the root `pnpm-lock.yaml` and discovers workspace packages.
+**Current state:** No Dependabot, Renovate, or Snyk configured. No `.github/dependabot.yml`. No `pnpm audit` in CI. Lockfile is committed so updates are not automatic.
 
-**Remaining to verify:** (a) After first Dependabot run, confirm workspace packages (apps/web, packages/core, packages/db, packages/schemas, packages/evals, packages/adapters/mock) are covered — if not, add explicit `directory` entries. (b) Dependency graph, Dependabot alerts, and Dependabot security updates are enabled in GitHub repo settings (`Settings > Code security`).
+**Risk:** Vulnerable dependency versions go undetected until manual review.
 
-**Next action:** After merge: (a) Enable Dependency graph + Dependabot alerts + Dependabot security updates in repo settings if not already enabled. (b) After first Dependabot run, confirm workspace package coverage. Promote to `DONE` once both verified.
+**Next action:** Add `.github/dependabot.yml` with weekly npm ecosystem updates.
 
 ---
 
 ### OR-10: Staging environment
 
-| Field             | Value         |
-| ----------------- | ------------- |
-| **Status**        | `DEFERRED`    |
-| **Priority**      | P3            |
-| **Launch gate**   | `post_launch` |
-| **Owner**         | ActionPM      |
-| **Last verified** | 2026-03-17    |
+| Field             | Value          |
+| ----------------- | -------------- |
+| **Status**        | `DEFERRED`     |
+| **Priority**      | P3             |
+| **Launch gate**   | `post_launch`  |
+| **Owner**         | ActionPM       |
+| **Last verified** | 2026-03-17     |
 
 **Current state:** No staging environment. Vercel preview deployments exist per-PR but share production env vars if configured. No `VERCEL_ENV`-based config switching.
 
@@ -254,13 +255,13 @@ If a row's status, evidence, or limitation has changed and this document was not
 
 ### OR-11: Authentication fail-closed
 
-| Field             | Value      |
-| ----------------- | ---------- |
-| **Status**        | `DONE`     |
-| **Priority**      | —          |
-| **Launch gate**   | —          |
-| **Owner**         | ActionPM   |
-| **Last verified** | 2026-03-17 |
+| Field             | Value          |
+| ----------------- | -------------- |
+| **Status**        | `DONE`         |
+| **Priority**      | —              |
+| **Launch gate**   | —              |
+| **Owner**         | ActionPM       |
+| **Last verified** | 2026-03-17     |
 
 **Current state:** `apps/web/src/middleware/auth.ts` returns 401 if JWT secrets are unset. JWT validation uses `jose` 6. Tenant isolation enforced at dispatcher level.
 
@@ -268,13 +269,13 @@ If a row's status, evidence, or limitation has changed and this document was not
 
 ### OR-12: Rate limiter durability
 
-| Field             | Value       |
-| ----------------- | ----------- |
-| **Status**        | `ADEQUATE`  |
-| **Priority**      | P1          |
-| **Launch gate**   | `pre_scale` |
-| **Owner**         | ActionPM    |
-| **Last verified** | 2026-03-17  |
+| Field             | Value          |
+| ----------------- | -------------- |
+| **Status**        | `ADEQUATE`     |
+| **Priority**      | P1             |
+| **Launch gate**   | `pre_scale`    |
+| **Owner**         | ActionPM       |
+| **Last verified** | 2026-03-17     |
 
 **Current state:** `apps/web/src/middleware/rate-limiter.ts` uses an in-memory `Map`. Code comment on line 8 acknowledges this is MVP-only. Rate limit violations are logged as structured security events.
 
@@ -288,31 +289,31 @@ If a row's status, evidence, or limitation has changed and this document was not
 
 ### OR-13: Security headers
 
-| Field             | Value      |
-| ----------------- | ---------- |
-| **Status**        | `DONE`     |
-| **Priority**      | —          |
-| **Launch gate**   | —          |
-| **Owner**         | ActionPM   |
-| **Last verified** | 2026-03-17 |
+| Field             | Value          |
+| ----------------- | -------------- |
+| **Status**        | `GAP`          |
+| **Priority**      | P2             |
+| **Launch gate**   | `pre_launch`   |
+| **Owner**         | ActionPM       |
+| **Last verified** | 2026-03-17     |
 
-**Current state:** `apps/web/next.config.ts` includes an `async headers()` function returning a catch-all route (`/:path*`) with 5 security headers: Strict-Transport-Security (HSTS with preload), X-Frame-Options (DENY), X-Content-Type-Options (nosniff), Referrer-Policy (strict-origin-when-cross-origin), and Permissions-Policy (deny camera/microphone/geolocation).
+**Current state:** `apps/web/next.config.ts` has no `headers()` configuration. No HSTS, CSP, X-Frame-Options, X-Content-Type-Options, or Referrer-Policy headers.
 
-**Evidence:** `apps/web/src/__tests__/security-headers.test.ts` validates the config exports a `headers` function and asserts all 5 header keys and values.
+**Risk:** Low for a JSON API, but missing HSTS allows downgrade attacks and missing X-Frame-Options allows clickjacking on any HTML responses (health check, error pages).
 
-**Note:** Content-Security-Policy is tracked separately as OR-24 (`DEFERRED`, `post_launch`) — requires nonce propagation for Next.js inline scripts/styles.
+**Next action:** Add `headers()` function to `apps/web/next.config.ts` with HSTS, X-Frame-Options, X-Content-Type-Options, and Referrer-Policy.
 
 ---
 
 ### OR-14: SQL injection prevention
 
-| Field             | Value      |
-| ----------------- | ---------- |
-| **Status**        | `DONE`     |
-| **Priority**      | —          |
-| **Launch gate**   | —          |
-| **Owner**         | ActionPM   |
-| **Last verified** | 2026-03-17 |
+| Field             | Value          |
+| ----------------- | -------------- |
+| **Status**        | `DONE`         |
+| **Priority**      | —              |
+| **Launch gate**   | —              |
+| **Owner**         | ActionPM       |
+| **Last verified** | 2026-03-17     |
 
 **Current state:** All Postgres repos use parameterized queries (`$1, $2, ...`). No string concatenation in SQL across all files in `packages/db/src/repos/`.
 
@@ -320,13 +321,13 @@ If a row's status, evidence, or limitation has changed and this document was not
 
 ### OR-15: Cron endpoint authentication
 
-| Field             | Value       |
-| ----------------- | ----------- |
-| **Status**        | `ADEQUATE`  |
-| **Priority**      | P3          |
-| **Launch gate**   | `pre_scale` |
-| **Owner**         | ActionPM    |
-| **Last verified** | 2026-03-17  |
+| Field             | Value          |
+| ----------------- | -------------- |
+| **Status**        | `ADEQUATE`     |
+| **Priority**      | P3             |
+| **Launch gate**   | `pre_scale`    |
+| **Owner**         | ActionPM       |
+| **Last verified** | 2026-03-17     |
 
 **Current state:** Cron routes validate `Authorization: Bearer <CRON_SECRET>`. Vercel injects `CRON_SECRET` automatically for configured cron jobs.
 
@@ -342,13 +343,13 @@ If a row's status, evidence, or limitation has changed and this document was not
 
 ### OR-16: Structured logging
 
-| Field             | Value      |
-| ----------------- | ---------- |
-| **Status**        | `DONE`     |
-| **Priority**      | —          |
-| **Launch gate**   | —          |
-| **Owner**         | ActionPM   |
-| **Last verified** | 2026-03-17 |
+| Field             | Value          |
+| ----------------- | -------------- |
+| **Status**        | `DONE`         |
+| **Priority**      | —              |
+| **Launch gate**   | —              |
+| **Owner**         | ActionPM       |
+| **Last verified** | 2026-03-17     |
 
 **Current state:** `StdoutJsonLogger` writes structured JSON to stdout across all routes, dispatcher, LLM adapters, and escalation coordinator. Fields: `component`, `event`, `request_id`, `severity`, `timestamp`. Request correlation via UUID `request_id` in `apps/web/src/middleware/request-context.ts`.
 
@@ -356,16 +357,15 @@ If a row's status, evidence, or limitation has changed and this document was not
 
 ### OR-17: Health check endpoints
 
-| Field             | Value       |
-| ----------------- | ----------- |
-| **Status**        | `ADEQUATE`  |
-| **Priority**      | P2          |
-| **Launch gate**   | `pre_scale` |
-| **Owner**         | ActionPM    |
-| **Last verified** | 2026-03-17  |
+| Field             | Value          |
+| ----------------- | -------------- |
+| **Status**        | `ADEQUATE`     |
+| **Priority**      | P2             |
+| **Launch gate**   | `pre_scale`    |
+| **Owner**         | ActionPM       |
+| **Last verified** | 2026-03-17     |
 
 **Current state:** Three health endpoints, all truthful:
-
 - `/api/health` — liveness-only. Returns `{ status: 'ok', kind: 'liveness', timestamp }`. No dependency claims. Suitable for load balancer and uptime monitor.
 - `/api/health/db` — database readiness check. Runs `SELECT 1` via a fresh pool. Returns 200 `ok` with `latency_ms`, 503 `misconfigured` when `DATABASE_URL` is unset, or 503 `unavailable` on connection failure.
 - `/api/health/erp` — ERP adapter health check. Calls `adapter.healthCheck()` and returns 200/503 based on real result.
@@ -382,13 +382,13 @@ No stubs remain — all responses are truthful.
 
 ### OR-18: Distributed tracing
 
-| Field             | Value         |
-| ----------------- | ------------- |
-| **Status**        | `DEFERRED`    |
-| **Priority**      | P3            |
-| **Launch gate**   | `post_launch` |
-| **Owner**         | ActionPM      |
-| **Last verified** | 2026-03-17    |
+| Field             | Value          |
+| ----------------- | -------------- |
+| **Status**        | `DEFERRED`     |
+| **Priority**      | P3             |
+| **Launch gate**   | `post_launch`  |
+| **Owner**         | ActionPM       |
+| **Last verified** | 2026-03-17     |
 
 **Current state:** `request_id` is generated per-request and propagated through the application but not sent as a header to external services. No W3C Trace Context.
 
@@ -400,13 +400,13 @@ No stubs remain — all responses are truthful.
 
 ### OR-19: Error aggregation service
 
-| Field             | Value         |
-| ----------------- | ------------- |
-| **Status**        | `DEFERRED`    |
-| **Priority**      | P3            |
-| **Launch gate**   | `post_launch` |
-| **Owner**         | ActionPM      |
-| **Last verified** | 2026-03-17    |
+| Field             | Value          |
+| ----------------- | -------------- |
+| **Status**        | `DEFERRED`     |
+| **Priority**      | P3             |
+| **Launch gate**   | `post_launch`  |
+| **Owner**         | ActionPM       |
+| **Last verified** | 2026-03-17     |
 
 **Current state:** Errors logged to stdout as structured JSON. No Sentry or equivalent. Alert evaluator detects metric spikes via cron but does not aggregate individual errors.
 
@@ -420,13 +420,13 @@ No stubs remain — all responses are truthful.
 
 ### OR-20: E2E tests against real database
 
-| Field             | Value       |
-| ----------------- | ----------- |
-| **Status**        | `GAP`       |
-| **Priority**      | P2          |
-| **Launch gate**   | `pre_scale` |
-| **Owner**         | ActionPM    |
-| **Last verified** | 2026-03-17  |
+| Field             | Value          |
+| ----------------- | -------------- |
+| **Status**        | `GAP`          |
+| **Priority**      | P2             |
+| **Launch gate**   | `pre_scale`    |
+| **Owner**         | ActionPM       |
+| **Last verified** | 2026-03-17     |
 
 **Current state:** All tests use in-memory stubs. CI sets `DATABASE_URL=''`. No test suite validates Postgres repos against a real database.
 
@@ -438,13 +438,13 @@ No stubs remain — all responses are truthful.
 
 ### OR-21: Performance / load testing
 
-| Field             | Value         |
-| ----------------- | ------------- |
-| **Status**        | `DEFERRED`    |
-| **Priority**      | P3            |
-| **Launch gate**   | `post_launch` |
-| **Owner**         | ActionPM      |
-| **Last verified** | 2026-03-17    |
+| Field             | Value          |
+| ----------------- | -------------- |
+| **Status**        | `DEFERRED`     |
+| **Priority**      | P3             |
+| **Launch gate**   | `post_launch`  |
+| **Owner**         | ActionPM       |
+| **Last verified** | 2026-03-17     |
 
 **Current state:** No load tests, latency benchmarks, or throughput measurements.
 
@@ -458,13 +458,13 @@ No stubs remain — all responses are truthful.
 
 ### OR-22: Environment variable validation
 
-| Field             | Value       |
-| ----------------- | ----------- |
-| **Status**        | `ADEQUATE`  |
-| **Priority**      | P2          |
-| **Launch gate**   | `pre_scale` |
-| **Owner**         | ActionPM    |
-| **Last verified** | 2026-03-17  |
+| Field             | Value          |
+| ----------------- | -------------- |
+| **Status**        | `ADEQUATE`     |
+| **Priority**      | P2             |
+| **Launch gate**   | `pre_scale`    |
+| **Owner**         | ActionPM       |
+| **Last verified** | 2026-03-17     |
 
 **Current state:** `.env.example` documents all variables. JWT secrets checked for presence in `apps/web/src/middleware/auth.ts` (fail-closed). Twilio credentials checked for presence in `apps/web/src/lib/orchestrator-factory.ts`. Emergency routing gated by feature flag.
 
@@ -478,33 +478,15 @@ No stubs remain — all responses are truthful.
 
 ### OR-23: Append-only database triggers
 
-| Field             | Value      |
-| ----------------- | ---------- |
-| **Status**        | `DONE`     |
-| **Priority**      | —          |
-| **Launch gate**   | —          |
-| **Owner**         | ActionPM   |
-| **Last verified** | 2026-03-17 |
+| Field             | Value          |
+| ----------------- | -------------- |
+| **Status**        | `DONE`         |
+| **Priority**      | —              |
+| **Launch gate**   | —              |
+| **Owner**         | ActionPM       |
+| **Last verified** | 2026-03-17     |
 
 **Current state:** Migration `001-conversation-events.sql` creates a `prevent_mutation()` trigger blocking UPDATE and DELETE on event tables at the database level. Enforces spec §7 independently of application code.
-
----
-
-### OR-24: Content-Security-Policy
-
-| Field             | Value         |
-| ----------------- | ------------- |
-| **Status**        | `DEFERRED`    |
-| **Priority**      | P3            |
-| **Launch gate**   | `post_launch` |
-| **Owner**         | ActionPM      |
-| **Last verified** | 2026-03-17    |
-
-**Current state:** No CSP header configured. The app serves a tenant-facing HTML page (`page.tsx` with `ChatShell` component) and root layout. Next.js inline scripts/styles require nonce propagation for a functional CSP policy.
-
-**Rationale:** CSP with nonce propagation is a non-trivial Next.js change. The app renders tenant/agent message content via `chat-shell.tsx` and `chat-message.tsx` as plain text in React components (not raw HTML injection). Risk escalates if rich rendering or third-party scripts are added.
-
-**Trigger to revisit:** Before introducing rich HTML/Markdown rendering, `dangerouslySetInnerHTML`, third-party scripts, or broader public-facing HTML surface.
 
 ---
 
@@ -512,19 +494,20 @@ No stubs remain — all responses are truthful.
 
 ### `pre_launch` — Required before first real tenant
 
-| ID    | Item                 | Status     | Priority |
-| ----- | -------------------- | ---------- | -------- |
-| OR-08 | Migration automation | `ADEQUATE` | P1       |
-| OR-09 | Dependency scanning  | `GAP`      | P2       |
-| OR-13 | Security headers     | `DONE`     | —        |
+| ID     | Item                  | Status | Priority |
+| ------ | --------------------- | ------ | -------- |
+| OR-03 | Query timeouts        | `GAP`  | P1       |
+| OR-08 | Migration automation  | `GAP`  | P1       |
+| OR-09 | Dependency scanning   | `GAP`  | P2       |
+| OR-13 | Security headers      | `GAP`  | P2       |
 
 ### `pre_scale` — Required before >10 buildings or >100 WOs/day
 
-| ID    | Item                         | Status     | Priority |
-| ----- | ---------------------------- | ---------- | -------- |
-| OR-01 | Idempotency transactionality | `ADEQUATE` | P1       |
-| OR-12 | Rate limiter durability      | `ADEQUATE` | P1       |
-| OR-02 | Session optimistic locking   | `ADEQUATE` | P2       |
+| ID     | Item                        | Status     | Priority |
+| ------ | --------------------------- | ---------- | -------- |
+| OR-01 | Idempotency transactionality| `ADEQUATE` | P1       |
+| OR-12 | Rate limiter durability     | `ADEQUATE` | P1       |
+| OR-02 | Session optimistic locking  | `ADEQUATE` | P2       |
 | OR-04 | Session query indexing       | `GAP`      | P2       |
 | OR-05 | Event query pagination       | `GAP`      | P2       |
 | OR-06 | Pool configuration           | `ADEQUATE` | P2       |
@@ -535,13 +518,12 @@ No stubs remain — all responses are truthful.
 
 ### `post_launch` — Follow-up hardening
 
-| ID    | Item                    | Status     | Priority |
-| ----- | ----------------------- | ---------- | -------- |
-| OR-10 | Staging environment     | `DEFERRED` | P3       |
-| OR-18 | Distributed tracing     | `DEFERRED` | P3       |
-| OR-19 | Error aggregation       | `DEFERRED` | P3       |
-| OR-21 | Performance testing     | `DEFERRED` | P3       |
-| OR-24 | Content-Security-Policy | `DEFERRED` | P3       |
+| ID     | Item                  | Status     | Priority |
+| ------ | --------------------- | ---------- | -------- |
+| OR-10 | Staging environment   | `DEFERRED` | P3       |
+| OR-18 | Distributed tracing   | `DEFERRED` | P3       |
+| OR-19 | Error aggregation     | `DEFERRED` | P3       |
+| OR-21 | Performance testing   | `DEFERRED` | P3       |
 
 ---
 
