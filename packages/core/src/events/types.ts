@@ -11,6 +11,7 @@ export type EventType =
   | 'emergency_action'
   | 'error_occurred'
   | 'confirmation_accepted'
+  | 'staleness_detected'
   | 'staleness_reclassification';
 
 /**

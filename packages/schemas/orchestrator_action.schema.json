@@ -414,7 +414,18 @@
           ]
         },
         "unit_id": { "type": ["string", "null"] },
-        "issues": { "type": "array", "items": { "type": "object" } },
+        "issues": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "issue_id": { "type": "string" },
+              "summary": { "type": "string", "maxLength": 500 },
+              "raw_excerpt": { "type": "string" }
+            },
+            "required": ["issue_id", "summary", "raw_excerpt"]
+          }
+        },
         "pinned_versions": {
           "type": "object",
           "properties": {
