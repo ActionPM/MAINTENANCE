@@ -10,6 +10,7 @@ import { FollowupForm } from './followup-form';
 import { ConfirmationPanel } from './confirmation-panel';
 import { StatusIndicator } from './status-indicator';
 import { QuickReplies } from './quick-replies';
+import type { UIMessage, QuickReply } from '@wo-agent/schemas';
 import styles from './chat-shell.module.css';
 
 interface ChatShellProps {
@@ -78,26 +79,26 @@ export function ChatShell({ token, unitIds }: ChatShellProps) {
     );
   }
 
-  const messages = (directive as any)?.messages ?? [];
-  let quickReplies = (directive as any)?.quick_replies ?? [];
+  const messages: readonly UIMessage[] = directive?.messages ?? [];
+  let quickReplies: readonly QuickReply[] = directive?.quick_replies ?? [];
 
   // Client-side synthesis: rehydrate emergency confirmation quick replies from
   // snapshot state on reload/resume (plan §5.7b). The GET read path returns
   // snapshot-only (no ui_directive), so the client reconstructs these.
   if (
     snapshot?.risk_summary?.escalation_state === 'pending_confirmation' &&
-    !quickReplies.some((r: any) => r.action_type === 'CONFIRM_EMERGENCY')
+    !quickReplies.some((r) => r.action_type === 'CONFIRM_EMERGENCY')
   ) {
     quickReplies = [
       {
         label: 'Yes, this is an emergency',
         value: 'confirm_emergency',
-        action_type: 'CONFIRM_EMERGENCY',
+        action_type: 'CONFIRM_EMERGENCY' as const,
       },
       {
         label: 'No, not an emergency',
         value: 'decline_emergency',
-        action_type: 'DECLINE_EMERGENCY',
+        action_type: 'DECLINE_EMERGENCY' as const,
       },
       ...quickReplies,
     ];
@@ -110,7 +111,7 @@ export function ChatShell({ token, unitIds }: ChatShellProps) {
       {conv.error && <div className={styles.errorBanner}>{conv.error}</div>}
 
       <div className={styles.messages}>
-        {messages.map((msg: any, i: number) => (
+        {messages.map((msg, i) => (
           <ChatMessage key={i} role={msg.role} content={msg.content} timestamp={msg.timestamp} />
         ))}
       </div>
@@ -122,9 +123,9 @@ export function ChatShell({ token, unitIds }: ChatShellProps) {
         )}
 
         {/* Split review */}
-        {state === 'split_proposed' && (snapshot as any)?.issues && (
+        {state === 'split_proposed' && snapshot?.issues && (
           <SplitReview
-            issues={(snapshot as any).issues}
+            issues={snapshot.issues}
             onConfirm={conv.confirmSplit}
             onReject={conv.rejectSplit}
             onEdit={conv.editIssue}
@@ -135,18 +136,18 @@ export function ChatShell({ token, unitIds }: ChatShellProps) {
         )}
 
         {/* Follow-up questions */}
-        {state === 'needs_tenant_input' && (snapshot as any)?.pending_followup_questions && (
+        {state === 'needs_tenant_input' && snapshot?.pending_followup_questions && (
           <FollowupForm
-            questions={(snapshot as any).pending_followup_questions}
+            questions={snapshot.pending_followup_questions}
             onSubmit={conv.answerFollowups}
             disabled={isLoading}
           />
         )}
 
         {/* Confirmation */}
-        {state === 'tenant_confirmation_pending' && (snapshot as any)?.confirmation_payload && (
+        {state === 'tenant_confirmation_pending' && snapshot?.confirmation_payload && (
           <ConfirmationPanel
-            payload={(snapshot as any).confirmation_payload}
+            payload={snapshot.confirmation_payload}
             onConfirm={conv.confirmSubmission}
             disabled={isLoading}
           />
@@ -159,17 +160,17 @@ export function ChatShell({ token, unitIds }: ChatShellProps) {
         {state && TERMINAL_STATES.has(state) && (
           <StatusIndicator
             state={state}
-            workOrderIds={(snapshot as any)?.work_order_ids}
-            queuedMessages={(snapshot as any)?.queued_messages}
+            workOrderIds={snapshot?.work_order_ids}
+            queuedMessages={snapshot?.queued_messages}
             onRetry={() => conv.resumeConversation(conv.conversationId!)}
             onResume={() => conv.resumeConversation(conv.conversationId!)}
             onStartOver={conv.startConversation}
             onStartQueued={
-              (snapshot as any)?.queued_messages?.length > 0 && (snapshot as any)?.unit_id
+              snapshot?.queued_messages?.length && snapshot?.unit_id
                 ? () =>
                     conv.startWithQueuedText(
-                      (snapshot as any).queued_messages,
-                      (snapshot as any).unit_id,
+                      snapshot.queued_messages!,
+                      snapshot.unit_id!,
                     )
                 : undefined
             }
