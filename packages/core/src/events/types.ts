@@ -9,7 +9,10 @@ export type EventType =
   | 'action_executed'
   | 'photo_attached'
   | 'emergency_action'
-  | 'error_occurred';
+  | 'error_occurred'
+  | 'confirmation_accepted'
+  | 'staleness_detected'
+  | 'staleness_reclassification';
 
 /**
  * Conversation event — append-only row in conversation_events (spec §7).

@@ -1,6 +1,7 @@
 import type { ActionType, ActorType } from '../action-types.js';
 import type { ConversationState } from '../conversation-states.js';
 import type { FollowUpQuestion } from './followups.js';
+import type { SplitIssue } from './issue-split.js';
 import type { PinnedVersions } from '../version-pinning.js';
 
 export interface AuthContext {
@@ -195,7 +196,7 @@ export interface ConversationSnapshot {
   readonly conversation_id: string;
   readonly state: ConversationState;
   readonly unit_id?: string | null;
-  readonly issues?: readonly Record<string, unknown>[];
+  readonly issues?: readonly SplitIssue[];
   readonly classification_results?: readonly Record<string, unknown>[];
   readonly pending_followup_questions?: readonly FollowUpQuestion[] | null;
   readonly confirmation_payload?: {

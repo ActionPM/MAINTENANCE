@@ -44,12 +44,15 @@ export function buildResponse(result: ActionHandlerResult): OrchestratorActionRe
     conversation_id: result.session.conversation_id,
     state: result.session.state,
     unit_id: result.session.unit_id,
-    ...(result.session.split_issues ? { issues: result.session.split_issues as any } : {}),
+    ...(result.session.split_issues ? { issues: result.session.split_issues } : {}),
     ...(result.session.classification_results
-      ? { classification_results: result.session.classification_results as any }
+      ? {
+          classification_results:
+            result.session.classification_results as unknown as ConversationSnapshot['classification_results'],
+        }
       : {}),
     ...(result.session.pending_followup_questions
-      ? { pending_followup_questions: result.session.pending_followup_questions as any }
+      ? { pending_followup_questions: result.session.pending_followup_questions }
       : {}),
     ...(confirmationPayload ? { confirmation_payload: confirmationPayload } : {}),
     ...(workOrderIds ? { work_order_ids: workOrderIds } : {}),
@@ -68,7 +71,7 @@ export function buildResponse(result: ActionHandlerResult): OrchestratorActionRe
   let quickReplies = result.quickReplies?.map((qr) => ({
     label: qr.label,
     value: qr.value,
-    action_type: qr.action_type as any,
+    action_type: qr.action_type,
   }));
 
   if (
@@ -79,12 +82,12 @@ export function buildResponse(result: ActionHandlerResult): OrchestratorActionRe
       {
         label: 'Yes, this is an emergency',
         value: 'confirm_emergency',
-        action_type: 'CONFIRM_EMERGENCY' as any,
+        action_type: 'CONFIRM_EMERGENCY' as const,
       },
       {
         label: 'No, not an emergency',
         value: 'decline_emergency',
-        action_type: 'DECLINE_EMERGENCY' as any,
+        action_type: 'DECLINE_EMERGENCY' as const,
       },
     ];
     quickReplies = [...emergencyReplies, ...(quickReplies ?? [])];

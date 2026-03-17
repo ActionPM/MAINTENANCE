@@ -260,6 +260,30 @@ describe('validateOrchestratorActionResponse', () => {
     expect(result.valid).toBe(true);
   });
 
+  it('accepts response with valid SplitIssue items in issues', () => {
+    const result = validateOrchestratorActionResponse({
+      ...baseResponse,
+      conversation_snapshot: {
+        ...baseResponse.conversation_snapshot,
+        issues: [
+          { issue_id: 'i-1', summary: 'Leaking toilet', raw_excerpt: 'toilet leaks' },
+        ],
+      },
+    });
+    expect(result.valid).toBe(true);
+  });
+
+  it('rejects response with issues items missing required fields', () => {
+    const result = validateOrchestratorActionResponse({
+      ...baseResponse,
+      conversation_snapshot: {
+        ...baseResponse.conversation_snapshot,
+        issues: [{ summary: 'Leaking toilet' }],
+      },
+    });
+    expect(result.valid).toBe(false);
+  });
+
   // --- Task 5d: state enum sync guard ---
 
   it('schema ConversationSnapshot state enum matches ConversationState values', () => {

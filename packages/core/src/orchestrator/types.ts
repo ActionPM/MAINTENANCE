@@ -1,4 +1,5 @@
 import type {
+  ActionType,
   ConversationState,
   IssueClassifierInput,
   IssueSplitterInput,
@@ -12,9 +13,11 @@ import type {
 } from '@wo-agent/schemas';
 import type { DisambiguatorCallResult } from '../disambiguator/disambiguator.js';
 import type { CueDictionary, Taxonomy, ConfidenceConfig, FollowUpCaps } from '@wo-agent/schemas';
+import type { EventType } from '../events/types.js';
 import type { EventRepository } from '../events/event-repository.js';
 import type { ConversationSession } from '../session/types.js';
 import type { TransitionContext } from '../state-machine/guards.js';
+import type { SystemEventRequest } from './internal-types.js';
 import type { UnitResolver } from '../unit-resolver/types.js';
 import type { WorkOrderRepository } from '../work-order/types.js';
 import type { IdempotencyStore } from '../idempotency/types.js';
@@ -100,7 +103,7 @@ export interface DispatchResult {
  */
 export interface ActionHandlerContext {
   readonly session: ConversationSession;
-  readonly request: OrchestratorActionRequest;
+  readonly request: OrchestratorActionRequest | SystemEventRequest;
   readonly deps: OrchestratorDependencies;
   readonly request_id?: string;
   readonly logger?: Logger;
@@ -113,7 +116,7 @@ export interface ActionHandlerContext {
  */
 export interface IntermediateStep {
   readonly state: ConversationState;
-  readonly eventType?: string;
+  readonly eventType?: EventType;
   readonly eventPayload?: Record<string, unknown>;
 }
 
@@ -136,7 +139,7 @@ export interface ActionHandlerResult {
   readonly artifacts?: readonly ArtifactInput[];
   readonly errors?: readonly ErrorInput[];
   readonly eventPayload?: Record<string, unknown>;
-  readonly eventType?: string;
+  readonly eventType?: EventType;
   /**
    * Intermediate state transitions the handler passed through.
    * Example: SUBMIT_INITIAL_MESSAGE enters split_in_progress (intermediate),
@@ -159,7 +162,7 @@ export interface UIMessageInput {
 export interface QuickReplyInput {
   readonly label: string;
   readonly value: string;
-  readonly action_type?: string;
+  readonly action_type?: ActionType;
 }
 
 export interface SideEffectInput {

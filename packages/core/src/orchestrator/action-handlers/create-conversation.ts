@@ -1,4 +1,4 @@
-import { ConversationState } from '@wo-agent/schemas';
+import { ActionType, ConversationState } from '@wo-agent/schemas';
 import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
 
 export async function handleCreateConversation(
@@ -22,7 +22,7 @@ export async function handleCreateConversation(
       ? request.auth_context.authorized_unit_ids.map((id) => ({
           label: `Unit ${id}`,
           value: id,
-          action_type: 'SELECT_UNIT',
+          action_type: ActionType.SELECT_UNIT,
         }))
       : undefined;
 
