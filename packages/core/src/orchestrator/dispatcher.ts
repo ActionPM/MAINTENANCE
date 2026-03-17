@@ -21,6 +21,7 @@ import {
 import type { ConversationEvent } from '../events/types.js';
 import { buildResponse } from './response-builder.js';
 import { getActionHandler } from './action-handlers/index.js';
+import type { SystemEventRequest } from './internal-types.js';
 import type { OrchestratorDependencies, ActionHandlerResult, DispatchResult } from './types.js';
 
 const SYSTEM_EVENT_SET = new Set<string>(ALL_SYSTEM_EVENTS);
@@ -30,7 +31,7 @@ const SYSTEM_EVENT_SET = new Set<string>(ALL_SYSTEM_EVENTS);
  * the dispatcher automatically fires the associated system event.
  * This implements spec §11.2 chaining (e.g., split_finalized -> START_CLASSIFICATION).
  */
-const AUTO_FIRE_MAP: Partial<Record<ConversationState, string>> = {
+const AUTO_FIRE_MAP: Partial<Record<ConversationState, SystemEvent>> = {
   [ConversationState.SPLIT_FINALIZED]: SystemEvent.START_CLASSIFICATION,
 };
 
@@ -306,8 +307,7 @@ export function createDispatcher(deps: OrchestratorDependencies) {
       const event: ConversationEvent = {
         event_id: deps.idGenerator(),
         conversation_id: session.conversation_id,
-        event_type:
-          (handlerResult.eventType as ConversationEvent['event_type']) ?? 'emergency_action',
+        event_type: handlerResult.eventType ?? 'emergency_action',
         prior_state: session.state,
         new_state: session.state, // sidecar — state does not change
         action_type,
@@ -396,7 +396,14 @@ export function createDispatcher(deps: OrchestratorDependencies) {
       const chainSession = await latestUpdatedSession;
       const chainResult = await chainHandler({
         session: chainSession,
-        request: { ...request, action_type: autoFireEvent as any },
+        request: {
+          conversation_id: request.conversation_id,
+          actor: request.actor,
+          auth_context: request.auth_context,
+          idempotency_key: request.idempotency_key,
+          request_id: request.request_id,
+          action_type: autoFireEvent,
+        } satisfies SystemEventRequest,
         deps,
         request_id,
         logger: deps.logger,
@@ -476,7 +483,7 @@ export function createDispatcher(deps: OrchestratorDependencies) {
         const intermediateEvent: ConversationEvent = {
           event_id: deps.idGenerator(),
           conversation_id: conversationId,
-          event_type: (step.eventType as any) ?? 'state_transition',
+          event_type: step.eventType ?? 'state_transition',
           prior_state: priorState,
           new_state: step.state,
           action_type: actionType,
@@ -494,7 +501,7 @@ export function createDispatcher(deps: OrchestratorDependencies) {
     const event: ConversationEvent = {
       event_id: deps.idGenerator(),
       conversation_id: conversationId,
-      event_type: (handlerResult.eventType as any) ?? 'state_transition',
+      event_type: handlerResult.eventType ?? 'state_transition',
       prior_state: priorState,
       new_state: handlerResult.newState,
       action_type: handlerResult.finalSystemAction ?? actionType,
