@@ -265,9 +265,7 @@ describe('validateOrchestratorActionResponse', () => {
       ...baseResponse,
       conversation_snapshot: {
         ...baseResponse.conversation_snapshot,
-        issues: [
-          { issue_id: 'i-1', summary: 'Leaking toilet', raw_excerpt: 'toilet leaks' },
-        ],
+        issues: [{ issue_id: 'i-1', summary: 'Leaking toilet', raw_excerpt: 'toilet leaks' }],
       },
     });
     expect(result.valid).toBe(true);
