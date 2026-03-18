@@ -167,11 +167,7 @@ export function ChatShell({ token, unitIds }: ChatShellProps) {
             onStartOver={conv.startConversation}
             onStartQueued={
               snapshot?.queued_messages?.length && snapshot?.unit_id
-                ? () =>
-                    conv.startWithQueuedText(
-                      snapshot.queued_messages!,
-                      snapshot.unit_id!,
-                    )
+                ? () => conv.startWithQueuedText(snapshot.queued_messages!, snapshot.unit_id!)
                 : undefined
             }
             disabled={isLoading}
