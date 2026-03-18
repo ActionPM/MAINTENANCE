@@ -27,6 +27,7 @@ If a row's status, evidence, or limitation has changed and this document was not
 | `docs/spec.md`                | Product logic, state machine, data integrity, LLM contracts |
 | `docs/spec-gap-tracker.md`    | Compliance of code against spec requirements                |
 | **This document**             | Deploy, infra, performance, security hardening              |
+| `docs/launch-checklist.md`    | Canonical recurring launch checklist                        |
 | `docs/security-boundaries.md` | Trust zones and auth model (overlaps on security items)     |
 | `docs/retention-policy.md`    | Data lifecycle (overlaps on storage items)                  |
 
@@ -50,9 +51,9 @@ If a row's status, evidence, or limitation has changed and this document was not
 
 | Status     | Count  |
 | ---------- | ------ |
-| `DONE`     | 7      |
+| `DONE`     | 8      |
 | `ADEQUATE` | 8      |
-| `GAP`      | 4      |
+| `GAP`      | 3      |
 | `DEFERRED` | 5      |
 | **Total**  | **24** |
 
@@ -216,19 +217,17 @@ If a row's status, evidence, or limitation has changed and this document was not
 
 ### OR-09: Dependency scanning
 
-| Field             | Value        |
-| ----------------- | ------------ |
-| **Status**        | `GAP`        |
-| **Priority**      | P2           |
-| **Launch gate**   | `pre_launch` |
-| **Owner**         | ActionPM     |
-| **Last verified** | 2026-03-17   |
+| Field             | Value      |
+| ----------------- | ---------- |
+| **Status**        | `DONE`     |
+| **Priority**      | —          |
+| **Launch gate**   | —          |
+| **Owner**         | ActionPM   |
+| **Last verified** | 2026-03-18 |
 
-**Current state:** `.github/dependabot.yml` added with two ecosystems: npm (weekly version updates, minor/patch grouped) and github-actions (weekly). Root `directory: /` — assumes Dependabot reads the root `pnpm-lock.yaml` and discovers workspace packages.
+**Current state:** `.github/dependabot.yml` configured with two ecosystems: npm (weekly version updates, minor/patch grouped) and github-actions (weekly). Root `directory: /` discovers workspace packages — confirmed by PR #30 which includes `packages/core/package.json` bumps. Dependabot alerts and security updates enabled in repo settings. 11 PRs opened on first run covering both ecosystems.
 
-**Remaining to verify:** (a) After first Dependabot run, confirm workspace packages (apps/web, packages/core, packages/db, packages/schemas, packages/evals, packages/adapters/mock) are covered — if not, add explicit `directory` entries. (b) Dependency graph, Dependabot alerts, and Dependabot security updates are enabled in GitHub repo settings (`Settings > Code security`).
-
-**Next action:** After merge: (a) Enable Dependency graph + Dependabot alerts + Dependabot security updates in repo settings if not already enabled. (b) After first Dependabot run, confirm workspace package coverage. Promote to `DONE` once both verified.
+**Evidence:** PR #30 (`minor-and-patch` group) modifies both root `package.json` and `packages/core/package.json`, confirming workspace coverage. GitHub Actions PRs #25-29 cover `actions/checkout`, `actions/setup-node`, `pnpm/action-setup`, `actions/download-artifact`, `dorny/paths-filter`.
 
 ---
 
@@ -515,7 +514,7 @@ No stubs remain — all responses are truthful.
 | ID    | Item                 | Status     | Priority |
 | ----- | -------------------- | ---------- | -------- |
 | OR-08 | Migration automation | `ADEQUATE` | P1       |
-| OR-09 | Dependency scanning  | `GAP`      | P2       |
+| OR-09 | Dependency scanning  | `DONE`     | —        |
 | OR-13 | Security headers     | `DONE`     | —        |
 
 ### `pre_scale` — Required before >10 buildings or >100 WOs/day
@@ -542,6 +541,12 @@ No stubs remain — all responses are truthful.
 | OR-19 | Error aggregation       | `DEFERRED` | P3       |
 | OR-21 | Performance testing     | `DEFERRED` | P3       |
 | OR-24 | Content-Security-Policy | `DEFERRED` | P3       |
+
+---
+
+## Canonical Checklist
+
+Use `docs/launch-checklist.md` as the recurring launch reference. This tracker remains the source of truth for gate status; the checklist converts those gates into a repeatable review sequence.
 
 ---
 
