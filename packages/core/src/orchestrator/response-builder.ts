@@ -47,8 +47,8 @@ export function buildResponse(result: ActionHandlerResult): OrchestratorActionRe
     ...(result.session.split_issues ? { issues: result.session.split_issues } : {}),
     ...(result.session.classification_results
       ? {
-          classification_results:
-            result.session.classification_results as unknown as ConversationSnapshot['classification_results'],
+          classification_results: result.session
+            .classification_results as unknown as ConversationSnapshot['classification_results'],
         }
       : {}),
     ...(result.session.pending_followup_questions
