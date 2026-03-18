@@ -1,0 +1,32 @@
+version: 2
+updates:
+  # npm ecosystem — pnpm workspace root lockfile
+  # Assumption: Dependabot reads root pnpm-lock.yaml and discovers workspace
+  # packages. If the first Dependabot run does not cover workspace packages
+  # (apps/web, packages/core, packages/db, packages/schemas, packages/evals,
+  # packages/adapters/mock), add explicit directory entries for each.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+    groups:
+      # Group minor/patch bumps into a single PR to reduce noise
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+
+  # GitHub Actions ecosystem — keep action versions current
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - ci
