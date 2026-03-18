@@ -7,7 +7,7 @@ A tenant-facing in-app chatbot that converts maintenance/management messages int
 ## Tech Stack
 
 - **Language**: TypeScript 5.7, strict mode, ESM (`"type": "module"` everywhere)
-- **Runtime**: Node.js ≥20
+- **Runtime**: Node.js 24 (pinned in `.nvmrc`; CI reads from it)
 - **Package manager**: pnpm ≥9 (workspaces)
 - **Module resolution**: `Bundler` (not `NodeNext`) — required for CJS/ESM interop with ajv/ajv-formats
 - **Frontend**: Next.js 15, React 19
