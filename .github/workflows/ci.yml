@@ -98,3 +98,27 @@ jobs:
     env:
       DATABASE_URL: ''
       ANTHROPIC_API_KEY: ''
+
+  migrate:
+    name: Run DB Migrations
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck, build-web, test]
+    # Migrations run only on push-to-main (after all CI jobs pass).
+    # NOT in Vercel build hooks — preview deploys share prod env vars (OR-10).
+    # Does NOT block Vercel's parallel deploy — see OR-08 limitation below.
+    # Fails if DATABASE_URL is missing (fail-closed for production).
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Run migrations
+        run: pnpm --filter @wo-agent/db migrate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

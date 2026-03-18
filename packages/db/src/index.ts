@@ -1,5 +1,5 @@
-export { createPool } from './pool.js';
-export type { Pool } from './pool.js';
+export { createPool, DEFAULT_POOL_OPTIONS } from './pool.js';
+export type { Pool, PoolOptions } from './pool.js';
 export { runMigrations } from './migrate.js';
 export { PostgresEventStore } from './repos/pg-event-store.js';
 export { PostgresWorkOrderStore } from './repos/pg-wo-store.js';

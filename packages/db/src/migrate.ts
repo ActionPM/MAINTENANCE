@@ -6,7 +6,7 @@ import { createPool } from './pool.js';
  * Usage: DATABASE_URL=... pnpm --filter @wo-agent/db migrate
  */
 export async function runMigrations(databaseUrl: string): Promise<void> {
-  const pool = createPool(databaseUrl);
+  const pool = createPool(databaseUrl, { statementTimeoutMs: 30_000 });
   try {
     // Create migrations tracking table
     await pool.query(`
