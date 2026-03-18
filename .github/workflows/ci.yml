@@ -25,6 +25,14 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+      - name: Debug — show what Prettier wants to change
+        if: always()
+        run: |
+          npx prettier --write apps/web/src/components/chat-shell.tsx docs/spec-gap-tracker.md packages/core/src/orchestrator/response-builder.ts packages/schemas/src/__tests__/validators.test.ts
+          git diff --stat
+          git diff -- packages/core/src/orchestrator/response-builder.ts | head -60
+          git diff -- apps/web/src/components/chat-shell.tsx | head -60
+          git checkout -- .
       - run: pnpm format:check
 
   typecheck:
