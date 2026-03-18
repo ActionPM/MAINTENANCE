@@ -99,7 +99,7 @@ jobs:
           echo "::error::Eval gate failed or was cancelled (result: ${{ needs.eval-gate.result }}). PR cannot merge."
           exit 1
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         if: needs.detect-changes.outputs.eval-relevant == 'true'
         with:
           path: eval-artifacts
