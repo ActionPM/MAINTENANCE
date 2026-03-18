@@ -2,6 +2,9 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   transpilePackages: ['@wo-agent/core', '@wo-agent/schemas', '@wo-agent/mock-erp', '@wo-agent/db'],
+  // Next.js 16 enables Turbopack by default. An empty turbopack config
+  // silences the error about having a webpack config without turbopack.
+  turbopack: {},
   webpack: (config) => {
     // Map .js imports to .ts/.tsx so webpack resolves TypeScript ESM-style
     // imports (e.g. './foo.js' → './foo.ts') used across workspace packages.
