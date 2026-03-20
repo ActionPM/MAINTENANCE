@@ -62,6 +62,11 @@ import { MockERPAdapter } from '@wo-agent/mock-erp';
 import slaPoliciesJson from '@wo-agent/schemas/sla_policies.json' with { type: 'json' };
 import { TwilioVoiceProvider } from './emergency/twilio-voice';
 import { TwilioSmsProvider } from './emergency/twilio-sms';
+import {
+  createDemoSplitter,
+  createDemoClassifier,
+  createDemoFollowupGenerator,
+} from './demo-fixtures';
 
 // In-memory session store fallback
 class InMemorySessionStore implements SessionStore {
@@ -319,10 +324,19 @@ function ensureInitialized(): FactoryDeps {
     });
 
     const taxonomy = loadTaxonomy();
+
+    // --- LLM dependency resolution (3-way priority) ---
+    // 1. USE_DEMO_FIXTURES=true → deterministic demo fixtures (global, all routes)
+    // 2. ANTHROPIC_API_KEY set  → real LLM adapters
+    // 3. Neither                → simple cue-based stubs
+    const useDemoFixtures = process.env.USE_DEMO_FIXTURES === 'true';
+    const demoFixtureSplitter = useDemoFixtures ? createDemoSplitter() : null;
+    const demoFixtureClassifier = useDemoFixtures ? createDemoClassifier() : null;
+    const demoFixtureFollowup = useDemoFixtures ? createDemoFollowupGenerator() : null;
     const anthropicApiKey = process.env.ANTHROPIC_API_KEY;
 
     let llmDeps: LlmDependencies | null = null;
-    if (anthropicApiKey) {
+    if (!useDemoFixtures && anthropicApiKey) {
       llmDeps = createLlmDependencies({
         apiKey: anthropicApiKey,
         taxonomy,
@@ -346,71 +360,75 @@ function ensureInitialized(): FactoryDeps {
       sessionStore: stores.sessionStore,
       idGenerator,
       clock,
-      issueSplitter:
-        llmDeps?.issueSplitter ??
-        (async (input) => ({
-          issues: [
-            {
-              issue_id: randomUUID(),
-              summary: input.raw_text.slice(0, 200),
-              raw_excerpt: input.raw_text,
-            },
-          ],
-          issue_count: 1,
-        })),
-      issueClassifier:
-        llmDeps?.issueClassifier ??
-        (async (input: IssueClassifierInput) => {
-          const text = `${input.issue_summary} ${input.raw_excerpt}`;
-          const cueScores = computeCueScores(text, classificationCues as CueDictionary);
+      issueSplitter: useDemoFixtures
+        ? demoFixtureSplitter!
+        : llmDeps?.issueSplitter ??
+          (async (input) => ({
+            issues: [
+              {
+                issue_id: randomUUID(),
+                summary: input.raw_text.slice(0, 200),
+                raw_excerpt: input.raw_text,
+              },
+            ],
+            issue_count: 1,
+          })),
+      issueClassifier: useDemoFixtures
+        ? demoFixtureClassifier!
+        : llmDeps?.issueClassifier ??
+          (async (input: IssueClassifierInput) => {
+            const text = `${input.issue_summary} ${input.raw_excerpt}`;
+            const cueScores = computeCueScores(text, classificationCues as CueDictionary);
 
-          // Derive classification from top cue labels, falling back to sensible defaults
-          const category = cueScores['Category']?.topLabel ?? 'maintenance';
-          const location = cueScores['Location']?.topLabel ?? 'suite';
-          const subLocation = cueScores['Sub_Location']?.topLabel ?? 'general';
-          const maintCategory =
-            cueScores['Maintenance_Category']?.topLabel ?? 'general_maintenance';
-          const maintObject = cueScores['Maintenance_Object']?.topLabel ?? 'other_object';
-          const maintProblem = cueScores['Maintenance_Problem']?.topLabel ?? 'not_working';
-          const mgmtCategory = cueScores['Management_Category']?.topLabel ?? 'other_mgmt_cat';
-          const mgmtObject = cueScores['Management_Object']?.topLabel ?? 'other_mgmt_obj';
-          const priority = cueScores['Priority']?.topLabel ?? 'normal';
+            const category = cueScores['Category']?.topLabel ?? 'maintenance';
+            const location = cueScores['Location']?.topLabel ?? 'suite';
+            const subLocation = cueScores['Sub_Location']?.topLabel ?? 'general';
+            const maintCategory =
+              cueScores['Maintenance_Category']?.topLabel ?? 'general_maintenance';
+            const maintObject = cueScores['Maintenance_Object']?.topLabel ?? 'other_object';
+            const maintProblem = cueScores['Maintenance_Problem']?.topLabel ?? 'not_working';
+            const mgmtCategory =
+              cueScores['Management_Category']?.topLabel ?? 'other_mgmt_cat';
+            const mgmtObject = cueScores['Management_Object']?.topLabel ?? 'other_mgmt_obj';
+            const priority = cueScores['Priority']?.topLabel ?? 'normal';
 
-          // Use cue score as model_confidence proxy (higher cue = more confident mock)
-          const conf = (field: string) => {
-            const s = cueScores[field]?.score ?? 0;
-            return s > 0 ? Math.min(0.95, 0.7 + s * 0.25) : 0.5;
-          };
+            const conf = (field: string) => {
+              const s = cueScores[field]?.score ?? 0;
+              return s > 0 ? Math.min(0.95, 0.7 + s * 0.25) : 0.5;
+            };
 
-          return {
-            issue_id: input.issue_id,
-            classification: {
-              Category: category,
-              Location: location,
-              Sub_Location: subLocation,
-              Maintenance_Category: maintCategory,
-              Maintenance_Object: maintObject,
-              Maintenance_Problem: maintProblem,
-              Management_Category: category === 'management' ? mgmtCategory : 'other_mgmt_cat',
-              Management_Object: category === 'management' ? mgmtObject : 'other_mgmt_obj',
-              Priority: priority,
-            },
-            model_confidence: {
-              Category: conf('Category'),
-              Location: conf('Location'),
-              Sub_Location: conf('Sub_Location'),
-              Maintenance_Category: conf('Maintenance_Category'),
-              Maintenance_Object: conf('Maintenance_Object'),
-              Maintenance_Problem: conf('Maintenance_Problem'),
-              Management_Category: category === 'management' ? conf('Management_Category') : 0.0,
-              Management_Object: category === 'management' ? conf('Management_Object') : 0.0,
-              Priority: conf('Priority'),
-            },
-            missing_fields: [],
-            needs_human_triage: false,
-          };
-        }),
-      followUpGenerator: llmDeps?.followUpGenerator ?? (async () => ({ questions: [] })),
+            return {
+              issue_id: input.issue_id,
+              classification: {
+                Category: category,
+                Location: location,
+                Sub_Location: subLocation,
+                Maintenance_Category: maintCategory,
+                Maintenance_Object: maintObject,
+                Maintenance_Problem: maintProblem,
+                Management_Category: category === 'management' ? mgmtCategory : 'other_mgmt_cat',
+                Management_Object: category === 'management' ? mgmtObject : 'other_mgmt_obj',
+                Priority: priority,
+              },
+              model_confidence: {
+                Category: conf('Category'),
+                Location: conf('Location'),
+                Sub_Location: conf('Sub_Location'),
+                Maintenance_Category: conf('Maintenance_Category'),
+                Maintenance_Object: conf('Maintenance_Object'),
+                Maintenance_Problem: conf('Maintenance_Problem'),
+                Management_Category:
+                  category === 'management' ? conf('Management_Category') : 0.0,
+                Management_Object: category === 'management' ? conf('Management_Object') : 0.0,
+                Priority: conf('Priority'),
+              },
+              missing_fields: [],
+              needs_human_triage: false,
+            };
+          }),
+      followUpGenerator: useDemoFixtures
+        ? demoFixtureFollowup!
+        : llmDeps?.followUpGenerator ?? (async () => ({ questions: [] })),
       messageDisambiguator: llmDeps?.messageDisambiguator,
       cueDict: classificationCues as CueDictionary,
       taxonomy,

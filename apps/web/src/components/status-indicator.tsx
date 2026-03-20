@@ -10,6 +10,7 @@ interface StatusIndicatorProps {
   onResume?: () => void;
   onStartOver?: () => void;
   onStartQueued?: () => void;
+  token?: string;
   disabled?: boolean;
 }
 
@@ -38,6 +39,7 @@ export function StatusIndicator({
   onResume,
   onStartOver,
   onStartQueued,
+  token,
   disabled,
 }: StatusIndicatorProps) {
   const message = MESSAGES[state] ?? state;
@@ -56,13 +58,40 @@ export function StatusIndicator({
       </p>
 
       {isSuccess && workOrderIds && workOrderIds.length > 0 && (
-        <ul className={styles.woList}>
-          {workOrderIds.map((id) => (
-            <li key={id} className={styles.woItem}>
-              {id}
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul className={styles.woList}>
+            {workOrderIds.map((id) => (
+              <li key={id} className={styles.woItem}>
+                {token ? (
+                  <a
+                    href={`/dev/work-orders/${id}?token=${encodeURIComponent(token)}`}
+                    style={{ color: '#0066cc', textDecoration: 'none' }}
+                  >
+                    {id}
+                  </a>
+                ) : (
+                  id
+                )}
+              </li>
+            ))}
+          </ul>
+          {token && (
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.25rem' }}>
+              <a
+                href={`/dev/work-orders?token=${encodeURIComponent(token)}`}
+                style={{ color: '#0066cc', fontSize: '0.85rem', textDecoration: 'none' }}
+              >
+                View all work orders
+              </a>
+              <a
+                href="/dev/demo"
+                style={{ color: '#0066cc', fontSize: '0.85rem', textDecoration: 'none' }}
+              >
+                Try another scenario
+              </a>
+            </div>
+          )}
+        </>
       )}
 
       {isSuccess && queuedMessages && queuedMessages.length > 0 && onStartQueued && (
