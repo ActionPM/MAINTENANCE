@@ -1,0 +1,76 @@
+{
+  "version": "1.0.0",
+  "labels": {
+    "Sub_Location": {
+      "kitchen": "Kitchen",
+      "bathroom": "Bathroom",
+      "common_living_dining": "Living / Dining Room",
+      "bedroom": "Bedroom",
+      "closets": "Closets",
+      "keys_locks": "Keys / Locks",
+      "windows": "Windows",
+      "balcony": "Balcony",
+      "ceiling": "Ceiling",
+      "general": "General area",
+      "entire_unit": "Entire apartment",
+      "multiple_rooms": "Multiple rooms",
+      "entrance_lobby": "Entrance / Lobby",
+      "hallways_stairwells": "Hallway / Stairwell",
+      "elevator": "Elevator",
+      "laundry": "Laundry room",
+      "locker_room": "Locker room",
+      "gym": "Gym",
+      "pool": "Pool",
+      "party_room": "Party room",
+      "other_amenity": "Other amenity",
+      "mechanical_room": "Mechanical room",
+      "cable_room": "Cable room",
+      "bike_locker": "Bike locker",
+      "parking_garage": "Parking garage",
+      "landscape": "Landscape",
+      "hardscape": "Hardscape",
+      "facade": "Facade",
+      "roof": "Roof",
+      "mechanical": "Mechanical",
+      "garbage": "Garbage area",
+      "amenity": "Amenity",
+      "surface_parking": "Surface parking",
+      "other_sub_location": "Other area"
+    },
+    "Category": {
+      "maintenance": "Maintenance",
+      "management": "Management",
+      "other_category": "Other"
+    },
+    "Location": {
+      "suite": "Your unit",
+      "building_interior": "Building interior",
+      "building_exterior": "Building exterior"
+    },
+    "Maintenance_Category": {
+      "plumbing": "Plumbing",
+      "electrical": "Electrical",
+      "hvac": "Heating / Cooling",
+      "carpentry": "Carpentry",
+      "flooring": "Flooring",
+      "drywall_plaster": "Drywall / Plaster",
+      "paint": "Paint",
+      "pest_control": "Pest control",
+      "general_maintenance": "General maintenance",
+      "locksmith": "Locksmith",
+      "appliance": "Appliance",
+      "roofing": "Roofing",
+      "tile": "Tile",
+      "other_issue": "Other issue",
+      "other_maintenance_category": "Other",
+      "not_applicable": "N/A"
+    },
+    "Priority": {
+      "low": "Low",
+      "normal": "Normal",
+      "high": "High",
+      "emergency": "Emergency",
+      "other_priority": "Other"
+    }
+  }
+}
