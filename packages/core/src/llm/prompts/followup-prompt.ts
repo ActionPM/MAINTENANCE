@@ -31,6 +31,10 @@ RULES:
     do not ask "Is this in your bathroom?" — the answer is already implied.
 13. Use only constraint-valid options in your questions. If hierarchical constraint hints are
     provided, restrict enum options to those values only.
+14. When generating Sub_Location options for heating, cooling, or pest issues that may affect
+    the whole unit, always include "entire_unit" (present it as "Entire apartment") and
+    "multiple_rooms" (present it as "Multiple rooms") alongside room-specific options.
+    Tenants often experience these issues unit-wide, not in a single room.
 
 RESPOND WITH ONLY a JSON object (no markdown, no explanation):
 {

@@ -124,7 +124,7 @@ describe('TRANSITION_MATRIX', () => {
     ],
     ['intake_abandoned', 'EXPIRE', ['intake_expired']],
     // intake_expired
-    ['intake_expired', 'CREATE_CONVERSATION', ['intake_started']],
+    ['intake_expired', 'CREATE_CONVERSATION', ['unit_selected', 'unit_selection_required']],
   ];
 
   it.each(expectedTransitions)('from %s + %s → %s', (state, trigger, expectedTargets) => {

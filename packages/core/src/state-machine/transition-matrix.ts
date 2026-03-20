@@ -147,6 +147,9 @@ export const TRANSITION_MATRIX: Record<
   },
 
   [ConversationState.INTAKE_EXPIRED]: {
-    [ActionType.CREATE_CONVERSATION]: [ConversationState.INTAKE_STARTED],
+    [ActionType.CREATE_CONVERSATION]: [
+      ConversationState.UNIT_SELECTED,
+      ConversationState.UNIT_SELECTION_REQUIRED,
+    ],
   },
 };

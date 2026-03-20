@@ -280,6 +280,112 @@ describe('computeCueScores', () => {
   });
 });
 
+describe('BUG-001/003 regression — maintenance category cue coverage', () => {
+  const realCues: CueDictionary = JSON.parse(
+    readFileSync(resolve(schemasDir, 'classification_cues.json'), 'utf-8'),
+  );
+
+  // Positive: new maintenance keywords produce correct cues
+  it('"I haven\'t had heat in over a week" → Category=maintenance', () => {
+    const result = computeCueStrengthForField(
+      "I haven't had heat in over a week",
+      'Category',
+      realCues,
+    );
+    expect(result.topLabel).toBe('maintenance');
+    expect(result.score).toBeGreaterThan(0);
+  });
+
+  it('"My toilet is overflowing" → Category=maintenance', () => {
+    const result = computeCueStrengthForField('My toilet is overflowing', 'Category', realCues);
+    expect(result.topLabel).toBe('maintenance');
+    expect(result.score).toBeGreaterThan(0);
+  });
+
+  it('"My toilet is overflowing" → Location=suite (possessive regex)', () => {
+    const result = computeCueStrengthForField('My toilet is overflowing', 'Location', realCues);
+    expect(result.topLabel).toBe('suite');
+    expect(result.score).toBeGreaterThan(0);
+  });
+
+  it('"It\'s freezing in my unit" → Category=maintenance', () => {
+    const result = computeCueStrengthForField("It's freezing in my unit", 'Category', realCues);
+    expect(result.topLabel).toBe('maintenance');
+    expect(result.score).toBeGreaterThan(0);
+  });
+
+  it('"The heater is not working" → Category=maintenance', () => {
+    const result = computeCueStrengthForField('The heater is not working', 'Category', realCues);
+    expect(result.topLabel).toBe('maintenance');
+    expect(result.score).toBeGreaterThan(0);
+  });
+
+  it('"no heat in my apartment" → Sub_Location=general', () => {
+    const result = computeCueStrengthForField(
+      'no heat in my apartment',
+      'Sub_Location',
+      realCues,
+    );
+    expect(result.topLabel).toBe('general');
+    expect(result.score).toBeGreaterThan(0);
+  });
+
+  // Regression: existing positive still works
+  it('"kitchen faucet is leaking" → Category=maintenance (existing)', () => {
+    const result = computeCueStrengthForField('kitchen faucet is leaking', 'Category', realCues);
+    expect(result.topLabel).toBe('maintenance');
+    expect(result.score).toBeGreaterThan(0);
+  });
+
+  // Negative: management text must NOT false-positive as maintenance
+  it('"rent increase" → Category=management, NOT maintenance', () => {
+    const result = computeCueStrengthForField('rent increase', 'Category', realCues);
+    expect(result.topLabel).toBe('management');
+  });
+
+  it('"I need to book the party room" → Category should not be maintenance', () => {
+    const result = computeCueScores('I need to book the party room', realCues);
+    const maintScore = result.Category.labelScores.find((l) => l.label === 'maintenance')?.score ?? 0;
+    const mgmtScore = result.Category.labelScores.find((l) => l.label === 'management')?.score ?? 0;
+    // Management-specific cues ("booking") should outscore maintenance noise
+    expect(mgmtScore).toBeGreaterThanOrEqual(maintScore);
+  });
+
+  it('"parking pass renewal" → Category should not be maintenance', () => {
+    const result = computeCueScores('parking pass renewal', realCues);
+    const maintScore = result.Category.labelScores.find((l) => l.label === 'maintenance')?.score ?? 0;
+    const mgmtScore = result.Category.labelScores.find((l) => l.label === 'management')?.score ?? 0;
+    expect(mgmtScore).toBeGreaterThanOrEqual(maintScore);
+  });
+
+  // Word-boundary regex \bac\b restores "AC" shorthand without substring false positives
+  it('"The AC is broken" → Category=maintenance (regex \\bac\\b)', () => {
+    const result = computeCueStrengthForField('The AC is broken', 'Category', realCues);
+    expect(result.topLabel).toBe('maintenance');
+    expect(result.score).toBeGreaterThan(0);
+  });
+
+  it('"The AC is broken" → Maintenance_Category=hvac (regex \\bac\\b)', () => {
+    const result = computeCueStrengthForField('The AC is broken', 'Maintenance_Category', realCues);
+    expect(result.topLabel).toBe('hvac');
+    expect(result.score).toBeGreaterThan(0);
+  });
+
+  // Substring false-positive guard: bare "ac" keyword was removed; \bac\b regex
+  // should NOT match inside "access", "package", "accounting".
+  it('"I need access to the gym" → Category.maintenance score must be 0', () => {
+    const result = computeCueStrengthForField('I need access to the gym', 'Category', realCues);
+    const maintScore = result.labelScores.find((l) => l.label === 'maintenance')?.score ?? 0;
+    expect(maintScore).toBe(0);
+  });
+
+  it('"I need a package locker code" → Category.maintenance score must be 0', () => {
+    const result = computeCueStrengthForField('I need a package locker code', 'Category', realCues);
+    const maintScore = result.labelScores.find((l) => l.label === 'maintenance')?.score ?? 0;
+    expect(maintScore).toBe(0);
+  });
+});
+
 describe('bathtub vs shower cue disambiguation (v1.2)', () => {
   const realCues: CueDictionary = JSON.parse(
     readFileSync(resolve(schemasDir, 'classification_cues.json'), 'utf-8'),

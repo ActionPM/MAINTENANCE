@@ -35,6 +35,8 @@
     "garbage",
     "amenity",
     "surface_parking",
+    "entire_unit",
+    "multiple_rooms",
     "other_sub_location"
   ],
 

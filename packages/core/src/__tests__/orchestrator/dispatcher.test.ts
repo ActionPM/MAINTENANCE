@@ -114,7 +114,8 @@ describe('createDispatcher', () => {
       },
     });
 
-    expect(result.response.conversation_snapshot.state).toBe('intake_started');
+    // Single-unit auth auto-resolves to unit_selected
+    expect(result.response.conversation_snapshot.state).toBe('unit_selected');
     expect(result.response.errors).toEqual([]);
   });
 

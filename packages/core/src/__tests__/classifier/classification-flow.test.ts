@@ -99,11 +99,11 @@ const AUTH = {
 };
 
 describe('Classification flow integration', () => {
-  it('walks CREATE -> SELECT_UNIT -> SUBMIT_INITIAL_MESSAGE -> CONFIRM_SPLIT -> classification -> confirmation', async () => {
+  it('walks CREATE -> SUBMIT_INITIAL_MESSAGE -> CONFIRM_SPLIT -> classification -> confirmation', async () => {
     const deps = makeDeps();
     const dispatch = createDispatcher(deps as any);
 
-    // Create conversation
+    // Create conversation — single-unit auth auto-resolves to unit_selected
     const r1 = await dispatch({
       conversation_id: null,
       action_type: ActionType.CREATE_CONVERSATION,
@@ -113,16 +113,7 @@ describe('Classification flow integration', () => {
     });
     const convId = r1.response.conversation_snapshot.conversation_id;
 
-    // Select unit
-    await dispatch({
-      conversation_id: convId,
-      action_type: ActionType.SELECT_UNIT,
-      actor: ActorType.TENANT,
-      tenant_input: { unit_id: 'u1' },
-      auth_context: AUTH,
-    });
-
-    // Submit initial message -> split_proposed
+    // Submit initial message -> split_proposed (SELECT_UNIT skipped — already unit_selected)
     await dispatch({
       conversation_id: convId,
       action_type: ActionType.SUBMIT_INITIAL_MESSAGE,
@@ -132,7 +123,7 @@ describe('Classification flow integration', () => {
     });
 
     // Confirm split -> should auto-trigger START_CLASSIFICATION -> classification result
-    const r4 = await dispatch({
+    const r3 = await dispatch({
       conversation_id: convId,
       action_type: ActionType.CONFIRM_SPLIT,
       actor: ActorType.TENANT,
@@ -141,22 +132,22 @@ describe('Classification flow integration', () => {
     });
 
     // Should end in tenant_confirmation_pending or needs_tenant_input (NOT split_finalized)
-    const finalState = r4.response.conversation_snapshot.state;
+    const finalState = r3.response.conversation_snapshot.state;
     expect([
       ConversationState.TENANT_CONFIRMATION_PENDING,
       ConversationState.NEEDS_TENANT_INPUT,
     ]).toContain(finalState);
 
     // Should have classification results
-    expect(r4.response.conversation_snapshot.classification_results).toBeDefined();
-    expect(r4.response.conversation_snapshot.classification_results!.length).toBe(1);
+    expect(r3.response.conversation_snapshot.classification_results).toBeDefined();
+    expect(r3.response.conversation_snapshot.classification_results!.length).toBe(1);
   });
 
   it('produces matrix-compliant events for the full CONFIRM_SPLIT -> classification chain', async () => {
     const deps = makeDeps();
     const dispatch = createDispatcher(deps as any);
 
-    // Reach split_proposed
+    // Reach split_proposed — single-unit auto-resolves, no SELECT_UNIT needed
     const r1 = await dispatch({
       conversation_id: null,
       action_type: ActionType.CREATE_CONVERSATION,
@@ -165,14 +156,6 @@ describe('Classification flow integration', () => {
       auth_context: AUTH,
     });
     const convId = r1.response.conversation_snapshot.conversation_id;
-
-    await dispatch({
-      conversation_id: convId,
-      action_type: ActionType.SELECT_UNIT,
-      actor: ActorType.TENANT,
-      tenant_input: { unit_id: 'u1' },
-      auth_context: AUTH,
-    });
 
     await dispatch({
       conversation_id: convId,
@@ -192,30 +175,29 @@ describe('Classification flow integration', () => {
     });
 
     // Check events:
-    // 1. CREATE -> intake_started
-    // 2. SELECT_UNIT -> unit_selected
-    // 3. SUBMIT_INITIAL_MESSAGE -> split_in_progress (intermediate)
-    // 4. LLM_SPLIT_SUCCESS -> split_proposed (final)
-    // 5. CONFIRM_SPLIT -> split_finalized
-    // 6. START_CLASSIFICATION -> classification_in_progress (intermediate)
-    // 7. LLM_CLASSIFY_SUCCESS -> tenant_confirmation_pending or needs_tenant_input
+    // 1. CREATE -> unit_selected (single-unit auto-resolve)
+    // 2. SUBMIT_INITIAL_MESSAGE -> split_in_progress (intermediate)
+    // 3. LLM_SPLIT_SUCCESS -> split_proposed (final)
+    // 4. CONFIRM_SPLIT -> split_finalized
+    // 5. START_CLASSIFICATION -> classification_in_progress (intermediate)
+    // 6. LLM_CLASSIFY_SUCCESS -> tenant_confirmation_pending or needs_tenant_input
     const events = await deps.eventRepo.query({ conversation_id: convId });
-    expect(events.length).toBe(7);
+    expect(events.length).toBe(6);
 
     // Verify the CONFIRM_SPLIT event
-    const confirmEvent = events[4];
+    const confirmEvent = events[3];
     expect(confirmEvent.action_type).toBe(ActionType.CONFIRM_SPLIT);
     expect(confirmEvent.prior_state).toBe(ConversationState.SPLIT_PROPOSED);
     expect(confirmEvent.new_state).toBe(ConversationState.SPLIT_FINALIZED);
 
     // Verify START_CLASSIFICATION intermediate event
-    const classStartEvent = events[5];
+    const classStartEvent = events[4];
     expect(classStartEvent.action_type).toBe(SystemEvent.START_CLASSIFICATION);
     expect(classStartEvent.prior_state).toBe(ConversationState.SPLIT_FINALIZED);
     expect(classStartEvent.new_state).toBe(ConversationState.CLASSIFICATION_IN_PROGRESS);
 
     // Verify LLM_CLASSIFY_SUCCESS final event
-    const classSuccessEvent = events[6];
+    const classSuccessEvent = events[5];
     expect(classSuccessEvent.action_type).toBe(SystemEvent.LLM_CLASSIFY_SUCCESS);
     expect(classSuccessEvent.prior_state).toBe(ConversationState.CLASSIFICATION_IN_PROGRESS);
     expect([
@@ -228,6 +210,7 @@ describe('Classification flow integration', () => {
     const deps = makeDeps();
     const dispatch = createDispatcher(deps as any);
 
+    // Single-unit auto-resolves to unit_selected
     const r1 = await dispatch({
       conversation_id: null,
       action_type: ActionType.CREATE_CONVERSATION,
@@ -239,14 +222,6 @@ describe('Classification flow integration', () => {
 
     await dispatch({
       conversation_id: convId,
-      action_type: ActionType.SELECT_UNIT,
-      actor: ActorType.TENANT,
-      tenant_input: { unit_id: 'u1' },
-      auth_context: AUTH,
-    });
-
-    await dispatch({
-      conversation_id: convId,
       action_type: ActionType.SUBMIT_INITIAL_MESSAGE,
       actor: ActorType.TENANT,
       tenant_input: { message: 'My toilet is leaking' },
@@ -254,7 +229,7 @@ describe('Classification flow integration', () => {
     });
 
     // Reject split -> should also auto-trigger classification
-    const r4 = await dispatch({
+    const r3 = await dispatch({
       conversation_id: convId,
       action_type: ActionType.REJECT_SPLIT,
       actor: ActorType.TENANT,
@@ -262,7 +237,7 @@ describe('Classification flow integration', () => {
       auth_context: AUTH,
     });
 
-    const finalState = r4.response.conversation_snapshot.state;
+    const finalState = r3.response.conversation_snapshot.state;
     expect([
       ConversationState.TENANT_CONFIRMATION_PENDING,
       ConversationState.NEEDS_TENANT_INPUT,
@@ -274,6 +249,7 @@ describe('Classification flow integration', () => {
     deps.issueClassifier.mockRejectedValue(new Error('LLM down'));
     const dispatch = createDispatcher(deps as any);
 
+    // Single-unit auto-resolves to unit_selected
     const r1 = await dispatch({
       conversation_id: null,
       action_type: ActionType.CREATE_CONVERSATION,
@@ -285,14 +261,6 @@ describe('Classification flow integration', () => {
 
     await dispatch({
       conversation_id: convId,
-      action_type: ActionType.SELECT_UNIT,
-      actor: ActorType.TENANT,
-      tenant_input: { unit_id: 'u1' },
-      auth_context: AUTH,
-    });
-
-    await dispatch({
-      conversation_id: convId,
       action_type: ActionType.SUBMIT_INITIAL_MESSAGE,
       actor: ActorType.TENANT,
       tenant_input: { message: 'My toilet is leaking' },
@@ -300,7 +268,7 @@ describe('Classification flow integration', () => {
     });
 
     // Confirm split -> classification fails -> should land in llm_error_retryable
-    const r4 = await dispatch({
+    const r3 = await dispatch({
       conversation_id: convId,
       action_type: ActionType.CONFIRM_SPLIT,
       actor: ActorType.TENANT,
@@ -308,6 +276,6 @@ describe('Classification flow integration', () => {
       auth_context: AUTH,
     });
 
-    expect(r4.response.conversation_snapshot.state).toBe(ConversationState.LLM_ERROR_RETRYABLE);
+    expect(r3.response.conversation_snapshot.state).toBe(ConversationState.LLM_ERROR_RETRYABLE);
   });
 });

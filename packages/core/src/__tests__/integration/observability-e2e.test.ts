@@ -154,7 +154,7 @@ describe('Observability E2E', () => {
       auth_context: AUTH,
     });
 
-    expect(result.response.conversation_snapshot.state).toBe(ConversationState.INTAKE_STARTED);
+    expect(result.response.conversation_snapshot.state).toBe(ConversationState.UNIT_SELECTED);
 
     // Check that dispatcher logged action_received and action_completed
     const received = logger.entries.find((e) => e.event === 'action_received');
@@ -184,7 +184,7 @@ describe('Observability E2E', () => {
   });
 
   it('logs and records metrics through multi-step conversation', async () => {
-    // Create conversation
+    // Create conversation — single-unit auto-resolves to unit_selected
     const createResult = await dispatch({
       conversation_id: null,
       action_type: ActionType.CREATE_CONVERSATION,
@@ -194,16 +194,8 @@ describe('Observability E2E', () => {
     });
     const convId = createResult.response.conversation_snapshot.conversation_id;
 
-    // Select unit
-    await dispatch({
-      conversation_id: convId,
-      action_type: ActionType.SELECT_UNIT,
-      actor: ActorType.TENANT,
-      tenant_input: { unit_id: 'unit-1' },
-      auth_context: AUTH,
-    });
-
     // Submit initial message (triggers split + classification via auto-chain)
+    // SELECT_UNIT skipped — already unit_selected from single-unit auto-resolve
     await dispatch({
       conversation_id: convId,
       action_type: ActionType.SUBMIT_INITIAL_MESSAGE,
@@ -212,15 +204,15 @@ describe('Observability E2E', () => {
       auth_context: AUTH,
     });
 
-    // Should have multiple action logs
+    // Should have multiple action logs (CREATE + SUBMIT + auto-chained system events)
     const actionLogs = logger.entries.filter((e) => e.event === 'action_completed');
-    expect(actionLogs.length).toBeGreaterThanOrEqual(3);
+    expect(actionLogs.length).toBeGreaterThanOrEqual(2);
 
     // Should have multiple latency metrics
     const latencyMetrics = metrics.observations.filter(
       (o) => o.metric_name === 'orchestrator_action_latency_ms',
     );
-    expect(latencyMetrics.length).toBeGreaterThanOrEqual(3);
+    expect(latencyMetrics.length).toBeGreaterThanOrEqual(2);
   });
 
   it('correlates dispatcher request_id with downstream llm_call_* logs', async () => {
@@ -318,7 +310,7 @@ describe('Observability E2E', () => {
 
     const observedDispatch = createDispatcher(deps);
 
-    // Drive through to split: CREATE → SELECT_UNIT → SUBMIT_INITIAL_MESSAGE
+    // Drive through to split: CREATE → SUBMIT_INITIAL_MESSAGE (single-unit auto-resolves)
     const createResult = await observedDispatch({
       conversation_id: null,
       action_type: ActionType.CREATE_CONVERSATION,
@@ -327,14 +319,6 @@ describe('Observability E2E', () => {
       auth_context: AUTH,
     });
     const convId = createResult.response.conversation_snapshot.conversation_id;
-
-    await observedDispatch({
-      conversation_id: convId,
-      action_type: ActionType.SELECT_UNIT,
-      actor: ActorType.TENANT,
-      tenant_input: { unit_id: 'unit-1' },
-      auth_context: AUTH,
-    });
 
     await observedDispatch({
       conversation_id: convId,

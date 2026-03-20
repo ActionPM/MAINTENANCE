@@ -13,7 +13,9 @@
       "windows",
       "balcony",
       "ceiling",
-      "general"
+      "general",
+      "entire_unit",
+      "multiple_rooms"
     ],
     "building_interior": [
       "entrance_lobby",
@@ -133,6 +135,40 @@
       "other_maintenance_category"
     ],
     "general": [
+      "plumbing",
+      "electrical",
+      "hvac",
+      "carpentry",
+      "flooring",
+      "drywall_plaster",
+      "paint",
+      "pest_control",
+      "general_maintenance",
+      "locksmith",
+      "appliance",
+      "roofing",
+      "tile",
+      "other_issue",
+      "other_maintenance_category"
+    ],
+    "entire_unit": [
+      "plumbing",
+      "electrical",
+      "hvac",
+      "carpentry",
+      "flooring",
+      "drywall_plaster",
+      "paint",
+      "pest_control",
+      "general_maintenance",
+      "locksmith",
+      "appliance",
+      "roofing",
+      "tile",
+      "other_issue",
+      "other_maintenance_category"
+    ],
+    "multiple_rooms": [
       "plumbing",
       "electrical",
       "hvac",
@@ -581,7 +617,9 @@
       "ceiling",
       "laundry",
       "mechanical_room",
-      "parking_garage"
+      "parking_garage",
+      "entire_unit",
+      "multiple_rooms"
     ],
     "shower": ["bathroom"],
     "breaker": [
@@ -642,9 +680,11 @@
       "bedroom",
       "common_living_dining",
       "hallways_stairwells",
-      "entrance_lobby"
+      "entrance_lobby",
+      "entire_unit",
+      "multiple_rooms"
     ],
-    "thermostat": ["common_living_dining", "hallways_stairwells", "mechanical_room"],
+    "thermostat": ["common_living_dining", "hallways_stairwells", "mechanical_room", "entire_unit", "multiple_rooms"],
     "door": [
       "kitchen",
       "bathroom",
@@ -707,10 +747,10 @@
       "hallways_stairwells",
       "entrance_lobby"
     ],
-    "pests": ["kitchen", "bathroom", "bedroom", "common_living_dining", "closets", "garbage"],
-    "cockroaches": ["kitchen", "bathroom", "bedroom", "common_living_dining", "closets", "garbage"],
-    "ants": ["kitchen", "bathroom", "bedroom", "common_living_dining", "closets", "garbage"],
-    "bedbugs": ["bedroom", "common_living_dining"],
+    "pests": ["kitchen", "bathroom", "bedroom", "common_living_dining", "closets", "garbage", "entire_unit", "multiple_rooms"],
+    "cockroaches": ["kitchen", "bathroom", "bedroom", "common_living_dining", "closets", "garbage", "entire_unit", "multiple_rooms"],
+    "ants": ["kitchen", "bathroom", "bedroom", "common_living_dining", "closets", "garbage", "entire_unit", "multiple_rooms"],
+    "bedbugs": ["bedroom", "common_living_dining", "entire_unit", "multiple_rooms"],
     "rodents": [
       "kitchen",
       "bathroom",
@@ -718,7 +758,9 @@
       "common_living_dining",
       "closets",
       "garbage",
-      "parking_garage"
+      "parking_garage",
+      "entire_unit",
+      "multiple_rooms"
     ],
     "lock": [
       "kitchen",
@@ -801,6 +843,8 @@
       "garbage",
       "amenity",
       "surface_parking",
+      "entire_unit",
+      "multiple_rooms",
       "other_sub_location"
     ],
     "no_object": [
@@ -835,6 +879,8 @@
       "garbage",
       "amenity",
       "surface_parking",
+      "entire_unit",
+      "multiple_rooms",
       "other_sub_location"
     ],
     "needs_object": [
@@ -869,6 +915,8 @@
       "garbage",
       "amenity",
       "surface_parking",
+      "entire_unit",
+      "multiple_rooms",
       "other_sub_location"
     ],
     "other_maintenance_object": [
@@ -903,6 +951,8 @@
       "garbage",
       "amenity",
       "surface_parking",
+      "entire_unit",
+      "multiple_rooms",
       "other_sub_location"
     ]
   }

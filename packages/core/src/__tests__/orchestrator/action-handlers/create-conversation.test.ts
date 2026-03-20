@@ -19,7 +19,7 @@ const MINI_CUES: CueDictionary = {
   },
 };
 
-function makeContext(unitIds: string[]): ActionHandlerContext {
+function makeContext(unitIds: string[], resolver?: UnitResolver): ActionHandlerContext {
   let counter = 0;
   const session = createSession({
     conversation_id: 'conv-1',
@@ -66,7 +66,7 @@ function makeContext(unitIds: string[]): ActionHandlerContext {
       followUpGenerator: async () => ({ questions: [] }),
       cueDict: MINI_CUES,
       taxonomy,
-      unitResolver: { resolve: async () => null } satisfies UnitResolver,
+      unitResolver: resolver ?? ({ resolve: async () => null } satisfies UnitResolver),
       workOrderRepo: new InMemoryWorkOrderStore(),
       idempotencyStore: new InMemoryIdempotencyStore(),
       riskProtocols: { version: '1.0.0', triggers: [], mitigation_templates: [] },
@@ -76,19 +76,60 @@ function makeContext(unitIds: string[]): ActionHandlerContext {
   };
 }
 
+const VALID_RESOLVER: UnitResolver = {
+  resolve: async (unitId: string) => ({
+    unit_id: unitId,
+    property_id: `prop-${unitId}`,
+    client_id: `client-${unitId}`,
+    building_id: `building-${unitId}`,
+  }),
+};
+
+const NULL_RESOLVER: UnitResolver = {
+  resolve: async () => null,
+};
+
 describe('handleCreateConversation', () => {
-  it('returns intake_started for multi-unit tenant', async () => {
-    const ctx = makeContext(['u1', 'u2']);
+  it('returns unit_selection_required for multi-unit tenant', async () => {
+    const ctx = makeContext(['u1', 'u2'], VALID_RESOLVER);
     const result = await handleCreateConversation(ctx);
-    expect(result.newState).toBe(ConversationState.INTAKE_STARTED);
+    expect(result.newState).toBe(ConversationState.UNIT_SELECTION_REQUIRED);
     expect(result.uiMessages.length).toBeGreaterThan(0);
+    expect(result.session.unit_id).toBeNull();
   });
 
-  it('auto-selects unit for single-unit tenant', async () => {
-    const ctx = makeContext(['u1']);
+  it('returns quick replies with SELECT_UNIT for multi-unit tenant', async () => {
+    const ctx = makeContext(['u1', 'u2', 'u3'], VALID_RESOLVER);
     const result = await handleCreateConversation(ctx);
-    // Still intake_started — unit auto-resolve happens on SELECT_UNIT
-    expect(result.newState).toBe(ConversationState.INTAKE_STARTED);
-    expect(result.uiMessages.length).toBeGreaterThan(0);
+    expect(result.quickReplies).toHaveLength(3);
+    for (const qr of result.quickReplies!) {
+      expect(qr.action_type).toBe(ActionType.SELECT_UNIT);
+    }
+  });
+
+  it('returns unit_selected with resolved scope for single-unit tenant', async () => {
+    const ctx = makeContext(['u1'], VALID_RESOLVER);
+    const result = await handleCreateConversation(ctx);
+    expect(result.newState).toBe(ConversationState.UNIT_SELECTED);
+    expect(result.session.unit_id).toBe('u1');
+    expect(result.session.property_id).toBe('prop-u1');
+    expect(result.session.client_id).toBe('client-u1');
+    expect(result.session.building_id).toBe('building-u1');
+  });
+
+  it('returns no quick replies for single-unit tenant', async () => {
+    const ctx = makeContext(['u1'], VALID_RESOLVER);
+    const result = await handleCreateConversation(ctx);
+    expect(result.quickReplies).toBeUndefined();
+  });
+
+  it('falls to unit_selection_required when resolver returns null for single-unit', async () => {
+    const ctx = makeContext(['u1'], NULL_RESOLVER);
+    const result = await handleCreateConversation(ctx);
+    expect(result.newState).toBe(ConversationState.UNIT_SELECTION_REQUIRED);
+    expect(result.session.unit_id).toBeNull();
+    expect(result.errors).toBeDefined();
+    expect(result.errors![0].code).toBe('UNIT_RESOLVE_FAILED');
+    expect(result.quickReplies).toHaveLength(1);
   });
 });

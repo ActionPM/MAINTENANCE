@@ -12,6 +12,9 @@ export {
 } from './taxonomy.js';
 export type { Taxonomy, TaxonomyFieldName } from './taxonomy.js';
 
+// --- Taxonomy Labels ---
+export { getTaxonomyLabel } from './taxonomy-labels.js';
+
 // --- Taxonomy Constraints ---
 export {
   loadTaxonomyConstraints,

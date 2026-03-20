@@ -86,8 +86,8 @@ describe('Orchestrator integration: happy path', () => {
     dispatch = createDispatcher(deps);
   });
 
-  it('walks CREATE → SELECT_UNIT → SUBMIT_INITIAL_MESSAGE → split_proposed', async () => {
-    // Step 1: Create
+  it('walks CREATE → SUBMIT_INITIAL_MESSAGE → split_proposed (single-unit auto-resolve)', async () => {
+    // Step 1: Create — single-unit auth auto-resolves to unit_selected
     const r1 = await dispatch({
       conversation_id: null,
       action_type: ActionType.CREATE_CONVERSATION,
@@ -95,41 +95,31 @@ describe('Orchestrator integration: happy path', () => {
       tenant_input: {},
       auth_context: AUTH,
     });
-    expect(r1.response.conversation_snapshot.state).toBe('intake_started');
+    expect(r1.response.conversation_snapshot.state).toBe('unit_selected');
     const convId = r1.response.conversation_snapshot.conversation_id;
 
-    // Step 2: Select unit
+    // Step 2: Submit initial message (SELECT_UNIT skipped — already unit_selected)
     const r2 = await dispatch({
-      conversation_id: convId,
-      action_type: ActionType.SELECT_UNIT,
-      actor: ActorType.TENANT,
-      tenant_input: { unit_id: 'u1' },
-      auth_context: AUTH,
-    });
-    expect(r2.response.conversation_snapshot.state).toBe('unit_selected');
-
-    // Step 3: Submit initial message
-    const r3 = await dispatch({
       conversation_id: convId,
       action_type: ActionType.SUBMIT_INITIAL_MESSAGE,
       actor: ActorType.TENANT,
       tenant_input: { message: 'My toilet is leaking' },
       auth_context: AUTH,
     });
-    expect(r3.response.conversation_snapshot.state).toBe('split_proposed');
+    expect(r2.response.conversation_snapshot.state).toBe('split_proposed');
 
-    // Verify events: CREATE, SELECT_UNIT, SUBMIT→split_in_progress, LLM_SPLIT_SUCCESS→split_proposed
+    // Verify events: CREATE→unit_selected, SUBMIT→split_in_progress, LLM_SPLIT_SUCCESS→split_proposed
     const events = await deps.eventRepo.query({ conversation_id: convId });
-    expect(events.length).toBe(4);
+    expect(events.length).toBe(3);
 
     // Verify intermediate event is matrix-compliant
-    const submitEvent = events[2];
+    const submitEvent = events[1];
     expect(submitEvent.action_type).toBe(ActionType.SUBMIT_INITIAL_MESSAGE);
     expect(submitEvent.prior_state).toBe('unit_selected');
     expect(submitEvent.new_state).toBe('split_in_progress');
 
     // Verify final system event
-    const splitSuccessEvent = events[3];
+    const splitSuccessEvent = events[2];
     expect(splitSuccessEvent.action_type).toBe(SystemEvent.LLM_SPLIT_SUCCESS);
     expect(splitSuccessEvent.prior_state).toBe('split_in_progress');
     expect(splitSuccessEvent.new_state).toBe('split_proposed');
@@ -145,7 +135,7 @@ describe('Orchestrator integration: happy path', () => {
     });
     const convId = r1.response.conversation_snapshot.conversation_id;
 
-    // Try to CONFIRM_SPLIT from intake_started — invalid
+    // Try to CONFIRM_SPLIT from unit_selected — invalid
     const r2 = await dispatch({
       conversation_id: convId,
       action_type: ActionType.CONFIRM_SPLIT,
@@ -154,7 +144,7 @@ describe('Orchestrator integration: happy path', () => {
       auth_context: AUTH,
     });
     expect(r2.response.errors[0].code).toBe('INVALID_TRANSITION');
-    expect(r2.response.conversation_snapshot.state).toBe('intake_started');
+    expect(r2.response.conversation_snapshot.state).toBe('unit_selected');
   });
 
   it('handles photo upload without state change', async () => {
@@ -174,7 +164,7 @@ describe('Orchestrator integration: happy path', () => {
       tenant_input: { filename: 'leak.jpg', content_type: 'image/jpeg', size_bytes: 1024 },
       auth_context: AUTH,
     });
-    expect(r2.response.conversation_snapshot.state).toBe('intake_started');
+    expect(r2.response.conversation_snapshot.state).toBe('unit_selected');
     expect(r2.response.errors).toEqual([]);
   });
 });
@@ -189,6 +179,7 @@ describe('Orchestrator integration: split confirmation flow', () => {
   });
 
   async function reachSplitProposed() {
+    // Single-unit auth auto-resolves to unit_selected; no SELECT_UNIT needed
     const r1 = await dispatch({
       conversation_id: null,
       action_type: ActionType.CREATE_CONVERSATION,
@@ -197,14 +188,6 @@ describe('Orchestrator integration: split confirmation flow', () => {
       auth_context: AUTH,
     });
     const convId = r1.response.conversation_snapshot.conversation_id;
-
-    await dispatch({
-      conversation_id: convId,
-      action_type: ActionType.SELECT_UNIT,
-      actor: ActorType.TENANT,
-      tenant_input: { unit_id: 'u1' },
-      auth_context: AUTH,
-    });
 
     await dispatch({
       conversation_id: convId,
@@ -286,6 +269,7 @@ describe('Orchestrator integration: split confirmation flow', () => {
     };
     dispatch = createDispatcher(deps as any);
 
+    // Single-unit auth auto-resolves to unit_selected
     const r1 = await dispatch({
       conversation_id: null,
       action_type: ActionType.CREATE_CONVERSATION,
@@ -295,33 +279,25 @@ describe('Orchestrator integration: split confirmation flow', () => {
     });
     const convId = r1.response.conversation_snapshot.conversation_id;
 
-    await dispatch({
-      conversation_id: convId,
-      action_type: ActionType.SELECT_UNIT,
-      actor: ActorType.TENANT,
-      tenant_input: { unit_id: 'u1' },
-      auth_context: AUTH,
-    });
-
-    const r3 = await dispatch({
+    const r2 = await dispatch({
       conversation_id: convId,
       action_type: ActionType.SUBMIT_INITIAL_MESSAGE,
       actor: ActorType.TENANT,
       tenant_input: { message: 'My toilet is leaking' },
       auth_context: AUTH,
     });
-    expect(r3.response.conversation_snapshot.state).toBe('llm_error_retryable');
-    expect(r3.response.errors.length).toBeGreaterThan(0);
+    expect(r2.response.conversation_snapshot.state).toBe('llm_error_retryable');
+    expect(r2.response.errors.length).toBeGreaterThan(0);
 
-    // Verify events: CREATE, SELECT_UNIT, SUBMIT→split_in_progress, LLM_FAIL→llm_error_retryable
+    // Verify events: CREATE→unit_selected, SUBMIT→split_in_progress, LLM_FAIL→llm_error_retryable
     const events = await deps.eventRepo.query({ conversation_id: convId });
-    expect(events.length).toBe(4);
+    expect(events.length).toBe(3);
 
-    const submitEvent = events[2];
+    const submitEvent = events[1];
     expect(submitEvent.action_type).toBe(ActionType.SUBMIT_INITIAL_MESSAGE);
     expect(submitEvent.new_state).toBe('split_in_progress');
 
-    const failEvent = events[3];
+    const failEvent = events[2];
     expect(failEvent.action_type).toBe(SystemEvent.LLM_FAIL);
     expect(failEvent.prior_state).toBe('split_in_progress');
     expect(failEvent.new_state).toBe('llm_error_retryable');

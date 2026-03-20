@@ -135,6 +135,8 @@ const SKIP_VALUES = new Set([
   'other_category',
   'other_priority',
   'general',
+  'entire_unit',
+  'multiple_rooms',
 ]);
 
 export function validateHierarchicalConstraints(

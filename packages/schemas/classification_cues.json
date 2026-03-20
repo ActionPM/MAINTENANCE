@@ -3,8 +3,17 @@
   "fields": {
     "Category": {
       "maintenance": {
-        "keywords": ["leak", "broken", "repair", "not working", "clog"],
-        "regex": []
+        "keywords": [
+          "leak", "broken", "repair", "not working", "clog",
+          "heat", "no heat", "cold", "freezing", "heater", "hvac",
+          "radiator", "thermostat", "air conditioning", "furnace",
+          "overflow", "overflowing", "flooding", "backed up",
+          "toilet", "faucet", "sink", "pipe", "drain",
+          "mold", "pest", "cockroach", "mouse", "infestation",
+          "door", "window", "cabinet", "floor", "ceiling",
+          "light", "outlet", "switch", "breaker", "smoke detector"
+        ],
+        "regex": ["\\bmy\\s+(toilet|sink|faucet|heater|radiator|thermostat|shower|oven|fridge|door|window|lock)\\b", "\\bac\\b"]
       },
       "management": {
         "keywords": ["rent", "lease", "move out", "receipt", "payment"],
@@ -14,7 +23,10 @@
     "Location": {
       "suite": {
         "keywords": ["apartment", "unit", "suite", "my room", "my place"],
-        "regex": ["\\b(in|inside)\\s+my\\s+(apartment|unit|suite|place|room)\\b"]
+        "regex": [
+          "\\b(in|inside)\\s+my\\s+(apartment|unit|suite|place|room)\\b",
+          "\\bmy\\s+(toilet|sink|faucet|heater|radiator|thermostat|shower|oven|fridge|door|window|lock|closet|bedroom|kitchen|bathroom)\\b"
+        ]
       },
       "building_interior": {
         "keywords": ["hallway", "lobby", "elevator", "stairwell", "laundry room"],
@@ -60,7 +72,7 @@
         "regex": []
       },
       "general": {
-        "keywords": ["apartment", "unit", "suite", "my place"],
+        "keywords": ["apartment", "unit", "suite", "my place", "no heat", "heat", "cold", "freezing", "whole", "everywhere", "entire"],
         "regex": []
       }
     },
@@ -115,7 +127,6 @@
       "hvac": {
         "keywords": [
           "heat",
-          "ac",
           "furnace",
           "thermostat",
           "vent",
@@ -124,7 +135,7 @@
           "hvac",
           "radiator"
         ],
-        "regex": []
+        "regex": ["\\bac\\b"]
       },
       "carpentry": {
         "keywords": [
