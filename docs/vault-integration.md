@@ -8,6 +8,12 @@ The ActionPM2 Obsidian vault is the project knowledge base for strategy, archite
 
 The vault is **not under git**. Writes are not reversible. Always run `/update-vault plan` before a first write against new vault state.
 
+Bug handling uses a split-authority model:
+
+- the vault is the intake and working-draft surface,
+- the repo is the canonical technical tracking surface,
+- and the vault `Agent Repo Review` section in a bug note freezes once a row exists in `docs/bug-tracker.md`.
+
 ## Setup
 
 Add the vault path to `.claude/settings.local.json` (machine-specific, not committed):
@@ -39,7 +45,7 @@ Full pass:
 3. Syncs `MOD - Maintenance.md` tracker totals
 4. Updates hub notes (Master Note, System Map) with any newly created notes
 
-Stub fill priority: COMP- → CTRL- → core ENT- → PROC- → DEC-/PLAT- → future MOD- (minimal).
+Stub fill priority: COMP- -> CTRL- -> core ENT- -> PROC- -> DEC-/PLAT- -> future MOD- (minimal).
 
 ### `/update-vault incorporate`
 
@@ -49,19 +55,20 @@ Picks up user edits made in Obsidian. Reads vault notes, flags any discrepancies
 
 ### Writable
 
-| Scope             | Notes                                                                                                                                        |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Prefixes          | `COMP-`, `CTRL-`, `ENT-`, `PROC-`, `MOD-`, `DEC-`, `PLAT-`, `TAX-`, `DATA-`, `PKG-`                                                          |
-| Update Notes      | `Update Note MM-DD-YY.md` in vault root                                                                                                      |
-| Hub note sections | `MOD - Maintenance.md` → `## Current state`, `ActionPM - Master Note.md.md` → `## Current state`, `ActionPM - System Map.md` → section lists |
+| Scope | Notes |
+| --- | --- |
+| Prefixes | `COMP-`, `CTRL-`, `ENT-`, `PROC-`, `MOD-`, `DEC-`, `PLAT-`, `TAX-`, `DATA-`, `PKG-`, `BUG-` |
+| Update Notes | `Update Note MM-DD-YY.md` in vault root |
+| Bug intake notes | `02_System/Bugs/*.md` created from the bug template; agent may fill the `Agent Repo Review` section during intake review only |
+| Hub note sections | `MOD - Maintenance.md` -> `## Current state`, `ActionPM - Master Note.md` -> linked workflow sections, `ActionPM - System Map.md` -> section lists |
 
 ### Read-only
 
-| Scope       | Notes                                                              |
-| ----------- | ------------------------------------------------------------------ |
-| Prefixes    | `STRAT-`, `SPEC-`, `UI-`, `ACTION-`, `RESEARCH-`, `RMI-`, `ACTOR-` |
+| Scope | Notes |
+| --- | --- |
+| Prefixes | `STRAT-`, `SPEC-`, `UI-`, `ACTION-`, `RESEARCH-`, `RMI-`, `ACTOR-` |
 | Directories | `07_Maps Excalidraw/`, `97_Agents/`, `99_Templates/`, `.obsidian/` |
-| Files       | `KPIs.md`, any `.excalidraw.md`                                    |
+| Files | `KPIs.md`, any `.excalidraw.md` |
 
 ## Safety Rules
 
@@ -69,12 +76,15 @@ Picks up user edits made in Obsidian. Reads vault notes, flags any discrepancies
 - **Section-targeted updates**: only replaces content under explicitly named `##` headings. If a heading is missing, the agent skips the file and reports.
 - **No deletions, renames, or auto-archiving.**
 - **Commit marker**: `<!-- vault-pm-last-commit: hash -->` at the bottom of Update Notes prevents duplicate entries across runs.
+- **Bug review freeze**: once `docs/bug-tracker.md` contains a row for a vault bug note, treat that note's `Agent Repo Review` section as frozen. Continue technical status updates in the repo, not the vault note.
 
 ## Key Files
 
-| File                               | Purpose                                                                  |
-| ---------------------------------- | ------------------------------------------------------------------------ |
-| `.claude/commands/update-vault.md` | Slash command definition (320 lines, full PM agent instructions)         |
-| `~/.claude/CLAUDE.md`              | User-level reminder to suggest `/update-vault post-commit` after commits |
-| `.claude/settings.local.json`      | Vault directory in `additionalDirectories` (machine-specific)            |
-| `docs/spec-gap-tracker.md`         | Source of truth for tracker totals synced to vault                       |
+| File | Purpose |
+| --- | --- |
+| `.claude/commands/update-vault.md` | Slash command definition for vault update behavior |
+| `~/.claude/CLAUDE.md` | User-level reminder to suggest `/update-vault post-commit` after commits |
+| `.claude/settings.local.json` | Vault directory in `additionalDirectories` (machine-specific) |
+| `docs/spec-gap-tracker.md` | Source of truth for tracker totals synced to vault |
+| `docs/bug-management.md` | Canonical bug handling process |
+| `docs/bug-tracker.md` | Canonical reviewed bug backlog |
