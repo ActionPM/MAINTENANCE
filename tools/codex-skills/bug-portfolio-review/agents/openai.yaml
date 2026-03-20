@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bug Portfolio Review"
+  short_description: "Cluster the bug backlog and publish a dated portfolio review"
+  default_prompt: "Review the open ActionPM bug backlog, compare it to the architecture and trackers, cluster related failures, and publish a dated synthesis in docs/bugs/reviews/"

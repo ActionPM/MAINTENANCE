@@ -10,15 +10,24 @@ import { FollowupForm } from './followup-form';
 import { ConfirmationPanel } from './confirmation-panel';
 import { StatusIndicator } from './status-indicator';
 import { QuickReplies } from './quick-replies';
+import { DemoProgress } from './demo-progress';
 import type { UIMessage, QuickReply } from '@wo-agent/schemas';
 import styles from './chat-shell.module.css';
 
 interface ChatShellProps {
   token: string;
   unitIds: readonly string[];
+  demoScenario?: string;
+  demoMessage?: string;
 }
 
-const INPUT_STATES = new Set(['intake_started', 'unit_selected']);
+const SCENARIO_NAMES: Record<string, string> = {
+  standard: 'Standard Request',
+  'multi-issue': 'Multi-Issue Report',
+  emergency: 'Emergency Detection',
+};
+
+const INPUT_STATES = new Set(['unit_selected']);
 
 const PROCESSING_STATES = new Set([
   'split_in_progress',
@@ -34,12 +43,13 @@ const TERMINAL_STATES = new Set([
   'intake_expired',
 ]);
 
-export function ChatShell({ token, unitIds }: ChatShellProps) {
+export function ChatShell({ token, unitIds, demoScenario, demoMessage }: ChatShellProps) {
   const conv = useConversation(token);
   const snapshot = conv.response?.conversation_snapshot;
   const directive = conv.response?.ui_directive;
   const state = snapshot?.state;
   const isLoading = conv.status === 'loading';
+  const isDemo = !!demoScenario;
 
   const handleQuickReply = useCallback(
     (reply: { label: string; value: string; action_type?: string }) => {
@@ -59,7 +69,6 @@ export function ChatShell({ token, unitIds }: ChatShellProps) {
         case 'RESUME':
           return conv.resumeConversation(conv.conversationId!);
         default:
-          // Fallback: treat as additional message text
           return conv.submitAdditionalMessage(reply.value);
       }
     },
@@ -70,6 +79,24 @@ export function ChatShell({ token, unitIds }: ChatShellProps) {
     return (
       <div className={styles.shell}>
         <div className={styles.header}>Maintenance Portal</div>
+        {isDemo && (
+          <div
+            style={{
+              background: '#eef2ff',
+              padding: '0.5rem 1rem',
+              fontSize: '0.8rem',
+              color: '#3b5998',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <span>Demo Mode — {SCENARIO_NAMES[demoScenario] ?? demoScenario}</span>
+            <a href="/dev/demo" style={{ color: '#0066cc', textDecoration: 'none' }}>
+              Back to Scenarios
+            </a>
+          </div>
+        )}
         <div className={styles.startContainer}>
           <button className={styles.startBtn} onClick={conv.startConversation}>
             Start a request
@@ -82,9 +109,6 @@ export function ChatShell({ token, unitIds }: ChatShellProps) {
   const messages: readonly UIMessage[] = directive?.messages ?? [];
   let quickReplies: readonly QuickReply[] = directive?.quick_replies ?? [];
 
-  // Client-side synthesis: rehydrate emergency confirmation quick replies from
-  // snapshot state on reload/resume (plan §5.7b). The GET read path returns
-  // snapshot-only (no ui_directive), so the client reconstructs these.
   if (
     snapshot?.risk_summary?.escalation_state === 'pending_confirmation' &&
     !quickReplies.some((r) => r.action_type === 'CONFIRM_EMERGENCY')
@@ -108,6 +132,27 @@ export function ChatShell({ token, unitIds }: ChatShellProps) {
     <div className={styles.shell}>
       <div className={styles.header}>Maintenance Portal</div>
 
+      {isDemo && (
+        <div
+          style={{
+            background: '#eef2ff',
+            padding: '0.5rem 1rem',
+            fontSize: '0.8rem',
+            color: '#3b5998',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <span>Demo Mode — {SCENARIO_NAMES[demoScenario] ?? demoScenario}</span>
+          <a href="/dev/demo" style={{ color: '#0066cc', textDecoration: 'none' }}>
+            Back to Scenarios
+          </a>
+        </div>
+      )}
+
+      {isDemo && <DemoProgress state={state} />}
+
       {conv.error && <div className={styles.errorBanner}>{conv.error}</div>}
 
       <div className={styles.messages}>
@@ -117,12 +162,11 @@ export function ChatShell({ token, unitIds }: ChatShellProps) {
       </div>
 
       <div className={styles.interactionArea}>
-        {/* Unit selection */}
-        {state === 'unit_selection_required' && (
+        {/* Show UnitSelector for unit_selection_required AND intake_started (legacy/resumed sessions) */}
+        {(state === 'unit_selection_required' || state === 'intake_started') && (
           <UnitSelector unitIds={unitIds} onSelect={conv.selectUnit} disabled={isLoading} />
         )}
 
-        {/* Split review */}
         {state === 'split_proposed' && snapshot?.issues && (
           <SplitReview
             issues={snapshot.issues}
@@ -135,7 +179,6 @@ export function ChatShell({ token, unitIds }: ChatShellProps) {
           />
         )}
 
-        {/* Follow-up questions */}
         {state === 'needs_tenant_input' && snapshot?.pending_followup_questions && (
           <FollowupForm
             questions={snapshot.pending_followup_questions}
@@ -144,7 +187,6 @@ export function ChatShell({ token, unitIds }: ChatShellProps) {
           />
         )}
 
-        {/* Confirmation */}
         {state === 'tenant_confirmation_pending' && snapshot?.confirmation_payload && (
           <ConfirmationPanel
             payload={snapshot.confirmation_payload}
@@ -153,10 +195,8 @@ export function ChatShell({ token, unitIds }: ChatShellProps) {
           />
         )}
 
-        {/* Processing states */}
         {state && PROCESSING_STATES.has(state) && <StatusIndicator state={state} />}
 
-        {/* Terminal and error states */}
         {state && TERMINAL_STATES.has(state) && (
           <StatusIndicator
             state={state}
@@ -174,21 +214,23 @@ export function ChatShell({ token, unitIds }: ChatShellProps) {
                     )
                 : undefined
             }
+            token={token}
             disabled={isLoading}
           />
         )}
 
-        {/* Quick replies */}
         {quickReplies.length > 0 && (
           <QuickReplies replies={quickReplies} onSelect={handleQuickReply} disabled={isLoading} />
         )}
 
-        {/* Message input for text-entry states */}
         {state && INPUT_STATES.has(state) && (
-          <MessageInput onSend={conv.submitInitialMessage} disabled={isLoading} />
+          <MessageInput
+            onSend={conv.submitInitialMessage}
+            disabled={isLoading}
+            defaultValue={demoMessage}
+          />
         )}
 
-        {/* Additional message input for states that accept it */}
         {(state === 'needs_tenant_input' || state === 'tenant_confirmation_pending') && (
           <MessageInput
             onSend={conv.submitAdditionalMessage}

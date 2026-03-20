@@ -1,5 +1,6 @@
 'use client';
 
+import { getTaxonomyLabel } from '@wo-agent/schemas';
 import styles from './confirmation-panel.module.css';
 
 interface ConfirmationIssue {
@@ -34,7 +35,7 @@ export function ConfirmationPanel({
           <div className={styles.labels}>
             {Object.entries(issue.classification).map(([field, value]) => (
               <span key={field} className={styles.label}>
-                {value}
+                {getTaxonomyLabel(field, value)}
               </span>
             ))}
           </div>

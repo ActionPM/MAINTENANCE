@@ -20,8 +20,17 @@ function ChatPageContent() {
   }
 
   const unitIds = units ? units.split(',').filter(Boolean) : [];
+  const demoScenario = searchParams.get('demo_scenario') ?? undefined;
+  const demoMessage = searchParams.get('demo_message') ?? undefined;
 
-  return <ChatShell token={token} unitIds={unitIds} />;
+  return (
+    <ChatShell
+      token={token}
+      unitIds={unitIds}
+      demoScenario={demoScenario}
+      demoMessage={demoMessage}
+    />
+  );
 }
 
 export default function ChatPage() {

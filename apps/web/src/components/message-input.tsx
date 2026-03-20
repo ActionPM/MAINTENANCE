@@ -8,6 +8,7 @@ interface MessageInputProps {
   disabled?: boolean;
   placeholder?: string;
   maxChars?: number;
+  defaultValue?: string;
 }
 
 export function MessageInput({
@@ -15,8 +16,9 @@ export function MessageInput({
   disabled = false,
   placeholder = 'Describe your issue...',
   maxChars = 8000,
+  defaultValue,
 }: MessageInputProps) {
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState(defaultValue ?? '');
   const trimmed = value.trim();
   const showCount = value.length > maxChars * 0.8;
   const overLimit = value.length > maxChars;

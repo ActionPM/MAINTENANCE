@@ -124,7 +124,23 @@ export function useConversation(token: string) {
       try {
         const created = await api.createConversation(token);
         const newId = created.conversation_snapshot.conversation_id;
-        await api.selectUnit(token, newId, unitId);
+        let current = created;
+
+        // If CREATE_CONVERSATION already auto-selected the unit (single-unit tenant),
+        // skip SELECT_UNIT — the transition matrix doesn't allow it from unit_selected.
+        if (current.conversation_snapshot.state !== 'unit_selected') {
+          current = await api.selectUnit(token, newId, unitId);
+        }
+
+        // Guard: only continue to submit if we actually reached unit_selected.
+        // SELECT_UNIT can return unit_selection_required with errors (resolver-null)
+        // and the route returns 200, not 4xx — so the API client won't throw.
+        if (current.conversation_snapshot.state !== 'unit_selected') {
+          setResponse(current);
+          setStatus('ready');
+          return;
+        }
+
         const result = await api.submitInitialMessage(token, newId, messages.join('\n'));
         setResponse(result);
         setStatus('ready');

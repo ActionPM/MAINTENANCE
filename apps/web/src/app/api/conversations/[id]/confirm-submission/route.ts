@@ -28,6 +28,7 @@ export const POST = withObservedRoute(
       tenant_input: body,
       auth_context: authResult,
       request_id: ctx.request_id,
+      idempotency_key: body.idempotency_key,
     });
 
     return NextResponse.json(result.response);

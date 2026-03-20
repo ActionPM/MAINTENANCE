@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { FollowUpQuestion } from '@wo-agent/schemas';
+import { getTaxonomyLabel } from '@wo-agent/schemas';
 import styles from './followup-form.module.css';
 
 interface FollowupFormProps {
@@ -49,7 +50,7 @@ export function FollowupForm({ questions, onSubmit, disabled = false }: Followup
                   onChange={() => setAnswer(q.question_id, option)}
                   disabled={disabled}
                 />
-                {option}
+                {getTaxonomyLabel(q.field_target, option)}
               </label>
             ))}
 

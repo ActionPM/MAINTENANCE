@@ -38,9 +38,9 @@ describe('FollowupForm', () => {
 
   it('renders radio buttons for enum type', () => {
     render(<FollowupForm questions={[questions[0]]} onSubmit={vi.fn()} />);
-    expect(screen.getByLabelText('kitchen')).toBeInTheDocument();
-    expect(screen.getByLabelText('bathroom')).toBeInTheDocument();
-    expect(screen.getByLabelText('bedroom')).toBeInTheDocument();
+    expect(screen.getByLabelText('Kitchen')).toBeInTheDocument();
+    expect(screen.getByLabelText('Bathroom')).toBeInTheDocument();
+    expect(screen.getByLabelText('Bedroom')).toBeInTheDocument();
   });
 
   it('renders radio buttons for yes_no type', () => {
@@ -59,7 +59,7 @@ describe('FollowupForm', () => {
     const user = userEvent.setup();
     render(<FollowupForm questions={questions} onSubmit={onSubmit} />);
 
-    await user.click(screen.getByLabelText('kitchen'));
+    await user.click(screen.getByLabelText('Kitchen'));
     await user.click(screen.getByLabelText('Yes'));
     await user.type(screen.getByRole('textbox'), 'The faucet');
     await user.click(screen.getByRole('button', { name: /submit/i }));

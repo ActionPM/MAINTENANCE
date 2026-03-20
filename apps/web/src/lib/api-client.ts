@@ -163,7 +163,7 @@ export function confirmSubmission(
 ): Promise<OrchestratorActionResponse> {
   return request(`/api/conversations/${conversationId}/confirm-submission`, token, {
     method: 'POST',
-    body: '{}',
+    body: JSON.stringify({ idempotency_key: crypto.randomUUID() }),
   });
 }
 

@@ -38,8 +38,9 @@ describe('ConfirmationPanel', () => {
 
   it('displays classification labels', () => {
     render(<ConfirmationPanel payload={payload} onConfirm={vi.fn()} />);
-    expect(screen.getAllByText(/maintenance/).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(/kitchen/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Maintenance/i).length).toBeGreaterThanOrEqual(1);
+    // "Kitchen" appears both as issue summary ("Kitchen sink leaking") and as label
+    expect(screen.getAllByText(/Kitchen/i).length).toBeGreaterThanOrEqual(2);
   });
 
   it('shows human triage badge when needed', () => {

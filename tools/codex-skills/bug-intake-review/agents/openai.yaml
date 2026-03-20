@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bug Intake Review"
+  short_description: "Review one bug note and create the canonical tracker row"
+  default_prompt: "Review a single ActionPM vault bug note against the repo, fill the intake review block, and create or update the canonical row in docs/bug-tracker.md"
