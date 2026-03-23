@@ -207,11 +207,7 @@ export function ChatShell({ token, unitIds, demoScenario, demoMessage }: ChatShe
             onStartOver={conv.startConversation}
             onStartQueued={
               snapshot?.queued_messages?.length && snapshot?.unit_id
-                ? () =>
-                    conv.startWithQueuedText(
-                      snapshot.queued_messages!,
-                      snapshot.unit_id!,
-                    )
+                ? () => conv.startWithQueuedText(snapshot.queued_messages!, snapshot.unit_id!)
                 : undefined
             }
             token={token}
