@@ -531,18 +531,7 @@ export function getEscalationCoordinatorDeps(): EscalationCoordinatorDeps | null
     metricsRecorder: d.metricsRecorder,
     alertSink: d.alertSink,
     writeRiskEvent: async (event) => {
-      await d.eventRepo.insert({
-        event_id: event.event_id,
-        conversation_id: event.conversation_id,
-        event_type: event.event_type as any,
-        prior_state: null, // async events — no state transition context
-        new_state: null,
-        action_type: 'SYSTEM_ESCALATION',
-        actor: 'system',
-        payload: event.payload,
-        pinned_versions: null,
-        created_at: event.created_at,
-      });
+      await d.eventRepo.insert(event);
     },
   };
 }

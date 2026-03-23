@@ -183,18 +183,7 @@ export async function handleConfirmEmergency(
         idGenerator: deps.idGenerator,
         clock: deps.clock,
         writeRiskEvent: async (event) => {
-          await deps.eventRepo.insert({
-            event_id: event.event_id,
-            conversation_id: event.conversation_id,
-            event_type: 'emergency_action' as any,
-            prior_state: session.state,
-            new_state: session.state,
-            action_type: 'CONFIRM_EMERGENCY',
-            actor: 'system',
-            payload: event.payload,
-            pinned_versions: null,
-            created_at: event.created_at,
-          });
+          await deps.eventRepo.insert(event);
         },
       },
     );
