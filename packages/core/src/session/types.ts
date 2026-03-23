@@ -18,6 +18,9 @@ export interface IssueClassificationResult {
   readonly classifierOutput: IssueClassifierOutput;
   readonly computedConfidence: Record<string, number>;
   readonly fieldsNeedingInput: readonly string[];
+  readonly shouldAskFollowup: boolean;
+  readonly followupTypes: Record<string, string>;
+  readonly constraintPassed: boolean;
 }
 
 /**

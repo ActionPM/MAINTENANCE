@@ -35,6 +35,7 @@ function makeSession(): ConversationSession {
       schema_version: '1.0.0',
       model_id: 'test',
       prompt_version: '1.0.0',
+      cue_version: '1.2.0',
     },
     split_issues: [
       { issue_id: 'issue-1', summary: 'Leaky faucet', raw_excerpt: 'My faucet leaks' },
@@ -51,6 +52,9 @@ function makeSession(): ConversationSession {
         },
         computedConfidence: { Category: 0.85, Priority: 0.75 },
         fieldsNeedingInput: [],
+        shouldAskFollowup: false,
+        followupTypes: {},
+        constraintPassed: true,
       },
     ],
     prior_state_before_error: null,

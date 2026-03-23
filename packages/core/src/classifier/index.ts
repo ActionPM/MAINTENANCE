@@ -21,4 +21,7 @@ export type { ClassifierResult } from './issue-classifier.js';
 
 export { resolveValidOptions, resolveConstraintImpliedFields } from './constraint-resolver.js';
 
+export { checkCompleteness, DEFAULT_COMPLETENESS_POLICY, FollowUpType } from './completeness-gate.js';
+export type { CompletenessResult, CompletenessPolicy } from './completeness-gate.js';
+
 export type { ClassificationEvent } from './classification-event.js';

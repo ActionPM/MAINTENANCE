@@ -128,6 +128,9 @@ export {
   ClassifierErrorCode,
   resolveConstraintImpliedFields,
   resolveValidOptions,
+  checkCompleteness,
+  DEFAULT_COMPLETENESS_POLICY,
+  FollowUpType,
 } from './classifier/index.js';
 export type {
   CueFieldResult,
@@ -139,6 +142,8 @@ export type {
   ClassifierResult,
   ClassificationEvent,
 } from './classifier/index.js';
+
+export { EVIDENCE_BASED_PROMPT_VERSION } from './llm/prompts/classifier-prompt.js';
 
 // --- Follow-up (Phase 6) ---
 export {

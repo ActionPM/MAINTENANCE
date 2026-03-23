@@ -65,6 +65,7 @@ async function isNewIssue(message: string, ctx: ActionHandlerContext): Promise<b
     conversation_state: ctx.session.state,
     model_id: versions.model_id,
     prompt_version: versions.prompt_version,
+    cue_version: versions.cue_version,
     conversation_id: ctx.session.conversation_id,
   };
 

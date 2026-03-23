@@ -11,17 +11,15 @@ const cueJson = JSON.parse(
 );
 const cueDict = cueJson as CueDictionary;
 
-describe('cue location inference from objects', () => {
-  it('toilet boosts Sub_Location=bathroom', () => {
+describe('cue location inference from objects (v1.3 — object shortcuts removed)', () => {
+  it('toilet does NOT boost Sub_Location (object-to-location cue removed)', () => {
     const result = computeCueScores('my toilet is leaking', cueDict);
-    expect(result['Sub_Location']?.topLabel).toBe('bathroom');
-    expect(result['Sub_Location']?.score).toBeGreaterThan(0);
+    expect(result['Sub_Location']?.score ?? 0).toBe(0);
   });
 
-  it('fridge boosts Sub_Location=kitchen', () => {
+  it('fridge does NOT boost Sub_Location (object-to-location cue removed)', () => {
     const result = computeCueScores('the fridge is not working', cueDict);
-    expect(result['Sub_Location']?.topLabel).toBe('kitchen');
-    expect(result['Sub_Location']?.score).toBeGreaterThan(0);
+    expect(result['Sub_Location']?.score ?? 0).toBe(0);
   });
 
   it('"in my apartment" boosts Location=suite', () => {
@@ -38,13 +36,25 @@ describe('cue location inference from objects', () => {
     }
   });
 
-  it('dishwasher boosts Sub_Location=kitchen', () => {
+  it('dishwasher does NOT boost Sub_Location (object-to-location cue removed)', () => {
     const result = computeCueScores('dishwasher is broken', cueDict);
-    expect(result['Sub_Location']?.topLabel).toBe('kitchen');
+    expect(result['Sub_Location']?.score ?? 0).toBe(0);
   });
 
-  it('shower boosts Sub_Location=bathroom', () => {
+  it('shower does NOT boost Sub_Location (object-to-location cue removed)', () => {
     const result = computeCueScores('shower is leaking', cueDict);
+    expect(result['Sub_Location']?.score ?? 0).toBe(0);
+  });
+
+  it('explicit "bathroom" still boosts Sub_Location=bathroom', () => {
+    const result = computeCueScores('the bathroom floor is wet', cueDict);
     expect(result['Sub_Location']?.topLabel).toBe('bathroom');
+    expect(result['Sub_Location']?.score).toBeGreaterThan(0);
+  });
+
+  it('explicit "kitchen" still boosts Sub_Location=kitchen', () => {
+    const result = computeCueScores('the kitchen sink is leaking', cueDict);
+    expect(result['Sub_Location']?.topLabel).toBe('kitchen');
+    expect(result['Sub_Location']?.score).toBeGreaterThan(0);
   });
 });

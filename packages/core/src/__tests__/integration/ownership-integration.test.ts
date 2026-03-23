@@ -42,6 +42,7 @@ const testVersions = {
   schema_version: '1.0.0',
   model_id: 'default',
   prompt_version: '1.0.0',
+      cue_version: '1.2.0',
 };
 
 class InMemorySessionStore implements SessionStore {

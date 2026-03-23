@@ -19,6 +19,7 @@ const VERSIONS: PinnedVersions = {
   schema_version: '1.0.0',
   model_id: 'test',
   prompt_version: '1.0.0',
+      cue_version: '1.2.0',
 };
 
 function makeSession(): ConversationSession {
@@ -49,6 +50,9 @@ function makeSession(): ConversationSession {
         },
         computedConfidence: { maintenance_category: 0.9 },
         fieldsNeedingInput: [],
+        shouldAskFollowup: false,
+        followupTypes: {},
+        constraintPassed: true,
       },
     ],
     prior_state_before_error: null,

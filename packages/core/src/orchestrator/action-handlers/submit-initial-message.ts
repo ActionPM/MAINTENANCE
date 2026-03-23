@@ -115,6 +115,7 @@ export async function handleSubmitInitialMessage(
     taxonomy_version: session.pinned_versions.taxonomy_version,
     model_id: session.pinned_versions.model_id,
     prompt_version: session.pinned_versions.prompt_version,
+    cue_version: session.pinned_versions.cue_version,
   };
 
   const obsCtx = ctx.request_id

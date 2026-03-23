@@ -11,6 +11,7 @@ export interface IssueClassifierInput {
   readonly taxonomy_version: string;
   readonly model_id: string;
   readonly prompt_version: string;
+  readonly cue_version: string;
   readonly cue_scores?: Record<string, number>;
   readonly retry_context?: string;
 }

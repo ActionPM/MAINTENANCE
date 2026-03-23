@@ -6,6 +6,9 @@ import {
   validateHierarchicalConstraints,
 } from '@wo-agent/schemas';
 import { resolveConstraintImpliedFields } from '../../classifier/constraint-resolver.js';
+import { checkCompleteness } from '../../classifier/completeness-gate.js';
+import { EVIDENCE_BASED_PROMPT_VERSION } from '../../llm/prompts/classifier-prompt.js';
+import { compareSemver } from '@wo-agent/schemas';
 import type {
   IssueClassifierInput,
   IssueClassifierOutput,
@@ -159,6 +162,7 @@ export async function handleAnswerFollowups(
       taxonomy_version: session.pinned_versions.taxonomy_version,
       model_id: session.pinned_versions.model_id,
       prompt_version: session.pinned_versions.prompt_version,
+      cue_version: session.pinned_versions.cue_version,
       cue_scores: cueScoresForInput,
     };
 
@@ -282,7 +286,41 @@ export async function handleAnswerFollowups(
       });
     }
 
-    // Step C: Confidence with constraint boost (C2)
+    // Step C: Completeness gate (v2+ only)
+    const isEvidenceBasedPrompt =
+      compareSemver(session.pinned_versions.prompt_version, EVIDENCE_BASED_PROMPT_VERSION) >= 0;
+    let completenessIncomplete: string[] = [];
+    let completenessFollowupTypes: Record<string, string> = {};
+
+    if (isEvidenceBasedPrompt && !output.needs_human_triage) {
+      const category = output.classification.Category ?? '';
+      if (category === 'management' && !output.classification.Maintenance_Category) {
+        output = {
+          ...output,
+          classification: {
+            ...output.classification,
+            Maintenance_Category: 'not_applicable',
+            Maintenance_Object: 'not_applicable',
+            Maintenance_Problem: 'not_applicable',
+          },
+        };
+      } else if (category === 'maintenance' && !output.classification.Management_Category) {
+        output = {
+          ...output,
+          classification: {
+            ...output.classification,
+            Management_Category: 'not_applicable',
+            Management_Object: 'not_applicable',
+          },
+        };
+      }
+
+      const completenessResult = checkCompleteness(output.classification, category);
+      completenessIncomplete = [...completenessResult.incompleteFields];
+      completenessFollowupTypes = { ...completenessResult.followupTypes };
+    }
+
+    // Step D: Confidence with constraint boost (C2)
     const computedConfidence = computeAllFieldConfidences({
       classification: output.classification,
       modelConfidence: output.model_confidence,
@@ -301,7 +339,6 @@ export async function handleAnswerFollowups(
         });
 
     // Short-circuit: remove fields the tenant directly answered this round.
-    // A tenant explicitly answering a field resolves it regardless of confidence.
     if (issue.issue_id === targetIssueId && followupAnswers.length > 0) {
       const answeredFields = new Set(followupAnswers.map((a) => a.field_target));
       fieldsNeedingInput = fieldsNeedingInput.filter((f) => !answeredFields.has(f));
@@ -312,6 +349,13 @@ export async function handleAnswerFollowups(
       fieldsNeedingInput = fieldsNeedingInput.filter((f) => !(f in impliedFields));
     }
 
+    // Merge completeness gate results (deduplicated)
+    for (const field of completenessIncomplete) {
+      if (!fieldsNeedingInput.includes(field)) {
+        fieldsNeedingInput.push(field);
+      }
+    }
+
     if (fieldsNeedingInput.length > 0) anyFieldsNeedInput = true;
 
     classificationResults.push({
@@ -319,6 +363,9 @@ export async function handleAnswerFollowups(
       classifierOutput: output,
       computedConfidence,
       fieldsNeedingInput,
+      shouldAskFollowup: fieldsNeedingInput.length > 0,
+      followupTypes: completenessFollowupTypes,
+      constraintPassed: !output.needs_human_triage,
     });
   }
 
@@ -342,6 +389,9 @@ export async function handleAnswerFollowups(
         ...r,
         classifierOutput: { ...r.classifierOutput, needs_human_triage: true },
         fieldsNeedingInput: [] as string[],
+        shouldAskFollowup: false,
+        followupTypes: {},
+        constraintPassed: true,
       }));
       updatedSession = setClassificationResults(updatedSession, triageResults);
 
@@ -376,6 +426,7 @@ export async function handleAnswerFollowups(
       total_questions_asked: updatedSession.total_questions_asked,
       taxonomy_version: session.pinned_versions.taxonomy_version,
       prompt_version: session.pinned_versions.prompt_version,
+      cue_version: session.pinned_versions.cue_version,
       original_text: targetIssueData?.raw_excerpt,
     };
 
@@ -401,6 +452,9 @@ export async function handleAnswerFollowups(
         ...r,
         classifierOutput: { ...r.classifierOutput, needs_human_triage: true },
         fieldsNeedingInput: [] as string[],
+        shouldAskFollowup: false,
+        followupTypes: {},
+        constraintPassed: true,
       }));
       updatedSession = setClassificationResults(updatedSession, triageResults);
 

@@ -16,6 +16,7 @@ describe('response builder risk data', () => {
       schema_version: '1',
       model_id: 'm',
       prompt_version: '1',
+      cue_version: '1.2.0',
     },
   });
 

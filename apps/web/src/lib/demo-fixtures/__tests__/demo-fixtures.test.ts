@@ -23,6 +23,7 @@ function makeSplitterInput(text: string): IssueSplitterInput {
     taxonomy_version: taxonomyVersion,
     model_id: 'demo-fixture',
     prompt_version: '1.0.0',
+      cue_version: '1.2.0',
   };
 }
 
@@ -38,6 +39,7 @@ function makeClassifierInput(
     taxonomy_version: taxonomyVersion,
     model_id: 'demo-fixture',
     prompt_version: '1.0.0',
+      cue_version: '1.2.0',
   };
 }
 
@@ -53,6 +55,7 @@ function makeFollowupInput(fieldsNeedingInput: string[]): FollowUpGeneratorInput
     total_questions_asked: 0,
     taxonomy_version: taxonomyVersion,
     prompt_version: '1.0.0',
+      cue_version: '1.2.0',
   };
 }
 

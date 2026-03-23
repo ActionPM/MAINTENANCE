@@ -18,6 +18,7 @@ const PINNED = {
   schema_version: '1.0.0',
   model_id: 'default',
   prompt_version: '1.0.0',
+      cue_version: '1.2.0',
 };
 
 const SPLIT_ISSUES = [
@@ -42,6 +43,9 @@ const CLASSIFICATION_RESULTS: IssueClassificationResult[] = [
     },
     computedConfidence: { Category: 0.92, Maintenance_Category: 0.87 },
     fieldsNeedingInput: [],
+    shouldAskFollowup: false,
+    followupTypes: {},
+    constraintPassed: true,
   },
 ];
 
@@ -204,6 +208,9 @@ describe('handleConfirmSubmission', () => {
         },
         computedConfidence: { Category: 0.3 }, // low band
         fieldsNeedingInput: [],
+        shouldAskFollowup: false,
+        followupTypes: {},
+        constraintPassed: true,
       },
       {
         issue_id: 'issue-2',
@@ -216,6 +223,9 @@ describe('handleConfirmSubmission', () => {
         },
         computedConfidence: { Category: 0.92 }, // high band
         fieldsNeedingInput: [],
+        shouldAskFollowup: false,
+        followupTypes: {},
+        constraintPassed: true,
       },
     ];
 

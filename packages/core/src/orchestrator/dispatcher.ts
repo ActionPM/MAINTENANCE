@@ -71,6 +71,7 @@ export function createDispatcher(deps: OrchestratorDependencies) {
           schema_version: '',
           model_id: '',
           prompt_version: '',
+          cue_version: '',
         },
       });
       logger?.log({
@@ -177,6 +178,7 @@ export function createDispatcher(deps: OrchestratorDependencies) {
           schema_version: '',
           model_id: '',
           prompt_version: '',
+          cue_version: '',
         },
       });
       return {
@@ -206,6 +208,7 @@ export function createDispatcher(deps: OrchestratorDependencies) {
           schema_version: '',
           model_id: '',
           prompt_version: '',
+          cue_version: '',
         },
       });
       return {

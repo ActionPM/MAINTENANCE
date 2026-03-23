@@ -11,6 +11,7 @@ const VERSIONS = {
   schema_version: '1.0.0',
   model_id: 'test',
   prompt_version: '1.0.0',
+      cue_version: '1.2.0',
 };
 
 describe('follow-up tracking on session', () => {

@@ -1,6 +1,24 @@
 import type { Pool } from '@neondatabase/serverless';
 import type { SessionStore } from '@wo-agent/core';
 import type { ConversationSession } from '@wo-agent/core';
+import { normalizePinnedVersions } from '@wo-agent/schemas';
+
+/**
+ * Normalize a restored session's pinned_versions, injecting defaults for
+ * fields missing from pre-migration data (e.g., cue_version).
+ */
+function normalizeSession(raw: Record<string, unknown>): ConversationSession {
+  const session = raw as unknown as ConversationSession;
+  if (session.pinned_versions) {
+    return {
+      ...session,
+      pinned_versions: normalizePinnedVersions(
+        session.pinned_versions as unknown as Record<string, unknown>,
+      ),
+    };
+  }
+  return session;
+}
 
 export class PostgresSessionStore implements SessionStore {
   constructor(private readonly pool: Pool) {}
@@ -9,7 +27,7 @@ export class PostgresSessionStore implements SessionStore {
     const result = await this.pool.query('SELECT data FROM sessions WHERE conversation_id = $1', [
       conversationId,
     ]);
-    return result.rows.length > 0 ? (result.rows[0].data as ConversationSession) : null;
+    return result.rows.length > 0 ? normalizeSession(result.rows[0].data as Record<string, unknown>) : null;
   }
 
   async getByTenantUser(tenantUserId: string): Promise<readonly ConversationSession[]> {
@@ -17,7 +35,7 @@ export class PostgresSessionStore implements SessionStore {
       'SELECT data FROM sessions WHERE tenant_user_id = $1 ORDER BY last_activity_at DESC',
       [tenantUserId],
     );
-    return result.rows.map((row) => row.data as ConversationSession);
+    return result.rows.map((row) => normalizeSession(row.data as Record<string, unknown>));
   }
 
   async save(session: ConversationSession): Promise<void> {

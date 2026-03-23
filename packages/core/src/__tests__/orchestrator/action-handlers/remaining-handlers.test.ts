@@ -47,6 +47,7 @@ function makeContext(
       schema_version: '1.0.0',
       model_id: 'gpt-4',
       prompt_version: '1.0.0',
+      cue_version: '1.2.0',
     },
   });
   if (state !== ConversationState.INTAKE_STARTED) {
@@ -204,6 +205,9 @@ describe('handleAnswerFollowups', () => {
         },
         computedConfidence: { Category: 0.9 },
         fieldsNeedingInput: ['Priority'],
+        shouldAskFollowup: false,
+        followupTypes: {},
+        constraintPassed: true,
       },
     ]);
     session = setPendingFollowUpQuestions(session, [
@@ -248,6 +252,9 @@ describe('handleConfirmSubmission', () => {
         },
         computedConfidence: { Category: 0.9 },
         fieldsNeedingInput: [],
+        shouldAskFollowup: false,
+        followupTypes: {},
+        constraintPassed: true,
       },
     ]);
     session = {

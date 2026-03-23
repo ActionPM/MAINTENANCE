@@ -19,6 +19,7 @@ function buildCtx(message: string, overrides?: Record<string, unknown>): ActionH
       schema_version: '1',
       model_id: 'm',
       prompt_version: '1',
+      cue_version: '1.2.0',
     },
   });
   session = updateSessionState(session, ConversationState.UNIT_SELECTED);

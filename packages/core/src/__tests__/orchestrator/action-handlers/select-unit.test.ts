@@ -34,6 +34,7 @@ function makeContext(
       schema_version: '1.0.0',
       model_id: 'gpt-4',
       prompt_version: '1.0.0',
+      cue_version: '1.2.0',
     },
   });
   return {

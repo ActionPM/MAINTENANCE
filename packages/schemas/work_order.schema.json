@@ -33,9 +33,10 @@
         "taxonomy_version": { "type": "string" },
         "schema_version": { "type": "string" },
         "model_id": { "type": "string" },
-        "prompt_version": { "type": "string" }
+        "prompt_version": { "type": "string" },
+        "cue_version": { "type": "string" }
       },
-      "required": ["taxonomy_version", "schema_version", "model_id", "prompt_version"],
+      "required": ["taxonomy_version", "schema_version", "model_id", "prompt_version", "cue_version"],
       "additionalProperties": false
     },
     "WorkOrder": {

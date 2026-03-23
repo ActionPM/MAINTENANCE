@@ -39,6 +39,7 @@
         "total_questions_asked": { "type": "integer", "minimum": 0, "maximum": 8 },
         "taxonomy_version": { "type": "string" },
         "prompt_version": { "type": "string" },
+        "cue_version": { "type": "string" },
         "original_text": { "type": "string" }
       },
       "required": [
@@ -51,7 +52,8 @@
         "turn_number",
         "total_questions_asked",
         "taxonomy_version",
-        "prompt_version"
+        "prompt_version",
+        "cue_version"
       ],
       "additionalProperties": false
     }

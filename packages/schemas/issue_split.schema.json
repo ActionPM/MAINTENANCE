@@ -9,9 +9,10 @@
         "conversation_id": { "type": "string" },
         "taxonomy_version": { "type": "string" },
         "model_id": { "type": "string" },
-        "prompt_version": { "type": "string" }
+        "prompt_version": { "type": "string" },
+        "cue_version": { "type": "string" }
       },
-      "required": ["raw_text", "conversation_id", "taxonomy_version", "model_id", "prompt_version"],
+      "required": ["raw_text", "conversation_id", "taxonomy_version", "model_id", "prompt_version", "cue_version"],
       "additionalProperties": false
     },
     "SplitIssue": {

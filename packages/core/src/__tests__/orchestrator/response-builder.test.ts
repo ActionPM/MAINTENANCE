@@ -19,6 +19,7 @@ const mockSession: ConversationSession = {
     schema_version: '1.0.0',
     model_id: 'gpt-4',
     prompt_version: '1.0.0',
+      cue_version: '1.2.0',
   },
   prior_state_before_error: null,
   draft_photo_ids: [],
@@ -96,6 +97,7 @@ describe('buildResponse', () => {
         schema_version: '1.0.0',
         model_id: 'gpt-4',
         prompt_version: '1.0.0',
+      cue_version: '1.2.0',
       },
     });
     session = setSplitIssues(session, issues);
@@ -120,6 +122,7 @@ describe('buildResponse', () => {
         schema_version: '1.0.0',
         model_id: 'gpt-4',
         prompt_version: '1.0.0',
+      cue_version: '1.2.0',
       },
     });
 

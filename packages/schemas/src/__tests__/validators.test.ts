@@ -215,6 +215,7 @@ describe('validateOrchestratorActionResponse', () => {
         schema_version: '1.0.0',
         model_id: 'claude-sonnet-4-6',
         prompt_version: '1.0.0',
+        cue_version: '1.2.0',
       },
     },
     ui_directive: {
@@ -535,6 +536,7 @@ describe('validateFollowUpInput', () => {
     total_questions_asked: 0,
     taxonomy_version: '1.0.0',
     prompt_version: '1.0.0',
+    cue_version: '1.2.0',
   };
 
   it('rejects turn_number > 8 (max_turns cap)', () => {
@@ -730,6 +732,7 @@ describe('validateWorkOrder', () => {
       schema_version: '1.0.0',
       model_id: 'claude-sonnet-4-6',
       prompt_version: '1.0.0',
+      cue_version: '1.2.0',
     },
     created_at: NOW,
     updated_at: NOW,

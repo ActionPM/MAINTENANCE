@@ -145,8 +145,8 @@ const EXTENDED_CUES: CueDictionary = {
       building_exterior: { keywords: ['parking', 'roof', 'exterior', 'garage'], regex: [] },
     },
     Sub_Location: {
-      kitchen: { keywords: ['kitchen', 'stove', 'oven', 'fridge'], regex: [] },
-      bathroom: { keywords: ['bathroom', 'shower', 'bathtub', 'toilet'], regex: [] },
+      kitchen: { keywords: ['kitchen'], regex: [] },
+      bathroom: { keywords: ['bathroom', 'washroom'], regex: [] },
       general: { keywords: ['apartment', 'unit', 'suite'], regex: [] },
     },
     Priority: {
@@ -213,9 +213,19 @@ describe('Location cue scoring', () => {
 });
 
 describe('Sub_Location cue scoring', () => {
-  it('scores "bathroom" for shower/toilet text', () => {
+  it('does NOT score "bathroom" from object mentions like shower (v1.3 audit)', () => {
     const result = computeCueStrengthForField(
       'My shower is leaking',
+      'Sub_Location',
+      EXTENDED_CUES,
+    );
+    // Object mentions removed from Sub_Location cues
+    expect(result.score).toBe(0);
+  });
+
+  it('scores "bathroom" only from explicit "bathroom" keyword', () => {
+    const result = computeCueStrengthForField(
+      'The bathroom floor is wet',
       'Sub_Location',
       EXTENDED_CUES,
     );
@@ -223,7 +233,7 @@ describe('Sub_Location cue scoring', () => {
     expect(result.score).toBeCloseTo(0.6);
   });
 
-  it('scores "kitchen" for kitchen text', () => {
+  it('scores "kitchen" for explicit kitchen text', () => {
     const result = computeCueStrengthForField(
       'The kitchen sink is clogged',
       'Sub_Location',
@@ -231,6 +241,27 @@ describe('Sub_Location cue scoring', () => {
     );
     expect(result.topLabel).toBe('kitchen');
     expect(result.score).toBeCloseTo(0.6);
+  });
+
+  it('"my sink is leaking" does NOT produce high Location or Sub_Location scores', () => {
+    const realCues: CueDictionary = JSON.parse(
+      readFileSync(resolve(schemasDir, 'classification_cues.json'), 'utf-8'),
+    );
+    const locResult = computeCueStrengthForField('my sink is leaking', 'Location', realCues);
+    const subLocResult = computeCueStrengthForField('my sink is leaking', 'Sub_Location', realCues);
+    expect(locResult.score).toBe(0);
+    expect(subLocResult.score).toBe(0);
+  });
+
+  it('"toilet is clogged" scores Maintenance_Object but not Location', () => {
+    const realCues: CueDictionary = JSON.parse(
+      readFileSync(resolve(schemasDir, 'classification_cues.json'), 'utf-8'),
+    );
+    const objResult = computeCueStrengthForField('toilet is clogged', 'Maintenance_Object', realCues);
+    const locResult = computeCueStrengthForField('toilet is clogged', 'Location', realCues);
+    expect(objResult.score).toBeGreaterThan(0);
+    expect(objResult.topLabel).toBe('toilet');
+    expect(locResult.score).toBe(0);
   });
 });
 
@@ -302,10 +333,10 @@ describe('BUG-001/003 regression — maintenance category cue coverage', () => {
     expect(result.score).toBeGreaterThan(0);
   });
 
-  it('"My toilet is overflowing" → Location=suite (possessive regex)', () => {
+  it('"My toilet is overflowing" → Location score 0 (object mention no longer cues location)', () => {
     const result = computeCueStrengthForField('My toilet is overflowing', 'Location', realCues);
-    expect(result.topLabel).toBe('suite');
-    expect(result.score).toBeGreaterThan(0);
+    // Object mentions removed from Location cues — only explicit location words score
+    expect(result.score).toBe(0);
   });
 
   it('"It\'s freezing in my unit" → Category=maintenance', () => {

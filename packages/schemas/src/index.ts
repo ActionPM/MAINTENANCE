@@ -46,10 +46,14 @@ export type { PinnedVersions } from './version-pinning.js';
 export {
   resolveCurrentVersions,
   assertPinnedVersionsIntact,
+  normalizePinnedVersions,
+  compareSemver,
   TAXONOMY_VERSION,
   SCHEMA_VERSION,
   PROMPT_VERSION,
   DEFAULT_MODEL_ID,
+  CUE_VERSION,
+  DEFAULT_CUE_VERSION,
 } from './version-pinning.js';
 
 // --- Types ---

@@ -21,6 +21,10 @@ import {
   computeContradictionAfterRetryRate,
 } from '../metrics/field-metrics.js';
 import {
+  computeFollowupPrecision,
+  computeFollowupRecall,
+} from '../metrics/followup-metrics.js';
+import {
   CRITICAL_SLICES,
   TAXONOMY_SLICES,
   INPUT_QUALITY_SLICES,
@@ -120,12 +124,29 @@ function computeSliceMetrics(
       }
     }
 
+    // Build follow-up comparison pairs
+    const followupPairs: { predicted_followup_fields: string[]; expected_followup_fields: string[] }[] = [];
+    for (const ex of matchedExamples) {
+      const exResults = resultsByExampleId.get(ex.example_id);
+      if (!exResults) continue;
+      // Predicted: fields needing input (from confidence + completeness gate)
+      const predictedFields = exResults
+        .filter((r) => r.status === 'ok' && r.fieldsNeedingInput)
+        .flatMap((r) => r.fieldsNeedingInput ?? []);
+      followupPairs.push({
+        predicted_followup_fields: predictedFields,
+        expected_followup_fields: [...(ex.expected_followup_fields ?? [])],
+      });
+    }
+
     const statuses = sliceResults.map((r) => r.status);
     sliceMetrics[slice.name] = {
       field_accuracy: fieldPairs.length > 0 ? computeOverallFieldAccuracy(fieldPairs) : 0,
       schema_invalid_rate: computeSchemaInvalidRate(statuses),
       taxonomy_invalid_rate: computeTaxonomyInvalidRate(statuses),
       contradiction_after_retry_rate: computeContradictionAfterRetryRate(sliceResults),
+      followup_precision: computeFollowupPrecision(followupPairs),
+      followup_recall: computeFollowupRecall(followupPairs),
       example_count: sliceResults.length,
     };
   }

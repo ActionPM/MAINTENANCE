@@ -7,6 +7,7 @@ const VERSIONS = {
   schema_version: '1.0.0',
   model_id: 'test',
   prompt_version: '1.0.0',
+      cue_version: '1.2.0',
 };
 
 afterEach(() => {
@@ -39,6 +40,9 @@ describe('setClassificationResults', () => {
         },
         computedConfidence: { Category: 0.85 },
         fieldsNeedingInput: [],
+        shouldAskFollowup: false,
+        followupTypes: {},
+        constraintPassed: true,
       },
     ];
     vi.advanceTimersByTime(1000);
@@ -68,6 +72,9 @@ describe('setClassificationResults', () => {
         },
         computedConfidence: { Category: 0.85 },
         fieldsNeedingInput: [],
+        shouldAskFollowup: false,
+        followupTypes: {},
+        constraintPassed: true,
       },
     ]);
     const cleared = setClassificationResults(session, null);

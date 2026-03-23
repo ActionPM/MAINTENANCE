@@ -21,6 +21,7 @@ const VERSIONS = {
   schema_version: '1.0.0',
   model_id: 'test-model',
   prompt_version: '1.0.0',
+      cue_version: '1.2.0',
 };
 
 const LOW_CONF_CLASSIFICATION: IssueClassifierOutput = {
