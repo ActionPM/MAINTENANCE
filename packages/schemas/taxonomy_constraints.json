@@ -684,7 +684,13 @@
       "entire_unit",
       "multiple_rooms"
     ],
-    "thermostat": ["common_living_dining", "hallways_stairwells", "mechanical_room", "entire_unit", "multiple_rooms"],
+    "thermostat": [
+      "common_living_dining",
+      "hallways_stairwells",
+      "mechanical_room",
+      "entire_unit",
+      "multiple_rooms"
+    ],
     "door": [
       "kitchen",
       "bathroom",
@@ -747,9 +753,36 @@
       "hallways_stairwells",
       "entrance_lobby"
     ],
-    "pests": ["kitchen", "bathroom", "bedroom", "common_living_dining", "closets", "garbage", "entire_unit", "multiple_rooms"],
-    "cockroaches": ["kitchen", "bathroom", "bedroom", "common_living_dining", "closets", "garbage", "entire_unit", "multiple_rooms"],
-    "ants": ["kitchen", "bathroom", "bedroom", "common_living_dining", "closets", "garbage", "entire_unit", "multiple_rooms"],
+    "pests": [
+      "kitchen",
+      "bathroom",
+      "bedroom",
+      "common_living_dining",
+      "closets",
+      "garbage",
+      "entire_unit",
+      "multiple_rooms"
+    ],
+    "cockroaches": [
+      "kitchen",
+      "bathroom",
+      "bedroom",
+      "common_living_dining",
+      "closets",
+      "garbage",
+      "entire_unit",
+      "multiple_rooms"
+    ],
+    "ants": [
+      "kitchen",
+      "bathroom",
+      "bedroom",
+      "common_living_dining",
+      "closets",
+      "garbage",
+      "entire_unit",
+      "multiple_rooms"
+    ],
     "bedbugs": ["bedroom", "common_living_dining", "entire_unit", "multiple_rooms"],
     "rodents": [
       "kitchen",

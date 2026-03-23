@@ -14,13 +14,13 @@ Use it to keep bug handling disciplined, architecture-aware, and batch-oriented 
 
 ## Canonical Artifacts
 
-| Artifact | Canonical path | Role |
-| --- | --- | --- |
-| Bug process | `docs/bug-management.md` | Authority for the workflow and rules in this document |
-| Bug tracker | `docs/bug-tracker.md` | Living canonical state for individual bugs |
-| Portfolio reviews | `docs/bugs/reviews/` | Append-only point-in-time synthesis of the bug backlog |
-| Vault bug template | `ActionPM2/99_Templates/Note Templates/Template - Bug.md` | Intake and working-draft note structure |
-| Vault bug process note | `ActionPM2/02_System/Bugs/PROC - Bug Intake and Portfolio Review.md` | Vault-facing explanation of how the workflow operates |
+| Artifact               | Canonical path                                                       | Role                                                   |
+| ---------------------- | -------------------------------------------------------------------- | ------------------------------------------------------ |
+| Bug process            | `docs/bug-management.md`                                             | Authority for the workflow and rules in this document  |
+| Bug tracker            | `docs/bug-tracker.md`                                                | Living canonical state for individual bugs             |
+| Portfolio reviews      | `docs/bugs/reviews/`                                                 | Append-only point-in-time synthesis of the bug backlog |
+| Vault bug template     | `ActionPM2/99_Templates/Note Templates/Template - Bug.md`            | Intake and working-draft note structure                |
+| Vault bug process note | `ActionPM2/02_System/Bugs/PROC - Bug Intake and Portfolio Review.md` | Vault-facing explanation of how the workflow operates  |
 
 ## Authority Model
 
@@ -46,12 +46,12 @@ The vault still remains authoritative for the original report context:
 
 ## Severity
 
-| Severity | Criteria | Expected handling |
-| --- | --- | --- |
-| `P0` | Security issue, data loss, production down, or emergency routing broken | Bypass batch review and act immediately |
-| `P1` | Core flow broken, explicit spec violation, or gold-test regression | Review next cycle and open a plan within 48 hours |
-| `P2` | Degraded experience, confidence/quality issue, or missing capability | Keep in batch review flow and plan when clustered or otherwise justified |
-| `P3` | Cosmetic issue, display issue, or minor UX defect | Batch review and fix opportunistically |
+| Severity | Criteria                                                                | Expected handling                                                        |
+| -------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `P0`     | Security issue, data loss, production down, or emergency routing broken | Bypass batch review and act immediately                                  |
+| `P1`     | Core flow broken, explicit spec violation, or gold-test regression      | Review next cycle and open a plan within 48 hours                        |
+| `P2`     | Degraded experience, confidence/quality issue, or missing capability    | Keep in batch review flow and plan when clustered or otherwise justified |
+| `P3`     | Cosmetic issue, display issue, or minor UX defect                       | Batch review and fix opportunistically                                   |
 
 Severity is assigned during repo review and may be revised later if more evidence appears.
 

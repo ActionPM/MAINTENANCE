@@ -9,6 +9,7 @@
 ## Context
 
 Testing the chat agent locally requires:
+
 1. Start dev server (`pnpm --filter @wo-agent/web dev`)
 2. POST to `/api/dev/auth/demo-login` with a persona key to get a JWT
 3. Copy the token into the browser URL as `?token=...&units=...`
@@ -41,12 +42,14 @@ JWT_REFRESH_SECRET=local-dev-refresh-secret-at-least-32-chars
 **File:** `apps/web/src/app/dev/login/page.tsx` (new)
 
 A client component that:
+
 1. Shows three buttons: "Alice (1 unit)", "Bob (3 units)", "Carol (1 unit, different account)"
 2. On click, POSTs to `/api/dev/auth/demo-login` with the persona key
 3. On success, redirects to `/?token=<access_token>&units=<unit_ids>`
 4. Shows an error message if the API returns an error (e.g., `DEV_AUTH_DISABLED`)
 
 Design notes:
+
 - `'use client'` — needs `fetch` and `useRouter`
 - Inline styles (consistent with existing `page.tsx` and `layout.tsx` — no CSS modules in use)
 - No server-side gate needed — the API already returns 403 if `ENABLE_DEV_AUTH !== 'true'`
@@ -65,10 +68,10 @@ Design notes:
 
 ## Files Changed (Expected)
 
-| File | Action |
-| ---- | ------ |
-| `apps/web/.env.local` | Edit — append 4 dev auth variables (not committed) |
-| `apps/web/src/app/dev/login/page.tsx` | New — dev login page |
+| File                                  | Action                                             |
+| ------------------------------------- | -------------------------------------------------- |
+| `apps/web/.env.local`                 | Edit — append 4 dev auth variables (not committed) |
+| `apps/web/src/app/dev/login/page.tsx` | New — dev login page                               |
 
 ## Out of Scope
 

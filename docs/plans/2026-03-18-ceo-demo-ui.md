@@ -9,14 +9,14 @@
 
 The app has a complete working backend (35 API routes, 14 states, 15 action types, full orchestrator) and a functional chat UI (8 components covering every state). However, the current experience has gaps for a CEO demo:
 
-| What exists | What's missing for CEO demo |
-|---|---|
-| Dev login page at `/dev/login` (3 personas) | No guided experience — CEO won't know what to type |
-| Full chat flow: split → classify → followup → confirm → WO | LLM stubs return single-issue splits, empty followup questions |
-| Risk detection + emergency confirmation UI | No curated scenario that reliably triggers emergency flow |
-| Work order creation + IDs displayed | No way to VIEW work orders after submission |
-| Real LLM works (ANTHROPIC_API_KEY configured) | Real LLM is unpredictable for a demo — may not showcase all features |
-| In-memory stores work without DATABASE_URL | — |
+| What exists                                                | What's missing for CEO demo                                          |
+| ---------------------------------------------------------- | -------------------------------------------------------------------- |
+| Dev login page at `/dev/login` (3 personas)                | No guided experience — CEO won't know what to type                   |
+| Full chat flow: split → classify → followup → confirm → WO | LLM stubs return single-issue splits, empty followup questions       |
+| Risk detection + emergency confirmation UI                 | No curated scenario that reliably triggers emergency flow            |
+| Work order creation + IDs displayed                        | No way to VIEW work orders after submission                          |
+| Real LLM works (ANTHROPIC_API_KEY configured)              | Real LLM is unpredictable for a demo — may not showcase all features |
+| In-memory stores work without DATABASE_URL                 | —                                                                    |
 
 ## Design Decisions
 
@@ -62,9 +62,10 @@ Create a deterministic splitter that pattern-matches on input text to produce sc
 ```
 
 **Type contract** (from `@wo-agent/schemas`):
+
 ```typescript
 interface IssueSplitterOutput {
-  issues: readonly SplitIssue[];  // { issue_id, summary, raw_excerpt }
+  issues: readonly SplitIssue[]; // { issue_id, summary, raw_excerpt }
   issue_count: number;
 }
 ```
@@ -172,6 +173,7 @@ Create a deterministic follow-up generator that returns meaningful questions for
 ```
 
 **Type contract**:
+
 ```typescript
 interface FollowUpQuestion {
   question_id: string;
@@ -288,6 +290,7 @@ Add `USE_DEMO_FIXTURES=true` alongside the existing dev auth vars.
 **File**: `.env.example` (document the option)
 
 Add a comment block explaining `USE_DEMO_FIXTURES`:
+
 ```
 # Set to "true" to use deterministic demo fixtures for LLM tools
 # (predictable multi-issue splits, classification, follow-up questions).
@@ -354,6 +357,7 @@ Note: Since the factory is a `globalThis` singleton, tests must clear `globalThi
 Client component with:
 
 **Header section**:
+
 - Product name: "Service Request Intake & Triage Agent"
 - One-line value prop: "AI-powered maintenance request processing with authoritative taxonomy classification"
 - Brief description (2-3 sentences): What it does, why it matters (categorization integrity, trend analysis, automated triage)
@@ -376,10 +380,12 @@ Client component with:
    - Capabilities shown: Emergency keyword detection, safety mitigations, emergency confirm/decline, risk flags on work order
 
 **Each card has a "Launch Demo" button** that:
+
 1. Calls `/api/dev/auth/demo-login` with persona `bob` (3 units — shows unit selector)
 2. Redirects to `/?token=...&units=...&demo_scenario=<scenario_key>&demo_message=<encoded_message>`
 
 **Architecture section** (collapsible or below cards):
+
 - Brief bullet list of what's under the hood: 14 conversation states, deterministic state machine, schema-locked LLM outputs, append-only event log, idempotency, emergency routing
 - Tech stack one-liner: Next.js 15 + TypeScript + PostgreSQL + Claude AI
 
@@ -402,11 +408,13 @@ Read `demo_scenario` and `demo_message` from URL search params (in addition to e
 **File**: `apps/web/src/components/chat-shell.tsx`
 
 When `demoMessage` is provided:
+
 1. After conversation is created and unit is selected (or auto-selected for single-unit personas), automatically populate the message input with the demo message text
 2. Show a subtle banner at the top: "Demo Mode — [scenario name]" with a link back to `/dev/demo`
 3. Do NOT auto-submit — let the CEO click Send to feel in control of the flow
 
 When `demoScenario` is provided:
+
 - Map scenario key to a human-readable name for the banner
 - For `bob` persona (3 units), add a hint: "Select a unit to begin" near the unit selector
 
@@ -425,6 +433,7 @@ When in demo mode (demoScenario is set), show a lightweight progress bar/step in
 ```
 
 Highlight the current step based on conversation state:
+
 - `intake_started` / `unit_selection_required` / `unit_selected` → Step 1
 - `split_in_progress` / `split_proposed` → Step 2
 - `split_finalized` / `classification_in_progress` → Step 3
@@ -461,11 +470,13 @@ Steps that don't apply (e.g., no follow-ups for single-issue scenario) are skipp
 **File**: `apps/web/src/app/dev/work-orders/page.tsx`
 
 Client component that:
+
 1. Reads `token` from URL params (passed through from chat flow)
 2. Calls `GET /api/work-orders` with auth header
 3. Displays a card list of all work orders for the authenticated tenant
 
 Each card shows:
+
 - Work order ID (truncated UUID)
 - Issue summary
 - Status badge (created, action_required, scheduled, resolved, cancelled)
@@ -485,6 +496,7 @@ Each card shows:
 **File**: `apps/web/src/app/dev/work-orders/[id]/page.tsx`
 
 Client component that:
+
 1. Calls `GET /api/work-orders/:id` for the work order
 2. Calls `GET /api/work-orders/:id/record-bundle` for the full bundle
 3. Displays comprehensive WO detail view
@@ -500,11 +512,13 @@ Client component that:
 **Confidence Scores**: Horizontal bar chart or progress bars for each field's confidence (0-1 scale). Color-coded: green (>0.8), yellow (0.5-0.8), red (<0.5).
 
 **Risk Assessment** (if risk_flags present):
+
 - Severity badge (emergency/high/medium)
 - Trigger names that matched
 - Whether emergency was confirmed
 
 **Record Bundle** (from `GET /api/work-orders/:id/record-bundle` — `RecordBundle` type):
+
 - **Urgency Basis**: `has_emergency`, `highest_severity`, `trigger_ids` — rendered as risk badge + trigger list
 - **Status History**: `readonly StatusHistoryEntry[]` — timeline of status transitions (CREATED → etc.)
 - **Communications**: `readonly CommunicationEntry[]` — notification log (channel, type, status, timestamps)
@@ -526,6 +540,7 @@ Note: The `RecordBundle` type does NOT include a raw event timeline or related w
 **File**: `apps/web/src/components/status-indicator.tsx`
 
 When `state === 'submitted'` and `workOrderIds` are present:
+
 - Change each WO ID from plain text to a clickable link
 - Link destination: `/dev/work-orders/${id}?token=${token}`
 - Add a "View all work orders" link below the list
@@ -560,6 +575,7 @@ Pass `token` prop down to StatusIndicator when rendering for the submitted state
 **Files**: Multiple pages
 
 Add consistent navigation:
+
 - `/dev/demo` → "Launch Demo" → chat page (already done)
 - Chat page (demo mode) → banner has "Back to Scenarios" link → `/dev/demo`
 - Submitted state → "View Work Orders" + "Try Another Scenario" → `/dev/demo`
@@ -575,6 +591,7 @@ Add consistent navigation:
 **Files**: All new CSS Module files
 
 Review and polish:
+
 - Consistent color palette with existing app (primary blue #0066cc, borders #e0e0e0, backgrounds #f8f9fa)
 - Responsive design (works on laptop screen ~1200px and tablet ~768px)
 - Loading states for all API calls (skeleton/spinner)
@@ -592,6 +609,7 @@ Review and polish:
 **Manual verification** — walk through each scenario start to finish:
 
 **Scenario 1 (Standard Request)**:
+
 1. `/dev/demo` → click "Launch Demo" on Standard Request
 2. Bob's 3 units shown → select unit-201
 3. Pre-filled message visible → click Send
@@ -601,6 +619,7 @@ Review and polish:
 7. Click WO ID → detail page shows classification + confidence (all high)
 
 **Scenario 2 (Multi-Issue Report)**:
+
 1. `/dev/demo` → click "Launch Demo" on Multi-Issue Report
 2. Select unit → send pre-filled message
 3. 3 issues in split review → demonstrate Edit on one, then Confirm
@@ -610,6 +629,7 @@ Review and polish:
 7. View WOs → each has different classification, some with lower confidence
 
 **Scenario 3 (Emergency Detection)**:
+
 1. `/dev/demo` → click "Launch Demo" on Emergency Detection
 2. Select unit → send pre-filled message
 3. Risk detected → safety mitigation message shown → emergency confirm/decline buttons
@@ -648,49 +668,52 @@ pnpm --filter @wo-agent/web build
 ## Files Created/Modified Summary
 
 ### New Files (12)
-| File | Purpose |
-|---|---|
-| `apps/web/src/lib/demo-fixtures/demo-splitter.ts` | Deterministic multi-issue splitter |
-| `apps/web/src/lib/demo-fixtures/demo-classifier.ts` | Deterministic taxonomy classifier |
-| `apps/web/src/lib/demo-fixtures/demo-followup-generator.ts` | Deterministic follow-up question generator |
-| `apps/web/src/lib/demo-fixtures/index.ts` | Barrel export |
-| `apps/web/src/lib/demo-fixtures/__tests__/demo-fixtures.test.ts` | Fixture unit tests (taxonomy validity, constraint chains, confidence targeting) |
-| `apps/web/src/lib/__tests__/orchestrator-factory-demo-fixtures.test.ts` | Factory branch test (USE_DEMO_FIXTURES priority) |
-| `apps/web/src/app/dev/demo/page.tsx` | CEO demo landing page |
-| `apps/web/src/app/dev/demo/demo.module.css` | Demo page styles |
-| `apps/web/src/app/dev/work-orders/page.tsx` | Work order list page |
-| `apps/web/src/app/dev/work-orders/[id]/page.tsx` | Work order detail page |
-| `apps/web/src/components/demo-progress.tsx` | Step progress indicator |
-| `apps/web/src/components/demo-progress.module.css` | Step progress indicator styles |
+
+| File                                                                    | Purpose                                                                         |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `apps/web/src/lib/demo-fixtures/demo-splitter.ts`                       | Deterministic multi-issue splitter                                              |
+| `apps/web/src/lib/demo-fixtures/demo-classifier.ts`                     | Deterministic taxonomy classifier                                               |
+| `apps/web/src/lib/demo-fixtures/demo-followup-generator.ts`             | Deterministic follow-up question generator                                      |
+| `apps/web/src/lib/demo-fixtures/index.ts`                               | Barrel export                                                                   |
+| `apps/web/src/lib/demo-fixtures/__tests__/demo-fixtures.test.ts`        | Fixture unit tests (taxonomy validity, constraint chains, confidence targeting) |
+| `apps/web/src/lib/__tests__/orchestrator-factory-demo-fixtures.test.ts` | Factory branch test (USE_DEMO_FIXTURES priority)                                |
+| `apps/web/src/app/dev/demo/page.tsx`                                    | CEO demo landing page                                                           |
+| `apps/web/src/app/dev/demo/demo.module.css`                             | Demo page styles                                                                |
+| `apps/web/src/app/dev/work-orders/page.tsx`                             | Work order list page                                                            |
+| `apps/web/src/app/dev/work-orders/[id]/page.tsx`                        | Work order detail page                                                          |
+| `apps/web/src/components/demo-progress.tsx`                             | Step progress indicator                                                         |
+| `apps/web/src/components/demo-progress.module.css`                      | Step progress indicator styles                                                  |
 
 ### Modified Files (5)
-| File | Change |
-|---|---|
-| `apps/web/src/lib/orchestrator-factory.ts` | Wire demo fixtures when `USE_DEMO_FIXTURES=true` |
-| `apps/web/src/app/page.tsx` | Read demo scenario/message params, pass to ChatShell |
-| `apps/web/src/components/chat-shell.tsx` | Demo banner, pre-filled message, progress indicator |
-| `apps/web/src/components/status-indicator.tsx` | Clickable WO links |
-| `.env.example` | Document `USE_DEMO_FIXTURES` |
+
+| File                                           | Change                                               |
+| ---------------------------------------------- | ---------------------------------------------------- |
+| `apps/web/src/lib/orchestrator-factory.ts`     | Wire demo fixtures when `USE_DEMO_FIXTURES=true`     |
+| `apps/web/src/app/page.tsx`                    | Read demo scenario/message params, pass to ChatShell |
+| `apps/web/src/components/chat-shell.tsx`       | Demo banner, pre-filled message, progress indicator  |
+| `apps/web/src/components/status-indicator.tsx` | Clickable WO links                                   |
+| `.env.example`                                 | Document `USE_DEMO_FIXTURES`                         |
 
 ### Env Changes
-| Variable | Value | Where |
-|---|---|---|
+
+| Variable            | Value  | Where                 |
+| ------------------- | ------ | --------------------- |
 | `USE_DEMO_FIXTURES` | `true` | `apps/web/.env.local` |
 
 ---
 
 ## Risk Mitigation
 
-| Risk | Mitigation |
-|---|---|
-| Demo fixture classification values not in taxonomy.json | Task 1.5 automated test validates every value against `loadTaxonomy()` and `validateHierarchicalConstraints()`. |
-| Constraint chain violations → needs_human_triage | Task 1.5 explicitly tests each chain against `taxonomyConstraints`. Catches issues before wiring. |
-| Factory wiring picks wrong LLM branch | Task 2.3 automated test covers all 3 priority branches (demo fixtures > real LLM > simple stubs). |
-| State machine rejects unexpected transitions | Demo fixtures don't change state logic — only LLM outputs. Transition matrix unchanged. |
-| Existing tests break | Every batch runs `pnpm test` before proceeding. No core logic modified. |
-| CEO finds flow confusing | Progress indicator + pre-filled messages + demo banner provide context at every step. |
-| Follow-up questions don't trigger | Demo classifier intentionally returns low confidence on specific fields to guarantee followup flow. Task 1.5 verifies confidence targeting. |
-| USE_DEMO_FIXTURES affects non-demo routes | By design (documented in Design Decision 1 + Scope Caveat). Toggle off and restart for real LLM. |
+| Risk                                                    | Mitigation                                                                                                                                  |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Demo fixture classification values not in taxonomy.json | Task 1.5 automated test validates every value against `loadTaxonomy()` and `validateHierarchicalConstraints()`.                             |
+| Constraint chain violations → needs_human_triage        | Task 1.5 explicitly tests each chain against `taxonomyConstraints`. Catches issues before wiring.                                           |
+| Factory wiring picks wrong LLM branch                   | Task 2.3 automated test covers all 3 priority branches (demo fixtures > real LLM > simple stubs).                                           |
+| State machine rejects unexpected transitions            | Demo fixtures don't change state logic — only LLM outputs. Transition matrix unchanged.                                                     |
+| Existing tests break                                    | Every batch runs `pnpm test` before proceeding. No core logic modified.                                                                     |
+| CEO finds flow confusing                                | Progress indicator + pre-filled messages + demo banner provide context at every step.                                                       |
+| Follow-up questions don't trigger                       | Demo classifier intentionally returns low confidence on specific fields to guarantee followup flow. Task 1.5 verifies confidence targeting. |
+| USE_DEMO_FIXTURES affects non-demo routes               | By design (documented in Design Decision 1 + Scope Caveat). Toggle off and restart for real LLM.                                            |
 
 ---
 

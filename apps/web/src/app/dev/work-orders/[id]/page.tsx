@@ -107,11 +107,15 @@ function WorkOrderDetailContent() {
   }, [token, id]);
 
   if (!token) return <p style={{ padding: '2rem', textAlign: 'center' }}>Token required.</p>;
-  if (loading) return <p style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>Loading...</p>;
-  if (error) return <p style={{ padding: '2rem', textAlign: 'center', color: '#991b1b' }}>{error}</p>;
+  if (loading)
+    return <p style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>Loading...</p>;
+  if (error)
+    return <p style={{ padding: '2rem', textAlign: 'center', color: '#991b1b' }}>{error}</p>;
   if (!wo) return <p style={{ padding: '2rem', textAlign: 'center' }}>Work order not found.</p>;
 
-  const riskFlags = wo.risk_flags as { has_emergency?: boolean; highest_severity?: string; trigger_ids?: string[] } | undefined;
+  const riskFlags = wo.risk_flags as
+    | { has_emergency?: boolean; highest_severity?: string; trigger_ids?: string[] }
+    | undefined;
 
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: '2rem 1.5rem', fontFamily: 'inherit' }}>
@@ -125,10 +129,19 @@ function WorkOrderDetailContent() {
       </div>
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1.5rem',
+        }}
+      >
         <div>
           <h1 style={{ fontSize: '1.25rem', margin: '0 0 0.25rem' }}>Work Order</h1>
-          <span style={{ fontSize: '0.75rem', color: '#888', fontFamily: 'monospace' }}>{wo.work_order_id}</span>
+          <span style={{ fontSize: '0.75rem', color: '#888', fontFamily: 'monospace' }}>
+            {wo.work_order_id}
+          </span>
         </div>
         <span
           style={{
@@ -149,7 +162,8 @@ function WorkOrderDetailContent() {
         <h2 style={{ fontSize: '1rem', marginBottom: '0.5rem', color: '#333' }}>Issue Summary</h2>
         <p style={{ margin: '0 0 0.5rem', fontSize: '0.9rem' }}>{wo.summary_confirmed}</p>
         <p style={{ margin: 0, fontSize: '0.8rem', color: '#666', fontStyle: 'italic' }}>
-          &ldquo;{wo.raw_text.slice(0, 300)}{wo.raw_text.length > 300 ? '...' : ''}&rdquo;
+          &ldquo;{wo.raw_text.slice(0, 300)}
+          {wo.raw_text.length > 300 ? '...' : ''}&rdquo;
         </p>
       </section>
 
@@ -159,9 +173,21 @@ function WorkOrderDetailContent() {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #e0e0e0' }}>
-              <th style={{ textAlign: 'left', padding: '0.4rem 0', color: '#888', fontWeight: 500 }}>Field</th>
-              <th style={{ textAlign: 'left', padding: '0.4rem 0', color: '#888', fontWeight: 500 }}>Value</th>
-              <th style={{ textAlign: 'right', padding: '0.4rem 0', color: '#888', fontWeight: 500 }}>Confidence</th>
+              <th
+                style={{ textAlign: 'left', padding: '0.4rem 0', color: '#888', fontWeight: 500 }}
+              >
+                Field
+              </th>
+              <th
+                style={{ textAlign: 'left', padding: '0.4rem 0', color: '#888', fontWeight: 500 }}
+              >
+                Value
+              </th>
+              <th
+                style={{ textAlign: 'right', padding: '0.4rem 0', color: '#888', fontWeight: 500 }}
+              >
+                Confidence
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -207,7 +233,15 @@ function WorkOrderDetailContent() {
                             }}
                           />
                         </div>
-                        <span style={{ fontSize: '0.75rem', color: confColor(conf), fontWeight: 500, minWidth: 35, textAlign: 'right' }}>
+                        <span
+                          style={{
+                            fontSize: '0.75rem',
+                            color: confColor(conf),
+                            fontWeight: 500,
+                            minWidth: 35,
+                            textAlign: 'right',
+                          }}
+                        >
                           {Math.round(conf * 100)}%
                         </span>
                       </div>
@@ -221,37 +255,61 @@ function WorkOrderDetailContent() {
       </section>
 
       {/* Risk Assessment */}
-      {riskFlags && (riskFlags.has_emergency || (riskFlags.trigger_ids && riskFlags.trigger_ids.length > 0)) && (
-        <section style={{ marginBottom: '1.5rem' }}>
-          <h2 style={{ fontSize: '1rem', marginBottom: '0.5rem', color: '#333' }}>Risk Assessment</h2>
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
-            {riskFlags.has_emergency && (
-              <span style={{ fontSize: '0.8rem', background: '#fef2f2', color: '#991b1b', padding: '0.2rem 0.5rem', borderRadius: 4, fontWeight: 600 }}>
-                Emergency
-              </span>
+      {riskFlags &&
+        (riskFlags.has_emergency ||
+          (riskFlags.trigger_ids && riskFlags.trigger_ids.length > 0)) && (
+          <section style={{ marginBottom: '1.5rem' }}>
+            <h2 style={{ fontSize: '1rem', marginBottom: '0.5rem', color: '#333' }}>
+              Risk Assessment
+            </h2>
+            <div
+              style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}
+            >
+              {riskFlags.has_emergency && (
+                <span
+                  style={{
+                    fontSize: '0.8rem',
+                    background: '#fef2f2',
+                    color: '#991b1b',
+                    padding: '0.2rem 0.5rem',
+                    borderRadius: 4,
+                    fontWeight: 600,
+                  }}
+                >
+                  Emergency
+                </span>
+              )}
+              {riskFlags.highest_severity && (
+                <span
+                  style={{
+                    fontSize: '0.8rem',
+                    padding: '0.2rem 0.5rem',
+                    borderRadius: 4,
+                    background: riskFlags.highest_severity === 'emergency' ? '#fef2f2' : '#fef9c3',
+                    color: riskFlags.highest_severity === 'emergency' ? '#991b1b' : '#854d0e',
+                  }}
+                >
+                  Severity: {riskFlags.highest_severity}
+                </span>
+              )}
+            </div>
+            {riskFlags.trigger_ids && riskFlags.trigger_ids.length > 0 && (
+              <p style={{ fontSize: '0.8rem', color: '#666', margin: 0 }}>
+                Triggers: {riskFlags.trigger_ids.join(', ')}
+              </p>
             )}
-            {riskFlags.highest_severity && (
-              <span style={{
-                fontSize: '0.8rem',
-                padding: '0.2rem 0.5rem',
-                borderRadius: 4,
-                background: riskFlags.highest_severity === 'emergency' ? '#fef2f2' : '#fef9c3',
-                color: riskFlags.highest_severity === 'emergency' ? '#991b1b' : '#854d0e',
-              }}>
-                Severity: {riskFlags.highest_severity}
-              </span>
-            )}
-          </div>
-          {riskFlags.trigger_ids && riskFlags.trigger_ids.length > 0 && (
-            <p style={{ fontSize: '0.8rem', color: '#666', margin: 0 }}>
-              Triggers: {riskFlags.trigger_ids.join(', ')}
-            </p>
-          )}
-        </section>
-      )}
+          </section>
+        )}
 
       {wo.needs_human_triage && (
-        <section style={{ marginBottom: '1.5rem', background: '#fef9c3', padding: '0.75rem 1rem', borderRadius: 6 }}>
+        <section
+          style={{
+            marginBottom: '1.5rem',
+            background: '#fef9c3',
+            padding: '0.75rem 1rem',
+            borderRadius: 6,
+          }}
+        >
           <p style={{ margin: 0, fontSize: '0.85rem', color: '#854d0e', fontWeight: 500 }}>
             This work order requires human review.
           </p>
@@ -262,14 +320,21 @@ function WorkOrderDetailContent() {
       {bundle?.schedule && (
         <section style={{ marginBottom: '1.5rem' }}>
           <h2 style={{ fontSize: '1rem', marginBottom: '0.5rem', color: '#333' }}>SLA Schedule</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', fontSize: '0.85rem' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '0.5rem',
+              fontSize: '0.85rem',
+            }}
+          >
             <div>
-              <span style={{ color: '#888' }}>Response:</span>{' '}
-              {bundle.schedule.response_hours}h (due {new Date(bundle.schedule.response_due_at).toLocaleString()})
+              <span style={{ color: '#888' }}>Response:</span> {bundle.schedule.response_hours}h
+              (due {new Date(bundle.schedule.response_due_at).toLocaleString()})
             </div>
             <div>
-              <span style={{ color: '#888' }}>Resolution:</span>{' '}
-              {bundle.schedule.resolution_hours}h (due {new Date(bundle.schedule.resolution_due_at).toLocaleString()})
+              <span style={{ color: '#888' }}>Resolution:</span> {bundle.schedule.resolution_hours}h
+              (due {new Date(bundle.schedule.resolution_due_at).toLocaleString()})
             </div>
           </div>
         </section>
@@ -278,11 +343,23 @@ function WorkOrderDetailContent() {
       {/* Status History */}
       {bundle?.status_history && bundle.status_history.length > 0 && (
         <section style={{ marginBottom: '1.5rem' }}>
-          <h2 style={{ fontSize: '1rem', marginBottom: '0.5rem', color: '#333' }}>Status History</h2>
+          <h2 style={{ fontSize: '1rem', marginBottom: '0.5rem', color: '#333' }}>
+            Status History
+          </h2>
           <div style={{ fontSize: '0.8rem' }}>
             {bundle.status_history.map((entry, i) => (
-              <div key={i} style={{ display: 'flex', gap: '0.5rem', padding: '0.25rem 0', borderBottom: '1px solid #f3f4f6' }}>
-                <span style={{ color: '#888', minWidth: 140 }}>{new Date(entry.changed_at).toLocaleString()}</span>
+              <div
+                key={i}
+                style={{
+                  display: 'flex',
+                  gap: '0.5rem',
+                  padding: '0.25rem 0',
+                  borderBottom: '1px solid #f3f4f6',
+                }}
+              >
+                <span style={{ color: '#888', minWidth: 140 }}>
+                  {new Date(entry.changed_at).toLocaleString()}
+                </span>
                 <span style={{ fontWeight: 500 }}>{entry.status}</span>
               </div>
             ))}
@@ -293,13 +370,30 @@ function WorkOrderDetailContent() {
       {/* Communications */}
       {bundle?.communications && bundle.communications.length > 0 && (
         <section style={{ marginBottom: '1.5rem' }}>
-          <h2 style={{ fontSize: '1rem', marginBottom: '0.5rem', color: '#333' }}>Communications</h2>
+          <h2 style={{ fontSize: '1rem', marginBottom: '0.5rem', color: '#333' }}>
+            Communications
+          </h2>
           <div style={{ fontSize: '0.8rem' }}>
             {bundle.communications.map((comm) => (
-              <div key={comm.notification_id} style={{ display: 'flex', gap: '0.5rem', padding: '0.25rem 0', borderBottom: '1px solid #f3f4f6' }}>
+              <div
+                key={comm.notification_id}
+                style={{
+                  display: 'flex',
+                  gap: '0.5rem',
+                  padding: '0.25rem 0',
+                  borderBottom: '1px solid #f3f4f6',
+                }}
+              >
                 <span style={{ minWidth: 50 }}>{comm.channel}</span>
                 <span style={{ flex: 1 }}>{comm.notification_type}</span>
-                <span style={{ color: comm.status === 'sent' || comm.status === 'delivered' ? '#15803d' : '#888' }}>{comm.status}</span>
+                <span
+                  style={{
+                    color:
+                      comm.status === 'sent' || comm.status === 'delivered' ? '#15803d' : '#888',
+                  }}
+                >
+                  {comm.status}
+                </span>
               </div>
             ))}
           </div>
@@ -321,10 +415,10 @@ function WorkOrderDetailContent() {
       {/* Pinned Versions */}
       <section style={{ borderTop: '1px solid #e0e0e0', paddingTop: '1rem', marginTop: '1rem' }}>
         <p style={{ fontSize: '0.7rem', color: '#aaa', margin: 0 }}>
-          Taxonomy: {wo.pinned_versions?.taxonomy_version ?? '—'} &middot;
-          Schema: {wo.pinned_versions?.schema_version ?? '—'} &middot;
-          Model: {wo.pinned_versions?.model_id ?? '—'} &middot;
-          Created: {new Date(wo.created_at).toLocaleString()}
+          Taxonomy: {wo.pinned_versions?.taxonomy_version ?? '—'} &middot; Schema:{' '}
+          {wo.pinned_versions?.schema_version ?? '—'} &middot; Model:{' '}
+          {wo.pinned_versions?.model_id ?? '—'} &middot; Created:{' '}
+          {new Date(wo.created_at).toLocaleString()}
         </p>
       </section>
     </div>

@@ -45,18 +45,14 @@ describe('orchestrator-factory demo-fixtures branch', () => {
     },
   );
 
-  it(
-    'USE_DEMO_FIXTURES=true overrides simple stubs',
-    { timeout: 15_000 },
-    async () => {
-      process.env.USE_DEMO_FIXTURES = 'true';
-      delete process.env.ANTHROPIC_API_KEY;
+  it('USE_DEMO_FIXTURES=true overrides simple stubs', { timeout: 15_000 }, async () => {
+    process.env.USE_DEMO_FIXTURES = 'true';
+    delete process.env.ANTHROPIC_API_KEY;
 
-      const { getOrchestrator } = await import('../orchestrator-factory.js');
-      const orchestrator = getOrchestrator();
-      expect(orchestrator).toBeDefined();
-    },
-  );
+    const { getOrchestrator } = await import('../orchestrator-factory.js');
+    const orchestrator = getOrchestrator();
+    expect(orchestrator).toBeDefined();
+  });
 
   it(
     'USE_DEMO_FIXTURES absent falls through to existing behavior',

@@ -118,6 +118,7 @@ pnpm --filter @wo-agent/web dev
 ### Task 3.1: Fix any issues found during E2E
 
 If any scenario fails, diagnose and fix. Common things to check:
+
 - API returns 403 → `ENABLE_DEV_AUTH` not set (check `apps/web/.env.local`)
 - Unit resolver returns null → `USE_DEMO_UNIT_RESOLVER` not set
 - Splitter returns 1 issue instead of 3 → `USE_DEMO_FIXTURES` not set

@@ -63,9 +63,7 @@ export async function handleCreateConversation(
     return {
       newState: ConversationState.UNIT_SELECTED,
       session: updatedSession,
-      uiMessages: [
-        { role: 'agent' as const, content: 'Welcome! How can we help you today?' },
-      ],
+      uiMessages: [{ role: 'agent' as const, content: 'Welcome! How can we help you today?' }],
       eventPayload: {
         authorized_unit_ids: request.auth_context.authorized_unit_ids,
         auto_selected_unit: autoUnitId,

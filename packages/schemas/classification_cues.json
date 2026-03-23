@@ -4,16 +4,50 @@
     "Category": {
       "maintenance": {
         "keywords": [
-          "leak", "broken", "repair", "not working", "clog",
-          "heat", "no heat", "cold", "freezing", "heater", "hvac",
-          "radiator", "thermostat", "air conditioning", "furnace",
-          "overflow", "overflowing", "flooding", "backed up",
-          "toilet", "faucet", "sink", "pipe", "drain",
-          "mold", "pest", "cockroach", "mouse", "infestation",
-          "door", "window", "cabinet", "floor", "ceiling",
-          "light", "outlet", "switch", "breaker", "smoke detector"
+          "leak",
+          "broken",
+          "repair",
+          "not working",
+          "clog",
+          "heat",
+          "no heat",
+          "cold",
+          "freezing",
+          "heater",
+          "hvac",
+          "radiator",
+          "thermostat",
+          "air conditioning",
+          "furnace",
+          "overflow",
+          "overflowing",
+          "flooding",
+          "backed up",
+          "toilet",
+          "faucet",
+          "sink",
+          "pipe",
+          "drain",
+          "mold",
+          "pest",
+          "cockroach",
+          "mouse",
+          "infestation",
+          "door",
+          "window",
+          "cabinet",
+          "floor",
+          "ceiling",
+          "light",
+          "outlet",
+          "switch",
+          "breaker",
+          "smoke detector"
         ],
-        "regex": ["\\bmy\\s+(toilet|sink|faucet|heater|radiator|thermostat|shower|oven|fridge|door|window|lock)\\b", "\\bac\\b"]
+        "regex": [
+          "\\bmy\\s+(toilet|sink|faucet|heater|radiator|thermostat|shower|oven|fridge|door|window|lock)\\b",
+          "\\bac\\b"
+        ]
       },
       "management": {
         "keywords": ["rent", "lease", "move out", "receipt", "payment"],
@@ -72,7 +106,19 @@
         "regex": []
       },
       "general": {
-        "keywords": ["apartment", "unit", "suite", "my place", "no heat", "heat", "cold", "freezing", "whole", "everywhere", "entire"],
+        "keywords": [
+          "apartment",
+          "unit",
+          "suite",
+          "my place",
+          "no heat",
+          "heat",
+          "cold",
+          "freezing",
+          "whole",
+          "everywhere",
+          "entire"
+        ],
         "regex": []
       }
     },

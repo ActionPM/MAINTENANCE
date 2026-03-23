@@ -10,9 +10,7 @@ import type { IssueSplitterInput, IssueSplitterOutput } from '@wo-agent/schemas'
  *   B (emergency):   text contains "flood" or "water everywhere"   → 1 issue
  *   C (default):     anything else                                  → 1 issue
  */
-export function createDemoSplitter(): (
-  input: IssueSplitterInput,
-) => Promise<IssueSplitterOutput> {
+export function createDemoSplitter(): (input: IssueSplitterInput) => Promise<IssueSplitterOutput> {
   return async (input: IssueSplitterInput): Promise<IssueSplitterOutput> => {
     const text = input.raw_text.toLowerCase();
 
@@ -22,8 +20,7 @@ export function createDemoSplitter(): (
         {
           issue_id: randomUUID(),
           summary: 'Kitchen faucet is leaking with water pooling under the sink',
-          raw_excerpt:
-            'The kitchen faucet is leaking and there\'s water under the sink.',
+          raw_excerpt: "The kitchen faucet is leaking and there's water under the sink.",
         },
         {
           issue_id: randomUUID(),
@@ -34,8 +31,7 @@ export function createDemoSplitter(): (
         {
           issue_id: randomUUID(),
           summary: 'Cockroach sighting in the bathroom',
-          raw_excerpt:
-            'I think I saw a cockroach in the bathroom last night.',
+          raw_excerpt: 'I think I saw a cockroach in the bathroom last night.',
         },
       ];
       return { issues, issue_count: issues.length };

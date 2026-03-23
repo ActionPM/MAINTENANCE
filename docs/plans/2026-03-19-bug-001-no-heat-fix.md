@@ -295,10 +295,14 @@ Import `getTaxonomyLabel` from `@wo-agent/schemas` and use it when rendering opt
 
 ```tsx
 // Before:
-{option}
+{
+  option;
+}
 
 // After:
-{getTaxonomyLabel(q.field_target, option)}
+{
+  getTaxonomyLabel(q.field_target, option);
+}
 ```
 
 Also update `confirmation-panel.tsx` to use display labels for classification values shown in the confirmation view.
@@ -360,6 +364,7 @@ pnpm --filter @wo-agent/web build
 **File**: `docs/bug-tracker.md`
 
 Update BUG-001 row:
+
 - Status: `FIXED`
 - Maps To: `packages/schemas/classification_cues.json; packages/schemas/taxonomy.json; packages/schemas/taxonomy-labels.json; packages/core/src/llm/prompts/followup-prompt.ts; packages/evals/datasets/regression/examples.jsonl`
 - Last Reviewed: `2026-03-19`
@@ -382,38 +387,40 @@ Update dashboard counts.
 ## Files Created/Modified Summary
 
 ### New Files (2)
-| File | Purpose |
-|---|---|
-| `packages/schemas/taxonomy-labels.json` | Slug → display label mapping |
-| `packages/schemas/src/taxonomy-labels.ts` | Loader + lookup function |
+
+| File                                      | Purpose                      |
+| ----------------------------------------- | ---------------------------- |
+| `packages/schemas/taxonomy-labels.json`   | Slug → display label mapping |
+| `packages/schemas/src/taxonomy-labels.ts` | Loader + lookup function     |
 
 ### Modified Files (10)
-| File | Change |
-|---|---|
-| `packages/schemas/classification_cues.json` | Add HVAC keywords to Category.maintenance and Sub_Location.general |
-| `packages/schemas/taxonomy.json` | Add `entire_unit`, `multiple_rooms` to Sub_Location |
-| `packages/schemas/taxonomy_constraints.json` | Add new values to constraint maps |
-| `packages/schemas/src/validators/taxonomy-cross-validator.ts` | Add new values to SKIP_VALUES |
-| `packages/schemas/src/index.ts` | Export taxonomy labels |
-| `packages/core/src/llm/prompts/followup-prompt.ts` | Add Rule 14 for whole-unit HVAC options |
-| `packages/core/src/__tests__/classifier/cue-scoring.test.ts` | Add no-heat cue tests |
-| `apps/web/src/components/followup-form.tsx` | Use display labels |
-| `apps/web/src/components/confirmation-panel.tsx` | Use display labels |
-| `packages/evals/datasets/regression/examples.jsonl` | Add 2 no-heat regression cases |
-| `packages/evals/datasets/regression/manifest.json` | Update count |
-| `docs/bug-tracker.md` | Update BUG-001 status to FIXED |
+
+| File                                                          | Change                                                             |
+| ------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `packages/schemas/classification_cues.json`                   | Add HVAC keywords to Category.maintenance and Sub_Location.general |
+| `packages/schemas/taxonomy.json`                              | Add `entire_unit`, `multiple_rooms` to Sub_Location                |
+| `packages/schemas/taxonomy_constraints.json`                  | Add new values to constraint maps                                  |
+| `packages/schemas/src/validators/taxonomy-cross-validator.ts` | Add new values to SKIP_VALUES                                      |
+| `packages/schemas/src/index.ts`                               | Export taxonomy labels                                             |
+| `packages/core/src/llm/prompts/followup-prompt.ts`            | Add Rule 14 for whole-unit HVAC options                            |
+| `packages/core/src/__tests__/classifier/cue-scoring.test.ts`  | Add no-heat cue tests                                              |
+| `apps/web/src/components/followup-form.tsx`                   | Use display labels                                                 |
+| `apps/web/src/components/confirmation-panel.tsx`              | Use display labels                                                 |
+| `packages/evals/datasets/regression/examples.jsonl`           | Add 2 no-heat regression cases                                     |
+| `packages/evals/datasets/regression/manifest.json`            | Update count                                                       |
+| `docs/bug-tracker.md`                                         | Update BUG-001 status to FIXED                                     |
 
 ---
 
 ## Risk Mitigation
 
-| Risk | Mitigation |
-|---|---|
-| New cue keywords cause false positives on Category | Only adding HVAC-specific terms that are unambiguously maintenance. No generic words. |
-| New taxonomy values break downstream constraint checks | `entire_unit` and `multiple_rooms` added to SKIP_VALUES — treated like `general` by hierarchy validator. |
-| Label mapping breaks existing tests | Fallback behavior: unknown slugs get formatted (underscores → spaces, capitalize). No test depends on raw slug rendering. |
-| Follow-up prompt change causes unexpected Claude behavior | Rule 14 is additive (doesn't modify existing rules). Only affects HVAC Sub_Location. |
-| Regression eval cases have wrong expectations | Based directly on gold-016 and gold-019 which are already approved_for_gate. |
+| Risk                                                      | Mitigation                                                                                                                |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| New cue keywords cause false positives on Category        | Only adding HVAC-specific terms that are unambiguously maintenance. No generic words.                                     |
+| New taxonomy values break downstream constraint checks    | `entire_unit` and `multiple_rooms` added to SKIP_VALUES — treated like `general` by hierarchy validator.                  |
+| Label mapping breaks existing tests                       | Fallback behavior: unknown slugs get formatted (underscores → spaces, capitalize). No test depends on raw slug rendering. |
+| Follow-up prompt change causes unexpected Claude behavior | Rule 14 is additive (doesn't modify existing rules). Only affects HVAC Sub_Location.                                      |
+| Regression eval cases have wrong expectations             | Based directly on gold-016 and gold-019 which are already approved_for_gate.                                              |
 
 ---
 

@@ -42,28 +42,48 @@ function WorkOrderListContent() {
 
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: '2rem 1.5rem', fontFamily: 'inherit' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1.5rem',
+        }}
+      >
         <h1 style={{ fontSize: '1.5rem', margin: 0 }}>Work Orders</h1>
-        <a href="/dev/demo" style={{ color: '#0066cc', fontSize: '0.85rem', textDecoration: 'none' }}>
+        <a
+          href="/dev/demo"
+          style={{ color: '#0066cc', fontSize: '0.85rem', textDecoration: 'none' }}
+        >
           Back to Demo
         </a>
       </div>
 
       {error && (
-        <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: 6, padding: '0.75rem', marginBottom: '1rem', color: '#991b1b', fontSize: '0.85rem' }}>
+        <div
+          style={{
+            background: '#fef2f2',
+            border: '1px solid #fca5a5',
+            borderRadius: 6,
+            padding: '0.75rem',
+            marginBottom: '1rem',
+            color: '#991b1b',
+            fontSize: '0.85rem',
+          }}
+        >
           {error}
         </div>
       )}
 
       {loading && <p style={{ color: '#888' }}>Loading...</p>}
 
-      {!loading && orders.length === 0 && (
-        <p style={{ color: '#888' }}>No work orders yet.</p>
-      )}
+      {!loading && orders.length === 0 && <p style={{ color: '#888' }}>No work orders yet.</p>}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         {orders.map((wo) => {
-          const hasRisk = !!(wo.risk_flags && (wo.risk_flags as Record<string, unknown>).has_emergency);
+          const hasRisk = !!(
+            wo.risk_flags && (wo.risk_flags as Record<string, unknown>).has_emergency
+          );
           const category = wo.classification?.Category ?? '';
           const priority = wo.classification?.Priority ?? '';
           return (
@@ -80,7 +100,9 @@ function WorkOrderListContent() {
                 background: '#fff',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}
+              >
                 <span style={{ fontSize: '0.75rem', color: '#888', fontFamily: 'monospace' }}>
                   {wo.work_order_id.slice(0, 8)}...
                 </span>
@@ -101,22 +123,54 @@ function WorkOrderListContent() {
               </p>
               <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
                 {category && (
-                  <span style={{ fontSize: '0.7rem', background: '#eef2ff', color: '#3b5998', padding: '0.15rem 0.4rem', borderRadius: 4 }}>
+                  <span
+                    style={{
+                      fontSize: '0.7rem',
+                      background: '#eef2ff',
+                      color: '#3b5998',
+                      padding: '0.15rem 0.4rem',
+                      borderRadius: 4,
+                    }}
+                  >
                     {category}
                   </span>
                 )}
                 {priority && (
-                  <span style={{ fontSize: '0.7rem', background: priority === 'emergency' ? '#fef2f2' : '#f3f4f6', color: priority === 'emergency' ? '#991b1b' : '#555', padding: '0.15rem 0.4rem', borderRadius: 4 }}>
+                  <span
+                    style={{
+                      fontSize: '0.7rem',
+                      background: priority === 'emergency' ? '#fef2f2' : '#f3f4f6',
+                      color: priority === 'emergency' ? '#991b1b' : '#555',
+                      padding: '0.15rem 0.4rem',
+                      borderRadius: 4,
+                    }}
+                  >
                     {priority}
                   </span>
                 )}
                 {hasRisk && (
-                  <span style={{ fontSize: '0.7rem', background: '#fef2f2', color: '#991b1b', padding: '0.15rem 0.4rem', borderRadius: 4 }}>
+                  <span
+                    style={{
+                      fontSize: '0.7rem',
+                      background: '#fef2f2',
+                      color: '#991b1b',
+                      padding: '0.15rem 0.4rem',
+                      borderRadius: 4,
+                    }}
+                  >
                     Risk
                   </span>
                 )}
                 {wo.needs_human_triage && (
-                  <span style={{ fontSize: '0.7rem', background: '#fef9c3', color: '#854d0e', padding: '0.15rem 0.4rem', borderRadius: 4 }}>
+                  <span
+                    style={{
+                      fontSize: '0.7rem',
+                      background: '#fef9c3',
+                      color: '#854d0e',
+                      padding: '0.15rem 0.4rem',
+                      borderRadius: 4,
+                    }}
+                  >
                     Triage needed
                   </span>
                 )}

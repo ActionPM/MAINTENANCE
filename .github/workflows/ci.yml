@@ -33,17 +33,22 @@ jobs:
       - name: Auto-format and push if needed
         env:
           TARGET_BRANCH: ${{ github.head_ref || github.ref_name }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           pnpm format
           if [ -n "$(git diff --name-only)" ]; then
             echo "Prettier formatted the following files:"
             git diff --name-only
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add -A
-            git commit -m "style: auto-format with Prettier (CI)"
-            git push origin HEAD:${TARGET_BRANCH}
-            echo "::notice::Auto-formatted and pushed. CI will re-run."
+            if [ "${EVENT_NAME}" = "pull_request" ]; then
+              git config user.name "github-actions[bot]"
+              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git add -A
+              git commit -m "style: auto-format with Prettier (CI)"
+              git push origin HEAD:${TARGET_BRANCH}
+              echo "::notice::Auto-formatted and pushed. CI will re-run."
+            else
+              echo "::error::Prettier drift detected on ${TARGET_BRANCH}. Run 'pnpm format' locally and commit the result."
+            fi
             exit 1
           fi
           echo "All files formatted correctly."

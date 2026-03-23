@@ -27,7 +27,7 @@ const SCENARIOS: Scenario[] = [
     description:
       'A tenant describes multiple problems at once. The agent splits them into separate issues, classifies each differently, and asks follow-up questions for uncertain fields.',
     message:
-      'Hi, I have a few problems. The kitchen faucet is leaking and there\'s water under the sink. Also, the hallway light near my front door has been flickering on and off for a week. And I think I saw a cockroach in the bathroom last night.',
+      "Hi, I have a few problems. The kitchen faucet is leaking and there's water under the sink. Also, the hallway light near my front door has been flickering on and off for a week. And I think I saw a cockroach in the bathroom last night.",
     capabilities: [
       'Multi-issue splitting',
       'Split review',
@@ -110,8 +110,8 @@ export default function DemoPage() {
         <p className={styles.description}>
           Tenants describe maintenance issues in natural language. The agent splits multi-issue
           messages, classifies each against a 9-field taxonomy, asks follow-up questions for
-          uncertain fields, detects emergencies, and creates schema-enforced work orders — all
-          with deterministic state-machine control.
+          uncertain fields, detects emergencies, and creates schema-enforced work orders — all with
+          deterministic state-machine control.
         </p>
       </div>
 

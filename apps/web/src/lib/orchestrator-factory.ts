@@ -362,7 +362,7 @@ function ensureInitialized(): FactoryDeps {
       clock,
       issueSplitter: useDemoFixtures
         ? demoFixtureSplitter!
-        : llmDeps?.issueSplitter ??
+        : (llmDeps?.issueSplitter ??
           (async (input) => ({
             issues: [
               {
@@ -372,10 +372,10 @@ function ensureInitialized(): FactoryDeps {
               },
             ],
             issue_count: 1,
-          })),
+          }))),
       issueClassifier: useDemoFixtures
         ? demoFixtureClassifier!
-        : llmDeps?.issueClassifier ??
+        : (llmDeps?.issueClassifier ??
           (async (input: IssueClassifierInput) => {
             const text = `${input.issue_summary} ${input.raw_excerpt}`;
             const cueScores = computeCueScores(text, classificationCues as CueDictionary);
@@ -387,8 +387,7 @@ function ensureInitialized(): FactoryDeps {
               cueScores['Maintenance_Category']?.topLabel ?? 'general_maintenance';
             const maintObject = cueScores['Maintenance_Object']?.topLabel ?? 'other_object';
             const maintProblem = cueScores['Maintenance_Problem']?.topLabel ?? 'not_working';
-            const mgmtCategory =
-              cueScores['Management_Category']?.topLabel ?? 'other_mgmt_cat';
+            const mgmtCategory = cueScores['Management_Category']?.topLabel ?? 'other_mgmt_cat';
             const mgmtObject = cueScores['Management_Object']?.topLabel ?? 'other_mgmt_obj';
             const priority = cueScores['Priority']?.topLabel ?? 'normal';
 
@@ -417,18 +416,17 @@ function ensureInitialized(): FactoryDeps {
                 Maintenance_Category: conf('Maintenance_Category'),
                 Maintenance_Object: conf('Maintenance_Object'),
                 Maintenance_Problem: conf('Maintenance_Problem'),
-                Management_Category:
-                  category === 'management' ? conf('Management_Category') : 0.0,
+                Management_Category: category === 'management' ? conf('Management_Category') : 0.0,
                 Management_Object: category === 'management' ? conf('Management_Object') : 0.0,
                 Priority: conf('Priority'),
               },
               missing_fields: [],
               needs_human_triage: false,
             };
-          }),
+          })),
       followUpGenerator: useDemoFixtures
         ? demoFixtureFollowup!
-        : llmDeps?.followUpGenerator ?? (async () => ({ questions: [] })),
+        : (llmDeps?.followUpGenerator ?? (async () => ({ questions: [] }))),
       messageDisambiguator: llmDeps?.messageDisambiguator,
       cueDict: classificationCues as CueDictionary,
       taxonomy,

@@ -321,11 +321,7 @@ describe('BUG-001/003 regression — maintenance category cue coverage', () => {
   });
 
   it('"no heat in my apartment" → Sub_Location=general', () => {
-    const result = computeCueStrengthForField(
-      'no heat in my apartment',
-      'Sub_Location',
-      realCues,
-    );
+    const result = computeCueStrengthForField('no heat in my apartment', 'Sub_Location', realCues);
     expect(result.topLabel).toBe('general');
     expect(result.score).toBeGreaterThan(0);
   });
@@ -345,7 +341,8 @@ describe('BUG-001/003 regression — maintenance category cue coverage', () => {
 
   it('"I need to book the party room" → Category should not be maintenance', () => {
     const result = computeCueScores('I need to book the party room', realCues);
-    const maintScore = result.Category.labelScores.find((l) => l.label === 'maintenance')?.score ?? 0;
+    const maintScore =
+      result.Category.labelScores.find((l) => l.label === 'maintenance')?.score ?? 0;
     const mgmtScore = result.Category.labelScores.find((l) => l.label === 'management')?.score ?? 0;
     // Management-specific cues ("booking") should outscore maintenance noise
     expect(mgmtScore).toBeGreaterThanOrEqual(maintScore);
@@ -353,7 +350,8 @@ describe('BUG-001/003 regression — maintenance category cue coverage', () => {
 
   it('"parking pass renewal" → Category should not be maintenance', () => {
     const result = computeCueScores('parking pass renewal', realCues);
-    const maintScore = result.Category.labelScores.find((l) => l.label === 'maintenance')?.score ?? 0;
+    const maintScore =
+      result.Category.labelScores.find((l) => l.label === 'maintenance')?.score ?? 0;
     const mgmtScore = result.Category.labelScores.find((l) => l.label === 'management')?.score ?? 0;
     expect(mgmtScore).toBeGreaterThanOrEqual(maintScore);
   });

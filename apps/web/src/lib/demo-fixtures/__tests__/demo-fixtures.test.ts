@@ -93,9 +93,7 @@ describe('createDemoSplitter', () => {
 
   it('generates unique issue_ids', async () => {
     const result = await split(
-      makeSplitterInput(
-        'Faucet leaking. Light flickering. Cockroach in bathroom.',
-      ),
+      makeSplitterInput('Faucet leaking. Light flickering. Cockroach in bathroom.'),
     );
     const ids = result.issues.map((i) => i.issue_id);
     expect(new Set(ids).size).toBe(ids.length);
@@ -211,11 +209,7 @@ describe('createDemoClassifier — confidence targeting', () => {
 
   it('faucet issue: all confidence values >= 0.7', async () => {
     const result = await classify(
-      makeClassifierInput(
-        'issue-1',
-        'Kitchen faucet is leaking',
-        'The kitchen faucet is leaking.',
-      ),
+      makeClassifierInput('issue-1', 'Kitchen faucet is leaking', 'The kitchen faucet is leaking.'),
     );
     for (const [field, conf] of Object.entries(result.model_confidence)) {
       // Management fields are gated to 0.0 for maintenance — skip those
@@ -289,9 +283,7 @@ describe('createDemoFollowupGenerator', () => {
   });
 
   it('generates unique question_ids', async () => {
-    const result = await generate(
-      makeFollowupInput(['Location', 'Sub_Location', 'Priority']),
-    );
+    const result = await generate(makeFollowupInput(['Location', 'Sub_Location', 'Priority']));
     const ids = result.questions.map((q) => q.question_id);
     expect(new Set(ids).size).toBe(ids.length);
   });

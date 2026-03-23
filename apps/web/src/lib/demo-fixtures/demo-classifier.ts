@@ -54,7 +54,7 @@ const ELECTRICAL_PRESET: Preset = {
     Location: 0.55, // LOW — triggers followup
     Sub_Location: 0.45, // LOW — triggers followup
     Maintenance_Category: 0.88,
-    Maintenance_Object: 0.90,
+    Maintenance_Object: 0.9,
     Maintenance_Problem: 0.85,
     Management_Category: 0.0,
     Management_Object: 0.0,
@@ -77,8 +77,8 @@ const PEST_PRESET: Preset = {
   model_confidence: {
     Category: 0.88,
     Location: 0.86,
-    Sub_Location: 0.40, // LOW — triggers followup
-    Maintenance_Category: 0.90,
+    Sub_Location: 0.4, // LOW — triggers followup
+    Maintenance_Category: 0.9,
     Maintenance_Object: 0.87,
     Maintenance_Problem: 0.85,
     Management_Category: 0.0,
@@ -102,8 +102,8 @@ const HVAC_PRESET: Preset = {
   },
   model_confidence: {
     Category: 0.95,
-    Location: 0.90,
-    Sub_Location: 0.70,
+    Location: 0.9,
+    Sub_Location: 0.7,
     Maintenance_Category: 0.92,
     Maintenance_Object: 0.75,
     Maintenance_Problem: 0.93,
@@ -130,7 +130,7 @@ const PLUMBING_GENERAL_PRESET: Preset = {
     Category: 0.93,
     Location: 0.88,
     Sub_Location: 0.85,
-    Maintenance_Category: 0.90,
+    Maintenance_Category: 0.9,
     Maintenance_Object: 0.87,
     Maintenance_Problem: 0.86,
     Management_Category: 0.0,
@@ -155,7 +155,7 @@ const CARPENTRY_PRESET: Preset = {
   model_confidence: {
     Category: 0.92,
     Location: 0.88,
-    Sub_Location: 0.80,
+    Sub_Location: 0.8,
     Maintenance_Category: 0.85,
     Maintenance_Object: 0.82,
     Maintenance_Problem: 0.86,
@@ -180,7 +180,7 @@ const APPLIANCE_PRESET: Preset = {
   },
   model_confidence: {
     Category: 0.93,
-    Location: 0.90,
+    Location: 0.9,
     Sub_Location: 0.88,
     Maintenance_Category: 0.91,
     Maintenance_Object: 0.85,
@@ -206,10 +206,10 @@ const DEFAULT_PRESET: Preset = {
   model_confidence: {
     Category: 0.85,
     Location: 0.85,
-    Sub_Location: 0.80,
+    Sub_Location: 0.8,
     Maintenance_Category: 0.75,
-    Maintenance_Object: 0.70,
-    Maintenance_Problem: 0.70,
+    Maintenance_Object: 0.7,
+    Maintenance_Problem: 0.7,
     Management_Category: 0.0,
     Management_Object: 0.0,
     Priority: 0.85,
@@ -228,27 +228,68 @@ function selectPreset(text: string): Preset {
     return PLUMBING_GENERAL_PRESET;
   }
   // Electrical
-  if (lower.includes('light') || lower.includes('hallway') || lower.includes('flickering') || lower.includes('outlet') || lower.includes('switch')) {
+  if (
+    lower.includes('light') ||
+    lower.includes('hallway') ||
+    lower.includes('flickering') ||
+    lower.includes('outlet') ||
+    lower.includes('switch')
+  ) {
     return ELECTRICAL_PRESET;
   }
   // HVAC
-  if (lower.includes('heat') || lower.includes('hvac') || lower.includes('radiator') || lower.includes('thermostat') || lower.includes('cold') || lower.includes('freezing')) {
+  if (
+    lower.includes('heat') ||
+    lower.includes('hvac') ||
+    lower.includes('radiator') ||
+    lower.includes('thermostat') ||
+    lower.includes('cold') ||
+    lower.includes('freezing')
+  ) {
     return HVAC_PRESET;
   }
   // Pest
-  if (lower.includes('cockroach') || lower.includes('pest') || lower.includes('roach') || lower.includes('mouse') || lower.includes('mice') || lower.includes('ant') || lower.includes('bug') || lower.includes('rodent')) {
+  if (
+    lower.includes('cockroach') ||
+    lower.includes('pest') ||
+    lower.includes('roach') ||
+    lower.includes('mouse') ||
+    lower.includes('mice') ||
+    lower.includes('ant') ||
+    lower.includes('bug') ||
+    lower.includes('rodent')
+  ) {
     return PEST_PRESET;
   }
   // Appliance
-  if (lower.includes('fridge') || lower.includes('oven') || lower.includes('dishwasher') || lower.includes('washer') || lower.includes('dryer') || lower.includes('stove') || lower.includes('appliance')) {
+  if (
+    lower.includes('fridge') ||
+    lower.includes('oven') ||
+    lower.includes('dishwasher') ||
+    lower.includes('washer') ||
+    lower.includes('dryer') ||
+    lower.includes('stove') ||
+    lower.includes('appliance')
+  ) {
     return APPLIANCE_PRESET;
   }
   // Carpentry / general damage
-  if (lower.includes('door') || lower.includes('window') || lower.includes('cabinet') || lower.includes('broken') || lower.includes('damaged')) {
+  if (
+    lower.includes('door') ||
+    lower.includes('window') ||
+    lower.includes('cabinet') ||
+    lower.includes('broken') ||
+    lower.includes('damaged')
+  ) {
     return CARPENTRY_PRESET;
   }
   // General plumbing keywords
-  if (lower.includes('leak') || lower.includes('plumbing') || lower.includes('pipe') || lower.includes('water')) {
+  if (
+    lower.includes('leak') ||
+    lower.includes('plumbing') ||
+    lower.includes('pipe') ||
+    lower.includes('water')
+  ) {
     return PLUMBING_PRESET;
   }
   return DEFAULT_PRESET;
