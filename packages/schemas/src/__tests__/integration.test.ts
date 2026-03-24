@@ -138,7 +138,7 @@ describe('Integration — round-trip: build valid data, validate, access typed r
           schema_version: '1.0.0',
           model_id: 'claude-sonnet-4-6',
           prompt_version: '1.0.0',
-      cue_version: '1.2.0',
+          cue_version: '1.2.0',
         },
       },
       ui_directive: {
@@ -228,7 +228,7 @@ describe('Integration — round-trip: build valid data, validate, access typed r
         schema_version: '1.0.0',
         model_id: 'claude-sonnet-4-6',
         prompt_version: '1.0.0',
-      cue_version: '1.2.0',
+        cue_version: '1.2.0',
       },
       created_at: NOW,
       updated_at: NOW,

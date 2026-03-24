@@ -21,7 +21,7 @@ const VALID_INPUT: FollowUpGeneratorInput = {
   total_questions_asked: 0,
   taxonomy_version: '1.0.0',
   prompt_version: '1.0.0',
-      cue_version: '1.2.0',
+  cue_version: '1.2.0',
 };
 
 const VALID_OUTPUT: FollowUpGeneratorOutput = {

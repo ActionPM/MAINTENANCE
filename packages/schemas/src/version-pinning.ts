@@ -43,9 +43,7 @@ export function resolveCurrentVersions(modelId?: string): PinnedVersions {
  * from pre-migration data. Used on the read path for historical WOs and
  * resumed sessions.
  */
-export function normalizePinnedVersions(
-  versions: Record<string, unknown>,
-): PinnedVersions {
+export function normalizePinnedVersions(versions: Record<string, unknown>): PinnedVersions {
   return {
     taxonomy_version: versions.taxonomy_version as string,
     schema_version: versions.schema_version as string,

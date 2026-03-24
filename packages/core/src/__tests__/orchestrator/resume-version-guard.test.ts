@@ -89,7 +89,7 @@ describe('handleResume — version integrity guard', () => {
         schema_version: '1.0.0',
         model_id: 'test',
         prompt_version: '1.0.0',
-      cue_version: '1.2.0',
+        cue_version: '1.2.0',
       },
     });
     const result = await handleResume(makeCtx(session));
@@ -106,7 +106,7 @@ describe('handleResume — version integrity guard', () => {
         schema_version: '1.0.0',
         model_id: '',
         prompt_version: '1.0.0',
-      cue_version: '1.2.0',
+        cue_version: '1.2.0',
       },
     });
     const result = await handleResume(makeCtx(session));

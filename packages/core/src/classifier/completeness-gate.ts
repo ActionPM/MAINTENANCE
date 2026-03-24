@@ -31,18 +31,11 @@ export interface CompletenessPolicy {
 }
 
 export const DEFAULT_COMPLETENESS_POLICY: CompletenessPolicy = {
-  maintenanceFollowupEligible: [
-    'Location',
-    'Sub_Location',
-    'Maintenance_Object',
-  ],
+  maintenanceFollowupEligible: ['Location', 'Sub_Location', 'Maintenance_Object'],
   managementFollowupEligible: [],
 };
 
-const CROSS_DOMAIN_MAINTENANCE = new Set([
-  'Management_Category',
-  'Management_Object',
-]);
+const CROSS_DOMAIN_MAINTENANCE = new Set(['Management_Category', 'Management_Object']);
 
 const CROSS_DOMAIN_MANAGEMENT = new Set([
   'Maintenance_Category',

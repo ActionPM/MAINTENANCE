@@ -30,7 +30,7 @@ describe('createSession', () => {
         schema_version: '1.0.0',
         model_id: 'gpt-4',
         prompt_version: '1.0.0',
-      cue_version: '1.2.0',
+        cue_version: '1.2.0',
       },
     });
 
@@ -59,7 +59,7 @@ describe('updateSessionState', () => {
         schema_version: '1.0.0',
         model_id: 'gpt-4',
         prompt_version: '1.0.0',
-      cue_version: '1.2.0',
+        cue_version: '1.2.0',
       },
     });
 
@@ -80,7 +80,7 @@ describe('updateSessionState', () => {
         schema_version: '1.0.0',
         model_id: 'gpt-4',
         prompt_version: '1.0.0',
-      cue_version: '1.2.0',
+        cue_version: '1.2.0',
       },
     });
 
@@ -100,7 +100,7 @@ describe('updateSessionState', () => {
         schema_version: '1.0.0',
         model_id: 'gpt-4',
         prompt_version: '1.0.0',
-      cue_version: '1.2.0',
+        cue_version: '1.2.0',
       },
     });
 
@@ -120,7 +120,7 @@ describe('updateSessionState', () => {
         schema_version: '1.0.0',
         model_id: 'gpt-4',
         prompt_version: '1.0.0',
-      cue_version: '1.2.0',
+        cue_version: '1.2.0',
       },
     });
 
@@ -144,7 +144,7 @@ describe('touchActivity', () => {
         schema_version: '1.0.0',
         model_id: 'gpt-4',
         prompt_version: '1.0.0',
-      cue_version: '1.2.0',
+        cue_version: '1.2.0',
       },
     });
 
@@ -167,7 +167,7 @@ describe('markAbandoned', () => {
         schema_version: '1.0.0',
         model_id: 'gpt-4',
         prompt_version: '1.0.0',
-      cue_version: '1.2.0',
+        cue_version: '1.2.0',
       },
     });
     const withUnit = updateSessionState(session, ConversationState.UNIT_SELECTED);
@@ -189,7 +189,7 @@ describe('markExpired', () => {
         schema_version: '1.0.0',
         model_id: 'gpt-4',
         prompt_version: '1.0.0',
-      cue_version: '1.2.0',
+        cue_version: '1.2.0',
       },
     });
     const abandoned = markAbandoned(session);
@@ -212,7 +212,7 @@ describe('isExpired', () => {
         schema_version: '1.0.0',
         model_id: 'gpt-4',
         prompt_version: '1.0.0',
-      cue_version: '1.2.0',
+        cue_version: '1.2.0',
       },
     });
     expect(isExpired(session, config)).toBe(false);
@@ -229,7 +229,7 @@ describe('isExpired', () => {
         schema_version: '1.0.0',
         model_id: 'gpt-4',
         prompt_version: '1.0.0',
-      cue_version: '1.2.0',
+        cue_version: '1.2.0',
       },
     });
     const abandoned = markAbandoned(session);
@@ -251,7 +251,7 @@ describe('isExpired', () => {
         schema_version: '1.0.0',
         model_id: 'gpt-4',
         prompt_version: '1.0.0',
-      cue_version: '1.2.0',
+        cue_version: '1.2.0',
       },
     });
     const abandoned = markAbandoned(session);
@@ -274,7 +274,7 @@ describe('setSplitIssues', () => {
         schema_version: '1.0.0',
         model_id: 'gpt-4',
         prompt_version: '1.0.0',
-      cue_version: '1.2.0',
+        cue_version: '1.2.0',
       },
     });
     expect(session.split_issues).toBeNull();
@@ -301,7 +301,7 @@ describe('setSplitIssues', () => {
         schema_version: '1.0.0',
         model_id: 'gpt-4',
         prompt_version: '1.0.0',
-      cue_version: '1.2.0',
+        cue_version: '1.2.0',
       },
     });
     session = setSplitIssues(session, [{ issue_id: 'i1', summary: 'Test', raw_excerpt: 'test' }]);

@@ -27,7 +27,9 @@ export class PostgresSessionStore implements SessionStore {
     const result = await this.pool.query('SELECT data FROM sessions WHERE conversation_id = $1', [
       conversationId,
     ]);
-    return result.rows.length > 0 ? normalizeSession(result.rows[0].data as Record<string, unknown>) : null;
+    return result.rows.length > 0
+      ? normalizeSession(result.rows[0].data as Record<string, unknown>)
+      : null;
   }
 
   async getByTenantUser(tenantUserId: string): Promise<readonly ConversationSession[]> {

@@ -24,6 +24,7 @@ The parent plan assumed column names and a semver taxonomy_version format that t
 **Decision**: Map `other_issue` → `other_maintenance_category` in the transpiler during CSV ingest. Do not remove `other_issue` from `taxonomy.json` or `taxonomy_constraints.json` in this phase.
 
 **Why safest/smallest**:
+
 - Removing `other_issue` from the taxonomy requires updating taxonomy_constraints.json (30+ sub-location entries), the cross-validator legacy lists, and taxonomy-labels.json. That is a cross-cutting taxonomy change with its own test surface.
 - Mapping in the transpiler is a one-line change isolated to ingest.
 - The runtime classifier prompt already uses `not_applicable` for cross-domain and the v2 prompt does not mention `other_issue` — it will naturally fall back to `other_maintenance_category` or `general_maintenance` when the category is ambiguous.
@@ -42,6 +43,7 @@ The parent plan assumed column names and a semver taxonomy_version format that t
 **Context**: The parent plan defaulted `expected_risk_flags: []` for all rows. The CSV has explicit `emergency` and `safety_flag` columns.
 
 **Decision**: The transpiler populates `expected_risk_flags` from these columns:
+
 - `emergency = "yes"` → `"emergency"` in `expected_risk_flags`
 - `safety_flag = "yes"` → `"safety"` in `expected_risk_flags`
 
@@ -73,6 +75,7 @@ The transpiler groups rows by `source_message_id`. When multiple rows share a `s
 
 **File**: `packages/evals/src/datasets/csv-transpiler.ts`
 **Changes**:
+
 1. Read `raw_intake` column → map to `conversation_text` in `NormalizedExample`
 2. Read `atomic_issue` column → map to `issue_text` in `split_issues_expected`
 3. Derive `example_id` from `source_message_id` (format: `gold-v1-{source_message_id}`, e.g., `gold-v1-SR-1018`)
@@ -88,6 +91,7 @@ The transpiler groups rows by `source_message_id`. When multiple rows share a `s
 
 **File**: `packages/evals/src/datasets/csv-transpiler.ts`
 **Changes**:
+
 1. Add named-version mapping: `{ 'maintenance_taxonomy_v1': '1.0.0' }`
 2. `normalizeTaxonomyVersion()` checks the mapping table first, falls back to numeric semver normalization
 
@@ -100,6 +104,7 @@ The transpiler groups rows by `source_message_id`. When multiple rows share a `s
 
 **File**: `packages/evals/src/datasets/csv-transpiler.ts`
 **Changes**:
+
 1. In `buildClassification()`, after reading each taxonomy field value, apply value normalization: if `Maintenance_Category` value is `other_issue`, replace with `other_maintenance_category`
 
 **Tests**: Gold-set row with `Maintenance_Category: "other_issue"` produces classification with `Maintenance_Category: "other_maintenance_category"`
@@ -111,6 +116,7 @@ The transpiler groups rows by `source_message_id`. When multiple rows share a `s
 
 **File**: `packages/evals/src/datasets/csv-transpiler.ts`
 **Changes**:
+
 1. Read `emergency` and `safety_flag` columns from each row
 2. Populate `expected_risk_flags`:
    - `emergency = "yes"` → include `"emergency"`
@@ -125,11 +131,13 @@ The transpiler groups rows by `source_message_id`. When multiple rows share a `s
 ### Task E: Run transpiler on actual CSV and generate gold-v1 baseline
 
 **Files**:
+
 - Input: gold-set CSV (provided by product owner)
 - Output: `packages/evals/datasets/gold-v1/examples.jsonl`, `packages/evals/datasets/gold-v1/manifest.json`
 - Baseline: `packages/evals/baselines/gold-v1-baseline.json`
 
 **Steps**:
+
 1. Place CSV in a known location (or pipe content to transpiler)
 2. Run `transpileCsv()` → writes `gold-v1/` dataset
 3. Verify `loadDataset('gold-v1')` succeeds (schema validation passes)
@@ -153,11 +161,11 @@ The transpiler groups rows by `source_message_id`. When multiple rows share a `s
 
 ## Risks
 
-| Risk | Mitigation |
-|---|---|
-| `other_issue` rows produce eval mismatches if runtime classifies as `general_maintenance` instead of `other_maintenance_category` | Both are valid taxonomy values; field_accuracy will score the exact match. Acceptable for baseline — the gold set defines the target. |
-| Named taxonomy versions from future CSVs not in mapping table | Transpiler throws with a clear error message; extend the table when new versions appear. |
-| `expected_risk_flags` data is populated but not scored | Intentional — gold-v1 does not add risk-flag metrics. The data is preserved so scoring can be added in a follow-up phase without re-ingesting the CSV. |
+| Risk                                                                                                                              | Mitigation                                                                                                                                             |
+| --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `other_issue` rows produce eval mismatches if runtime classifies as `general_maintenance` instead of `other_maintenance_category` | Both are valid taxonomy values; field_accuracy will score the exact match. Acceptable for baseline — the gold set defines the target.                  |
+| Named taxonomy versions from future CSVs not in mapping table                                                                     | Transpiler throws with a clear error message; extend the table when new versions appear.                                                               |
+| `expected_risk_flags` data is populated but not scored                                                                            | Intentional — gold-v1 does not add risk-flag metrics. The data is preserved so scoring can be added in a follow-up phase without re-ingesting the CSV. |
 
 ---
 

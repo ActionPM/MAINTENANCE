@@ -51,9 +51,7 @@ describe('checkCompleteness', () => {
 
       expect(result.complete).toBe(false);
       expect(result.incompleteFields).toContain('Maintenance_Object');
-      expect(result.followupTypes['Maintenance_Object']).toBe(
-        FollowUpType.OBJECT_CLARIFICATION,
-      );
+      expect(result.followupTypes['Maintenance_Object']).toBe(FollowUpType.OBJECT_CLARIFICATION);
     });
 
     it('returns complete when all eligible fields are populated', () => {
@@ -132,9 +130,7 @@ describe('checkCompleteness', () => {
       const result = checkCompleteness(classification, 'management');
 
       expect(result.incompleteFields).toContain('Management_Object');
-      expect(result.followupTypes['Management_Object']).toBe(
-        FollowUpType.OBJECT_CLARIFICATION,
-      );
+      expect(result.followupTypes['Management_Object']).toBe(FollowUpType.OBJECT_CLARIFICATION);
     });
 
     it('returns complete for management issue with all relevant fields', () => {

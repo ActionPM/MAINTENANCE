@@ -149,10 +149,7 @@ RESPOND WITH ONLY a JSON object (no markdown, no explanation):
  * Build the system prompt for the classifier, selecting v1 or v2 based on prompt_version.
  * This is the main entry point — all callers should use this.
  */
-export function buildClassifierSystemPrompt(
-  taxonomy: Taxonomy,
-  promptVersion?: string,
-): string {
+export function buildClassifierSystemPrompt(taxonomy: Taxonomy, promptVersion?: string): string {
   if (promptVersion && compareSemver(promptVersion, EVIDENCE_BASED_PROMPT_VERSION) >= 0) {
     return buildClassifierSystemPromptV2(taxonomy);
   }
@@ -190,9 +187,7 @@ export function buildClassifierUserMessage(
     parts.push(`\nRETRY CONTEXT (${retryContext.retryHint}):`);
     if (retryContext.constraint) {
       parts.push(`CONSTRAINT: ${retryContext.constraint}`);
-      parts.push(
-        'Use "not_applicable" for cross-domain fields instead of "other_*" values.',
-      );
+      parts.push('Use "not_applicable" for cross-domain fields instead of "other_*" values.');
     }
     parts.push('Please correct your output according to the above constraint.');
   }

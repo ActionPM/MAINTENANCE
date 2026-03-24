@@ -20,10 +20,7 @@ import {
   computeTaxonomyInvalidRate,
   computeContradictionAfterRetryRate,
 } from '../metrics/field-metrics.js';
-import {
-  computeFollowupPrecision,
-  computeFollowupRecall,
-} from '../metrics/followup-metrics.js';
+import { computeFollowupPrecision, computeFollowupRecall } from '../metrics/followup-metrics.js';
 import {
   CRITICAL_SLICES,
   TAXONOMY_SLICES,
@@ -125,7 +122,10 @@ function computeSliceMetrics(
     }
 
     // Build follow-up comparison pairs
-    const followupPairs: { predicted_followup_fields: string[]; expected_followup_fields: string[] }[] = [];
+    const followupPairs: {
+      predicted_followup_fields: string[];
+      expected_followup_fields: string[];
+    }[] = [];
     for (const ex of matchedExamples) {
       const exResults = resultsByExampleId.get(ex.example_id);
       if (!exResults) continue;

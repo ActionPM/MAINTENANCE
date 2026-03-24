@@ -34,7 +34,7 @@ describe('buildResponse with classification', () => {
         schema_version: '1.0.0',
         model_id: 'test',
         prompt_version: '1.0.0',
-      cue_version: '1.2.0',
+        cue_version: '1.2.0',
       },
     });
     session = setClassificationResults(session, results);
@@ -60,7 +60,7 @@ describe('buildResponse with classification', () => {
         schema_version: '1.0.0',
         model_id: 'test',
         prompt_version: '1.0.0',
-      cue_version: '1.2.0',
+        cue_version: '1.2.0',
       },
     });
 

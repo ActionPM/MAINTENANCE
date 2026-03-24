@@ -180,10 +180,7 @@ function buildClassification(row: GoldSetRow): Record<string, string> {
  * in Maintenance_Object or Management_Object, include that field regardless of
  * the CSV's should_ask_followup column.
  */
-function deriveFollowupFields(
-  row: GoldSetRow,
-  classification: Record<string, string>,
-): string[] {
+function deriveFollowupFields(row: GoldSetRow, classification: Record<string, string>): string[] {
   const fields: string[] = [];
 
   // Policy override: needs_object always triggers follow-up
@@ -213,10 +210,7 @@ function deriveFollowupFields(
 /**
  * Derive slice tags from a classification.
  */
-function deriveSliceTags(
-  classification: Record<string, string>,
-  isMultiIssue: boolean,
-): string[] {
+function deriveSliceTags(classification: Record<string, string>, isMultiIssue: boolean): string[] {
   const tags: string[] = ['gold'];
   if (classification.Category) tags.push(classification.Category);
   if (classification.Maintenance_Category) tags.push(classification.Maintenance_Category);
@@ -374,13 +368,20 @@ export function writeDataset(
 
   const jsonlLines = examples.map((ex) => JSON.stringify(ex)).join('\n');
   writeFileSync(resolve(outputDir, 'examples.jsonl'), jsonlLines + '\n', 'utf-8');
-  writeFileSync(resolve(outputDir, 'manifest.json'), JSON.stringify(manifest, null, 2) + '\n', 'utf-8');
+  writeFileSync(
+    resolve(outputDir, 'manifest.json'),
+    JSON.stringify(manifest, null, 2) + '\n',
+    'utf-8',
+  );
 }
 
 /**
  * Full transpile pipeline: CSV text → files on disk.
  */
-export function transpileCsv(csvText: string, outputDir: string): {
+export function transpileCsv(
+  csvText: string,
+  outputDir: string,
+): {
   examples: NormalizedExample[];
   manifest: TranspilerManifest;
 } {

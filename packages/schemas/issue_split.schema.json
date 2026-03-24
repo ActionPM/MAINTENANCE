@@ -12,7 +12,14 @@
         "prompt_version": { "type": "string" },
         "cue_version": { "type": "string" }
       },
-      "required": ["raw_text", "conversation_id", "taxonomy_version", "model_id", "prompt_version", "cue_version"],
+      "required": [
+        "raw_text",
+        "conversation_id",
+        "taxonomy_version",
+        "model_id",
+        "prompt_version",
+        "cue_version"
+      ],
       "additionalProperties": false
     },
     "SplitIssue": {

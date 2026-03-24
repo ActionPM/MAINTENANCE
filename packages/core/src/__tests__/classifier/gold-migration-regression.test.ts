@@ -87,9 +87,7 @@ describe('needs_object always triggers follow-up — Decision 2', () => {
     };
     const result = checkCompleteness(classification, 'maintenance');
     expect(result.incompleteFields).toContain('Maintenance_Object');
-    expect(result.followupTypes['Maintenance_Object']).toBe(
-      FollowUpType.OBJECT_CLARIFICATION,
-    );
+    expect(result.followupTypes['Maintenance_Object']).toBe(FollowUpType.OBJECT_CLARIFICATION);
   });
 });
 

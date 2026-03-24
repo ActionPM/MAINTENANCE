@@ -15,7 +15,7 @@ const VALID_INPUT: IssueSplitterInput = {
   taxonomy_version: '1.0.0',
   model_id: 'claude-sonnet-4-20250514',
   prompt_version: '1.0.0',
-      cue_version: '1.2.0',
+  cue_version: '1.2.0',
 };
 
 describe('createSplitterAdapter', () => {

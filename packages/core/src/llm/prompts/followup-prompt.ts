@@ -108,9 +108,7 @@ export function buildFollowUpUserMessage(
 /**
  * Build follow-up type hints to guide question generation per field.
  */
-function buildFollowupTypeHints(
-  input: FollowUpGeneratorInput,
-): string[] {
+function buildFollowupTypeHints(input: FollowUpGeneratorInput): string[] {
   // followup_types may be passed via an extended input in the future;
   // for now, derive from field names using the same heuristics as the
   // completeness gate

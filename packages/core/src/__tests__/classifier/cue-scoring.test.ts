@@ -257,7 +257,11 @@ describe('Sub_Location cue scoring', () => {
     const realCues: CueDictionary = JSON.parse(
       readFileSync(resolve(schemasDir, 'classification_cues.json'), 'utf-8'),
     );
-    const objResult = computeCueStrengthForField('toilet is clogged', 'Maintenance_Object', realCues);
+    const objResult = computeCueStrengthForField(
+      'toilet is clogged',
+      'Maintenance_Object',
+      realCues,
+    );
     const locResult = computeCueStrengthForField('toilet is clogged', 'Location', realCues);
     expect(objResult.score).toBeGreaterThan(0);
     expect(objResult.topLabel).toBe('toilet');
