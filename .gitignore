@@ -14,7 +14,6 @@ dist/
 .vscode/
 !.vscode/settings.json
 .idea/
-*.code-workspace
 
 # OS
 .DS_Store
@@ -46,6 +45,7 @@ apps/web/public/dev.htm
 
 # Obsidian Vault (ActionPM2 — may be symlinked or copied into repo root)
 ActionPM2/
+docs/ActionPM[[:space:]]Taxonomy[[:space:]]Transition[[:space:]]Handoff
 .obsidian/
 00_Map/
 01_Product/
@@ -58,3 +58,5 @@ ActionPM2/
 97_Agents/
 99_Templates/
 XX-Archive/
+
+*.code-workspace
