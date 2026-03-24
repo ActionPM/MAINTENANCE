@@ -22,17 +22,6 @@ const TAXONOMY_FIELDS = [
   'Priority',
 ] as const;
 
-const EVAL_ONLY_COLUMNS = new Set([
-  'gold_rationale',
-  'evidence_notes',
-  'ambiguity_notes',
-  'reporting_risk',
-  'review_status',
-  'reviewer',
-  'Confidence_Score',
-  'Confidence_Flag',
-]);
-
 /** Named taxonomy version → semver mapping table. */
 const NAMED_VERSION_MAP: Record<string, string> = {
   maintenance_taxonomy_v1: '1.0.0',
@@ -268,7 +257,6 @@ export function transpileRows(rows: readonly GoldSetRow[]): NormalizedExample[] 
   }
 
   const examples: NormalizedExample[] = [];
-  let exampleIndex = 1;
 
   for (const [, groupRows] of groups) {
     const first = groupRows[0];
@@ -334,7 +322,6 @@ export function transpileRows(rows: readonly GoldSetRow[]): NormalizedExample[] 
     };
 
     examples.push(example);
-    exampleIndex++;
   }
 
   return examples;

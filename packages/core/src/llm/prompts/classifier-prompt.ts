@@ -1,5 +1,5 @@
 import type { IssueClassifierInput, Taxonomy } from '@wo-agent/schemas';
-import { PROMPT_VERSION, compareSemver } from '@wo-agent/schemas';
+import { compareSemver } from '@wo-agent/schemas';
 
 /** The prompt version boundary for the evidence-based classifier. */
 export const EVIDENCE_BASED_PROMPT_VERSION = '2.0.0';
