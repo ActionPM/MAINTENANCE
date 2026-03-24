@@ -33,10 +33,23 @@ const EVAL_ONLY_COLUMNS = new Set([
   'Confidence_Flag',
 ]);
 
+/** Named taxonomy version → semver mapping table. */
+const NAMED_VERSION_MAP: Record<string, string> = {
+  maintenance_taxonomy_v1: '1.0.0',
+};
+
+/** Value normalization for taxonomy fields during ingest. */
+const VALUE_NORMALIZATION: Record<string, Record<string, string>> = {
+  Maintenance_Category: {
+    other_issue: 'other_maintenance_category',
+  },
+};
+
 export interface GoldSetRow {
+  readonly record_id: string;
   readonly source_message_id: string;
-  readonly issue_text: string;
-  readonly conversation_text: string;
+  readonly raw_intake: string;
+  readonly atomic_issue: string;
   readonly Category: string;
   readonly Location: string;
   readonly Sub_Location: string;
@@ -49,6 +62,8 @@ export interface GoldSetRow {
   readonly should_ask_followup: string;
   readonly followup_type: string;
   readonly taxonomy_version: string;
+  readonly emergency: string;
+  readonly safety_flag: string;
   readonly [key: string]: string;
 }
 
@@ -155,9 +170,15 @@ function parseCsvLine(line: string): string[] {
 function buildClassification(row: GoldSetRow): Record<string, string> {
   const classification: Record<string, string> = {};
   for (const field of TAXONOMY_FIELDS) {
-    const value = row[field];
+    let value = row[field];
     if (value && value.trim() !== '') {
-      classification[field] = value.trim();
+      value = value.trim();
+      // Apply value normalization (e.g., other_issue → other_maintenance_category)
+      const fieldMap = VALUE_NORMALIZATION[field];
+      if (fieldMap && value in fieldMap) {
+        value = fieldMap[value];
+      }
+      classification[field] = value;
     }
     // blank → omit key entirely
   }
@@ -220,7 +241,12 @@ function deriveSliceTags(
  * E.g., "1" → "1.0.0", "1.0" → "1.0.0", "1.0.0" → "1.0.0"
  */
 export function normalizeTaxonomyVersion(version: string): string {
-  const parts = version.trim().split('.');
+  const trimmed = version.trim();
+  // Check named-version mapping first (e.g., maintenance_taxonomy_v1 → 1.0.0)
+  if (trimmed in NAMED_VERSION_MAP) {
+    return NAMED_VERSION_MAP[trimmed];
+  }
+  const parts = trimmed.split('.');
   while (parts.length < 3) parts.push('0');
   if (!/^\d+\.\d+\.\d+$/.test(parts.join('.'))) {
     throw new Error(`Cannot normalize taxonomy version to semver: "${version}"`);
@@ -250,7 +276,7 @@ export function transpileRows(rows: readonly GoldSetRow[]): NormalizedExample[] 
     const isMultiIssue = groupRows.length > 1;
 
     const splitIssues = groupRows.map((r) => ({
-      issue_text: r.issue_text,
+      issue_text: r.atomic_issue,
     }));
 
     const classifications = groupRows.map((r) => buildClassification(r));
@@ -274,20 +300,31 @@ export function transpileRows(rows: readonly GoldSetRow[]): NormalizedExample[] 
       }
     }
 
+    // Derive risk flags from emergency and safety_flag columns (union across group)
+    const riskFlags: string[] = [];
+    for (const r of groupRows) {
+      if (r.emergency?.trim().toLowerCase() === 'yes' && !riskFlags.includes('emergency')) {
+        riskFlags.push('emergency');
+      }
+      if (r.safety_flag?.trim().toLowerCase() === 'yes' && !riskFlags.includes('safety')) {
+        riskFlags.push('safety');
+      }
+    }
+
     // Derive slice tags from first issue's classification
     const sliceTags = deriveSliceTags(classifications[0], isMultiIssue);
 
     const example: NormalizedExample = {
-      example_id: `gold-v1-${String(exampleIndex).padStart(3, '0')}`,
+      example_id: `gold-v1-${first.source_message_id}`,
       dataset_type: 'gold',
       source_type: 'production_reviewed',
-      conversation_text: first.conversation_text,
+      conversation_text: first.raw_intake,
       split_issues_expected: splitIssues,
       expected_classification_by_issue: classifications,
       expected_missing_fields: allMissingFields,
       expected_followup_fields: allFollowupFields,
       expected_needs_human_triage: false,
-      expected_risk_flags: [],
+      expected_risk_flags: riskFlags,
       slice_tags: sliceTags,
       taxonomy_version: taxonomyVersion,
       schema_version: '1.0.0',
