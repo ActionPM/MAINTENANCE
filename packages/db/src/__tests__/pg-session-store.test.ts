@@ -42,6 +42,7 @@ describe('PostgresSessionStore', () => {
         schema_version: '1.0',
         model_id: 'm1',
         prompt_version: '1.0',
+        cue_version: '1.2.0',
       },
       split_issues: null,
       classification_results: null,

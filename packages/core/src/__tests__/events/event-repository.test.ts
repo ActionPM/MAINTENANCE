@@ -18,6 +18,7 @@ describe('ConversationEvent type', () => {
         schema_version: '1.0.0',
         model_id: 'gpt-4',
         prompt_version: '1.0.0',
+        cue_version: '1.2.0',
       },
       created_at: new Date().toISOString(),
     };

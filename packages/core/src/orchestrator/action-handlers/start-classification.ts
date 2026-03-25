@@ -13,6 +13,9 @@ import type {
   FollowUpCaps,
 } from '@wo-agent/schemas';
 import { resolveConstraintImpliedFields } from '../../classifier/constraint-resolver.js';
+import { checkCompleteness } from '../../classifier/completeness-gate.js';
+import { EVIDENCE_BASED_PROMPT_VERSION } from '../../llm/prompts/classifier-prompt.js';
+import { compareSemver } from '@wo-agent/schemas';
 import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
 import { callIssueClassifier } from '../../classifier/issue-classifier.js';
 import { computeCueScores } from '../../classifier/cue-scoring.js';
@@ -113,6 +116,7 @@ export async function handleStartClassification(
       taxonomy_version: session.pinned_versions.taxonomy_version,
       model_id: session.pinned_versions.model_id,
       prompt_version: session.pinned_versions.prompt_version,
+      cue_version: session.pinned_versions.cue_version,
       cue_scores: cueScoresForInput,
     };
 
@@ -225,7 +229,46 @@ export async function handleStartClassification(
       });
     }
 
-    // Step C: Confidence with constraint boost (C2)
+    // Step C: Completeness gate (v2+ only) — check for blank meaningful fields
+    const isEvidenceBasedPrompt =
+      compareSemver(session.pinned_versions.prompt_version, EVIDENCE_BASED_PROMPT_VERSION) >= 0;
+    let completenessIncomplete: string[] = [];
+    let completenessFollowupTypes: Record<string, string> = {};
+
+    if (isEvidenceBasedPrompt && !output.needs_human_triage) {
+      const category = output.classification.Category ?? '';
+      // Auto-normalize cross-domain fields for v2 prompt
+      if (category === 'management') {
+        if (!output.classification.Maintenance_Category) {
+          output = {
+            ...output,
+            classification: {
+              ...output.classification,
+              Maintenance_Category: 'not_applicable',
+              Maintenance_Object: 'not_applicable',
+              Maintenance_Problem: 'not_applicable',
+            },
+          };
+        }
+      } else if (category === 'maintenance') {
+        if (!output.classification.Management_Category) {
+          output = {
+            ...output,
+            classification: {
+              ...output.classification,
+              Management_Category: 'not_applicable',
+              Management_Object: 'not_applicable',
+            },
+          };
+        }
+      }
+
+      const completenessResult = checkCompleteness(output.classification, category);
+      completenessIncomplete = [...completenessResult.incompleteFields];
+      completenessFollowupTypes = { ...completenessResult.followupTypes };
+    }
+
+    // Step D: Confidence with constraint boost (C2) — only on populated fields
     const computedConfidence = computeAllFieldConfidences({
       classification: output.classification,
       modelConfidence: output.model_confidence,
@@ -248,6 +291,13 @@ export async function handleStartClassification(
       fieldsNeedingInput = fieldsNeedingInput.filter((f) => !(f in impliedFields));
     }
 
+    // Merge completeness gate results with confidence-band results (deduplicated)
+    for (const field of completenessIncomplete) {
+      if (!fieldsNeedingInput.includes(field)) {
+        fieldsNeedingInput.push(field);
+      }
+    }
+
     if (fieldsNeedingInput.length > 0) {
       anyFieldsNeedInput = true;
     }
@@ -257,6 +307,9 @@ export async function handleStartClassification(
       classifierOutput: output,
       computedConfidence,
       fieldsNeedingInput,
+      shouldAskFollowup: fieldsNeedingInput.length > 0,
+      followupTypes: completenessFollowupTypes,
+      constraintPassed: !output.needs_human_triage,
     });
   }
 
@@ -299,6 +352,9 @@ export async function handleStartClassification(
         ...r,
         classifierOutput: { ...r.classifierOutput, needs_human_triage: true },
         fieldsNeedingInput: [] as string[],
+        shouldAskFollowup: false,
+        followupTypes: {},
+        constraintPassed: true,
       }));
       updatedSession = setClassificationResults(updatedSession, triageResults);
       updatedSession = applyConfirmationTracking(updatedSession, issues, deps.clock);
@@ -334,6 +390,7 @@ export async function handleStartClassification(
       total_questions_asked: updatedSession.total_questions_asked,
       taxonomy_version: session.pinned_versions.taxonomy_version,
       prompt_version: session.pinned_versions.prompt_version,
+      cue_version: session.pinned_versions.cue_version,
       original_text: targetIssueData?.raw_excerpt,
     };
 
@@ -353,6 +410,9 @@ export async function handleStartClassification(
           ...r,
           classifierOutput: { ...r.classifierOutput, needs_human_triage: true },
           fieldsNeedingInput: [] as string[],
+          shouldAskFollowup: false,
+          followupTypes: {},
+          constraintPassed: true,
         }));
         updatedSession = setClassificationResults(updatedSession, triageResults);
         updatedSession = applyConfirmationTracking(updatedSession, issues, deps.clock);
@@ -384,6 +444,9 @@ export async function handleStartClassification(
           ...r,
           classifierOutput: { ...r.classifierOutput, needs_human_triage: true },
           fieldsNeedingInput: [] as string[],
+          shouldAskFollowup: false,
+          followupTypes: {},
+          constraintPassed: true,
         }));
         updatedSession = setClassificationResults(updatedSession, triageResults);
         updatedSession = applyConfirmationTracking(updatedSession, issues, deps.clock);
@@ -413,6 +476,9 @@ export async function handleStartClassification(
         ...r,
         classifierOutput: { ...r.classifierOutput, needs_human_triage: true },
         fieldsNeedingInput: [] as string[],
+        shouldAskFollowup: false,
+        followupTypes: {},
+        constraintPassed: true,
       }));
       updatedSession = setClassificationResults(updatedSession, triageResults);
       updatedSession = applyConfirmationTracking(updatedSession, issues, deps.clock);

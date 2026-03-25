@@ -117,6 +117,7 @@ describe('validateEvalRun', () => {
       schema_version: '1.0.0',
       cue_dict_version: '1.0.0',
       prompt_version: 'v1',
+
       model_id: 'claude-3-haiku',
       started_at: NOW,
       completed_at: NOW,
@@ -139,6 +140,7 @@ describe('validateEvalRun', () => {
       schema_version: '1.0.0',
       cue_dict_version: '1.0.0',
       prompt_version: 'v1',
+
       model_id: 'claude-3-haiku',
       started_at: NOW,
       completed_at: NOW,
@@ -166,6 +168,7 @@ describe('validateEvalRun', () => {
       schema_version: '1.0.0',
       cue_dict_version: '1.0.0',
       prompt_version: 'v1',
+
       model_id: 'claude-3-haiku',
       started_at: NOW,
       completed_at: NOW,

@@ -41,6 +41,7 @@ function makeWo(overrides: Partial<Record<string, unknown>> = {}) {
       schema_version: '1.0',
       model_id: 'm1',
       prompt_version: '1.0',
+      cue_version: '1.2.0',
     },
     created_at: '2026-03-04T00:00:00Z',
     updated_at: '2026-03-04T00:00:00Z',

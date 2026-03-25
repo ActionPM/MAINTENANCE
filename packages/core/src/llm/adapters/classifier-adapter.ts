@@ -10,6 +10,9 @@ import { extractJsonFromResponse } from '../parse-response.js';
  * Create an IssueClassifier adapter function that calls the real LLM.
  * Returns raw parsed JSON — callIssueClassifier handles validation,
  * taxonomy checking, category gating, and retry logic.
+ *
+ * The system prompt is built per-call based on input.prompt_version,
+ * enabling version-gated behavior for old vs new conversations.
  */
 export function createClassifierAdapter(
   client: LlmClient,
@@ -18,12 +21,11 @@ export function createClassifierAdapter(
   input: IssueClassifierInput,
   retryContext?: { retryHint: string; constraint?: string },
 ) => Promise<unknown> {
-  const systemPrompt = buildClassifierSystemPrompt(taxonomy);
-
   return async (
     input: IssueClassifierInput,
     retryContext?: { retryHint: string; constraint?: string },
   ): Promise<unknown> => {
+    const systemPrompt = buildClassifierSystemPrompt(taxonomy, input.prompt_version);
     const response = await client.complete({
       system: systemPrompt,
       userMessage: buildClassifierUserMessage(input, retryContext),

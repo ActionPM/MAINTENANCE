@@ -26,6 +26,7 @@ const mockResponse = {
       schema_version: '1.0',
       model_id: 'test',
       prompt_version: '1.0',
+      cue_version: '1.2.0',
     },
   },
   ui_directive: {},

@@ -14,6 +14,7 @@ export interface DisambiguatorInput {
   readonly conversation_state: ConversationState;
   readonly model_id: string;
   readonly prompt_version: string;
+  readonly cue_version: string;
   readonly conversation_id: string;
 }
 

@@ -21,6 +21,7 @@ describe('WO creation with risk flags', () => {
       schema_version: '1',
       model_id: 'm',
       prompt_version: '1',
+      cue_version: '1.2.0',
     },
   });
 
@@ -42,6 +43,9 @@ describe('WO creation with risk flags', () => {
         },
         computedConfidence: {},
         fieldsNeedingInput: [],
+        shouldAskFollowup: false,
+        followupTypes: {},
+        constraintPassed: true,
       },
     ]);
 

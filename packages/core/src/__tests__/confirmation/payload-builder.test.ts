@@ -25,6 +25,9 @@ const CLASSIFICATION_RESULTS: readonly IssueClassificationResult[] = [
     },
     computedConfidence: { Category: 0.92, Maintenance_Category: 0.85 },
     fieldsNeedingInput: [],
+    shouldAskFollowup: false,
+    followupTypes: {},
+    constraintPassed: true,
   },
   {
     issue_id: 'issue-2',
@@ -37,6 +40,9 @@ const CLASSIFICATION_RESULTS: readonly IssueClassificationResult[] = [
     },
     computedConfidence: { Category: 0.72, Maintenance_Category: 0.55 },
     fieldsNeedingInput: [],
+    shouldAskFollowup: false,
+    followupTypes: {},
+    constraintPassed: true,
   },
 ];
 

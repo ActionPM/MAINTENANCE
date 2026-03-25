@@ -25,6 +25,7 @@ function makeWo(status: string, id = 'wo-1'): WorkOrder {
       schema_version: '1.0.0',
       model_id: 'test',
       prompt_version: '1.0.0',
+      cue_version: '1.2.0',
     },
     created_at: '2026-01-15T00:00:00Z',
     updated_at: '2026-01-15T00:00:00Z',

@@ -9,6 +9,7 @@ const PINNED = {
   schema_version: '1.0.0',
   model_id: 'default',
   prompt_version: '1.0.0',
+  cue_version: '1.2.0',
 };
 
 function makeSession(state: ConversationState): ConversationSession {
@@ -35,6 +36,9 @@ function makeSession(state: ConversationState): ConversationSession {
         },
         computedConfidence: { Category: 0.92 },
         fieldsNeedingInput: [],
+        shouldAskFollowup: false,
+        followupTypes: {},
+        constraintPassed: true,
       },
     ],
     prior_state_before_error: null,

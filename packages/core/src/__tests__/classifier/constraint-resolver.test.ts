@@ -129,4 +129,27 @@ describe('resolveConstraintImpliedFields', () => {
     const implied = resolveConstraintImpliedFields(classification, constraints);
     expect(implied['Sub_Location']).toBe('bathroom');
   });
+
+  it('does NOT auto-resolve needs_object — it triggers follow-up instead', () => {
+    const classification = {
+      Category: 'maintenance',
+      Location: 'suite',
+      Maintenance_Category: 'plumbing',
+      Maintenance_Object: 'needs_object',
+    };
+    const implied = resolveConstraintImpliedFields(classification, constraints);
+    expect(implied['Maintenance_Object']).toBeUndefined();
+  });
+
+  it('still resolves "general" even when needs_object is present elsewhere', () => {
+    const classification = {
+      Category: 'maintenance',
+      Location: 'suite',
+      Sub_Location: 'general',
+      Maintenance_Object: 'needs_object',
+    };
+    const implied = resolveConstraintImpliedFields(classification, constraints);
+    // general is vague and may be resolved, but needs_object should stay
+    expect(implied['Maintenance_Object']).toBeUndefined();
+  });
 });

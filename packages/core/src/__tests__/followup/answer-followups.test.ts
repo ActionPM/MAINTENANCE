@@ -29,6 +29,7 @@ const VERSIONS = {
   schema_version: '1.0.0',
   model_id: 'test-model',
   prompt_version: '1.0.0',
+  cue_version: '1.2.0',
 };
 
 const HIGH_CONF_OUTPUT: IssueClassifierOutput = {
@@ -112,6 +113,9 @@ function makeAnswerContext(overrides?: {
       },
       computedConfidence: { Category: 0.9, Priority: 0.4 },
       fieldsNeedingInput: ['Priority'],
+      shouldAskFollowup: false,
+      followupTypes: {},
+      constraintPassed: true,
     },
   ];
 

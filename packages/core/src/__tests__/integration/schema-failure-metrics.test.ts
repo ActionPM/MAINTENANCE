@@ -29,6 +29,7 @@ describe('schema_validation_failure_total metric emission', () => {
       taxonomy_version: '1.0.0',
       model_id: 'test',
       prompt_version: '1.0.0',
+      cue_version: '1.2.0',
     };
 
     // LLM always returns invalid output (not matching schema)
@@ -54,6 +55,7 @@ describe('schema_validation_failure_total metric emission', () => {
       taxonomy_version: '1.0.0',
       model_id: 'test',
       prompt_version: '1.0.0',
+      cue_version: '1.2.0',
     };
 
     const badLlm = async () => ({ not_valid: true });
@@ -82,6 +84,7 @@ describe('schema_validation_failure_total metric emission', () => {
       total_questions_asked: 0,
       taxonomy_version: '1.0.0',
       prompt_version: '1.0.0',
+      cue_version: '1.2.0',
     };
 
     const badLlm = async () => ({ wrong_shape: true });
@@ -113,6 +116,7 @@ describe('schema_validation_failure_total metric emission', () => {
       taxonomy_version: '1.0.0',
       model_id: 'test',
       prompt_version: '1.0.0',
+      cue_version: '1.2.0',
     };
 
     const badLlm = async () => ({ invalid: true });

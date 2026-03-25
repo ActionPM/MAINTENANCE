@@ -27,6 +27,7 @@ function makeWO(overrides: Partial<WorkOrder> & { work_order_id: string }): Work
       schema_version: '1.0.0',
       model_id: 'test',
       prompt_version: '1.0.0',
+      cue_version: '1.2.0',
     },
     created_at: '2026-03-01T10:00:00Z',
     updated_at: '2026-03-01T10:00:00Z',

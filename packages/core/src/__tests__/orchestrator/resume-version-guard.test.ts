@@ -73,6 +73,7 @@ describe('handleResume — version integrity guard', () => {
       schema_version: '0.8.0',
       model_id: 'claude-haiku-4-5-20251001',
       prompt_version: '0.7.0',
+      cue_version: '1.0.0',
     };
     const session = makeSession({ pinned_versions: customVersions });
     const result = await handleResume(makeCtx(session));
@@ -88,6 +89,7 @@ describe('handleResume — version integrity guard', () => {
         schema_version: '1.0.0',
         model_id: 'test',
         prompt_version: '1.0.0',
+        cue_version: '1.2.0',
       },
     });
     const result = await handleResume(makeCtx(session));
@@ -104,6 +106,7 @@ describe('handleResume — version integrity guard', () => {
         schema_version: '1.0.0',
         model_id: '',
         prompt_version: '1.0.0',
+        cue_version: '1.2.0',
       },
     });
     const result = await handleResume(makeCtx(session));
@@ -119,6 +122,7 @@ describe('handleResume — version integrity guard', () => {
         schema_version: '',
         model_id: '',
         prompt_version: '',
+        cue_version: '',
       },
     });
     const result = await handleResume(makeCtx(session));

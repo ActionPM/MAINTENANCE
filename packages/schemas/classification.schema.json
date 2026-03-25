@@ -24,6 +24,7 @@
         "taxonomy_version": { "type": "string" },
         "model_id": { "type": "string" },
         "prompt_version": { "type": "string" },
+        "cue_version": { "type": "string" },
         "cue_scores": {
           "type": "object",
           "additionalProperties": { "type": "number", "minimum": 0, "maximum": 1 }
@@ -35,7 +36,8 @@
         "raw_excerpt",
         "taxonomy_version",
         "model_id",
-        "prompt_version"
+        "prompt_version",
+        "cue_version"
       ],
       "additionalProperties": false
     },

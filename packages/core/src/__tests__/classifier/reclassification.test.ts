@@ -19,6 +19,7 @@ const VERSIONS = {
   schema_version: '1.0.0',
   model_id: 'test-model',
   prompt_version: '1.0.0',
+  cue_version: '1.2.0',
 };
 
 const HIGH_CONFIDENCE_OUTPUT: IssueClassifierOutput = {
@@ -87,6 +88,9 @@ function makeFollowupContext(overrides?: {
       },
       computedConfidence: { Category: 0.9, Priority: 0.4 },
       fieldsNeedingInput: ['Priority'],
+      shouldAskFollowup: false,
+      followupTypes: {},
+      constraintPassed: true,
     },
   ];
 
@@ -247,6 +251,9 @@ describe('handleAnswerFollowups (re-classification)', () => {
         },
         computedConfidence: { Category: 0.9, Priority: 0.4 },
         fieldsNeedingInput: ['Priority'],
+        shouldAskFollowup: false,
+        followupTypes: {},
+        constraintPassed: true,
       },
       {
         issue_id: 'i2',
@@ -257,6 +264,9 @@ describe('handleAnswerFollowups (re-classification)', () => {
         },
         computedConfidence: { Category: 0.9, Location: 0.4 },
         fieldsNeedingInput: ['Location'],
+        shouldAskFollowup: false,
+        followupTypes: {},
+        constraintPassed: true,
       },
     ]);
 

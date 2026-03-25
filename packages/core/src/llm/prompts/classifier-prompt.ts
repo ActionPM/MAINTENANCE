@@ -1,10 +1,14 @@
 import type { IssueClassifierInput, Taxonomy } from '@wo-agent/schemas';
+import { compareSemver } from '@wo-agent/schemas';
+
+/** The prompt version boundary for the evidence-based classifier. */
+export const EVIDENCE_BASED_PROMPT_VERSION = '2.0.0';
 
 /**
- * System prompt for the IssueClassifier LLM tool.
- * Spec references: §5.1 (taxonomy authoritative), §14 (classification), §2.1 (no free-text)
+ * System prompt for the IssueClassifier LLM tool (legacy force-fill version).
+ * Used for conversations pinned to prompt_version < 2.0.0.
  */
-export function buildClassifierSystemPrompt(taxonomy: Taxonomy): string {
+export function buildClassifierSystemPromptV1(taxonomy: Taxonomy): string {
   const taxonomyBlock = Object.entries(taxonomy)
     .map(([field, values]) => `${field}: ${(values as string[]).join(', ')}`)
     .join('\n');
@@ -72,6 +76,87 @@ RESPOND WITH ONLY a JSON object (no markdown, no explanation):
 }
 
 /**
+ * System prompt for the IssueClassifier LLM tool (v2 — evidence-based).
+ * Used for conversations pinned to prompt_version >= 2.0.0.
+ *
+ * Key changes from v1:
+ * - Only assign taxonomy values when the tenant's text provides clear evidence
+ * - Omit unsupported fields instead of guessing
+ * - Cross-domain fields use "not_applicable" (not other_*)
+ * - "needs_object" used intentionally for ambiguous objects
+ */
+export function buildClassifierSystemPromptV2(taxonomy: Taxonomy): string {
+  const taxonomyBlock = Object.entries(taxonomy)
+    .map(([field, values]) => `${field}: ${(values as string[]).join(', ')}`)
+    .join('\n');
+
+  return `You are an issue classifier for a property management service request system.
+
+Your job: Classify a tenant's maintenance or management issue using the taxonomy values below.
+Only assign values that are clearly supported by the tenant's text.
+
+TAXONOMY (valid values):
+${taxonomyBlock}
+
+EVIDENCE-BASED CLASSIFICATION RULES:
+1. Only assign a taxonomy value when the tenant's text provides clear evidence for it.
+2. If the text does not support a field value, OMIT that field from the classification object entirely.
+3. Do not guess Location, Sub_Location, or object fields from weak or indirect evidence.
+4. A mentioned object does NOT automatically imply a location (e.g., "sink" does not mean Location=suite).
+5. All values must come from the taxonomy. No free-text values.
+
+CROSS-DOMAIN NORMALIZATION:
+- If the issue is "maintenance", set Management_Category and Management_Object to "not_applicable".
+- If the issue is "management", set Maintenance_Category, Maintenance_Object, and Maintenance_Problem to "not_applicable".
+
+NEEDS_OBJECT GUIDANCE:
+- Use "needs_object" when the category/problem type is understood but the specific object cannot be identified from the text.
+- Do not use "needs_object" as a lazy default — use it only when there genuinely is an object involved but it is ambiguous.
+
+MISSING_FIELDS:
+- List fields you omitted from classification because the text did not support a value.
+- Also list fields where you assigned a value but have low certainty.
+
+HIERARCHICAL CONSTRAINTS:
+Fields are not independent — they must be logically consistent with each other.
+- Location constrains Sub_Location: "suite" Sub_Locations include kitchen, bathroom, bedroom, etc. "building_interior" includes elevator, parking_garage, etc.
+- Sub_Location constrains Maintenance_Category: e.g., "elevator" only allows electrical, general_maintenance.
+- Maintenance_Category constrains Maintenance_Object: e.g., "plumbing" allows toilet, sink, pipe, etc. NOT breaker, fridge.
+- Maintenance_Object constrains Maintenance_Problem: e.g., "toilet" allows leak, clog, not_working. NOT no_heat, infestation.
+- Maintenance_Object constrains Sub_Location: e.g., "toilet" must be in bathroom. "fridge" must be in kitchen.
+
+Examples:
+- toilet + bathroom + plumbing + leak = VALID
+- fridge + kitchen + appliance + not_working = VALID
+- toilet + bedroom = INVALID (do not classify toilet in bedroom)
+- shelf + no_heat = INVALID (shelves don't have heating problems)
+
+RESPOND WITH ONLY a JSON object (no markdown, no explanation):
+{
+  "issue_id": "<same as input>",
+  "classification": {
+    // Include only fields you can classify with evidence. Omit fields you cannot.
+  },
+  "model_confidence": {
+    // Only include confidence scores for fields present in classification
+  },
+  "missing_fields": ["<field_name>", ...],
+  "needs_human_triage": false
+}`;
+}
+
+/**
+ * Build the system prompt for the classifier, selecting v1 or v2 based on prompt_version.
+ * This is the main entry point — all callers should use this.
+ */
+export function buildClassifierSystemPrompt(taxonomy: Taxonomy, promptVersion?: string): string {
+  if (promptVersion && compareSemver(promptVersion, EVIDENCE_BASED_PROMPT_VERSION) >= 0) {
+    return buildClassifierSystemPromptV2(taxonomy);
+  }
+  return buildClassifierSystemPromptV1(taxonomy);
+}
+
+/**
  * Build the user message for the classifier.
  */
 export function buildClassifierUserMessage(
@@ -102,6 +187,7 @@ export function buildClassifierUserMessage(
     parts.push(`\nRETRY CONTEXT (${retryContext.retryHint}):`);
     if (retryContext.constraint) {
       parts.push(`CONSTRAINT: ${retryContext.constraint}`);
+      parts.push('Use "not_applicable" for cross-domain fields instead of "other_*" values.');
     }
     parts.push('Please correct your output according to the above constraint.');
   }

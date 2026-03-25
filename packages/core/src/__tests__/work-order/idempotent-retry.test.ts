@@ -13,6 +13,7 @@ const PINNED = {
   schema_version: '1.0.0',
   model_id: 'default',
   prompt_version: '1.0.0',
+  cue_version: '1.2.0',
 };
 
 const SPLIT_ISSUES = [{ issue_id: 'iss-1', summary: 'Leaky faucet', raw_excerpt: 'Faucet leaks' }];
@@ -35,6 +36,9 @@ const CLASSIFICATION_RESULTS: IssueClassificationResult[] = [
     },
     computedConfidence: { Category: 0.92 },
     fieldsNeedingInput: [],
+    shouldAskFollowup: false,
+    followupTypes: {},
+    constraintPassed: true,
   },
 ];
 

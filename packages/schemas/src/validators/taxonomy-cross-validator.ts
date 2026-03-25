@@ -45,6 +45,7 @@ export function semverLt(a: string, b: string): boolean {
 }
 
 function isAcceptableNA(val: string, taxonomyVersion?: string): boolean {
+  if (val === CURRENT_NA) return true;
   if (!taxonomyVersion || semverLt(taxonomyVersion, '1.1.0')) {
     // Legacy: accept old other_* values
     return (
@@ -52,7 +53,7 @@ function isAcceptableNA(val: string, taxonomyVersion?: string): boolean {
       (LEGACY_MANAGEMENT_NA as readonly string[]).includes(val)
     );
   }
-  return val === CURRENT_NA;
+  return false;
 }
 
 /**

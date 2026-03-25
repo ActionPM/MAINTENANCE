@@ -45,6 +45,7 @@ describe('Integration: full happy-path lifecycle', () => {
         schema_version: '1.0',
         model_id: 'gpt-4',
         prompt_version: '1.0',
+        cue_version: '1.2.0',
       },
     });
     expect(session.state).toBe(ConversationState.INTAKE_STARTED);
@@ -102,6 +103,7 @@ describe('Integration: error recovery with retry', () => {
         schema_version: '1.0',
         model_id: 'gpt-4',
         prompt_version: '1.0',
+        cue_version: '1.2.0',
       },
     });
 
@@ -134,6 +136,7 @@ describe('Integration: abandon and resume', () => {
         schema_version: '1.0',
         model_id: 'gpt-4',
         prompt_version: '1.0',
+        cue_version: '1.2.0',
       },
     });
 
@@ -176,6 +179,7 @@ describe('Integration: draft discovery with auth', () => {
             schema_version: '1.0',
             model_id: 'gpt-4',
             prompt_version: '1.0',
+            cue_version: '1.2.0',
           },
         }),
         state: ConversationState.NEEDS_TENANT_INPUT as ConversationState,
@@ -192,6 +196,7 @@ describe('Integration: draft discovery with auth', () => {
             schema_version: '1.0',
             model_id: 'gpt-4',
             prompt_version: '1.0',
+            cue_version: '1.2.0',
           },
         }),
         state: ConversationState.SUBMITTED as ConversationState,
@@ -208,6 +213,7 @@ describe('Integration: draft discovery with auth', () => {
             schema_version: '1.0',
             model_id: 'gpt-4',
             prompt_version: '1.0',
+            cue_version: '1.2.0',
           },
         }),
         state: ConversationState.SPLIT_PROPOSED as ConversationState,
@@ -246,6 +252,7 @@ describe('Integration: follow-up loop', () => {
         schema_version: '1.0',
         model_id: 'gpt-4',
         prompt_version: '1.0',
+        cue_version: '1.2.0',
       },
     });
 

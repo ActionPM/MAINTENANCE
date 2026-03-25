@@ -20,6 +20,7 @@ const baseSession = (): ConversationSession => {
       schema_version: '1.0',
       model_id: 'gpt-test',
       prompt_version: '1.0',
+      cue_version: '1.2.0',
     },
   });
   s = setSessionUnit(s, 'unit-1');
@@ -40,6 +41,9 @@ const baseSession = (): ConversationSession => {
       },
       computedConfidence: { category: 0.92, subcategory: 0.85 },
       fieldsNeedingInput: [],
+      shouldAskFollowup: false,
+      followupTypes: {},
+      constraintPassed: true,
     },
     {
       issue_id: 'iss-2',
@@ -52,6 +56,9 @@ const baseSession = (): ConversationSession => {
       },
       computedConfidence: { category: 0.88, subcategory: 0.75 },
       fieldsNeedingInput: [],
+      shouldAskFollowup: false,
+      followupTypes: {},
+      constraintPassed: true,
     },
   ]);
   return s;
@@ -175,6 +182,9 @@ describe('createWorkOrders', () => {
         },
         computedConfidence: { category: 0.45 },
         fieldsNeedingInput: [],
+        shouldAskFollowup: false,
+        followupTypes: {},
+        constraintPassed: true,
       },
     ]);
     session = setSplitIssues(session, [

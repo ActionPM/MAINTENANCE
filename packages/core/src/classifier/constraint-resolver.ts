@@ -1,8 +1,14 @@
 import type { TaxonomyConstraints } from '@wo-agent/schemas';
 import { CONSTRAINT_EDGES } from '@wo-agent/schemas';
 
-/** Values considered "vague" — can be overwritten by constraint resolution. */
-const VAGUE_VALUES = new Set(['general', 'other_sub_location', 'needs_object']);
+/**
+ * Values considered "vague" — can be overwritten by constraint resolution.
+ *
+ * `needs_object` is intentionally excluded: it is a deliberate placeholder that
+ * triggers follow-up for object clarification. It should only be resolved when
+ * the tenant provides specific information, not by constraint narrowing alone.
+ */
+const VAGUE_VALUES = new Set(['general', 'other_sub_location']);
 
 /**
  * Given a target field and current classification, return the valid options

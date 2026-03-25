@@ -73,6 +73,7 @@ export function buildFollowUpUserMessage(
     ),
     `\nMissing fields: ${input.missing_fields.join(', ') || 'none'}`,
     `\nFields needing input (generate questions for THESE ONLY): ${input.fields_needing_input.join(', ')}`,
+    ...buildFollowupTypeHints(input),
     `\nTurn number: ${input.turn_number}`,
     `Total questions asked so far: ${input.total_questions_asked}`,
   );
@@ -102,4 +103,43 @@ export function buildFollowUpUserMessage(
   }
 
   return parts.join('\n');
+}
+
+/**
+ * Build follow-up type hints to guide question generation per field.
+ */
+function buildFollowupTypeHints(input: FollowUpGeneratorInput): string[] {
+  // followup_types may be passed via an extended input in the future;
+  // for now, derive from field names using the same heuristics as the
+  // completeness gate
+  const hints: string[] = [];
+  const locationFields = new Set(['Location', 'Sub_Location']);
+  const objectFields = new Set(['Maintenance_Object', 'Management_Object']);
+
+  const typesByField: string[] = [];
+  for (const field of input.fields_needing_input) {
+    if (locationFields.has(field)) {
+      typesByField.push(
+        `  ${field} [type: location]: Ask where in the unit/building the issue is located.`,
+      );
+    } else if (objectFields.has(field)) {
+      const value = input.classification[field];
+      if (value === 'needs_object') {
+        typesByField.push(
+          `  ${field} [type: object_clarification]: Ask the tenant to describe the specific fixture or item involved.`,
+        );
+      } else {
+        typesByField.push(
+          `  ${field} [type: other]: Ask a targeted question to identify this field.`,
+        );
+      }
+    }
+  }
+
+  if (typesByField.length > 0) {
+    hints.push('\nFollow-up type guidance (generate the minimum question per type):');
+    hints.push(...typesByField);
+  }
+
+  return hints;
 }

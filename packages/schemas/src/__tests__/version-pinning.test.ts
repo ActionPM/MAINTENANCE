@@ -2,20 +2,24 @@ import { describe, it, expect } from 'vitest';
 import {
   resolveCurrentVersions,
   assertPinnedVersionsIntact,
+  normalizePinnedVersions,
   TAXONOMY_VERSION,
   SCHEMA_VERSION,
   PROMPT_VERSION,
   DEFAULT_MODEL_ID,
+  CUE_VERSION,
+  DEFAULT_CUE_VERSION,
 } from '../version-pinning.js';
 
 describe('resolveCurrentVersions', () => {
-  it('returns all four version fields with defaults', () => {
+  it('returns all five version fields with defaults', () => {
     const versions = resolveCurrentVersions();
     expect(versions).toEqual({
       taxonomy_version: TAXONOMY_VERSION,
       schema_version: SCHEMA_VERSION,
       model_id: DEFAULT_MODEL_ID,
       prompt_version: PROMPT_VERSION,
+      cue_version: CUE_VERSION,
     });
   });
 
@@ -37,6 +41,11 @@ describe('resolveCurrentVersions', () => {
       expect(typeof value).toBe('string');
     }
   });
+
+  it('includes cue_version', () => {
+    const versions = resolveCurrentVersions();
+    expect(versions.cue_version).toBe(CUE_VERSION);
+  });
 });
 
 describe('assertPinnedVersionsIntact', () => {
@@ -47,6 +56,7 @@ describe('assertPinnedVersionsIntact', () => {
         schema_version: '1.0.0',
         model_id: 'claude-sonnet-4-20250514',
         prompt_version: '1.0.0',
+        cue_version: '1.2.0',
       }),
     ).toBe(true);
   });
@@ -58,6 +68,7 @@ describe('assertPinnedVersionsIntact', () => {
         schema_version: '1.0.0',
         model_id: 'test',
         prompt_version: '1.0.0',
+        cue_version: '1.2.0',
       }),
     ).toBe(false);
   });
@@ -69,6 +80,7 @@ describe('assertPinnedVersionsIntact', () => {
         schema_version: '',
         model_id: 'test',
         prompt_version: '1.0.0',
+        cue_version: '1.2.0',
       }),
     ).toBe(false);
   });
@@ -80,6 +92,7 @@ describe('assertPinnedVersionsIntact', () => {
         schema_version: '1.0.0',
         model_id: '',
         prompt_version: '1.0.0',
+        cue_version: '1.2.0',
       }),
     ).toBe(false);
   });
@@ -91,6 +104,19 @@ describe('assertPinnedVersionsIntact', () => {
         schema_version: '1.0.0',
         model_id: 'test',
         prompt_version: '',
+        cue_version: '1.2.0',
+      }),
+    ).toBe(false);
+  });
+
+  it('returns false when cue_version is empty', () => {
+    expect(
+      assertPinnedVersionsIntact({
+        taxonomy_version: '1.0.0',
+        schema_version: '1.0.0',
+        model_id: 'test',
+        prompt_version: '1.0.0',
+        cue_version: '',
       }),
     ).toBe(false);
   });
@@ -98,5 +124,41 @@ describe('assertPinnedVersionsIntact', () => {
   it('returns true for versions from resolveCurrentVersions', () => {
     const versions = resolveCurrentVersions();
     expect(assertPinnedVersionsIntact(versions)).toBe(true);
+  });
+});
+
+describe('normalizePinnedVersions', () => {
+  it('passes through all fields when present', () => {
+    const input = {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'test',
+      prompt_version: '1.0.0',
+      cue_version: '2.0.0',
+    };
+    const result = normalizePinnedVersions(input);
+    expect(result.cue_version).toBe('2.0.0');
+  });
+
+  it('injects default cue_version for pre-migration data', () => {
+    const input = {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'test',
+      prompt_version: '1.0.0',
+    };
+    const result = normalizePinnedVersions(input);
+    expect(result.cue_version).toBe(DEFAULT_CUE_VERSION);
+  });
+
+  it('produces a valid PinnedVersions that passes assertPinnedVersionsIntact', () => {
+    const input = {
+      taxonomy_version: '1.0.0',
+      schema_version: '1.0.0',
+      model_id: 'test',
+      prompt_version: '1.0.0',
+    };
+    const result = normalizePinnedVersions(input);
+    expect(assertPinnedVersionsIntact(result)).toBe(true);
   });
 });

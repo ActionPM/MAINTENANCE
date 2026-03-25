@@ -1,5 +1,6 @@
 import type { Pool } from '@neondatabase/serverless';
 import type { WorkOrder, WorkOrderStatus, ActorType } from '@wo-agent/schemas';
+import { normalizePinnedVersions } from '@wo-agent/schemas';
 import type { WorkOrderRepository, WorkOrderListFilters } from '@wo-agent/core';
 
 export class PostgresWorkOrderStore implements WorkOrderRepository {
@@ -162,7 +163,7 @@ function mapRowToWorkOrder(row: Record<string, unknown>): WorkOrder {
     pets_present: row.pets_present as WorkOrder['pets_present'],
     risk_flags: row.risk_flags as Record<string, unknown> | undefined,
     needs_human_triage: row.needs_human_triage as boolean,
-    pinned_versions: row.pinned_versions as WorkOrder['pinned_versions'],
+    pinned_versions: normalizePinnedVersions(row.pinned_versions as Record<string, unknown>),
     created_at:
       row.created_at instanceof Date ? row.created_at.toISOString() : (row.created_at as string),
     updated_at:

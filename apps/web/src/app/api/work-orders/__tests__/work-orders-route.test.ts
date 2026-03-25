@@ -70,6 +70,7 @@ function makeWorkOrder(overrides: Record<string, unknown> = {}) {
       schema_version: '1.0.0',
       model_id: 'default',
       prompt_version: '1.0.0',
+      cue_version: '1.2.0',
     },
     created_at: '2026-01-01T00:00:00Z',
     updated_at: '2026-01-01T00:00:00Z',

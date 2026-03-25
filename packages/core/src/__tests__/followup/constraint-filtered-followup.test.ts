@@ -20,6 +20,7 @@ describe('constraint-filtered follow-up options', () => {
     total_questions_asked: 0,
     taxonomy_version: '1.0',
     prompt_version: '1.0',
+    cue_version: '1.2.0',
     original_text: 'my toilet is leaking',
   };
 
