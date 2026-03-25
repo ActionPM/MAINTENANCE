@@ -1,19 +1,21 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
+const createPoolMock = vi.fn(() => ({
+  query: mockQuery,
+  end: mockEnd,
+}));
 const mockQuery = vi.fn();
 const mockEnd = vi.fn();
 
 vi.mock('@wo-agent/db', () => ({
-  createPool: vi.fn(() => ({
-    query: mockQuery,
-    end: mockEnd,
-  })),
+  createPool: createPoolMock,
 }));
 
 import { GET } from '../route.js';
 
 describe('GET /api/health/db (readiness)', () => {
   const originalEnv = process.env.DATABASE_URL;
+  const originalUnpooledEnv = process.env.DATABASE_URL_UNPOOLED;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -25,10 +27,16 @@ describe('GET /api/health/db (readiness)', () => {
     } else {
       process.env.DATABASE_URL = originalEnv;
     }
+    if (originalUnpooledEnv === undefined) {
+      delete process.env.DATABASE_URL_UNPOOLED;
+    } else {
+      process.env.DATABASE_URL_UNPOOLED = originalUnpooledEnv;
+    }
   });
 
-  it('returns 503 misconfigured when DATABASE_URL is unset', async () => {
+  it('returns 503 misconfigured when both DB env vars are unset', async () => {
     delete process.env.DATABASE_URL;
+    delete process.env.DATABASE_URL_UNPOOLED;
 
     const req = new Request('http://localhost:3000/api/health/db');
     const res = await GET(req as any);
@@ -43,6 +51,7 @@ describe('GET /api/health/db (readiness)', () => {
 
   it('returns 200 ok with latency_ms when pool query succeeds', async () => {
     process.env.DATABASE_URL = 'postgresql://test:test@localhost/test';
+    delete process.env.DATABASE_URL_UNPOOLED;
     mockQuery.mockResolvedValue({ rows: [{ '?column?': 1 }] });
     mockEnd.mockResolvedValue(undefined);
 
@@ -61,6 +70,7 @@ describe('GET /api/health/db (readiness)', () => {
 
   it('returns 503 unavailable without leaking error details when pool query throws', async () => {
     process.env.DATABASE_URL = 'postgresql://test:test@localhost/test';
+    delete process.env.DATABASE_URL_UNPOOLED;
     mockQuery.mockRejectedValue(new Error('connection refused'));
     mockEnd.mockResolvedValue(undefined);
 
@@ -78,6 +88,7 @@ describe('GET /api/health/db (readiness)', () => {
 
   it('closes the pool even when the query fails', async () => {
     process.env.DATABASE_URL = 'postgresql://test:test@localhost/test';
+    delete process.env.DATABASE_URL_UNPOOLED;
     mockQuery.mockRejectedValue(new Error('connection refused'));
     mockEnd.mockResolvedValue(undefined);
 
@@ -85,5 +96,17 @@ describe('GET /api/health/db (readiness)', () => {
     await GET(req as any);
 
     expect(mockEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it('prefers DATABASE_URL_UNPOOLED when present', async () => {
+    process.env.DATABASE_URL = 'postgresql://pooled:test@localhost/test';
+    process.env.DATABASE_URL_UNPOOLED = 'postgresql://direct:test@localhost/test';
+    mockQuery.mockResolvedValue({ rows: [{ '?column?': 1 }] });
+    mockEnd.mockResolvedValue(undefined);
+
+    const req = new Request('http://localhost:3000/api/health/db');
+    await GET(req as any);
+
+    expect(createPoolMock).toHaveBeenCalledWith('postgresql://direct:test@localhost/test');
   });
 });

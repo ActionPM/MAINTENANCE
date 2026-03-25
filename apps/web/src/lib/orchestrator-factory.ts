@@ -67,6 +67,7 @@ import {
   createDemoClassifier,
   createDemoFollowupGenerator,
 } from './demo-fixtures';
+import { getDatabaseUrl } from './database-url';
 
 // In-memory session store fallback
 class InMemorySessionStore implements SessionStore {
@@ -94,7 +95,7 @@ interface Stores {
 }
 
 function createStores(): Stores {
-  const databaseUrl = process.env.DATABASE_URL;
+  const databaseUrl = getDatabaseUrl();
 
   if (databaseUrl) {
     // Lazy-import to avoid bundling @neondatabase/serverless when not needed
@@ -552,11 +553,12 @@ export function getAlertEvaluatorDeps(): AlertEvaluatorDeps | null {
 
   // Alert cooldown: use DB store if available, otherwise in-memory
   let cooldownStore: AlertCooldownStore;
-  if (process.env.DATABASE_URL) {
+  const databaseUrl = getDatabaseUrl();
+  if (databaseUrl) {
     const { createPool, PgAlertCooldownStore } =
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       require('@wo-agent/db');
-    const pool = createPool(process.env.DATABASE_URL);
+    const pool = createPool(databaseUrl);
     cooldownStore = new PgAlertCooldownStore(pool);
   } else {
     cooldownStore = new InMemoryAlertCooldownStore();

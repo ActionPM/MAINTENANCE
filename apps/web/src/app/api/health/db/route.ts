@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getDatabaseUrl } from '@/lib/database-url';
 import { withObservedRoute } from '@/lib/observability/with-observed-route';
 import { StdoutJsonLogger } from '@wo-agent/core';
 import type { Logger } from '@wo-agent/core';
@@ -6,7 +7,7 @@ import type { Logger } from '@wo-agent/core';
 const logger: Logger = new StdoutJsonLogger();
 
 export const GET = withObservedRoute('health:db', async () => {
-  const databaseUrl = process.env.DATABASE_URL;
+  const databaseUrl = getDatabaseUrl();
 
   if (!databaseUrl) {
     return NextResponse.json(
