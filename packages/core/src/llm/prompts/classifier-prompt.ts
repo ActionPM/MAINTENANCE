@@ -4,11 +4,35 @@ import { compareSemver } from '@wo-agent/schemas';
 /** The prompt version boundary for the evidence-based classifier. */
 export const EVIDENCE_BASED_PROMPT_VERSION = '2.0.0';
 
+/** The prompt version boundary for Priority guidance (added in 2.1.0). */
+export const PRIORITY_GUIDANCE_VERSION = '2.1.0';
+
+/** The prompt version boundary for domain assignment hints (added in 2.2.0). */
+export const DOMAIN_HINTS_VERSION = '2.2.0';
+
+const DOMAIN_HINTS_BLOCK = `
+DOMAIN ASSIGNMENT HINTS:
+- Intercom, buzzer, door-entry, and visitor-access issues are management (general/intercom)
+  unless the tenant describes a specific electrical repair (e.g., "wires exposed", "sparking").
+- Key fob programming, lockout, and room-access issues are management (general/building_access).
+- Lock/key issues involving physical damage ("broken lock", "key snapped off") are maintenance (locksmith).`;
+
+const PRIORITY_GUIDANCE_BLOCK = `
+PRIORITY GUIDANCE:
+- "emergency": immediate safety risk (fire, gas leak, flooding, no heat in winter, structural danger)
+- "high": significant disruption to habitability (no hot water, broken lock, major leak, infestation)
+- "normal": standard maintenance or management request (dripping faucet, appliance issue, clog, document request)
+- "low": cosmetic or non-urgent (paint touch-up, minor wear, scuff)
+- Only classify as "emergency" when there is clear evidence of safety risk or uninhabitable conditions.`;
+
 /**
  * System prompt for the IssueClassifier LLM tool (legacy force-fill version).
  * Used for conversations pinned to prompt_version < 2.0.0.
  */
-export function buildClassifierSystemPromptV1(taxonomy: Taxonomy): string {
+export function buildClassifierSystemPromptV1(
+  taxonomy: Taxonomy,
+  options?: { includePriorityGuidance?: boolean; includeDomainHints?: boolean },
+): string {
   const taxonomyBlock = Object.entries(taxonomy)
     .map(([field, values]) => `${field}: ${(values as string[]).join(', ')}`)
     .join('\n');
@@ -44,7 +68,7 @@ Examples:
 - shelf + no_heat = INVALID (shelves don't have heating problems)
 
 When unsure about a constrained field, use the appropriate "other_*" or "general" value and report it in missing_fields.
-
+${options?.includePriorityGuidance ? PRIORITY_GUIDANCE_BLOCK : ''}${options?.includeDomainHints ? DOMAIN_HINTS_BLOCK : ''}
 RESPOND WITH ONLY a JSON object (no markdown, no explanation):
 {
   "issue_id": "<same as input>",
@@ -85,7 +109,10 @@ RESPOND WITH ONLY a JSON object (no markdown, no explanation):
  * - Cross-domain fields use "not_applicable" (not other_*)
  * - "needs_object" used intentionally for ambiguous objects
  */
-export function buildClassifierSystemPromptV2(taxonomy: Taxonomy): string {
+export function buildClassifierSystemPromptV2(
+  taxonomy: Taxonomy,
+  options?: { includePriorityGuidance?: boolean; includeDomainHints?: boolean },
+): string {
   const taxonomyBlock = Object.entries(taxonomy)
     .map(([field, values]) => `${field}: ${(values as string[]).join(', ')}`)
     .join('\n');
@@ -113,6 +140,7 @@ NEEDS_OBJECT GUIDANCE:
 - Use "needs_object" when the category/problem type is understood but the specific object cannot be identified from the text.
 - Do not use "needs_object" as a lazy default — use it only when there genuinely is an object involved but it is ambiguous.
 
+${options?.includePriorityGuidance ? PRIORITY_GUIDANCE_BLOCK : ''}${options?.includeDomainHints ? DOMAIN_HINTS_BLOCK : ''}
 MISSING_FIELDS:
 - List fields you omitted from classification because the text did not support a value.
 - Also list fields where you assigned a value but have low certainty.
@@ -150,10 +178,15 @@ RESPOND WITH ONLY a JSON object (no markdown, no explanation):
  * This is the main entry point — all callers should use this.
  */
 export function buildClassifierSystemPrompt(taxonomy: Taxonomy, promptVersion?: string): string {
+  const includePriorityGuidance =
+    !!promptVersion && compareSemver(promptVersion, PRIORITY_GUIDANCE_VERSION) >= 0;
+  const includeDomainHints =
+    !!promptVersion && compareSemver(promptVersion, DOMAIN_HINTS_VERSION) >= 0;
+
   if (promptVersion && compareSemver(promptVersion, EVIDENCE_BASED_PROMPT_VERSION) >= 0) {
-    return buildClassifierSystemPromptV2(taxonomy);
+    return buildClassifierSystemPromptV2(taxonomy, { includePriorityGuidance, includeDomainHints });
   }
-  return buildClassifierSystemPromptV1(taxonomy);
+  return buildClassifierSystemPromptV1(taxonomy, { includePriorityGuidance, includeDomainHints });
 }
 
 /**

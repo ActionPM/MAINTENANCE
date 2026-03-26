@@ -21,6 +21,7 @@ import { callIssueClassifier } from '../../classifier/issue-classifier.js';
 import { computeCueScores } from '../../classifier/cue-scoring.js';
 import {
   computeAllFieldConfidences,
+  extractFlatConfidence,
   determineFieldsNeedingInput,
 } from '../../classifier/confidence.js';
 import {
@@ -321,18 +322,19 @@ export async function handleAnswerFollowups(
     }
 
     // Step D: Confidence with constraint boost (C2)
-    const computedConfidence = computeAllFieldConfidences({
+    const confidenceDetail = computeAllFieldConfidences({
       classification: output.classification,
       modelConfidence: output.model_confidence,
       cueResults: cueScoreMap,
       config: confidenceConfig,
       impliedFields,
     });
+    const computedConfidence = extractFlatConfidence(confidenceDetail);
 
     let fieldsNeedingInput = output.needs_human_triage
       ? []
       : determineFieldsNeedingInput({
-          confidenceByField: computedConfidence,
+          confidenceByField: confidenceDetail,
           config: confidenceConfig,
           missingFields: output.missing_fields,
           classificationOutput: output.classification,

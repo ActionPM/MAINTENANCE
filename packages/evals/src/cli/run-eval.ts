@@ -8,11 +8,16 @@
  *
  * Exit code 1 = gate failed (critical-slice regression or blocking-rate increase).
  */
+import { CUE_VERSION, PROMPT_VERSION } from '@wo-agent/schemas';
+import { DEFAULT_MODEL_ID } from '@wo-agent/schemas';
 import { loadDataset } from '../datasets/load-dataset.js';
 import type { NormalizedExample } from '../datasets/load-dataset.js';
 import { runIssueReplay } from '../runners/issue-replay.js';
 import type { IssueReplayResult } from '../runners/issue-replay.js';
-import { FixtureClassifierAdapter } from '../runners/classifier-adapters.js';
+import {
+  AnthropicClassifierAdapter,
+  FixtureClassifierAdapter,
+} from '../runners/classifier-adapters.js';
 import type { ClassifierAdapterOutput } from '../runners/classifier-adapters.js';
 import {
   computeOverallFieldAccuracy,
@@ -48,11 +53,49 @@ function parseArgs(argv: string[]): {
   const baseline = baselineIdx !== -1 ? argv[baselineIdx + 1] : undefined;
 
   if (!dataset) {
-    console.error('Usage: pnpm eval:run --dataset <name> [--adapter fixture] [--baseline <path>]');
+    console.error(
+      'Usage: pnpm eval:run --dataset <name> [--adapter fixture|anthropic] [--baseline <path>]',
+    );
     process.exit(1);
   }
 
   return { dataset, adapter, baseline };
+}
+
+function loadLocalEnvFiles(repoRoot: string): void {
+  for (const fileName of ['.env.local', '.env']) {
+    const filePath = path.join(repoRoot, fileName);
+    if (!fs.existsSync(filePath)) {
+      continue;
+    }
+
+    const lines = fs.readFileSync(filePath, 'utf-8').split(/\r?\n/);
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) {
+        continue;
+      }
+
+      const match = /^([\w.-]+)\s*=\s*(.*)$/.exec(trimmed);
+      if (!match) {
+        continue;
+      }
+
+      const [, key, rawValue] = match;
+      if (process.env[key] != null) {
+        continue;
+      }
+
+      let value = rawValue.trim();
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1);
+      }
+      process.env[key] = value;
+    }
+  }
 }
 
 /**
@@ -158,6 +201,8 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
 
   const evalsRoot = path.resolve(import.meta.dirname ?? '.', '../..');
+  const repoRoot = path.resolve(evalsRoot, '../..');
+  loadLocalEnvFiles(repoRoot);
   const datasetDir = path.resolve(evalsRoot, 'datasets', args.dataset);
 
   console.log(`Loading dataset from ${datasetDir}...`);
@@ -183,7 +228,20 @@ async function main() {
     }
   }
 
-  const classifierAdapter = new FixtureClassifierAdapter(fixtureMap);
+  let classifierAdapter;
+  if (args.adapter === 'fixture') {
+    classifierAdapter = new FixtureClassifierAdapter(fixtureMap);
+  } else if (args.adapter === 'anthropic') {
+    classifierAdapter = new AnthropicClassifierAdapter({
+      apiKey: process.env.ANTHROPIC_API_KEY,
+      taxonomyVersion,
+      modelId: process.env.LLM_DEFAULT_MODEL ?? DEFAULT_MODEL_ID,
+      promptVersion: PROMPT_VERSION,
+      cueVersion: CUE_VERSION,
+    });
+  } else {
+    throw new Error(`Unknown adapter "${args.adapter}". Expected "fixture" or "anthropic".`);
+  }
 
   console.log(`Running replay for ${examples.length} examples...`);
   const resultsByExampleId = new Map<string, IssueReplayResult[]>();
@@ -239,9 +297,11 @@ async function main() {
     dataset_manifest_id: manifestId,
     taxonomy_version: taxonomyVersion,
     schema_version: '1.0.0',
-    cue_dict_version: '1.2.0',
-    prompt_version: 'fixture-replay',
-    model_id: args.adapter === 'fixture' ? 'fixture' : 'unknown',
+    cue_dict_version: CUE_VERSION,
+    prompt_version:
+      args.adapter === 'fixture' ? `fixture-replay (${PROMPT_VERSION})` : PROMPT_VERSION,
+    model_id:
+      args.adapter === 'fixture' ? 'fixture' : (process.env.LLM_DEFAULT_MODEL ?? DEFAULT_MODEL_ID),
     started_at: now,
     completed_at: now,
     results: allResults.map((r) => ({
@@ -249,6 +309,7 @@ async function main() {
       status: r.status,
       classification: r.classification,
       confidenceByField: r.confidenceByField,
+      confidenceComponents: r.confidenceComponents,
       fieldsNeedingInput: r.fieldsNeedingInput,
       hierarchyValid: r.hierarchyValid,
       errors: r.errors,
@@ -265,8 +326,17 @@ async function main() {
   fs.writeFileSync(runPath, JSON.stringify(evalRun, null, 2));
   console.log(`EvalRun written to ${runPath}`);
 
-  // Baseline comparison
-  const baselinePath = args.baseline ?? path.join(outputDir, `${manifestId}-baseline.json`);
+  // Baseline comparison — adapter-aware baseline selection.
+  // Provider (anthropic) runs compare against provider baselines, not fixture baselines.
+  // This prevents conflating LLM variance with pipeline regression.
+  const baselinePath =
+    args.baseline ??
+    (args.adapter !== 'fixture'
+      ? // Prefer adapter-specific baseline, fall back to manifest default
+        (fs.existsSync(path.join(outputDir, `${args.dataset}-${args.adapter}-baseline.json`))
+          ? path.join(outputDir, `${args.dataset}-${args.adapter}-baseline.json`)
+          : path.join(outputDir, `${manifestId}-baseline.json`))
+      : path.join(outputDir, `${manifestId}-baseline.json`));
   let gatePassed = true;
 
   if (fs.existsSync(baselinePath)) {

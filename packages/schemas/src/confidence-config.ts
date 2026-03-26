@@ -19,6 +19,9 @@ export interface ConfidenceConfig {
   readonly medium_threshold: number;
   readonly model_hint_min: number;
   readonly model_hint_max: number;
+  readonly resolved_medium_threshold: number;
+  readonly resolved_medium_max_ambiguity: number;
+  readonly category_gating_threshold: number;
   readonly weights: {
     readonly cue_strength: number;
     readonly completeness: number;
@@ -34,6 +37,9 @@ export const DEFAULT_CONFIDENCE_CONFIG: ConfidenceConfig = {
   medium_threshold: 0.65,
   model_hint_min: 0.2,
   model_hint_max: 0.95,
+  resolved_medium_threshold: 0.78,
+  resolved_medium_max_ambiguity: 0.2,
+  category_gating_threshold: 0.7,
   weights: {
     cue_strength: 0.4,
     completeness: 0.25,

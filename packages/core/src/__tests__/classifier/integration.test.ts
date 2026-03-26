@@ -26,14 +26,14 @@ const VALID_CLASSIFICATION: IssueClassifierOutput = {
   },
   model_confidence: {
     Category: 0.95,
-    Location: 0.9,
-    Sub_Location: 0.85,
+    Location: 0.5, // Medium-band required field: conf ~0.75 (below resolved_medium_threshold 0.78)
+    Sub_Location: 0.5, // Medium-band required field: conf ~0.75
     Maintenance_Category: 0.92,
     Maintenance_Object: 0.95,
     Maintenance_Problem: 0.88,
     Management_Category: 0.95,
     Management_Object: 0.95,
-    Priority: 0.9,
+    Priority: 0.5, // Medium-band risk-relevant field: conf ~0.75
   },
   missing_fields: [],
   needs_human_triage: false,

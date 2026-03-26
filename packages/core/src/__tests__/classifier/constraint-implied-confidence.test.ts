@@ -69,6 +69,8 @@ describe('constraint_implied confidence term', () => {
       },
       config: DEFAULT_CONFIDENCE_CONFIG,
     });
-    expect(withImplied['Sub_Location']).toBeGreaterThan(without['Sub_Location']);
+    expect(withImplied['Sub_Location'].confidence).toBeGreaterThan(
+      without['Sub_Location'].confidence,
+    );
   });
 });

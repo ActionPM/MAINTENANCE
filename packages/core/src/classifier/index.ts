@@ -4,12 +4,15 @@ export type { CueFieldResult, CueScoreMap } from './cue-scoring.js';
 export {
   computeFieldConfidence,
   computeAllFieldConfidences,
+  extractFlatConfidence,
   classifyConfidenceBand,
   determineFieldsNeedingInput,
 } from './confidence.js';
 export type {
   ConfidenceBand,
   FieldConfidenceInput,
+  FieldConfidenceComponents,
+  FieldConfidenceDetail,
   ComputeAllInput,
   DetermineFieldsOptions,
   FieldPolicyMetadata,

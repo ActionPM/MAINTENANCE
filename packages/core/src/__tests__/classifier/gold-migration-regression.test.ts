@@ -146,8 +146,8 @@ describe('version-aware prompt dispatch', () => {
     expect(prompt).not.toContain('Every classification field MUST use a value');
   });
 
-  it('PROMPT_VERSION is now 2.0.0', () => {
-    expect(PROMPT_VERSION).toBe('2.0.0');
+  it('PROMPT_VERSION is >= 2.0.0 (evidence-based classifier)', () => {
+    expect(PROMPT_VERSION).toBe('2.2.0');
   });
 });
 

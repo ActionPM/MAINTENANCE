@@ -3,6 +3,21 @@ import type { CueFieldResult } from './cue-scoring.js';
 
 export type ConfidenceBand = 'high' | 'medium' | 'low';
 
+export interface FieldConfidenceComponents {
+  readonly cueStrength: number;
+  readonly completeness: number;
+  readonly modelHint: number;
+  readonly modelHintClamped: number;
+  readonly constraintImplied: number;
+  readonly disagreement: number;
+  readonly ambiguityPenalty: number;
+}
+
+export interface FieldConfidenceDetail {
+  readonly confidence: number;
+  readonly components: FieldConfidenceComponents;
+}
+
 export interface FieldConfidenceInput {
   readonly cueStrength: number;
   readonly completeness: number;
@@ -70,10 +85,13 @@ export function classifyConfidenceBand(
 
 /**
  * Compute confidence for all classified fields, using cue results and model output.
+ * Returns per-field detail including the final score and raw components.
  */
-export function computeAllFieldConfidences(input: ComputeAllInput): Record<string, number> {
+export function computeAllFieldConfidences(
+  input: ComputeAllInput,
+): Record<string, FieldConfidenceDetail> {
   const { classification, modelConfidence, cueResults, config, impliedFields } = input;
-  const result: Record<string, number> = {};
+  const result: Record<string, FieldConfidenceDetail> = {};
 
   for (const field of Object.keys(classification)) {
     const cueResult = cueResults[field];
@@ -97,7 +115,11 @@ export function computeAllFieldConfidences(input: ComputeAllInput): Record<strin
     // ambiguity_penalty: from cue scoring (how close top-2 labels are)
     const ambiguityPenalty = cueResult?.ambiguity ?? 0;
 
-    result[field] = computeFieldConfidence({
+    const clampedHint = Math.max(
+      config.model_hint_min,
+      Math.min(config.model_hint_max, rawModelHint),
+    );
+    const conf = computeFieldConfidence({
       cueStrength,
       completeness,
       modelHint: rawModelHint,
@@ -106,9 +128,36 @@ export function computeAllFieldConfidences(input: ComputeAllInput): Record<strin
       ambiguityPenalty,
       config,
     });
+
+    result[field] = {
+      confidence: conf,
+      components: {
+        cueStrength,
+        completeness,
+        modelHint: rawModelHint,
+        modelHintClamped: clampedHint,
+        constraintImplied,
+        disagreement,
+        ambiguityPenalty,
+      },
+    };
   }
 
   return result;
+}
+
+/**
+ * Extract flat confidence scores from a detail map.
+ * Convenience helper for callers that need Record<string, number>.
+ */
+export function extractFlatConfidence(
+  details: Record<string, FieldConfidenceDetail>,
+): Record<string, number> {
+  const flat: Record<string, number> = {};
+  for (const [field, detail] of Object.entries(details)) {
+    flat[field] = detail.confidence;
+  }
+  return flat;
 }
 
 /** Fields to exclude when Category is confidently resolved */
@@ -133,7 +182,7 @@ export const DEFAULT_FIELD_POLICY: FieldPolicyMetadata = {
 } as const;
 
 export interface DetermineFieldsOptions {
-  readonly confidenceByField: Record<string, number>;
+  readonly confidenceByField: Record<string, FieldConfidenceDetail>;
   readonly config: ConfidenceConfig;
   readonly missingFields?: readonly string[];
   readonly classificationOutput?: Record<string, string>;
@@ -155,19 +204,35 @@ export function determineFieldsNeedingInput(opts: DetermineFieldsOptions): strin
   const config = opts.config;
   const needed = new Set<string>();
 
-  for (const [field, confidence] of Object.entries(opts.confidenceByField)) {
-    const band = classifyConfidenceBand(confidence, config);
+  for (const [field, detail] of Object.entries(opts.confidenceByField)) {
+    const band = classifyConfidenceBand(detail.confidence, config);
 
     if (band === 'low') {
       needed.add(field);
     } else if (band === 'medium') {
-      // Spec §14.3: medium confidence — ask if required OR risk-relevant
-      const isRequired = fieldPolicy.requiredFields.includes(field);
-      const isRiskRelevant = fieldPolicy.riskRelevantFields.includes(field);
-      if (isRequired || isRiskRelevant) {
-        needed.add(field);
+      // Resolved medium: accept if field has strong, unambiguous signals (§14.3.1)
+      const isResolvedMedium =
+        detail.confidence >= config.resolved_medium_threshold &&
+        detail.components.disagreement === 0 &&
+        detail.components.ambiguityPenalty <= config.resolved_medium_max_ambiguity &&
+        !isMissingField(field, opts.missingFields);
+
+      // Priority=emergency is never auto-accepted from resolved medium
+      const isEmergencyPriority =
+        field === 'Priority' && opts.classificationOutput?.['Priority'] === 'emergency';
+
+      if (isResolvedMedium && !isEmergencyPriority) {
+        // Accepted — do not add to needed
+      } else {
+        // Original medium-band logic: ask if required OR risk-relevant
+        const isRequired = fieldPolicy.requiredFields.includes(field);
+        const isRiskRelevant = fieldPolicy.riskRelevantFields.includes(field);
+        if (isRequired || isRiskRelevant) {
+          needed.add(field);
+        }
       }
     }
+    // high band: accepted as-is (no change)
   }
 
   // Merge in any fields the classifier reported as missing (not classified at all).
@@ -179,17 +244,39 @@ export function determineFieldsNeedingInput(opts: DetermineFieldsOptions): strin
 
   const fields = [...needed];
 
-  // Category gating: if Category is confident, exclude irrelevant cross-category fields
-  if (opts.classificationOutput && !fields.includes('Category')) {
+  // Category gating (§14.3.2): when Category is confidently resolved, prune cross-domain fields.
+  // Uses category_gating_threshold (lower than resolved_medium_threshold) with
+  // disagreement and ambiguity guards to prevent over-pruning on mixed-domain texts.
+  if (opts.classificationOutput) {
+    const categoryDetail = opts.confidenceByField['Category'];
     const category = opts.classificationOutput['Category'];
-    const excludes =
-      category === 'maintenance'
-        ? MAINTENANCE_EXCLUDES
-        : category === 'management'
-          ? MANAGEMENT_EXCLUDES
-          : [];
-    return fields.filter((f) => !excludes.includes(f));
+
+    const categoryGatable =
+      categoryDetail &&
+      categoryDetail.confidence >= config.category_gating_threshold &&
+      categoryDetail.components.disagreement === 0 &&
+      categoryDetail.components.ambiguityPenalty <= config.resolved_medium_max_ambiguity;
+
+    if (categoryGatable && category) {
+      const excludes =
+        category === 'maintenance'
+          ? MAINTENANCE_EXCLUDES
+          : category === 'management'
+            ? MANAGEMENT_EXCLUDES
+            : [];
+      const filtered = fields.filter((f) => !excludes.includes(f));
+
+      if (category === 'management') {
+        return filtered.filter((f) => f !== 'Location' && f !== 'Sub_Location');
+      }
+
+      return filtered;
+    }
   }
 
   return fields;
+}
+
+function isMissingField(field: string, missingFields?: readonly string[]): boolean {
+  return missingFields?.includes(field) ?? false;
 }

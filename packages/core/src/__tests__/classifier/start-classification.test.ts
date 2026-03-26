@@ -30,14 +30,14 @@ const VALID_CLASSIFICATION: IssueClassifierOutput = {
   },
   model_confidence: {
     Category: 0.95,
-    Location: 0.9,
-    Sub_Location: 0.85,
+    Location: 0.5, // Medium-band required field: conf ~0.75 (below resolved_medium_threshold 0.78)
+    Sub_Location: 0.5, // Medium-band required field: conf ~0.75
     Maintenance_Category: 0.92,
     Maintenance_Object: 0.95,
     Maintenance_Problem: 0.88,
     Management_Category: 0.95,
     Management_Object: 0.95,
-    Priority: 0.9,
+    Priority: 0.5, // Medium-band risk-relevant field: conf ~0.75
   },
   missing_fields: [],
   needs_human_triage: false,
@@ -232,6 +232,45 @@ describe('handleStartClassification', () => {
     const result = await handleStartClassification(ctx);
     expect(result.newState).toBe(ConversationState.NEEDS_TENANT_INPUT);
     expect(result.session.classification_results![0].fieldsNeedingInput).toContain('Location');
+  });
+
+  it('routes to needs_tenant_input when classification contains needs_object', async () => {
+    const needsObjectOutput: IssueClassifierOutput = {
+      ...VALID_CLASSIFICATION,
+      classification: {
+        ...VALID_CLASSIFICATION.classification,
+        Maintenance_Object: 'needs_object',
+      },
+      model_confidence: {
+        ...VALID_CLASSIFICATION.model_confidence,
+        Maintenance_Object: 0.5,
+      },
+    };
+    // Use v2 prompt so the completeness gate runs (needs_object detection is a v2+ feature)
+    const ctx = makeContext({
+      classifierFn: vi.fn().mockResolvedValue(needsObjectOutput),
+    });
+    (ctx as any).session = {
+      ...ctx.session,
+      pinned_versions: { ...VERSIONS, prompt_version: '2.0.0' },
+    };
+    // Override followUpGenerator to target the needs_object field
+    (ctx.deps as any).followUpGenerator = vi.fn().mockResolvedValue({
+      questions: [
+        {
+          question_id: 'q-obj',
+          field_target: 'Maintenance_Object',
+          prompt: 'What specific fixture is affected?',
+          options: ['toilet', 'sink', 'faucet'],
+          answer_type: 'enum',
+        },
+      ],
+    });
+    const result = await handleStartClassification(ctx);
+    expect(result.newState).toBe(ConversationState.NEEDS_TENANT_INPUT);
+    expect(result.session.classification_results![0].fieldsNeedingInput).toContain(
+      'Maintenance_Object',
+    );
   });
 
   it('uses intermediateSteps for matrix compliance', async () => {

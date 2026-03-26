@@ -206,6 +206,9 @@ const RELAXED_CONFIDENCE: ConfidenceConfig = {
   medium_threshold: 0.65,
   model_hint_min: 0.2,
   model_hint_max: 0.95,
+  resolved_medium_threshold: 0.78,
+  resolved_medium_max_ambiguity: 0.2,
+  category_gating_threshold: 0.7,
   weights: {
     cue_strength: 0.4,
     completeness: 0.25,

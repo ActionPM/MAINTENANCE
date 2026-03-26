@@ -121,6 +121,7 @@ export {
   computeCueStrengthForField,
   computeFieldConfidence,
   computeAllFieldConfidences,
+  extractFlatConfidence,
   classifyConfidenceBand,
   determineFieldsNeedingInput,
   callIssueClassifier,
@@ -137,13 +138,18 @@ export type {
   CueScoreMap,
   ConfidenceBand,
   FieldConfidenceInput,
+  FieldConfidenceComponents,
+  FieldConfidenceDetail,
   ComputeAllInput,
   DetermineFieldsOptions,
   ClassifierResult,
   ClassificationEvent,
 } from './classifier/index.js';
 
-export { EVIDENCE_BASED_PROMPT_VERSION } from './llm/prompts/classifier-prompt.js';
+export {
+  EVIDENCE_BASED_PROMPT_VERSION,
+  DOMAIN_HINTS_VERSION,
+} from './llm/prompts/classifier-prompt.js';
 
 // --- Follow-up (Phase 6) ---
 export {

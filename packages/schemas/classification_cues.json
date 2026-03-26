@@ -1,5 +1,5 @@
 {
-  "version": "1.3.0",
+  "version": "1.4.0",
   "fields": {
     "Category": {
       "maintenance": {
@@ -50,14 +50,53 @@
         ]
       },
       "management": {
-        "keywords": ["rent", "lease", "move out", "receipt", "payment"],
-        "regex": []
+        "keywords": [
+          "rent",
+          "lease",
+          "move out",
+          "receipt",
+          "payment",
+          "billing",
+          "charges",
+          "invoice",
+          "account",
+          "balance",
+          "deposit",
+          "renewal",
+          "notice",
+          "agreement",
+          "amenity",
+          "booking",
+          "reservation",
+          "parking",
+          "storage",
+          "key fob"
+        ],
+        "regex": [
+          "\\b(rent|lease|billing|payment|invoice)\\s*(charge|question|issue|inquiry|receipt|increase)?\\b",
+          "\\b(move\\s*(in|out)|lease\\s*(renewal|inquiry|question))\\b",
+          "\\b(parking|storage|locker)\\s*(spot|unit|space|rental)\\b"
+        ]
       }
     },
     "Location": {
       "suite": {
-        "keywords": ["apartment", "unit", "suite", "my room", "my place"],
-        "regex": ["\\b(in|inside)\\s+my\\s+(apartment|unit|suite|place|room)\\b"]
+        "keywords": [
+          "apartment",
+          "unit",
+          "suite",
+          "my room",
+          "my place",
+          "kitchen",
+          "bathroom",
+          "bedroom",
+          "living room",
+          "dining room"
+        ],
+        "regex": [
+          "\\b(in|inside)\\s+my\\s+(apartment|unit|suite|place|room)\\b",
+          "\\bmy\\s+(kitchen|bathroom|bedroom|living room)\\b"
+        ]
       },
       "building_interior": {
         "keywords": ["hallway", "lobby", "elevator", "stairwell", "laundry room"],
@@ -365,6 +404,10 @@
           "\\b(venetian|roller|vertical|window)\\s*blinds?\\b",
           "\\bblinds?\\s+(is|are|not|broken|stuck|fell|won)\\b"
         ]
+      },
+      "needs_object": {
+        "keywords": ["something is broken", "something is leaking", "something is not working"],
+        "regex": ["\\bsomething\\s+(is|in)\\s+my\\s+(kitchen|bathroom|bedroom|apartment)\\b"]
       }
     },
     "Maintenance_Problem": {
@@ -467,7 +510,10 @@
           "booking",
           "schedule",
           "parking",
-          "intercom"
+          "intercom",
+          "intercom issue",
+          "buzzer issue",
+          "door entry"
         ],
         "regex": []
       }
@@ -495,8 +541,15 @@
       },
       "parking": { "keywords": ["parking", "parking spot", "parking pass", "garage"], "regex": [] },
       "intercom": {
-        "keywords": ["intercom", "buzzer", "door entry", "visitor access"],
-        "regex": []
+        "keywords": [
+          "intercom",
+          "buzzer",
+          "door entry",
+          "visitor access",
+          "entry system",
+          "call box"
+        ],
+        "regex": ["\\b(intercom|buzzer|door\\s*entry|entry\\s*system)\\b"]
       },
       "building_access": {
         "keywords": [
@@ -517,6 +570,21 @@
           "\\b(gym|pool|cable|electrical|phone|billiard|mechanical)\\s*room\\s*(access)?\\b",
           "\\bfob\\s+(not|is|program|replace|need)\\b"
         ]
+      },
+      "booking_scheduling": {
+        "keywords": [
+          "booking",
+          "reservation",
+          "schedule",
+          "appointment",
+          "amenity booking",
+          "room booking",
+          "party room",
+          "common room",
+          "meeting room",
+          "reserve"
+        ],
+        "regex": ["\\b(book|reserve|schedule)\\s+(a\\s+)?(room|amenity|space|time)\\b"]
       }
     }
   }

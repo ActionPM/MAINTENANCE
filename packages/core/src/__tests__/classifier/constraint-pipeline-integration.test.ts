@@ -43,7 +43,9 @@ describe('constraint pipeline integration', () => {
       config: DEFAULT_CONFIDENCE_CONFIG,
     });
 
-    expect(withBoost['Sub_Location']).toBeGreaterThan(withoutBoost['Sub_Location']);
+    expect(withBoost['Sub_Location'].confidence).toBeGreaterThan(
+      withoutBoost['Sub_Location'].confidence,
+    );
   });
 
   it('detects toilet+bedroom as a hierarchical violation', () => {

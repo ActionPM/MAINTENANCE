@@ -60,3 +60,7 @@ docs/ActionPM[[:space:]]Taxonomy[[:space:]]Transition[[:space:]]Handoff
 XX-Archive/
 
 *.code-workspace
+
+# Eval ephemeral artifacts (keep only canonical *-baseline.json files)
+packages/evals/baselines/*-run-*.json
+packages/evals/baselines/*-comparison-*.md

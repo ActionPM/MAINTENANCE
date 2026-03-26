@@ -5,10 +5,12 @@ import { fileURLToPath } from 'node:url';
 import {
   computeCueScores,
   computeAllFieldConfidences,
+  extractFlatConfidence,
   determineFieldsNeedingInput,
   resolveConstraintImpliedFields,
   checkCompleteness,
 } from '@wo-agent/core';
+import type { FieldConfidenceComponents } from '@wo-agent/core';
 import {
   validateClassificationAgainstTaxonomy,
   DEFAULT_CONFIDENCE_CONFIG,
@@ -46,6 +48,7 @@ export interface IssueReplayResult {
   readonly status: 'ok' | 'schema_fail' | 'taxonomy_fail' | 'needs_human_triage';
   readonly classification?: Record<string, string>;
   readonly confidenceByField?: Record<string, number>;
+  readonly confidenceComponents?: Record<string, FieldConfidenceComponents>;
   readonly fieldsNeedingInput?: string[];
   readonly hierarchyValid: boolean;
   readonly constraintImpliedFields?: Record<string, string>;
@@ -57,10 +60,17 @@ export async function runIssueReplay(input: IssueReplayInput): Promise<IssueRepl
   const issueId = `${example_id}-issue-${issue_index}`;
 
   try {
+    const cueScores = computeCueScores(issue_text, cueDict);
+    const cueScoresForInput: Record<string, number> = {};
+    for (const [field, result] of Object.entries(cueScores)) {
+      cueScoresForInput[field] = result.score;
+    }
+
     // Step 1: Classify
     const output = await classifierAdapter.classify({
       issue_id: issueId,
       issue_text,
+      cue_scores: cueScoresForInput,
     });
 
     if (output.needs_human_triage) {
@@ -134,22 +144,24 @@ export async function runIssueReplay(input: IssueReplayInput): Promise<IssueRepl
       completenessIncomplete = [...completenessResult.incompleteFields];
     }
 
-    // Step 4: Compute cue scores
-    const cueScores = computeCueScores(issue_text, cueDict);
-
     // Step 5: Compute confidence
     const config = DEFAULT_CONFIDENCE_CONFIG;
-    const confidenceByField = computeAllFieldConfidences({
+    const confidenceDetail = computeAllFieldConfidences({
       classification,
       modelConfidence: output.model_confidence,
       cueResults: cueScores,
       config,
       impliedFields,
     });
+    const confidenceByField = extractFlatConfidence(confidenceDetail);
+    const componentsMap: Record<string, FieldConfidenceComponents> = {};
+    for (const [field, detail] of Object.entries(confidenceDetail)) {
+      componentsMap[field] = detail.components;
+    }
 
     // Step 6: Determine fields needing input
     let fieldsNeedingInput = determineFieldsNeedingInput({
-      confidenceByField,
+      confidenceByField: confidenceDetail,
       config,
       missingFields: output.missing_fields,
       classificationOutput: classification,
@@ -173,6 +185,7 @@ export async function runIssueReplay(input: IssueReplayInput): Promise<IssueRepl
       status: 'ok',
       classification,
       confidenceByField,
+      confidenceComponents: componentsMap,
       fieldsNeedingInput,
       hierarchyValid: true,
       constraintImpliedFields: impliedFields,

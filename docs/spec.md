@@ -468,6 +468,28 @@ Threshold bands:
 
 **Bands are provisional**: validate and tune on Gold Set B before pilot launch.
 
+#### 14.3.1 Resolved Medium Acceptance
+
+A field in the medium band (>= medium_threshold, < high_threshold) is accepted without follow-up when ALL of the following hold:
+
+- confidence >= resolved_medium_threshold (default: 0.78)
+- disagreement = 0 (cue and model agree on the label)
+- ambiguity_penalty <= resolved_medium_max_ambiguity (default: 0.20)
+- field is not in missing_fields
+- field is not Priority=emergency
+
+This rule does not change the confidence formula or thresholds. It adds a policy gate in follow-up field selection.
+
+#### 14.3.2 Category Gating Threshold
+
+Cross-domain field pruning fires when ALL of the following hold:
+
+- Category confidence >= category_gating_threshold (default: 0.70)
+- Category disagreement = 0 (cue and model agree on the category)
+- Category ambiguity_penalty <= resolved_medium_max_ambiguity (default: 0.20)
+
+This is independent of whether Category is in fieldsNeedingInput. The lower confidence threshold (vs. resolved_medium_threshold) reflects that pruning removes obviously irrelevant fields, not accepting a value. The ambiguity guard prevents over-pruning on mixed-domain texts where both maintenance and management cues fire.
+
 ### 14.4 Classification cue dictionaries (required artifact)
 
 Add `packages/schemas/classification_cues.json` defining per-field keyword/regex cues used to compute `cue_strength`.
