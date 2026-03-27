@@ -66,6 +66,7 @@ export const TRANSITION_MATRIX: Record<
 
   [ConversationState.UNIT_SELECTION_REQUIRED]: {
     [ActionType.SELECT_UNIT]: [ConversationState.UNIT_SELECTED],
+    [ActionType.RESUME]: [ConversationState.UNIT_SELECTION_REQUIRED],
     [ActionType.ABANDON]: [ConversationState.INTAKE_ABANDONED],
   },
 
@@ -89,6 +90,7 @@ export const TRANSITION_MATRIX: Record<
     [ActionType.EDIT_ISSUE]: [ConversationState.SPLIT_PROPOSED],
     [ActionType.ADD_ISSUE]: [ConversationState.SPLIT_PROPOSED],
     [ActionType.REJECT_SPLIT]: [ConversationState.SPLIT_FINALIZED],
+    [ActionType.RESUME]: [ConversationState.SPLIT_PROPOSED],
     [ActionType.ABANDON]: [ConversationState.INTAKE_ABANDONED],
   },
 
@@ -106,12 +108,14 @@ export const TRANSITION_MATRIX: Record<
       ConversationState.LLM_ERROR_RETRYABLE,
       ConversationState.LLM_ERROR_TERMINAL,
     ],
+    [ActionType.RESUME]: [ConversationState.CLASSIFICATION_IN_PROGRESS],
     [ActionType.ABANDON]: [ConversationState.INTAKE_ABANDONED],
   },
 
   [ConversationState.NEEDS_TENANT_INPUT]: {
     [ActionType.ANSWER_FOLLOWUPS]: [ConversationState.CLASSIFICATION_IN_PROGRESS],
     [ActionType.SUBMIT_ADDITIONAL_MESSAGE]: [ConversationState.NEEDS_TENANT_INPUT],
+    [ActionType.RESUME]: [ConversationState.NEEDS_TENANT_INPUT],
     [ActionType.ABANDON]: [ConversationState.INTAKE_ABANDONED],
   },
 
@@ -119,6 +123,7 @@ export const TRANSITION_MATRIX: Record<
     [ActionType.CONFIRM_SUBMISSION]: [ConversationState.SUBMITTED],
     [SystemEvent.STALENESS_DETECTED]: [ConversationState.SPLIT_FINALIZED],
     [ActionType.SUBMIT_ADDITIONAL_MESSAGE]: [ConversationState.TENANT_CONFIRMATION_PENDING],
+    [ActionType.RESUME]: [ConversationState.TENANT_CONFIRMATION_PENDING],
     [ActionType.ABANDON]: [ConversationState.INTAKE_ABANDONED],
   },
 

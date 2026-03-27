@@ -63,6 +63,7 @@ describe('TRANSITION_MATRIX', () => {
     ['intake_started', 'RESUME', ['intake_started']],
     // unit_selection_required
     ['unit_selection_required', 'SELECT_UNIT', ['unit_selected']],
+    ['unit_selection_required', 'RESUME', ['unit_selection_required']],
     ['unit_selection_required', 'ABANDON', ['intake_abandoned']],
     // unit_selected
     ['unit_selected', 'SUBMIT_INITIAL_MESSAGE', ['split_in_progress']],
@@ -77,6 +78,7 @@ describe('TRANSITION_MATRIX', () => {
     ['split_proposed', 'EDIT_ISSUE', ['split_proposed']],
     ['split_proposed', 'ADD_ISSUE', ['split_proposed']],
     ['split_proposed', 'REJECT_SPLIT', ['split_finalized']],
+    ['split_proposed', 'RESUME', ['split_proposed']],
     ['split_proposed', 'ABANDON', ['intake_abandoned']],
     // split_finalized
     ['split_finalized', 'START_CLASSIFICATION', ['classification_in_progress']],
@@ -88,15 +90,18 @@ describe('TRANSITION_MATRIX', () => {
       ['needs_tenant_input', 'tenant_confirmation_pending'],
     ],
     ['classification_in_progress', 'LLM_FAIL', ['llm_error_retryable', 'llm_error_terminal']],
+    ['classification_in_progress', 'RESUME', ['classification_in_progress']],
     ['classification_in_progress', 'ABANDON', ['intake_abandoned']],
     // needs_tenant_input
     ['needs_tenant_input', 'ANSWER_FOLLOWUPS', ['classification_in_progress']],
     ['needs_tenant_input', 'SUBMIT_ADDITIONAL_MESSAGE', ['needs_tenant_input']],
+    ['needs_tenant_input', 'RESUME', ['needs_tenant_input']],
     ['needs_tenant_input', 'ABANDON', ['intake_abandoned']],
     // tenant_confirmation_pending
     ['tenant_confirmation_pending', 'CONFIRM_SUBMISSION', ['submitted']],
     ['tenant_confirmation_pending', 'STALENESS_DETECTED', ['split_finalized']],
     ['tenant_confirmation_pending', 'SUBMIT_ADDITIONAL_MESSAGE', ['tenant_confirmation_pending']],
+    ['tenant_confirmation_pending', 'RESUME', ['tenant_confirmation_pending']],
     ['tenant_confirmation_pending', 'ABANDON', ['intake_abandoned']],
     // submitted
     ['submitted', 'SUBMIT_INITIAL_MESSAGE', ['submitted']],
