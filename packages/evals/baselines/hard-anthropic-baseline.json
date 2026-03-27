@@ -1,20 +1,21 @@
 {
-  "run_id": "run-1774539418454",
+  "run_id": "run-1774566191301",
   "runner_type": "issue_level",
   "dataset_manifest_id": "hard-v0.1",
   "taxonomy_version": "2.0.0",
   "schema_version": "1.0.0",
-  "cue_dict_version": "1.5.0",
-  "prompt_version": "2.2.0",
+  "cue_dict_version": "1.6.0",
+  "prompt_version": "2.3.0",
   "model_id": "claude-sonnet-4-20250514",
-  "started_at": "2026-03-26T15:36:58.454Z",
-  "completed_at": "2026-03-26T15:36:58.454Z",
+  "started_at": "2026-03-26T23:03:11.301Z",
+  "completed_at": "2026-03-26T23:03:11.301Z",
   "results": [
     {
       "example_id": "hard-001",
       "status": "ok",
       "classification": {
         "Category": "maintenance",
+        "Maintenance_Category": "electrical",
         "Maintenance_Object": "needs_object",
         "Maintenance_Problem": "noise_vibration",
         "Management_Category": "not_applicable",
@@ -23,11 +24,12 @@
       },
       "confidenceByField": {
         "Category": 0.42000000000000004,
-        "Maintenance_Object": 0.33,
+        "Maintenance_Category": 0.53,
+        "Maintenance_Object": 0.37,
         "Maintenance_Problem": 0.67,
         "Management_Category": 0.29000000000000004,
         "Management_Object": 0.43000000000000005,
-        "Priority": 0.39
+        "Priority": 0.4
       },
       "confidenceComponents": {
         "Category": {
@@ -39,11 +41,20 @@
           "disagreement": 0,
           "ambiguityPenalty": 0
         },
+        "Maintenance_Category": {
+          "cueStrength": 0.6,
+          "completeness": 1,
+          "modelHint": 0.7,
+          "modelHintClamped": 0.7,
+          "constraintImplied": 0,
+          "disagreement": 1,
+          "ambiguityPenalty": 0
+        },
         "Maintenance_Object": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.4,
-          "modelHintClamped": 0.4,
+          "modelHint": 0.6,
+          "modelHintClamped": 0.6,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -78,8 +89,8 @@
         "Priority": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.7,
-          "modelHintClamped": 0.7,
+          "modelHint": 0.75,
+          "modelHintClamped": 0.75,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -87,14 +98,14 @@
       },
       "fieldsNeedingInput": [
         "Category",
+        "Maintenance_Category",
         "Maintenance_Object",
         "Maintenance_Problem",
         "Management_Category",
         "Management_Object",
         "Priority",
         "Location",
-        "Sub_Location",
-        "Maintenance_Category"
+        "Sub_Location"
       ],
       "hierarchyValid": true
     },
@@ -105,7 +116,7 @@
         "Category": "maintenance",
         "Sub_Location": "ceiling",
         "Maintenance_Category": "plumbing",
-        "Maintenance_Object": "pipe",
+        "Maintenance_Object": "needs_object",
         "Maintenance_Problem": "leak",
         "Management_Category": "not_applicable",
         "Management_Object": "not_applicable",
@@ -115,17 +126,17 @@
         "Category": 0.8400000000000001,
         "Sub_Location": 0.43000000000000005,
         "Maintenance_Category": 0.81,
-        "Maintenance_Object": 0.63,
-        "Maintenance_Problem": 0.66,
-        "Management_Category": 0.29000000000000004,
-        "Management_Object": 0.29000000000000004,
-        "Priority": 0.42000000000000004
+        "Maintenance_Object": 0.53,
+        "Maintenance_Problem": 0.67,
+        "Management_Category": 0.44,
+        "Management_Object": 0.44,
+        "Priority": 0.41000000000000003
       },
       "confidenceComponents": {
         "Category": {
           "cueStrength": 1,
           "completeness": 1,
-          "modelHint": 0.95,
+          "modelHint": 1,
           "modelHintClamped": 0.95,
           "constraintImplied": 0,
           "disagreement": 0,
@@ -155,14 +166,14 @@
           "modelHint": 0.7,
           "modelHintClamped": 0.7,
           "constraintImplied": 0,
-          "disagreement": 0,
+          "disagreement": 1,
           "ambiguityPenalty": 0
         },
         "Maintenance_Problem": {
           "cueStrength": 0.6,
           "completeness": 1,
-          "modelHint": 0.85,
-          "modelHintClamped": 0.85,
+          "modelHint": 0.9,
+          "modelHintClamped": 0.9,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -170,8 +181,8 @@
         "Management_Category": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0,
-          "modelHintClamped": 0.2,
+          "modelHint": 1,
+          "modelHintClamped": 0.95,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -179,8 +190,8 @@
         "Management_Object": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0,
-          "modelHintClamped": 0.2,
+          "modelHint": 1,
+          "modelHintClamped": 0.95,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -188,8 +199,8 @@
         "Priority": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.85,
-          "modelHintClamped": 0.85,
+          "modelHint": 0.8,
+          "modelHintClamped": 0.8,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -211,23 +222,23 @@
         "Category": "maintenance",
         "Location": "suite",
         "Sub_Location": "kitchen",
-        "Maintenance_Category": "general_maintenance",
+        "Maintenance_Category": "appliance",
         "Maintenance_Object": "stove",
         "Maintenance_Problem": "smell",
+        "Priority": "high",
         "Management_Category": "not_applicable",
-        "Management_Object": "not_applicable",
-        "Priority": "high"
+        "Management_Object": "not_applicable"
       },
       "confidenceByField": {
         "Category": 0.44,
         "Location": 0.43000000000000005,
         "Sub_Location": 0.44,
-        "Maintenance_Category": 0.53,
-        "Maintenance_Object": 0.66,
+        "Maintenance_Category": 0.65,
+        "Maintenance_Object": 0.67,
         "Maintenance_Problem": 0.6799999999999999,
+        "Priority": 0.42000000000000004,
         "Management_Category": 0.29000000000000004,
-        "Management_Object": 0.29000000000000004,
-        "Priority": 0.41000000000000003
+        "Management_Object": 0.29000000000000004
       },
       "confidenceComponents": {
         "Category": {
@@ -260,17 +271,17 @@
         "Maintenance_Category": {
           "cueStrength": 0.6,
           "completeness": 1,
-          "modelHint": 0.7,
-          "modelHintClamped": 0.7,
+          "modelHint": 0.8,
+          "modelHintClamped": 0.8,
           "constraintImplied": 0,
-          "disagreement": 1,
+          "disagreement": 0,
           "ambiguityPenalty": 0
         },
         "Maintenance_Object": {
           "cueStrength": 0.6,
           "completeness": 1,
-          "modelHint": 0.85,
-          "modelHintClamped": 0.85,
+          "modelHint": 0.9,
+          "modelHintClamped": 0.9,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -280,6 +291,15 @@
           "completeness": 1,
           "modelHint": 0.95,
           "modelHintClamped": 0.95,
+          "constraintImplied": 0,
+          "disagreement": 0,
+          "ambiguityPenalty": 0
+        },
+        "Priority": {
+          "cueStrength": 0,
+          "completeness": 1,
+          "modelHint": 0.85,
+          "modelHintClamped": 0.85,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -301,15 +321,6 @@
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
-        },
-        "Priority": {
-          "cueStrength": 0,
-          "completeness": 1,
-          "modelHint": 0.8,
-          "modelHintClamped": 0.8,
-          "constraintImplied": 0,
-          "disagreement": 0,
-          "ambiguityPenalty": 0
         }
       },
       "fieldsNeedingInput": [
@@ -318,9 +329,9 @@
         "Sub_Location",
         "Maintenance_Category",
         "Maintenance_Problem",
+        "Priority",
         "Management_Category",
-        "Management_Object",
-        "Priority"
+        "Management_Object"
       ],
       "hierarchyValid": true
     },
@@ -330,7 +341,6 @@
       "classification": {
         "Category": "maintenance",
         "Location": "suite",
-        "Sub_Location": "bathroom",
         "Maintenance_Category": "plumbing",
         "Maintenance_Object": "needs_object",
         "Maintenance_Problem": "leak",
@@ -340,14 +350,13 @@
       },
       "confidenceByField": {
         "Category": 0.6799999999999999,
-        "Location": 0.66,
-        "Sub_Location": 0.65,
-        "Maintenance_Category": 0.59,
-        "Maintenance_Object": 0.37,
-        "Maintenance_Problem": 0.42000000000000004,
-        "Management_Category": 0.29000000000000004,
-        "Management_Object": 0.29000000000000004,
-        "Priority": 0.41000000000000003
+        "Location": 0.67,
+        "Maintenance_Category": 0.61,
+        "Maintenance_Object": 0.41000000000000003,
+        "Maintenance_Problem": 0.43000000000000005,
+        "Management_Category": 0.44,
+        "Management_Object": 0.44,
+        "Priority": 0.42000000000000004
       },
       "confidenceComponents": {
         "Category": {
@@ -362,17 +371,8 @@
         "Location": {
           "cueStrength": 0.6,
           "completeness": 1,
-          "modelHint": 0.85,
-          "modelHintClamped": 0.85,
-          "constraintImplied": 0,
-          "disagreement": 0,
-          "ambiguityPenalty": 0
-        },
-        "Sub_Location": {
-          "cueStrength": 0.6,
-          "completeness": 1,
-          "modelHint": 0.8,
-          "modelHintClamped": 0.8,
+          "modelHint": 0.9,
+          "modelHintClamped": 0.9,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -380,8 +380,8 @@
         "Maintenance_Category": {
           "cueStrength": 0.6,
           "completeness": 1,
-          "modelHint": 0.75,
-          "modelHintClamped": 0.75,
+          "modelHint": 0.85,
+          "modelHintClamped": 0.85,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 1
@@ -389,8 +389,8 @@
         "Maintenance_Object": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.6,
-          "modelHintClamped": 0.6,
+          "modelHint": 0.8,
+          "modelHintClamped": 0.8,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -398,8 +398,8 @@
         "Maintenance_Problem": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.85,
-          "modelHintClamped": 0.85,
+          "modelHint": 0.9,
+          "modelHintClamped": 0.9,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -407,8 +407,8 @@
         "Management_Category": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0,
-          "modelHintClamped": 0.2,
+          "modelHint": 0.95,
+          "modelHintClamped": 0.95,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -416,8 +416,8 @@
         "Management_Object": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0,
-          "modelHintClamped": 0.2,
+          "modelHint": 0.95,
+          "modelHintClamped": 0.95,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -425,8 +425,8 @@
         "Priority": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.8,
-          "modelHintClamped": 0.8,
+          "modelHint": 0.85,
+          "modelHintClamped": 0.85,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -435,13 +435,13 @@
       "fieldsNeedingInput": [
         "Category",
         "Location",
-        "Sub_Location",
         "Maintenance_Category",
         "Maintenance_Object",
         "Maintenance_Problem",
         "Management_Category",
         "Management_Object",
-        "Priority"
+        "Priority",
+        "Sub_Location"
       ],
       "hierarchyValid": true
     },
@@ -450,19 +450,23 @@
       "status": "ok",
       "classification": {
         "Category": "maintenance",
+        "Location": "suite",
+        "Sub_Location": "general",
         "Maintenance_Category": "hvac",
         "Maintenance_Object": "radiator",
         "Maintenance_Problem": "noise_vibration",
-        "Priority": "normal",
+        "Priority": "high",
         "Management_Category": "not_applicable",
         "Management_Object": "not_applicable"
       },
       "confidenceByField": {
         "Category": 0.8400000000000001,
-        "Maintenance_Category": 0.77,
-        "Maintenance_Object": 0.67,
-        "Maintenance_Problem": 0.81,
-        "Priority": 0.42000000000000004,
+        "Location": 0.42000000000000004,
+        "Sub_Location": 0.64,
+        "Maintenance_Category": 0.78,
+        "Maintenance_Object": 0.8300000000000001,
+        "Maintenance_Problem": 0.8200000000000001,
+        "Priority": 0.41000000000000003,
         "Management_Category": 0.29000000000000004,
         "Management_Object": 0.43000000000000005
       },
@@ -476,17 +480,35 @@
           "disagreement": 0,
           "ambiguityPenalty": 0
         },
-        "Maintenance_Category": {
-          "cueStrength": 1,
+        "Location": {
+          "cueStrength": 0,
+          "completeness": 1,
+          "modelHint": 0.85,
+          "modelHintClamped": 0.85,
+          "constraintImplied": 0,
+          "disagreement": 0,
+          "ambiguityPenalty": 0
+        },
+        "Sub_Location": {
+          "cueStrength": 0.6,
           "completeness": 1,
           "modelHint": 0.75,
           "modelHintClamped": 0.75,
           "constraintImplied": 0,
           "disagreement": 0,
+          "ambiguityPenalty": 0
+        },
+        "Maintenance_Category": {
+          "cueStrength": 1,
+          "completeness": 1,
+          "modelHint": 0.8,
+          "modelHintClamped": 0.8,
+          "constraintImplied": 0,
+          "disagreement": 0,
           "ambiguityPenalty": 0.6
         },
         "Maintenance_Object": {
-          "cueStrength": 0.6,
+          "cueStrength": 1,
           "completeness": 1,
           "modelHint": 0.9,
           "modelHintClamped": 0.9,
@@ -497,8 +519,8 @@
         "Maintenance_Problem": {
           "cueStrength": 1,
           "completeness": 1,
-          "modelHint": 0.8,
-          "modelHintClamped": 0.8,
+          "modelHint": 0.85,
+          "modelHintClamped": 0.85,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -506,8 +528,8 @@
         "Priority": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.85,
-          "modelHintClamped": 0.85,
+          "modelHint": 0.8,
+          "modelHintClamped": 0.8,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -532,10 +554,10 @@
         }
       },
       "fieldsNeedingInput": [
-        "Maintenance_Category",
-        "Priority",
         "Location",
-        "Sub_Location"
+        "Sub_Location",
+        "Maintenance_Category",
+        "Priority"
       ],
       "hierarchyValid": true
     },
@@ -545,18 +567,14 @@
       "classification": {
         "Category": "maintenance",
         "Maintenance_Problem": "broken_damaged",
-        "Maintenance_Category": "not_applicable",
-        "Maintenance_Object": "not_applicable",
         "Management_Category": "not_applicable",
         "Management_Object": "not_applicable"
       },
       "confidenceByField": {
         "Category": 0.63,
-        "Maintenance_Problem": 0.49000000000000005,
-        "Maintenance_Category": 0.43000000000000005,
-        "Maintenance_Object": 0.43000000000000005,
-        "Management_Category": 0.29000000000000004,
-        "Management_Object": 0.29000000000000004
+        "Maintenance_Problem": 0.47000000000000003,
+        "Management_Category": 0.44,
+        "Management_Object": 0.44
       },
       "confidenceComponents": {
         "Category": {
@@ -571,35 +589,17 @@
         "Maintenance_Problem": {
           "cueStrength": 0.6,
           "completeness": 1,
-          "modelHint": 0.75,
-          "modelHintClamped": 0.75,
+          "modelHint": 0.65,
+          "modelHintClamped": 0.65,
           "constraintImplied": 0,
           "disagreement": 1,
           "ambiguityPenalty": 1
         },
-        "Maintenance_Category": {
-          "cueStrength": 0.6,
-          "completeness": 1,
-          "modelHint": 0,
-          "modelHintClamped": 0.2,
-          "constraintImplied": 0,
-          "disagreement": 1,
-          "ambiguityPenalty": 0
-        },
-        "Maintenance_Object": {
-          "cueStrength": 0.6,
-          "completeness": 1,
-          "modelHint": 0,
-          "modelHintClamped": 0.2,
-          "constraintImplied": 0,
-          "disagreement": 1,
-          "ambiguityPenalty": 0
-        },
         "Management_Category": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0,
-          "modelHintClamped": 0.2,
+          "modelHint": 0.95,
+          "modelHintClamped": 0.95,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -607,8 +607,8 @@
         "Management_Object": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0,
-          "modelHintClamped": 0.2,
+          "modelHint": 0.95,
+          "modelHintClamped": 0.95,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -617,12 +617,12 @@
       "fieldsNeedingInput": [
         "Category",
         "Maintenance_Problem",
-        "Maintenance_Category",
-        "Maintenance_Object",
         "Management_Category",
         "Management_Object",
         "Location",
         "Sub_Location",
+        "Maintenance_Category",
+        "Maintenance_Object",
         "Priority"
       ],
       "hierarchyValid": true
@@ -699,14 +699,14 @@
         "Category": "other_category"
       },
       "confidenceByField": {
-        "Category": 0.37
+        "Category": 0.39
       },
       "confidenceComponents": {
         "Category": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.6,
-          "modelHintClamped": 0.6,
+          "modelHint": 0.7,
+          "modelHintClamped": 0.7,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -735,9 +735,9 @@
         "Maintenance_Category": "plumbing",
         "Maintenance_Object": "toilet",
         "Maintenance_Problem": "leak",
-        "Priority": "normal",
         "Management_Category": "not_applicable",
-        "Management_Object": "not_applicable"
+        "Management_Object": "not_applicable",
+        "Priority": "normal"
       },
       "confidenceByField": {
         "Category": 0.8400000000000001,
@@ -746,9 +746,9 @@
         "Maintenance_Category": 0.8400000000000001,
         "Maintenance_Object": 0.6799999999999999,
         "Maintenance_Problem": 0.8400000000000001,
-        "Priority": 0.67,
         "Management_Category": 0.44,
-        "Management_Object": 0.44
+        "Management_Object": 0.44,
+        "Priority": 0.65
       },
       "confidenceComponents": {
         "Category": {
@@ -805,15 +805,6 @@
           "disagreement": 0,
           "ambiguityPenalty": 0
         },
-        "Priority": {
-          "cueStrength": 0.6,
-          "completeness": 1,
-          "modelHint": 0.9,
-          "modelHintClamped": 0.9,
-          "constraintImplied": 0,
-          "disagreement": 0,
-          "ambiguityPenalty": 0
-        },
         "Management_Category": {
           "cueStrength": 0,
           "completeness": 1,
@@ -828,6 +819,15 @@
           "completeness": 1,
           "modelHint": 1,
           "modelHintClamped": 0.95,
+          "constraintImplied": 0,
+          "disagreement": 0,
+          "ambiguityPenalty": 0
+        },
+        "Priority": {
+          "cueStrength": 0.6,
+          "completeness": 1,
+          "modelHint": 0.8,
+          "modelHintClamped": 0.8,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -859,10 +859,10 @@
         "Sub_Location": 0.6799999999999999,
         "Maintenance_Category": 0.62,
         "Maintenance_Object": 0.6799999999999999,
-        "Maintenance_Problem": 0.66,
+        "Maintenance_Problem": 0.67,
         "Management_Category": 0.44,
         "Management_Object": 0.44,
-        "Priority": 0.41000000000000003
+        "Priority": 0.42000000000000004
       },
       "confidenceComponents": {
         "Category": {
@@ -913,8 +913,8 @@
         "Maintenance_Problem": {
           "cueStrength": 0.6,
           "completeness": 1,
-          "modelHint": 0.85,
-          "modelHintClamped": 0.85,
+          "modelHint": 0.9,
+          "modelHintClamped": 0.9,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -940,8 +940,8 @@
         "Priority": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.8,
-          "modelHintClamped": 0.8,
+          "modelHint": 0.85,
+          "modelHintClamped": 0.85,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -971,12 +971,12 @@
         "Maintenance_Problem": "infestation",
         "Management_Category": "not_applicable",
         "Management_Object": "not_applicable",
-        "Priority": "normal"
+        "Priority": "high"
       },
       "confidenceByField": {
         "Category": 0.44,
         "Location": 0.43000000000000005,
-        "Sub_Location": 0.42000000000000004,
+        "Sub_Location": 0.43000000000000005,
         "Maintenance_Category": 0.6799999999999999,
         "Maintenance_Object": 0.44,
         "Maintenance_Problem": 0.43000000000000005,
@@ -1006,8 +1006,8 @@
         "Sub_Location": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.85,
-          "modelHintClamped": 0.85,
+          "modelHint": 0.9,
+          "modelHintClamped": 0.9,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -1132,7 +1132,7 @@
         "Maintenance_Category": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 1,
+          "modelHint": 0.95,
           "modelHintClamped": 0.95,
           "constraintImplied": 0,
           "disagreement": 0,
@@ -1141,7 +1141,7 @@
         "Maintenance_Object": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 1,
+          "modelHint": 0.95,
           "modelHintClamped": 0.95,
           "constraintImplied": 0,
           "disagreement": 0,
@@ -1150,7 +1150,7 @@
         "Maintenance_Problem": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 1,
+          "modelHint": 0.95,
           "modelHintClamped": 0.95,
           "constraintImplied": 0,
           "disagreement": 0,
@@ -1193,8 +1193,8 @@
         "Maintenance_Category": 0.67,
         "Maintenance_Object": 0.6799999999999999,
         "Maintenance_Problem": 0.6799999999999999,
-        "Management_Category": 0.29000000000000004,
-        "Management_Object": 0.29000000000000004,
+        "Management_Category": 0.44,
+        "Management_Object": 0.44,
         "Priority": 0.42000000000000004
       },
       "confidenceComponents": {
@@ -1255,8 +1255,8 @@
         "Management_Category": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0,
-          "modelHintClamped": 0.2,
+          "modelHint": 0.95,
+          "modelHintClamped": 0.95,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -1264,8 +1264,8 @@
         "Management_Object": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0,
-          "modelHintClamped": 0.2,
+          "modelHint": 0.95,
+          "modelHintClamped": 0.95,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -1388,23 +1388,25 @@
       "status": "ok",
       "classification": {
         "Category": "maintenance",
+        "Location": "suite",
         "Sub_Location": "kitchen",
         "Maintenance_Category": "appliance",
         "Maintenance_Object": "dishwasher",
         "Maintenance_Problem": "broken_damaged",
+        "Priority": "normal",
         "Management_Category": "not_applicable",
-        "Management_Object": "not_applicable",
-        "Priority": "normal"
+        "Management_Object": "not_applicable"
       },
       "confidenceByField": {
         "Category": 0.6799999999999999,
+        "Location": 0.43000000000000005,
         "Sub_Location": 0.43000000000000005,
         "Maintenance_Category": 0.81,
         "Maintenance_Object": 0.6299999999999999,
         "Maintenance_Problem": 0.51,
-        "Management_Category": 0.44,
-        "Management_Object": 0.44,
-        "Priority": 0.65
+        "Priority": 0.65,
+        "Management_Category": 0.29000000000000004,
+        "Management_Object": 0.29000000000000004
       },
       "confidenceComponents": {
         "Category": {
@@ -1412,6 +1414,15 @@
           "completeness": 1,
           "modelHint": 0.95,
           "modelHintClamped": 0.95,
+          "constraintImplied": 0,
+          "disagreement": 0,
+          "ambiguityPenalty": 0
+        },
+        "Location": {
+          "cueStrength": 0,
+          "completeness": 1,
+          "modelHint": 0.9,
+          "modelHintClamped": 0.9,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -1452,24 +1463,6 @@
           "disagreement": 1,
           "ambiguityPenalty": 1
         },
-        "Management_Category": {
-          "cueStrength": 0,
-          "completeness": 1,
-          "modelHint": 0.95,
-          "modelHintClamped": 0.95,
-          "constraintImplied": 0,
-          "disagreement": 0,
-          "ambiguityPenalty": 0
-        },
-        "Management_Object": {
-          "cueStrength": 0,
-          "completeness": 1,
-          "modelHint": 0.95,
-          "modelHintClamped": 0.95,
-          "constraintImplied": 0,
-          "disagreement": 0,
-          "ambiguityPenalty": 0
-        },
         "Priority": {
           "cueStrength": 0.6,
           "completeness": 1,
@@ -1478,18 +1471,36 @@
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
+        },
+        "Management_Category": {
+          "cueStrength": 0,
+          "completeness": 1,
+          "modelHint": 0,
+          "modelHintClamped": 0.2,
+          "constraintImplied": 0,
+          "disagreement": 0,
+          "ambiguityPenalty": 0
+        },
+        "Management_Object": {
+          "cueStrength": 0,
+          "completeness": 1,
+          "modelHint": 0,
+          "modelHintClamped": 0.2,
+          "constraintImplied": 0,
+          "disagreement": 0,
+          "ambiguityPenalty": 0
         }
       },
       "fieldsNeedingInput": [
         "Category",
+        "Location",
         "Sub_Location",
         "Maintenance_Category",
         "Maintenance_Object",
         "Maintenance_Problem",
-        "Management_Category",
-        "Management_Object",
         "Priority",
-        "Location"
+        "Management_Category",
+        "Management_Object"
       ],
       "hierarchyValid": true
     },
@@ -1511,9 +1522,9 @@
         "Category": 0.44,
         "Location": 0.8400000000000001,
         "Sub_Location": 0.6799999999999999,
-        "Maintenance_Category": 0.44,
-        "Maintenance_Object": 0.44,
-        "Maintenance_Problem": 0.6799999999999999,
+        "Maintenance_Category": 0.43000000000000005,
+        "Maintenance_Object": 0.43000000000000005,
+        "Maintenance_Problem": 0.67,
         "Management_Category": 0.44,
         "Management_Object": 0.44,
         "Priority": 0.42000000000000004
@@ -1549,8 +1560,8 @@
         "Maintenance_Category": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.95,
-          "modelHintClamped": 0.95,
+          "modelHint": 0.9,
+          "modelHintClamped": 0.9,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -1558,8 +1569,8 @@
         "Maintenance_Object": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.95,
-          "modelHintClamped": 0.95,
+          "modelHint": 0.9,
+          "modelHintClamped": 0.9,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -1567,8 +1578,8 @@
         "Maintenance_Problem": {
           "cueStrength": 0.6,
           "completeness": 1,
-          "modelHint": 0.95,
-          "modelHintClamped": 0.95,
+          "modelHint": 0.9,
+          "modelHintClamped": 0.9,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -1636,7 +1647,7 @@
         "Maintenance_Problem": 0.6799999999999999,
         "Management_Category": 0.44,
         "Management_Object": 0.44,
-        "Priority": 0.66
+        "Priority": 0.65
       },
       "confidenceComponents": {
         "Category": {
@@ -1714,8 +1725,8 @@
         "Priority": {
           "cueStrength": 0.6,
           "completeness": 1,
-          "modelHint": 0.85,
-          "modelHintClamped": 0.85,
+          "modelHint": 0.8,
+          "modelHintClamped": 0.8,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -1825,8 +1836,10 @@
       "status": "ok",
       "classification": {
         "Category": "maintenance",
+        "Location": "suite",
+        "Sub_Location": "general",
         "Maintenance_Category": "hvac",
-        "Maintenance_Object": "not_applicable",
+        "Maintenance_Object": "needs_object",
         "Maintenance_Problem": "not_working",
         "Management_Category": "not_applicable",
         "Management_Object": "not_applicable",
@@ -1834,11 +1847,13 @@
       },
       "confidenceByField": {
         "Category": 0.6799999999999999,
+        "Location": 0.42000000000000004,
+        "Sub_Location": 0.39,
         "Maintenance_Category": 0.67,
-        "Maintenance_Object": 0.39,
+        "Maintenance_Object": 0.4,
         "Maintenance_Problem": 0.42000000000000004,
-        "Management_Category": 0.44,
-        "Management_Object": 0.44,
+        "Management_Category": 0.29000000000000004,
+        "Management_Object": 0.29000000000000004,
         "Priority": 0.41000000000000003
       },
       "confidenceComponents": {
@@ -1847,6 +1862,24 @@
           "completeness": 1,
           "modelHint": 0.95,
           "modelHintClamped": 0.95,
+          "constraintImplied": 0,
+          "disagreement": 0,
+          "ambiguityPenalty": 0
+        },
+        "Location": {
+          "cueStrength": 0,
+          "completeness": 1,
+          "modelHint": 0.85,
+          "modelHintClamped": 0.85,
+          "constraintImplied": 0,
+          "disagreement": 0,
+          "ambiguityPenalty": 0
+        },
+        "Sub_Location": {
+          "cueStrength": 0,
+          "completeness": 1,
+          "modelHint": 0.7,
+          "modelHintClamped": 0.7,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -1863,8 +1896,8 @@
         "Maintenance_Object": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.7,
-          "modelHintClamped": 0.7,
+          "modelHint": 0.75,
+          "modelHintClamped": 0.75,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -1881,8 +1914,8 @@
         "Management_Category": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.95,
-          "modelHintClamped": 0.95,
+          "modelHint": 0,
+          "modelHintClamped": 0.2,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -1890,8 +1923,8 @@
         "Management_Object": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.95,
-          "modelHintClamped": 0.95,
+          "modelHint": 0,
+          "modelHintClamped": 0.2,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -1908,14 +1941,14 @@
       },
       "fieldsNeedingInput": [
         "Category",
+        "Location",
+        "Sub_Location",
         "Maintenance_Category",
         "Maintenance_Object",
         "Maintenance_Problem",
         "Management_Category",
         "Management_Object",
-        "Priority",
-        "Location",
-        "Sub_Location"
+        "Priority"
       ],
       "hierarchyValid": true
     },
@@ -1924,6 +1957,7 @@
       "status": "ok",
       "classification": {
         "Category": "maintenance",
+        "Sub_Location": "kitchen",
         "Maintenance_Category": "plumbing",
         "Maintenance_Object": "sink",
         "Maintenance_Problem": "clog",
@@ -1933,8 +1967,9 @@
       },
       "confidenceByField": {
         "Category": 0.6799999999999999,
-        "Maintenance_Category": 0.8300000000000001,
-        "Maintenance_Object": 0.66,
+        "Sub_Location": 0.39,
+        "Maintenance_Category": 0.8400000000000001,
+        "Maintenance_Object": 0.6799999999999999,
         "Maintenance_Problem": 0.43000000000000005,
         "Management_Category": 0.44,
         "Management_Object": 0.44,
@@ -1950,11 +1985,20 @@
           "disagreement": 0,
           "ambiguityPenalty": 0
         },
+        "Sub_Location": {
+          "cueStrength": 0,
+          "completeness": 1,
+          "modelHint": 0.7,
+          "modelHintClamped": 0.7,
+          "constraintImplied": 0,
+          "disagreement": 0,
+          "ambiguityPenalty": 0
+        },
         "Maintenance_Category": {
           "cueStrength": 1,
           "completeness": 1,
-          "modelHint": 0.9,
-          "modelHintClamped": 0.9,
+          "modelHint": 0.95,
+          "modelHintClamped": 0.95,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -1962,8 +2006,8 @@
         "Maintenance_Object": {
           "cueStrength": 0.6,
           "completeness": 1,
-          "modelHint": 0.85,
-          "modelHintClamped": 0.85,
+          "modelHint": 0.95,
+          "modelHintClamped": 0.95,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -1980,7 +2024,7 @@
         "Management_Category": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.95,
+          "modelHint": 1,
           "modelHintClamped": 0.95,
           "constraintImplied": 0,
           "disagreement": 0,
@@ -1989,118 +2033,10 @@
         "Management_Object": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.95,
+          "modelHint": 1,
           "modelHintClamped": 0.95,
           "constraintImplied": 0,
           "disagreement": 0,
-          "ambiguityPenalty": 0
-        },
-        "Priority": {
-          "cueStrength": 0,
-          "completeness": 1,
-          "modelHint": 0.8,
-          "modelHintClamped": 0.8,
-          "constraintImplied": 0,
-          "disagreement": 0,
-          "ambiguityPenalty": 0
-        }
-      },
-      "fieldsNeedingInput": [
-        "Category",
-        "Maintenance_Problem",
-        "Management_Category",
-        "Management_Object",
-        "Priority",
-        "Location",
-        "Sub_Location"
-      ],
-      "hierarchyValid": true
-    },
-    {
-      "example_id": "hard-016",
-      "status": "ok",
-      "classification": {
-        "Category": "maintenance",
-        "Sub_Location": "kitchen",
-        "Maintenance_Category": "appliance",
-        "Maintenance_Object": "fridge",
-        "Maintenance_Problem": "not_working",
-        "Management_Category": "not_applicable",
-        "Management_Object": "not_applicable",
-        "Priority": "high"
-      },
-      "confidenceByField": {
-        "Category": 0.6799999999999999,
-        "Sub_Location": 0.52,
-        "Maintenance_Category": 0.5299999999999999,
-        "Maintenance_Object": 0.5299999999999999,
-        "Maintenance_Problem": 0.56,
-        "Management_Category": 0.44,
-        "Management_Object": 0.58,
-        "Priority": 0.41000000000000003
-      },
-      "confidenceComponents": {
-        "Category": {
-          "cueStrength": 0.6,
-          "completeness": 1,
-          "modelHint": 0.95,
-          "modelHintClamped": 0.95,
-          "constraintImplied": 0,
-          "disagreement": 0,
-          "ambiguityPenalty": 0
-        },
-        "Sub_Location": {
-          "cueStrength": 0.6,
-          "completeness": 1,
-          "modelHint": 0.9,
-          "modelHintClamped": 0.9,
-          "constraintImplied": 0,
-          "disagreement": 1,
-          "ambiguityPenalty": 1
-        },
-        "Maintenance_Category": {
-          "cueStrength": 0.6,
-          "completeness": 1,
-          "modelHint": 0.95,
-          "modelHintClamped": 0.95,
-          "constraintImplied": 0,
-          "disagreement": 1,
-          "ambiguityPenalty": 1
-        },
-        "Maintenance_Object": {
-          "cueStrength": 0.6,
-          "completeness": 1,
-          "modelHint": 0.95,
-          "modelHintClamped": 0.95,
-          "constraintImplied": 0,
-          "disagreement": 1,
-          "ambiguityPenalty": 1
-        },
-        "Maintenance_Problem": {
-          "cueStrength": 0.6,
-          "completeness": 1,
-          "modelHint": 0.85,
-          "modelHintClamped": 0.85,
-          "constraintImplied": 0,
-          "disagreement": 1,
-          "ambiguityPenalty": 0
-        },
-        "Management_Category": {
-          "cueStrength": 0,
-          "completeness": 1,
-          "modelHint": 0.95,
-          "modelHintClamped": 0.95,
-          "constraintImplied": 0,
-          "disagreement": 0,
-          "ambiguityPenalty": 0
-        },
-        "Management_Object": {
-          "cueStrength": 0.6,
-          "completeness": 1,
-          "modelHint": 0.95,
-          "modelHintClamped": 0.95,
-          "constraintImplied": 0,
-          "disagreement": 1,
           "ambiguityPenalty": 0
         },
         "Priority": {
@@ -2116,8 +2052,6 @@
       "fieldsNeedingInput": [
         "Category",
         "Sub_Location",
-        "Maintenance_Category",
-        "Maintenance_Object",
         "Maintenance_Problem",
         "Management_Category",
         "Management_Object",
@@ -2127,25 +2061,150 @@
       "hierarchyValid": true
     },
     {
+      "example_id": "hard-016",
+      "status": "ok",
+      "classification": {
+        "Category": "maintenance",
+        "Location": "suite",
+        "Sub_Location": "kitchen",
+        "Maintenance_Category": "appliance",
+        "Maintenance_Object": "fridge",
+        "Maintenance_Problem": "not_working",
+        "Management_Category": "not_applicable",
+        "Management_Object": "not_applicable",
+        "Priority": "normal"
+      },
+      "confidenceByField": {
+        "Category": 0.6799999999999999,
+        "Location": 0.43000000000000005,
+        "Sub_Location": 0.5299999999999999,
+        "Maintenance_Category": 0.5299999999999999,
+        "Maintenance_Object": 0.5299999999999999,
+        "Maintenance_Problem": 0.56,
+        "Management_Category": 0.29000000000000004,
+        "Management_Object": 0.43000000000000005,
+        "Priority": 0.41000000000000003
+      },
+      "confidenceComponents": {
+        "Category": {
+          "cueStrength": 0.6,
+          "completeness": 1,
+          "modelHint": 0.95,
+          "modelHintClamped": 0.95,
+          "constraintImplied": 0,
+          "disagreement": 0,
+          "ambiguityPenalty": 0
+        },
+        "Location": {
+          "cueStrength": 0,
+          "completeness": 1,
+          "modelHint": 0.9,
+          "modelHintClamped": 0.9,
+          "constraintImplied": 0,
+          "disagreement": 0,
+          "ambiguityPenalty": 0
+        },
+        "Sub_Location": {
+          "cueStrength": 0.6,
+          "completeness": 1,
+          "modelHint": 0.95,
+          "modelHintClamped": 0.95,
+          "constraintImplied": 0,
+          "disagreement": 1,
+          "ambiguityPenalty": 1
+        },
+        "Maintenance_Category": {
+          "cueStrength": 0.6,
+          "completeness": 1,
+          "modelHint": 0.95,
+          "modelHintClamped": 0.95,
+          "constraintImplied": 0,
+          "disagreement": 1,
+          "ambiguityPenalty": 1
+        },
+        "Maintenance_Object": {
+          "cueStrength": 0.6,
+          "completeness": 1,
+          "modelHint": 0.95,
+          "modelHintClamped": 0.95,
+          "constraintImplied": 0,
+          "disagreement": 1,
+          "ambiguityPenalty": 1
+        },
+        "Maintenance_Problem": {
+          "cueStrength": 0.6,
+          "completeness": 1,
+          "modelHint": 0.85,
+          "modelHintClamped": 0.85,
+          "constraintImplied": 0,
+          "disagreement": 1,
+          "ambiguityPenalty": 0
+        },
+        "Management_Category": {
+          "cueStrength": 0,
+          "completeness": 1,
+          "modelHint": 0,
+          "modelHintClamped": 0.2,
+          "constraintImplied": 0,
+          "disagreement": 0,
+          "ambiguityPenalty": 0
+        },
+        "Management_Object": {
+          "cueStrength": 0.6,
+          "completeness": 1,
+          "modelHint": 0,
+          "modelHintClamped": 0.2,
+          "constraintImplied": 0,
+          "disagreement": 1,
+          "ambiguityPenalty": 0
+        },
+        "Priority": {
+          "cueStrength": 0,
+          "completeness": 1,
+          "modelHint": 0.8,
+          "modelHintClamped": 0.8,
+          "constraintImplied": 0,
+          "disagreement": 0,
+          "ambiguityPenalty": 0
+        }
+      },
+      "fieldsNeedingInput": [
+        "Category",
+        "Location",
+        "Sub_Location",
+        "Maintenance_Category",
+        "Maintenance_Object",
+        "Maintenance_Problem",
+        "Management_Category",
+        "Management_Object",
+        "Priority"
+      ],
+      "hierarchyValid": true
+    },
+    {
       "example_id": "hard-017",
       "status": "ok",
       "classification": {
         "Category": "maintenance",
+        "Location": "suite",
+        "Sub_Location": "general",
         "Maintenance_Category": "hvac",
         "Maintenance_Object": "needs_object",
         "Maintenance_Problem": "no_heat",
-        "Priority": "emergency",
         "Management_Category": "not_applicable",
-        "Management_Object": "not_applicable"
+        "Management_Object": "not_applicable",
+        "Priority": "high"
       },
       "confidenceByField": {
         "Category": 0.8400000000000001,
-        "Maintenance_Category": 0.67,
-        "Maintenance_Object": 0.39,
+        "Location": 0.41000000000000003,
+        "Sub_Location": 0.63,
+        "Maintenance_Category": 0.8400000000000001,
+        "Maintenance_Object": 0.42000000000000004,
         "Maintenance_Problem": 0.44,
-        "Priority": 0.42000000000000004,
         "Management_Category": 0.29000000000000004,
-        "Management_Object": 0.29000000000000004
+        "Management_Object": 0.29000000000000004,
+        "Priority": 0.43000000000000005
       },
       "confidenceComponents": {
         "Category": {
@@ -2157,11 +2216,29 @@
           "disagreement": 0,
           "ambiguityPenalty": 0
         },
-        "Maintenance_Category": {
+        "Location": {
+          "cueStrength": 0,
+          "completeness": 1,
+          "modelHint": 0.8,
+          "modelHintClamped": 0.8,
+          "constraintImplied": 0,
+          "disagreement": 0,
+          "ambiguityPenalty": 0
+        },
+        "Sub_Location": {
           "cueStrength": 0.6,
           "completeness": 1,
-          "modelHint": 0.9,
-          "modelHintClamped": 0.9,
+          "modelHint": 0.7,
+          "modelHintClamped": 0.7,
+          "constraintImplied": 0,
+          "disagreement": 0,
+          "ambiguityPenalty": 0
+        },
+        "Maintenance_Category": {
+          "cueStrength": 1,
+          "completeness": 1,
+          "modelHint": 0.95,
+          "modelHintClamped": 0.95,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -2169,8 +2246,8 @@
         "Maintenance_Object": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.7,
-          "modelHintClamped": 0.7,
+          "modelHint": 0.85,
+          "modelHintClamped": 0.85,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -2180,15 +2257,6 @@
           "completeness": 1,
           "modelHint": 0.95,
           "modelHintClamped": 0.95,
-          "constraintImplied": 0,
-          "disagreement": 0,
-          "ambiguityPenalty": 0
-        },
-        "Priority": {
-          "cueStrength": 0,
-          "completeness": 1,
-          "modelHint": 0.85,
-          "modelHintClamped": 0.85,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -2210,15 +2278,23 @@
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
+        },
+        "Priority": {
+          "cueStrength": 0,
+          "completeness": 1,
+          "modelHint": 0.9,
+          "modelHintClamped": 0.9,
+          "constraintImplied": 0,
+          "disagreement": 0,
+          "ambiguityPenalty": 0
         }
       },
       "fieldsNeedingInput": [
-        "Maintenance_Category",
+        "Location",
+        "Sub_Location",
         "Maintenance_Object",
         "Maintenance_Problem",
-        "Priority",
-        "Location",
-        "Sub_Location"
+        "Priority"
       ],
       "hierarchyValid": true
     },
@@ -2348,8 +2424,10 @@
       "status": "ok",
       "classification": {
         "Category": "maintenance",
+        "Location": "suite",
+        "Sub_Location": "general",
         "Maintenance_Category": "hvac",
-        "Maintenance_Object": "other_object",
+        "Maintenance_Object": "needs_object",
         "Maintenance_Problem": "not_working",
         "Management_Category": "not_applicable",
         "Management_Object": "not_applicable",
@@ -2357,11 +2435,13 @@
       },
       "confidenceByField": {
         "Category": 0.44,
-        "Maintenance_Category": 0.43000000000000005,
+        "Location": 0.41000000000000003,
+        "Sub_Location": 0.39,
+        "Maintenance_Category": 0.67,
         "Maintenance_Object": 0.4,
         "Maintenance_Problem": 0.42000000000000004,
-        "Management_Category": 0.44,
-        "Management_Object": 0.44,
+        "Management_Category": 0.29000000000000004,
+        "Management_Object": 0.29000000000000004,
         "Priority": 0.41000000000000003
       },
       "confidenceComponents": {
@@ -2374,8 +2454,26 @@
           "disagreement": 0,
           "ambiguityPenalty": 0
         },
-        "Maintenance_Category": {
+        "Location": {
           "cueStrength": 0,
+          "completeness": 1,
+          "modelHint": 0.8,
+          "modelHintClamped": 0.8,
+          "constraintImplied": 0,
+          "disagreement": 0,
+          "ambiguityPenalty": 0
+        },
+        "Sub_Location": {
+          "cueStrength": 0,
+          "completeness": 1,
+          "modelHint": 0.7,
+          "modelHintClamped": 0.7,
+          "constraintImplied": 0,
+          "disagreement": 0,
+          "ambiguityPenalty": 0
+        },
+        "Maintenance_Category": {
+          "cueStrength": 0.6,
           "completeness": 1,
           "modelHint": 0.9,
           "modelHintClamped": 0.9,
@@ -2404,8 +2502,8 @@
         "Management_Category": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.95,
-          "modelHintClamped": 0.95,
+          "modelHint": 0,
+          "modelHintClamped": 0.2,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -2413,8 +2511,8 @@
         "Management_Object": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.95,
-          "modelHintClamped": 0.95,
+          "modelHint": 0,
+          "modelHintClamped": 0.2,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -2431,14 +2529,14 @@
       },
       "fieldsNeedingInput": [
         "Category",
+        "Location",
+        "Sub_Location",
         "Maintenance_Category",
         "Maintenance_Object",
         "Maintenance_Problem",
         "Management_Category",
         "Management_Object",
-        "Priority",
-        "Location",
-        "Sub_Location"
+        "Priority"
       ],
       "hierarchyValid": true
     },
@@ -2458,20 +2556,20 @@
       },
       "confidenceByField": {
         "Category": 0.44,
-        "Location": 0.43000000000000005,
-        "Sub_Location": 0.43000000000000005,
-        "Maintenance_Category": 0.42000000000000004,
-        "Maintenance_Object": 0.42000000000000004,
-        "Maintenance_Problem": 0.43000000000000005,
+        "Location": 0.44,
+        "Sub_Location": 0.44,
+        "Maintenance_Category": 0.44,
+        "Maintenance_Object": 0.44,
+        "Maintenance_Problem": 0.44,
         "Management_Category": 0.29000000000000004,
         "Management_Object": 0.29000000000000004,
-        "Priority": 0.41000000000000003
+        "Priority": 0.42000000000000004
       },
       "confidenceComponents": {
         "Category": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.95,
+          "modelHint": 0.98,
           "modelHintClamped": 0.95,
           "constraintImplied": 0,
           "disagreement": 0,
@@ -2480,8 +2578,8 @@
         "Location": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.9,
-          "modelHintClamped": 0.9,
+          "modelHint": 0.95,
+          "modelHintClamped": 0.95,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -2489,8 +2587,8 @@
         "Sub_Location": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.9,
-          "modelHintClamped": 0.9,
+          "modelHint": 0.98,
+          "modelHintClamped": 0.95,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -2498,8 +2596,8 @@
         "Maintenance_Category": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.85,
-          "modelHintClamped": 0.85,
+          "modelHint": 0.98,
+          "modelHintClamped": 0.95,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -2507,8 +2605,8 @@
         "Maintenance_Object": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.85,
-          "modelHintClamped": 0.85,
+          "modelHint": 0.98,
+          "modelHintClamped": 0.95,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -2516,8 +2614,8 @@
         "Maintenance_Problem": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.9,
-          "modelHintClamped": 0.9,
+          "modelHint": 0.98,
+          "modelHintClamped": 0.95,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -2543,8 +2641,8 @@
         "Priority": {
           "cueStrength": 0,
           "completeness": 1,
-          "modelHint": 0.8,
-          "modelHintClamped": 0.8,
+          "modelHint": 0.85,
+          "modelHintClamped": 0.85,
           "constraintImplied": 0,
           "disagreement": 0,
           "ambiguityPenalty": 0
@@ -2686,7 +2784,7 @@
     }
   ],
   "metrics": {
-    "field_accuracy": 0.7565843621399178,
+    "field_accuracy": 0.7853909465020577,
     "schema_invalid_rate": 0,
     "taxonomy_invalid_rate": 0,
     "contradiction_after_retry_rate": 0,
@@ -2696,16 +2794,16 @@
   },
   "slice_metrics": {
     "slang": {
-      "field_accuracy": 0.6071428571428571,
+      "field_accuracy": 0.7857142857142857,
       "schema_invalid_rate": 0,
       "taxonomy_invalid_rate": 0,
       "contradiction_after_retry_rate": 0,
-      "followup_precision": 0.03225806451612903,
+      "followup_precision": 0.03333333333333333,
       "followup_recall": 1,
       "example_count": 4
     },
     "typo": {
-      "field_accuracy": 0.8928571428571429,
+      "field_accuracy": 0.9285714285714286,
       "schema_invalid_rate": 0,
       "taxonomy_invalid_rate": 0,
       "contradiction_after_retry_rate": 0,
@@ -2732,7 +2830,7 @@
       "example_count": 10
     },
     "ambiguous": {
-      "field_accuracy": 0.6571428571428573,
+      "field_accuracy": 0.6857142857142857,
       "schema_invalid_rate": 0,
       "taxonomy_invalid_rate": 0,
       "contradiction_after_retry_rate": 0,
