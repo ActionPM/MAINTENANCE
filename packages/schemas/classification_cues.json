@@ -1,5 +1,5 @@
 {
-  "version": "1.4.0",
+  "version": "1.6.0",
   "fields": {
     "Category": {
       "maintenance": {
@@ -151,16 +151,86 @@
     },
     "Priority": {
       "emergency": {
-        "keywords": ["flood", "fire", "gas leak", "burst pipe", "sewage"],
-        "regex": []
+        "keywords": [
+          "flood",
+          "flooding",
+          "flooded",
+          "fire",
+          "flames",
+          "gas leak",
+          "smell gas",
+          "natural gas",
+          "burst pipe",
+          "water everywhere",
+          "sewage",
+          "structural",
+          "falling off",
+          "collapsed",
+          "burning",
+          "burning smell",
+          "co alarm going off",
+          "carbon monoxide alarm going off"
+        ],
+        "regex": [
+          "\\b(fire|flood(ing|ed)?|burst\\s+pipe)\\b",
+          "\\b(gas\\s+leak|smell(ing)?\\s+gas)\\b",
+          "\\b(burn(ing|t)|smoking|flames?)\\b",
+          "\\bsmoke\\b(?!\\s*(alarm|detector))",
+          "\\bcarbon\\s+monoxide\\b(?!\\s*(alarm|detector))",
+          "\\b(co|carbon\\s+monoxide)\\s*(alarm|detector)\\s*(going\\s+off|beeping|sounding|activated)\\b",
+          "\\b(falling\\s+off|collaps(ed|ing)|structur(al|e)\\s+(damage|danger|failure))\\b"
+        ]
       },
       "high": {
-        "keywords": ["no water", "sparks", "infestation", "dangerous", "mold"],
-        "regex": []
+        "keywords": [
+          "no water",
+          "no hot water",
+          "sparks",
+          "sparking",
+          "exposed wires",
+          "infestation",
+          "dangerous",
+          "mold",
+          "broken lock",
+          "locked out",
+          "major leak",
+          "water damage",
+          "pest",
+          "rodent",
+          "cockroach",
+          "no heat",
+          "no heating",
+          "freezing",
+          "no electricity",
+          "no power",
+          "safety issue",
+          "unsafe",
+          "hazard"
+        ],
+        "regex": [
+          "\\b(no\\s+(water|hot\\s+water|heat|heating|electricity|power))\\b",
+          "\\b(locked\\s+out|broken\\s+lock)\\b",
+          "\\b(water\\s+damage|major\\s+leak)\\b",
+          "\\b(spark(s|ing)?|exposed\\s+wires?)\\b",
+          "\\b(safety\\s+(issue|risk|hazard)|unsafe|danger(ous)?)\\b"
+        ]
       },
       "normal": {
-        "keywords": ["leak", "broken", "not working", "clog", "peeling"],
-        "regex": []
+        "keywords": [
+          "leak",
+          "broken",
+          "not working",
+          "clog",
+          "peeling",
+          "smoke alarm",
+          "smoke detector",
+          "fire alarm",
+          "beeping"
+        ],
+        "regex": [
+          "\\b(smoke|fire)\\s*(alarm|detector)\\b",
+          "\\b(co|carbon\\s+monoxide)\\s*(alarm|detector)\\b(?!\\s*(going\\s+off|beeping|sounding|activated))"
+        ]
       },
       "low": {
         "keywords": ["cosmetic", "scratch", "minor", "scuff"],
@@ -206,9 +276,26 @@
           "air conditioning",
           "heating",
           "hvac",
-          "radiator"
+          "radiator",
+          "heater",
+          "baseboard",
+          "boiler",
+          "cooling",
+          "air conditioner",
+          "ductwork",
+          "air handler",
+          "compressor",
+          "ventilation",
+          "central air",
+          "no heat",
+          "no cooling",
+          "cold air"
         ],
-        "regex": ["\\bac\\b"]
+        "regex": [
+          "\\b(heat(er|ing)?|furnace|boiler|baseboard)\\b",
+          "\\b(air\\s*(conditioning|conditioner|handler)|central\\s*air)\\b",
+          "\\bac\\b"
+        ]
       },
       "carpentry": {
         "keywords": [
@@ -307,8 +394,15 @@
         "regex": []
       },
       "thermostat": {
-        "keywords": ["thermostat", "temperature control", "temp control"],
-        "regex": []
+        "keywords": [
+          "thermostat",
+          "temperature control",
+          "temp control",
+          "temperature dial",
+          "heating control",
+          "programmable thermostat"
+        ],
+        "regex": ["\\b(thermo(stat)?|temp(erature)?\\s*control)\\b"]
       },
       "door": {
         "keywords": ["door", "front door", "closet door", "bedroom door", "entrance"],
@@ -322,7 +416,17 @@
       "stove": { "keywords": ["stove", "burner", "cooktop", "range"], "regex": [] },
       "washer": { "keywords": ["washer", "washing machine", "laundry machine"], "regex": [] },
       "dryer": { "keywords": ["dryer", "clothes dryer", "tumble dryer"], "regex": [] },
-      "radiator": { "keywords": ["radiator", "baseboard heater", "heating unit"], "regex": [] },
+      "radiator": {
+        "keywords": [
+          "radiator",
+          "baseboard heater",
+          "heating unit",
+          "baseboard",
+          "heat register",
+          "heating element"
+        ],
+        "regex": ["\\b(baseboard|radiator)\\s*(heater|unit)?\\b"]
+      },
       "bathtub": {
         "keywords": [
           "bathtub",
