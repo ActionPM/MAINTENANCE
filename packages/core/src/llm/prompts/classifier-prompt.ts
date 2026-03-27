@@ -10,6 +10,9 @@ export const PRIORITY_GUIDANCE_VERSION = '2.1.0';
 /** The prompt version boundary for domain assignment hints (added in 2.2.0). */
 export const DOMAIN_HINTS_VERSION = '2.2.0';
 
+/** The prompt version boundary for HVAC classification hints (added in 2.3.0). */
+export const HVAC_HINTS_VERSION = '2.3.0';
+
 const DOMAIN_HINTS_BLOCK = `
 DOMAIN ASSIGNMENT HINTS:
 - Intercom, buzzer, door-entry, and visitor-access issues are management (general/intercom)
@@ -17,10 +20,20 @@ DOMAIN ASSIGNMENT HINTS:
 - Key fob programming, lockout, and room-access issues are management (general/building_access).
 - Lock/key issues involving physical damage ("broken lock", "key snapped off") are maintenance (locksmith).`;
 
+const HVAC_HINTS_BLOCK = `
+HVAC CLASSIFICATION HINTS:
+- When the tenant describes a heating/cooling problem but does not name the specific component,
+  set Maintenance_Object to "needs_object" (do NOT omit the field).
+- "Baseboard", "baseboard heater", and "heating unit" map to Maintenance_Object "radiator".
+- "Furnace", "boiler", and "heating system" indicate Maintenance_Category "hvac" with
+  Maintenance_Object "needs_object" unless the tenant names a specific part.
+- If the issue is clearly in-unit (e.g., "my heat", "in my apartment"), set Location to "suite"
+  and Sub_Location to "general" even without a specific room name.`;
+
 const PRIORITY_GUIDANCE_BLOCK = `
 PRIORITY GUIDANCE:
-- "emergency": immediate safety risk (fire, gas leak, flooding, no heat in winter, structural danger)
-- "high": significant disruption to habitability (no hot water, broken lock, major leak, infestation)
+- "emergency": immediate safety risk (fire, gas leak, flooding, structural danger, burning smell)
+- "high": significant disruption to habitability (no heat, no hot water, broken lock, major leak, infestation, electrical safety)
 - "normal": standard maintenance or management request (dripping faucet, appliance issue, clog, document request)
 - "low": cosmetic or non-urgent (paint touch-up, minor wear, scuff)
 - Only classify as "emergency" when there is clear evidence of safety risk or uninhabitable conditions.`;
@@ -31,7 +44,11 @@ PRIORITY GUIDANCE:
  */
 export function buildClassifierSystemPromptV1(
   taxonomy: Taxonomy,
-  options?: { includePriorityGuidance?: boolean; includeDomainHints?: boolean },
+  options?: {
+    includePriorityGuidance?: boolean;
+    includeDomainHints?: boolean;
+    includeHvacHints?: boolean;
+  },
 ): string {
   const taxonomyBlock = Object.entries(taxonomy)
     .map(([field, values]) => `${field}: ${(values as string[]).join(', ')}`)
@@ -68,7 +85,7 @@ Examples:
 - shelf + no_heat = INVALID (shelves don't have heating problems)
 
 When unsure about a constrained field, use the appropriate "other_*" or "general" value and report it in missing_fields.
-${options?.includePriorityGuidance ? PRIORITY_GUIDANCE_BLOCK : ''}${options?.includeDomainHints ? DOMAIN_HINTS_BLOCK : ''}
+${options?.includePriorityGuidance ? PRIORITY_GUIDANCE_BLOCK : ''}${options?.includeDomainHints ? DOMAIN_HINTS_BLOCK : ''}${options?.includeHvacHints ? HVAC_HINTS_BLOCK : ''}
 RESPOND WITH ONLY a JSON object (no markdown, no explanation):
 {
   "issue_id": "<same as input>",
@@ -111,7 +128,11 @@ RESPOND WITH ONLY a JSON object (no markdown, no explanation):
  */
 export function buildClassifierSystemPromptV2(
   taxonomy: Taxonomy,
-  options?: { includePriorityGuidance?: boolean; includeDomainHints?: boolean },
+  options?: {
+    includePriorityGuidance?: boolean;
+    includeDomainHints?: boolean;
+    includeHvacHints?: boolean;
+  },
 ): string {
   const taxonomyBlock = Object.entries(taxonomy)
     .map(([field, values]) => `${field}: ${(values as string[]).join(', ')}`)
@@ -138,9 +159,16 @@ CROSS-DOMAIN NORMALIZATION:
 
 NEEDS_OBJECT GUIDANCE:
 - Use "needs_object" when the category/problem type is understood but the specific object cannot be identified from the text.
-- Do not use "needs_object" as a lazy default — use it only when there genuinely is an object involved but it is ambiguous.
+- Do not use "needs_object" as a lazy default — use it only when there genuinely is an object involved but it is ambiguous.${
+    options?.includeHvacHints
+      ? `
+- IMPORTANT: "needs_object" is ONLY valid for the Maintenance_Object field.
+  Do NOT use "needs_object" as a value for Maintenance_Problem or any other field.
+  If the problem type is unclear, use "other_problem" for Maintenance_Problem.`
+      : ''
+  }
 
-${options?.includePriorityGuidance ? PRIORITY_GUIDANCE_BLOCK : ''}${options?.includeDomainHints ? DOMAIN_HINTS_BLOCK : ''}
+${options?.includePriorityGuidance ? PRIORITY_GUIDANCE_BLOCK : ''}${options?.includeDomainHints ? DOMAIN_HINTS_BLOCK : ''}${options?.includeHvacHints ? HVAC_HINTS_BLOCK : ''}
 MISSING_FIELDS:
 - List fields you omitted from classification because the text did not support a value.
 - Also list fields where you assigned a value but have low certainty.
@@ -182,11 +210,20 @@ export function buildClassifierSystemPrompt(taxonomy: Taxonomy, promptVersion?: 
     !!promptVersion && compareSemver(promptVersion, PRIORITY_GUIDANCE_VERSION) >= 0;
   const includeDomainHints =
     !!promptVersion && compareSemver(promptVersion, DOMAIN_HINTS_VERSION) >= 0;
+  const includeHvacHints = !!promptVersion && compareSemver(promptVersion, HVAC_HINTS_VERSION) >= 0;
 
   if (promptVersion && compareSemver(promptVersion, EVIDENCE_BASED_PROMPT_VERSION) >= 0) {
-    return buildClassifierSystemPromptV2(taxonomy, { includePriorityGuidance, includeDomainHints });
+    return buildClassifierSystemPromptV2(taxonomy, {
+      includePriorityGuidance,
+      includeDomainHints,
+      includeHvacHints,
+    });
   }
-  return buildClassifierSystemPromptV1(taxonomy, { includePriorityGuidance, includeDomainHints });
+  return buildClassifierSystemPromptV1(taxonomy, {
+    includePriorityGuidance,
+    includeDomainHints,
+    includeHvacHints,
+  });
 }
 
 /**

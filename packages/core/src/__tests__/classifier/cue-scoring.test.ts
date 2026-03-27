@@ -419,6 +419,213 @@ describe('BUG-001/003 regression — maintenance category cue coverage', () => {
   });
 });
 
+describe('HVAC cue coverage', () => {
+  const realCues: CueDictionary = JSON.parse(
+    readFileSync(resolve(schemasDir, 'classification_cues.json'), 'utf-8'),
+  );
+
+  it('"heater not working" → Maintenance_Category=hvac, score >= 0.6', () => {
+    const result = computeCueStrengthForField(
+      'heater not working',
+      'Maintenance_Category',
+      realCues,
+    );
+    expect(result.topLabel).toBe('hvac');
+    expect(result.score).toBeGreaterThanOrEqual(0.6);
+  });
+
+  it('"baseboard is cold" → Maintenance_Category=hvac AND Maintenance_Object=radiator', () => {
+    const catResult = computeCueStrengthForField(
+      'baseboard is cold',
+      'Maintenance_Category',
+      realCues,
+    );
+    expect(catResult.topLabel).toBe('hvac');
+    const objResult = computeCueStrengthForField(
+      'baseboard is cold',
+      'Maintenance_Object',
+      realCues,
+    );
+    expect(objResult.topLabel).toBe('radiator');
+  });
+
+  it('"boiler making noise" → Maintenance_Category=hvac, score >= 0.6', () => {
+    const result = computeCueStrengthForField(
+      'boiler making noise',
+      'Maintenance_Category',
+      realCues,
+    );
+    expect(result.topLabel).toBe('hvac');
+    expect(result.score).toBeGreaterThanOrEqual(0.6);
+  });
+
+  it('"air conditioner leaking" → Maintenance_Category=hvac, score >= 0.6', () => {
+    const result = computeCueStrengthForField(
+      'air conditioner leaking',
+      'Maintenance_Category',
+      realCues,
+    );
+    expect(result.topLabel).toBe('hvac');
+    expect(result.score).toBeGreaterThanOrEqual(0.6);
+  });
+
+  it('"no cooling in apartment" → Maintenance_Category=hvac, score >= 0.6', () => {
+    const result = computeCueStrengthForField(
+      'no cooling in apartment',
+      'Maintenance_Category',
+      realCues,
+    );
+    expect(result.topLabel).toBe('hvac');
+    expect(result.score).toBeGreaterThanOrEqual(0.6);
+  });
+
+  it('"temperature control broken" → Maintenance_Object=thermostat, score >= 0.6', () => {
+    const result = computeCueStrengthForField(
+      'temperature control broken',
+      'Maintenance_Object',
+      realCues,
+    );
+    expect(result.topLabel).toBe('thermostat');
+    expect(result.score).toBeGreaterThanOrEqual(0.6);
+  });
+
+  it('"ventilation not working" → Maintenance_Category=hvac', () => {
+    const result = computeCueStrengthForField(
+      'ventilation not working',
+      'Maintenance_Category',
+      realCues,
+    );
+    expect(result.topLabel).toBe('hvac');
+  });
+});
+
+describe('Priority cue coverage', () => {
+  const realCues: CueDictionary = JSON.parse(
+    readFileSync(resolve(schemasDir, 'classification_cues.json'), 'utf-8'),
+  );
+
+  it('"flood in apartment" → Priority=emergency, score >= 0.6', () => {
+    const result = computeCueStrengthForField('flood in apartment', 'Priority', realCues);
+    expect(result.topLabel).toBe('emergency');
+    expect(result.score).toBeGreaterThanOrEqual(0.6);
+  });
+
+  it('"burning smell from outlet" → Priority=emergency, score >= 0.6', () => {
+    const result = computeCueStrengthForField('burning smell from outlet', 'Priority', realCues);
+    expect(result.topLabel).toBe('emergency');
+    expect(result.score).toBeGreaterThanOrEqual(0.6);
+  });
+
+  it('"gas leak in kitchen" → Priority=emergency, score >= 0.6', () => {
+    const result = computeCueStrengthForField('gas leak in kitchen', 'Priority', realCues);
+    expect(result.topLabel).toBe('emergency');
+    expect(result.score).toBeGreaterThanOrEqual(0.6);
+  });
+
+  it('"falling off the wall" → Priority=emergency', () => {
+    const result = computeCueStrengthForField('falling off the wall', 'Priority', realCues);
+    expect(result.topLabel).toBe('emergency');
+  });
+
+  it('"no heat in apartment" → Priority=high (not emergency — operational policy)', () => {
+    const result = computeCueStrengthForField('no heat in apartment', 'Priority', realCues);
+    expect(result.topLabel).toBe('high');
+  });
+
+  it('"sparking outlet" → Priority=high (not emergency — operational policy)', () => {
+    const result = computeCueStrengthForField('sparking outlet', 'Priority', realCues);
+    expect(result.topLabel).toBe('high');
+  });
+
+  it('"safety issue with electrical" → Priority=high', () => {
+    const result = computeCueStrengthForField('safety issue with electrical', 'Priority', realCues);
+    expect(result.topLabel).toBe('high');
+  });
+
+  it('"no hot water" → Priority=high', () => {
+    const result = computeCueStrengthForField('no hot water', 'Priority', realCues);
+    expect(result.topLabel).toBe('high');
+  });
+
+  it('"locked out of apartment" → Priority=high', () => {
+    const result = computeCueStrengthForField('locked out of apartment', 'Priority', realCues);
+    expect(result.topLabel).toBe('high');
+  });
+
+  it('"leak" → Priority=normal (unchanged)', () => {
+    const result = computeCueStrengthForField('leak', 'Priority', realCues);
+    expect(result.topLabel).toBe('normal');
+  });
+
+  it('"cosmetic scratch" → Priority=low (unchanged)', () => {
+    const result = computeCueStrengthForField('cosmetic scratch', 'Priority', realCues);
+    expect(result.topLabel).toBe('low');
+  });
+
+  // Regression: smoke alarm/detector must NOT promote to emergency
+  it('"smoke alarm beeping" → Priority=normal, NOT emergency', () => {
+    const result = computeCueStrengthForField('smoke alarm beeping', 'Priority', realCues);
+    expect(result.topLabel).toBe('normal');
+  });
+
+  it('"smoke detector not working" → Priority=normal, NOT emergency', () => {
+    const result = computeCueStrengthForField('smoke detector not working', 'Priority', realCues);
+    expect(result.topLabel).toBe('normal');
+  });
+
+  // Positive: actual smoke (not alarm/detector) SHOULD still be emergency
+  it('"I see smoke coming from the kitchen" → Priority=emergency', () => {
+    const result = computeCueStrengthForField(
+      'I see smoke coming from the kitchen',
+      'Priority',
+      realCues,
+    );
+    expect(result.topLabel).toBe('emergency');
+  });
+
+  // CO alarm alerting = emergency (CO is odorless — if the alarm is going off, trust it)
+  it('"carbon monoxide detector beeping" → Priority=emergency', () => {
+    const result = computeCueStrengthForField(
+      'carbon monoxide detector beeping',
+      'Priority',
+      realCues,
+    );
+    expect(result.topLabel).toBe('emergency');
+  });
+
+  it('"carbon monoxide alarm going off" → Priority=emergency', () => {
+    const result = computeCueStrengthForField(
+      'carbon monoxide alarm going off',
+      'Priority',
+      realCues,
+    );
+    expect(result.topLabel).toBe('emergency');
+  });
+
+  it('"co alarm going off" → Priority=emergency', () => {
+    const result = computeCueStrengthForField('co alarm going off', 'Priority', realCues);
+    expect(result.topLabel).toBe('emergency');
+  });
+
+  // CO detector broken/missing = normal maintenance (no active danger)
+  it('"co detector not working" → Priority=normal (maintenance, not active alert)', () => {
+    const result = computeCueStrengthForField('co detector not working', 'Priority', realCues);
+    expect(result.topLabel).toBe('normal');
+  });
+
+  it('"need a new carbon monoxide detector" → Priority=normal, NOT emergency', () => {
+    const result = computeCueStrengthForField(
+      'need a new carbon monoxide detector',
+      'Priority',
+      realCues,
+    );
+    // "carbon monoxide detector" matches the normal counter-cue regex (no alerting verb).
+    // The emergency regex has a negative lookahead excluding "carbon monoxide alarm|detector".
+    // So only normal fires, not emergency.
+    expect(result.topLabel).toBe('normal');
+  });
+});
+
 describe('bathtub vs shower cue disambiguation (v1.2)', () => {
   const realCues: CueDictionary = JSON.parse(
     readFileSync(resolve(schemasDir, 'classification_cues.json'), 'utf-8'),

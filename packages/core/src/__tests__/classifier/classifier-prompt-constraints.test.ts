@@ -72,6 +72,14 @@ describe('classifier prompt Priority guidance (version-gated)', () => {
     expect(v210).toContain('PRIORITY GUIDANCE');
     expect(v100).not.toContain('PRIORITY GUIDANCE');
   });
+
+  it('Priority guidance does NOT list "no heat" as emergency (Batch 2b hold)', () => {
+    const prompt = buildClassifierSystemPrompt(taxonomy, '2.3.0');
+    // "no heat" is a disputed item held in Batch 2b — must NOT appear in emergency examples
+    expect(prompt).not.toMatch(/"emergency".*no heat/);
+    // "no heat" should appear in "high" examples instead
+    expect(prompt).toMatch(/"high".*no heat/);
+  });
 });
 
 describe('domain hints version gating', () => {
@@ -112,5 +120,41 @@ describe('domain hints version gating', () => {
     const v220 = buildClassifierSystemPrompt(taxonomy, '2.2.0');
     expect(v220).toContain('PRIORITY GUIDANCE');
     expect(v220).toContain('DOMAIN ASSIGNMENT HINTS');
+  });
+});
+
+describe('HVAC hints version gating', () => {
+  it('V2 prompt at version 2.3.0 includes "HVAC CLASSIFICATION HINTS"', () => {
+    const v230 = buildClassifierSystemPrompt(taxonomy, '2.3.0');
+    expect(v230).toContain('HVAC CLASSIFICATION HINTS');
+  });
+
+  it('V1 prompt at version 2.3.0 includes "HVAC CLASSIFICATION HINTS"', () => {
+    // V1 is used when promptVersion < 2.0.0, but the flag is still passed.
+    // Since 2.3.0 >= 2.0.0, the main entry point routes to V2, so test V1 directly.
+    const v1 = buildClassifierSystemPromptV1(taxonomy, { includeHvacHints: true });
+    expect(v1).toContain('HVAC CLASSIFICATION HINTS');
+  });
+
+  it('V2 prompt at version 2.2.0 does NOT include "HVAC CLASSIFICATION HINTS"', () => {
+    const v220 = buildClassifierSystemPrompt(taxonomy, '2.2.0');
+    expect(v220).not.toContain('HVAC CLASSIFICATION HINTS');
+  });
+
+  it('V2 prompt at version 2.3.0 still includes domain hints and Priority guidance', () => {
+    const v230 = buildClassifierSystemPrompt(taxonomy, '2.3.0');
+    expect(v230).toContain('PRIORITY GUIDANCE');
+    expect(v230).toContain('DOMAIN ASSIGNMENT HINTS');
+    expect(v230).toContain('HVAC CLASSIFICATION HINTS');
+  });
+
+  it('V2 prompt at version 2.3.0 includes needs_object field-confusion guard', () => {
+    const v230 = buildClassifierSystemPrompt(taxonomy, '2.3.0');
+    expect(v230).toContain('ONLY valid for the Maintenance_Object field');
+  });
+
+  it('V2 prompt at version 2.2.0 does NOT include needs_object field-confusion guard', () => {
+    const v220 = buildClassifierSystemPrompt(taxonomy, '2.2.0');
+    expect(v220).not.toContain('ONLY valid for the Maintenance_Object field');
   });
 });

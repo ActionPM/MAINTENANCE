@@ -149,6 +149,7 @@ export type {
 export {
   EVIDENCE_BASED_PROMPT_VERSION,
   DOMAIN_HINTS_VERSION,
+  HVAC_HINTS_VERSION,
 } from './llm/prompts/classifier-prompt.js';
 
 // --- Follow-up (Phase 6) ---

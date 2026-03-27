@@ -58,9 +58,20 @@ export async function callIssueClassifier(
   for (let attempt = 0; attempt < 2; attempt++) {
     let raw: unknown;
     try {
+      let retryHint = 'schema_errors';
+      if (
+        Array.isArray(lastSchemaError) &&
+        lastSchemaError.some(
+          (e: Record<string, unknown>) =>
+            e.field === 'Maintenance_Problem' && e.value === 'needs_object',
+        )
+      ) {
+        retryHint =
+          'schema_errors — "needs_object" is only valid for the Maintenance_Object field, not Maintenance_Problem. Use "other_problem" or "not_working" for Maintenance_Problem.';
+      }
       raw = obsCtx
-        ? await llmCall(input, attempt > 0 ? { retryHint: 'schema_errors' } : undefined, obsCtx)
-        : await llmCall(input, attempt > 0 ? { retryHint: 'schema_errors' } : undefined);
+        ? await llmCall(input, attempt > 0 ? { retryHint } : undefined, obsCtx)
+        : await llmCall(input, attempt > 0 ? { retryHint } : undefined);
     } catch (err) {
       throw new ClassifierError(
         ClassifierErrorCode.LLM_CALL_FAILED,

@@ -137,4 +137,55 @@ describe('callIssueClassifier', () => {
     const result = await callIssueClassifier(VALID_INPUT, llmCall, taxonomy);
     expect(result.status).toBe('llm_fail');
   });
+
+  it('sends targeted retry hint when Maintenance_Problem is "needs_object"', async () => {
+    const needsObjectBad: IssueClassifierOutput = {
+      ...VALID_OUTPUT,
+      classification: {
+        ...VALID_OUTPUT.classification,
+        Maintenance_Problem: 'needs_object', // invalid — only valid for Maintenance_Object
+      },
+    };
+    const corrected: IssueClassifierOutput = {
+      ...VALID_OUTPUT,
+      classification: {
+        ...VALID_OUTPUT.classification,
+        Maintenance_Problem: 'not_working',
+      },
+    };
+    const llmCall = vi.fn().mockResolvedValueOnce(needsObjectBad).mockResolvedValueOnce(corrected);
+    const result = await callIssueClassifier(VALID_INPUT, llmCall, taxonomy);
+    expect(result.status).toBe('ok');
+    expect(llmCall).toHaveBeenCalledTimes(2);
+    // The retry call should contain the targeted needs_object hint
+    const retryArgs = llmCall.mock.calls[1];
+    expect(retryArgs[1]).toBeDefined();
+    expect(retryArgs[1].retryHint).toContain('only valid for the Maintenance_Object field');
+  });
+
+  it('recovers from needs_object misplacement on retry (integration)', async () => {
+    const needsObjectBad: IssueClassifierOutput = {
+      ...VALID_OUTPUT,
+      classification: {
+        ...VALID_OUTPUT.classification,
+        Maintenance_Category: 'electrical',
+        Maintenance_Object: 'outlet',
+        Maintenance_Problem: 'needs_object', // wrong field — taxonomy-invalid
+      },
+    };
+    const corrected: IssueClassifierOutput = {
+      ...VALID_OUTPUT,
+      classification: {
+        ...VALID_OUTPUT.classification,
+        Maintenance_Category: 'electrical',
+        Maintenance_Object: 'outlet',
+        Maintenance_Problem: 'not_working', // corrected value
+      },
+    };
+    const llmCall = vi.fn().mockResolvedValueOnce(needsObjectBad).mockResolvedValueOnce(corrected);
+    const result = await callIssueClassifier(VALID_INPUT, llmCall, taxonomy);
+    expect(result.status).toBe('ok');
+    expect(result.output!.classification.Maintenance_Problem).toBe('not_working');
+    expect(llmCall).toHaveBeenCalledTimes(2);
+  });
 });
