@@ -553,12 +553,7 @@
           "ambiguityPenalty": 0
         }
       },
-      "fieldsNeedingInput": [
-        "Location",
-        "Sub_Location",
-        "Maintenance_Category",
-        "Priority"
-      ],
+      "fieldsNeedingInput": ["Location", "Sub_Location", "Maintenance_Category", "Priority"],
       "hierarchyValid": true
     },
     {
@@ -833,10 +828,7 @@
           "ambiguityPenalty": 0
         }
       },
-      "fieldsNeedingInput": [
-        "Sub_Location",
-        "Priority"
-      ],
+      "fieldsNeedingInput": ["Sub_Location", "Priority"],
       "hierarchyValid": true
     },
     {
@@ -1166,10 +1158,7 @@
           "ambiguityPenalty": 0
         }
       },
-      "fieldsNeedingInput": [
-        "Management_Object",
-        "Priority"
-      ],
+      "fieldsNeedingInput": ["Management_Object", "Priority"],
       "hierarchyValid": true
     },
     {
@@ -1378,9 +1367,7 @@
           "ambiguityPenalty": 0
         }
       },
-      "fieldsNeedingInput": [
-        "Priority"
-      ],
+      "fieldsNeedingInput": ["Priority"],
       "hierarchyValid": true
     },
     {
@@ -1732,12 +1719,7 @@
           "ambiguityPenalty": 0
         }
       },
-      "fieldsNeedingInput": [
-        "Location",
-        "Sub_Location",
-        "Maintenance_Problem",
-        "Priority"
-      ],
+      "fieldsNeedingInput": ["Location", "Sub_Location", "Maintenance_Problem", "Priority"],
       "hierarchyValid": true
     },
     {
@@ -1826,9 +1808,7 @@
           "ambiguityPenalty": 0
         }
       },
-      "fieldsNeedingInput": [
-        "Priority"
-      ],
+      "fieldsNeedingInput": ["Priority"],
       "hierarchyValid": true
     },
     {

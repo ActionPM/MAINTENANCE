@@ -9,6 +9,7 @@
 This addendum covers the remaining work after implementation is complete and provider-backed evals have passed. It folds the earlier "tomorrow" checklist into the existing hardening plan by treating baseline promotion and release evidence as the final Batch 4 closeout, and by moving branch/PR hygiene into an explicit post-plan closeout checklist.
 
 Current assumed state:
+
 - Batches 1, 2, 3, and 2b are implemented (execution order: 1 -> 2 -> 3 -> 2b)
 - Provider-backed `gold-v1`, `regression`, and `hard` evals have already passed (all gates PASSED per comparison reports)
 - Timestamped eval artifacts already exist and are the source of truth for baseline promotion and evidence capture
@@ -27,11 +28,11 @@ Add three explicit closeout steps after Tasks 4.3-4.5. Baseline promotion is con
 
 Overwrite the current (provisional) baselines with the passing post-hardening runs:
 
-| Baseline file | Source run file | Gate |
-|---|---|---|
-| `gold-v1-anthropic-baseline.json` | `gold-v1-run-1774565983521.json` | PASSED |
+| Baseline file                        | Source run file                     | Gate   |
+| ------------------------------------ | ----------------------------------- | ------ |
+| `gold-v1-anthropic-baseline.json`    | `gold-v1-run-1774565983521.json`    | PASSED |
 | `regression-anthropic-baseline.json` | `regression-run-1774566090698.json` | PASSED |
-| `hard-anthropic-baseline.json` | `hard-run-1774566191302.json` | PASSED |
+| `hard-anthropic-baseline.json`       | `hard-run-1774566191302.json`       | PASSED |
 
 Retain the following timestamped artifacts as committed historical snapshots (do not delete):
 
@@ -52,31 +53,33 @@ Update the plan execution summary and `docs/spec-gap-tracker.md` with the final 
 
 **gold-v1** (source: `gold-v1-comparison-1774565983554.md`):
 
-| Metric | Slice | Baseline | Post-hardening | Delta |
-|---|---|---|---|---|
-| field_accuracy | _overall | 0.7894 | 0.8236 | +0.0342 |
-| field_accuracy | hvac | 0.6889 | 0.8057 | +0.1168 |
-| field_accuracy | emergency | 0.7358 | 0.7799 | +0.0442 |
-| field_accuracy | multi_issue | 0.7605 | 0.7960 | +0.0355 |
-| schema_invalid_rate | _overall | 0.0047 | 0.0000 | -0.0047 |
-| schema_invalid_rate | multi_issue | 0.0123 | 0.0000 | -0.0123 |
-| contradiction_after_retry_rate | _overall | 0.0047 | 0.0000 | -0.0047 |
-| contradiction_after_retry_rate | multi_issue | 0.0123 | 0.0000 | -0.0123 |
+| Metric                         | Slice       | Baseline | Post-hardening | Delta   |
+| ------------------------------ | ----------- | -------- | -------------- | ------- |
+| field_accuracy                 | \_overall   | 0.7894   | 0.8236         | +0.0342 |
+| field_accuracy                 | hvac        | 0.6889   | 0.8057         | +0.1168 |
+| field_accuracy                 | emergency   | 0.7358   | 0.7799         | +0.0442 |
+| field_accuracy                 | multi_issue | 0.7605   | 0.7960         | +0.0355 |
+| schema_invalid_rate            | \_overall   | 0.0047   | 0.0000         | -0.0047 |
+| schema_invalid_rate            | multi_issue | 0.0123   | 0.0000         | -0.0123 |
+| contradiction_after_retry_rate | \_overall   | 0.0047   | 0.0000         | -0.0047 |
+| contradiction_after_retry_rate | multi_issue | 0.0123   | 0.0000         | -0.0123 |
 
 Non-targeted slices also improved (no regressions anywhere):
 
-| Metric | Slice | Baseline | Post-hardening | Delta |
-|---|---|---|---|---|
-| field_accuracy | pest_control | 0.8889 | 0.9145 | +0.0256 |
-| field_accuracy | electrical | 0.8296 | 0.8654 | +0.0358 |
-| field_accuracy | appliance | 0.8722 | 0.8944 | +0.0222 |
-| field_accuracy | carpentry | 0.8194 | 0.8472 | +0.0278 |
+| Metric         | Slice        | Baseline | Post-hardening | Delta   |
+| -------------- | ------------ | -------- | -------------- | ------- |
+| field_accuracy | pest_control | 0.8889   | 0.9145         | +0.0256 |
+| field_accuracy | electrical   | 0.8296   | 0.8654         | +0.0358 |
+| field_accuracy | appliance    | 0.8722   | 0.8944         | +0.0222 |
+| field_accuracy | carpentry    | 0.8194   | 0.8472         | +0.0278 |
 
 **regression** (source: `regression-comparison-1774566090717.md`):
+
 - Passed without blocking regressions
 - hvac slice improved: 0.8571 -> 0.9286 (+0.0714)
 
 **hard** (source: `hard-comparison-1774566191316.md`):
+
 - Overall improved: 0.7566 -> 0.7854 (+0.0288)
 - slang slice improved: 0.6071 -> 0.7857 (+0.1786)
 - typo slice improved: 0.8929 -> 0.9286 (+0.0357)

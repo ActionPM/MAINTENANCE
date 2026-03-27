@@ -418,11 +418,11 @@ Do NOT treat these conditions as Priority=`emergency`:
   - "no heat in the whole apartment/unit/suite"
   - "no power/no electricity in the whole apartment/unit/suite"
   - "no water in the whole apartment/unit/suite"
-  Keep generic "no heat", "no power", and "no water" cues in Priority.high unless the text clearly implies the entire suite.
+    Keep generic "no heat", "no power", and "no water" cues in Priority.high unless the text clearly implies the entire suite.
 - **Task 2b.2**: Update `packages/schemas/classification_cues.json` to promote access/security emergencies to Priority.emergency:
   - "locked out", "can't get into the suite", "can't get into the building"
   - "door won't lock", "can't lock the door", "can't secure the unit/building"
-  Add counter-cues so these remain below emergency when the text says access still works (`key still works`, `fob still works`) or the door still locks.
+    Add counter-cues so these remain below emergency when the text says access still works (`key still works`, `fob still works`) or the door still locks.
 - **Task 2b.3**: Update `packages/schemas/risk_protocols.json`:
   - Change `no-heat-001` to severity=`emergency`, but narrow its grammar to whole-suite heat loss
   - Add new emergency triggers for whole-suite no electricity, whole-suite no water, lockout / no access, and cannot-secure scenarios
