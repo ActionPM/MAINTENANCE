@@ -515,6 +515,13 @@ Cue scoring rule:
 
 - keyword hits and regex matches contribute to a normalized 0..1 score per candidate label; take the top score for `cue_strength`.
 
+**Cue dictionary evolution** (v1.6.0, prompt_version 2.3.0):
+
+- **HVAC cue expansion**: `Maintenance_Category.hvac` expanded from 8 to 21 keywords plus 3 regex patterns covering colloquial terms (heater, baseboard, boiler, air conditioner, ventilation, central air, no heat, no cooling). `Maintenance_Object.radiator` expanded to 6 keywords + 1 regex; `Maintenance_Object.thermostat` expanded to 6 keywords + 1 regex.
+- **Priority cue expansion (undisputed)**: `Priority.emergency` expanded from 5 to 18 keywords plus 7 regex patterns aligned with `risk_protocols.json` severity=emergency triggers (fire, flood, gas leak, structural collapse, burning smell) plus CO alarm/detector alerting-verb detection. Bare `smoke` and `carbon monoxide` use negative-lookahead regex to avoid false-promoting alarm/detector maintenance requests. `Priority.high` expanded from 5 to 23 keywords plus 5 regex patterns for scenarios where operational policy assigns severity=high (no heat, electrical safety, no power, locked out, water damage). `Priority.normal` expanded with counter-cues for smoke alarm/detector and non-alerting CO alarm/detector mentions (9 keywords + 2 regex).
+- **HVAC classification hints** (prompt_version >= 2.3.0): Version-gated prompt guidance for HVAC component identification, `needs_object` usage for unnamed components, and in-unit Location/Sub_Location defaults for HVAC issues.
+- **needs_object field-confusion guard** (prompt_version >= 2.3.0): Explicit instruction that `needs_object` is only valid for `Maintenance_Object`, not `Maintenance_Problem` or other fields.
+
 ---
 
 ## 15) Follow-ups

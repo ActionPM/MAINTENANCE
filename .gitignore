@@ -61,6 +61,9 @@ XX-Archive/
 
 *.code-workspace
 
+# Source data files
+WO Review Gold Set.csv
+
 # Eval ephemeral artifacts (keep only canonical *-baseline.json files)
 packages/evals/baselines/*-run-*.json
 packages/evals/baselines/*-comparison-*.md
