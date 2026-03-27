@@ -301,13 +301,13 @@ Add a new `describe('electrical safety emergency cue coverage')` block (alongsid
 alternative label; the exact resolution (high, normal, or null) depends on which other cue
 keywords happen to substring-match and is not the concern of this test suite.
 
-| Input text | Assertion | Why |
-|---|---|---|
-| `"outlet not working"` | `topLabel !== 'emergency'` | routine repair, no live-hazard keyword fires emergency |
-| `"breaker keeps tripping"` | `topLabel !== 'emergency'` | routine electrical, no live-hazard keyword |
-| `"lights flickering"` | `topLabel !== 'emergency'` | symptom only, no live-hazard keyword |
-| `"unsafe electrical issue"` | `topLabel !== 'emergency'` | generic safety language; "unsafe" is in high, not emergency |
-| `"no power in whole apartment"` | `topLabel !== 'emergency'` | suite-wide power loss is out of scope for this rule |
+| Input text                      | Assertion                  | Why                                                         |
+| ------------------------------- | -------------------------- | ----------------------------------------------------------- |
+| `"outlet not working"`          | `topLabel !== 'emergency'` | routine repair, no live-hazard keyword fires emergency      |
+| `"breaker keeps tripping"`      | `topLabel !== 'emergency'` | routine electrical, no live-hazard keyword                  |
+| `"lights flickering"`           | `topLabel !== 'emergency'` | symptom only, no live-hazard keyword                        |
+| `"unsafe electrical issue"`     | `topLabel !== 'emergency'` | generic safety language; "unsafe" is in high, not emergency |
+| `"no power in whole apartment"` | `topLabel !== 'emergency'` | suite-wide power loss is out of scope for this rule         |
 
 ---
 
@@ -483,12 +483,12 @@ If any gate fails:
 
 ## Risk assessment
 
-| Risk                                                | Likelihood | Impact | Mitigation                                                                                                                                     |
-| --------------------------------------------------- | ---------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Risk                                                | Likelihood | Impact | Mitigation                                                                                                                                                                                  |
+| --------------------------------------------------- | ---------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | False-positive emergency on generic electrical text | Low        | Medium | Trigger grammar uses specific live-hazard keywords; generic terms ("unsafe", "hazard") excluded; hot/burning regex scoped to electrical components to avoid matching radiators, pipes, etc. |
-| Existing "burning smell from outlet" tests break    | Low        | Low    | "burning" is already in Priority.emergency cues; adding "outlet" context should not downgrade                                                  |
-| Regression in non-electrical eval slices            | Low        | Medium | Batch 5 eval gates catch regressions before baseline promotion                                                                                 |
-| Version conflict with pending gold-v1 closeout      | Medium     | Low    | Pre-implementation version check in preamble; plan uses placeholder versions                                                                   |
+| Existing "burning smell from outlet" tests break    | Low        | Low    | "burning" is already in Priority.emergency cues; adding "outlet" context should not downgrade                                                                                               |
+| Regression in non-electrical eval slices            | Low        | Medium | Batch 5 eval gates catch regressions before baseline promotion                                                                                                                              |
+| Version conflict with pending gold-v1 closeout      | Medium     | Low    | Pre-implementation version check in preamble; plan uses placeholder versions                                                                                                                |
 
 ---
 
@@ -500,12 +500,12 @@ If any gate fails:
 
 ### Changes made
 
-| Batch | File | Change |
-|---|---|---|
-| 1 | `packages/schemas/risk_protocols.json` | safety-001 severity high → emergency; expanded keyword_any (arcing, hot/burning/smoking components); expanded regex_any (5 patterns for arcing + hot-to-touch); mit-electrical template updated with hot-component guidance; version 1.0.0 → 1.1.0 |
-| 1 | `packages/schemas/classification_cues.json` | Priority.emergency: +11 keywords, +5 regex; Priority.high: removed sparks/sparking/exposed wires keywords and spark/exposed-wires regex; version 1.6.0 → 1.7.0 |
-| 2 | `packages/core/src/llm/prompts/classifier-prompt.ts` | Added ELECTRICAL_SAFETY_HINTS_VERSION (2.4.0), ELECTRICAL_SAFETY_HINTS_BLOCK, version gate in buildClassifierSystemPrompt(), passed includeElectricalSafetyHints to V1 and V2 builders |
-| 2 | `packages/schemas/src/version-pinning.ts` | PROMPT_VERSION 2.3.0 → 2.4.0, CUE_VERSION 1.6.0 → 1.7.0 |
+| Batch | File                                                 | Change                                                                                                                                                                                                                                             |
+| ----- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | `packages/schemas/risk_protocols.json`               | safety-001 severity high → emergency; expanded keyword_any (arcing, hot/burning/smoking components); expanded regex_any (5 patterns for arcing + hot-to-touch); mit-electrical template updated with hot-component guidance; version 1.0.0 → 1.1.0 |
+| 1     | `packages/schemas/classification_cues.json`          | Priority.emergency: +11 keywords, +5 regex; Priority.high: removed sparks/sparking/exposed wires keywords and spark/exposed-wires regex; version 1.6.0 → 1.7.0                                                                                     |
+| 2     | `packages/core/src/llm/prompts/classifier-prompt.ts` | Added ELECTRICAL_SAFETY_HINTS_VERSION (2.4.0), ELECTRICAL_SAFETY_HINTS_BLOCK, version gate in buildClassifierSystemPrompt(), passed includeElectricalSafetyHints to V1 and V2 builders                                                             |
+| 2     | `packages/schemas/src/version-pinning.ts`            | PROMPT_VERSION 2.3.0 → 2.4.0, CUE_VERSION 1.6.0 → 1.7.0                                                                                                                                                                                            |
 
 ### Tests added
 
@@ -524,10 +524,10 @@ If any gate fails:
 
 Batch 5 (provider-backed evals) completed:
 
-| Dataset | Gate | field_accuracy | Notes |
-|---|---|---|---|
-| gold-v1 | FAILED (noise) | 0.8253 (baseline 0.8236, +0.0017) | Emergency slice **0.8333** (baseline 0.7799, **+0.0534**). Gate failed due to small regressions in unrelated slices: pest_control -0.017, carpentry -0.028, schema_invalid_rate +0.019 — all within LLM non-determinism range. |
-| regression | **PASSED** | 0.8202 | No significant changes. Emergency 0.9048. Zero schema errors. |
-| hard | **PASSED** | 0.7977 | Improved: vague +0.0625, ambiguous +0.0571. Zero schema errors. |
+| Dataset    | Gate           | field_accuracy                    | Notes                                                                                                                                                                                                                          |
+| ---------- | -------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| gold-v1    | FAILED (noise) | 0.8253 (baseline 0.8236, +0.0017) | Emergency slice **0.8333** (baseline 0.7799, **+0.0534**). Gate failed due to small regressions in unrelated slices: pest_control -0.017, carpentry -0.028, schema_invalid_rate +0.019 — all within LLM non-determinism range. |
+| regression | **PASSED**     | 0.8202                            | No significant changes. Emergency 0.9048. Zero schema errors.                                                                                                                                                                  |
+| hard       | **PASSED**     | 0.7977                            | Improved: vague +0.0625, ambiguous +0.0571. Zero schema errors.                                                                                                                                                                |
 
 **Baseline promotion: NOT performed** — gold-v1 gate failed per plan policy. The failure is noise (unrelated slices, model variance), not a regression from electrical safety changes. The target metric (emergency slice field_accuracy) improved by +5.34%.
