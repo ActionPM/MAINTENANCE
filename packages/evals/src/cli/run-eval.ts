@@ -333,9 +333,9 @@ async function main() {
     args.baseline ??
     (args.adapter !== 'fixture'
       ? // Prefer adapter-specific baseline, fall back to manifest default
-        (fs.existsSync(path.join(outputDir, `${args.dataset}-${args.adapter}-baseline.json`))
-          ? path.join(outputDir, `${args.dataset}-${args.adapter}-baseline.json`)
-          : path.join(outputDir, `${manifestId}-baseline.json`))
+        fs.existsSync(path.join(outputDir, `${args.dataset}-${args.adapter}-baseline.json`))
+        ? path.join(outputDir, `${args.dataset}-${args.adapter}-baseline.json`)
+        : path.join(outputDir, `${manifestId}-baseline.json`)
       : path.join(outputDir, `${manifestId}-baseline.json`));
   let gatePassed = true;
 
