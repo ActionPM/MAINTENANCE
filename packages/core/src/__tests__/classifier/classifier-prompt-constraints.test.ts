@@ -158,3 +158,35 @@ describe('HVAC hints version gating', () => {
     expect(v220).not.toContain('ONLY valid for the Maintenance_Object field');
   });
 });
+
+describe('electrical safety hints version gating', () => {
+  it('prompt at 2.4.0 includes ELECTRICAL SAFETY ESCALATION block', () => {
+    const prompt = buildClassifierSystemPrompt(taxonomy, '2.4.0');
+    expect(prompt).toContain('ELECTRICAL SAFETY ESCALATION');
+    expect(prompt).toContain('sparks, arcing, or electrical fire');
+    expect(prompt).toContain('NOT emergency');
+  });
+
+  it('prompt at 2.3.0 does NOT include ELECTRICAL SAFETY ESCALATION block', () => {
+    const prompt = buildClassifierSystemPrompt(taxonomy, '2.3.0');
+    expect(prompt).not.toContain('ELECTRICAL SAFETY ESCALATION');
+  });
+
+  it('prompt at 2.4.0 still includes all prior blocks (no regression)', () => {
+    const prompt = buildClassifierSystemPrompt(taxonomy, '2.4.0');
+    expect(prompt).toContain('PRIORITY GUIDANCE');
+    expect(prompt).toContain('DOMAIN ASSIGNMENT HINTS');
+    expect(prompt).toContain('HVAC CLASSIFICATION HINTS');
+    expect(prompt).toContain('ELECTRICAL SAFETY ESCALATION');
+  });
+
+  it('PRIORITY_GUIDANCE_BLOCK still lists electrical safety as high (backward compat)', () => {
+    const prompt = buildClassifierSystemPrompt(taxonomy, '2.4.0');
+    expect(prompt).toMatch(/"high".*electrical safety/);
+  });
+
+  it('electrical safety escalation block explicitly excludes routine failures', () => {
+    const prompt = buildClassifierSystemPrompt(taxonomy, '2.4.0');
+    expect(prompt).toMatch(/NOT emergency[\s\S]*breaker trips|breaker trips[\s\S]*NOT emergency/i);
+  });
+});

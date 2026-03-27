@@ -79,11 +79,11 @@ No DATABASE_URL or ANTHROPIC_API_KEY needed for `pnpm test` — in-memory stores
 
 ## Environment Variables
 
-See `.env.example`:
+See `.env.example` for the full list. **Live secrets are in `.env.local`** (gitignored, Vercel CLI–generated). Source it when running provider-backed evals or anything requiring real API keys.
 
 - `DATABASE_URL` — Neon Postgres pooled connection string (optional for local dev; falls back to in-memory)
 - `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` — 32+ char secrets
-- `ANTHROPIC_API_KEY` — for LLM tools (optional; stubs used if absent)
+- `ANTHROPIC_API_KEY` — for LLM tools and provider-backed evals (optional; stubs used if absent). **Located in `.env.local`.**
 - `LLM_DEFAULT_MODEL` — optional override (default: `claude-sonnet-4-20250514`)
 
 ## Code Conventions

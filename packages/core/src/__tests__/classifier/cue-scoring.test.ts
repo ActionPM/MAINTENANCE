@@ -532,9 +532,9 @@ describe('Priority cue coverage', () => {
     expect(result.topLabel).toBe('high');
   });
 
-  it('"sparking outlet" → Priority=high (not emergency — operational policy)', () => {
+  it('"sparking outlet" → Priority=emergency (live electrical hazard)', () => {
     const result = computeCueStrengthForField('sparking outlet', 'Priority', realCues);
-    expect(result.topLabel).toBe('high');
+    expect(result.topLabel).toBe('emergency');
   });
 
   it('"safety issue with electrical" → Priority=high', () => {
@@ -641,5 +641,102 @@ describe('bathtub vs shower cue disambiguation (v1.2)', () => {
     const text = 'shower head is leaking water all over the floor';
     const result = computeCueStrengthForField(text, 'Maintenance_Object', realCues);
     expect(result.topLabel).toBe('shower');
+  });
+});
+
+describe('electrical safety emergency cue coverage', () => {
+  const realCues: CueDictionary = JSON.parse(
+    readFileSync(resolve(schemasDir, 'classification_cues.json'), 'utf-8'),
+  );
+
+  // Emergency assertions: topLabel === 'emergency', score >= 0.6
+  it('"sparking outlet" → Priority=emergency, score >= 0.6', () => {
+    const result = computeCueStrengthForField('sparking outlet', 'Priority', realCues);
+    expect(result.topLabel).toBe('emergency');
+    expect(result.score).toBeGreaterThanOrEqual(0.6);
+  });
+
+  it('"exposed wires in the bedroom" → Priority=emergency, score >= 0.6', () => {
+    const result = computeCueStrengthForField('exposed wires in the bedroom', 'Priority', realCues);
+    expect(result.topLabel).toBe('emergency');
+    expect(result.score).toBeGreaterThanOrEqual(0.6);
+  });
+
+  it('"exposed live wires in bedroom" → Priority=emergency, score >= 0.6', () => {
+    const result = computeCueStrengthForField('exposed live wires in bedroom', 'Priority', realCues);
+    expect(result.topLabel).toBe('emergency');
+    expect(result.score).toBeGreaterThanOrEqual(0.6);
+  });
+
+  it('"electrical shock from the switch" → Priority=emergency, score >= 0.6', () => {
+    const result = computeCueStrengthForField('electrical shock from the switch', 'Priority', realCues);
+    expect(result.topLabel).toBe('emergency');
+    expect(result.score).toBeGreaterThanOrEqual(0.6);
+  });
+
+  it('"electrical fire in panel" → Priority=emergency, score >= 0.6', () => {
+    const result = computeCueStrengthForField('electrical fire in panel', 'Priority', realCues);
+    expect(result.topLabel).toBe('emergency');
+    expect(result.score).toBeGreaterThanOrEqual(0.6);
+  });
+
+  it('"burning smell from outlet" → Priority=emergency (no regression)', () => {
+    const result = computeCueStrengthForField('burning smell from outlet', 'Priority', realCues);
+    expect(result.topLabel).toBe('emergency');
+    expect(result.score).toBeGreaterThanOrEqual(0.6);
+  });
+
+  it('"outlet is too hot to touch" → Priority=emergency, score >= 0.6', () => {
+    const result = computeCueStrengthForField('outlet is too hot to touch', 'Priority', realCues);
+    expect(result.topLabel).toBe('emergency');
+    expect(result.score).toBeGreaterThanOrEqual(0.6);
+  });
+
+  it('"switch plate is burning hot" → Priority=emergency, score >= 0.6', () => {
+    const result = computeCueStrengthForField('switch plate is burning hot', 'Priority', realCues);
+    expect(result.topLabel).toBe('emergency');
+    expect(result.score).toBeGreaterThanOrEqual(0.6);
+  });
+
+  it('"breaker panel is hot and smells like burning" → Priority=emergency, score >= 0.6', () => {
+    const result = computeCueStrengthForField(
+      'breaker panel is hot and smells like burning',
+      'Priority',
+      realCues,
+    );
+    expect(result.topLabel).toBe('emergency');
+    expect(result.score).toBeGreaterThanOrEqual(0.6);
+  });
+
+  it('"arcing from the outlet" → Priority=emergency, score >= 0.6', () => {
+    const result = computeCueStrengthForField('arcing from the outlet', 'Priority', realCues);
+    expect(result.topLabel).toBe('emergency');
+    expect(result.score).toBeGreaterThanOrEqual(0.6);
+  });
+
+  // Non-emergency assertions: topLabel !== 'emergency'
+  it('"outlet not working" → NOT emergency', () => {
+    const result = computeCueStrengthForField('outlet not working', 'Priority', realCues);
+    expect(result.topLabel).not.toBe('emergency');
+  });
+
+  it('"breaker keeps tripping" → NOT emergency', () => {
+    const result = computeCueStrengthForField('breaker keeps tripping', 'Priority', realCues);
+    expect(result.topLabel).not.toBe('emergency');
+  });
+
+  it('"lights flickering" → NOT emergency', () => {
+    const result = computeCueStrengthForField('lights flickering', 'Priority', realCues);
+    expect(result.topLabel).not.toBe('emergency');
+  });
+
+  it('"unsafe electrical issue" → NOT emergency', () => {
+    const result = computeCueStrengthForField('unsafe electrical issue', 'Priority', realCues);
+    expect(result.topLabel).not.toBe('emergency');
+  });
+
+  it('"no power in whole apartment" → NOT emergency', () => {
+    const result = computeCueStrengthForField('no power in whole apartment', 'Priority', realCues);
+    expect(result.topLabel).not.toBe('emergency');
   });
 });

@@ -275,7 +275,7 @@ describe('Integration — all 11 schema/config JSON files exist', () => {
 describe('Integration — config JSON content validation', () => {
   it('risk_protocols.json has triggers and mitigation_templates', () => {
     const raw = JSON.parse(readFileSync(resolve(schemasDir, 'risk_protocols.json'), 'utf-8'));
-    expect(raw.version).toBe('1.0.0');
+    expect(raw.version).toBe('1.1.0');
     expect(raw.triggers.length).toBeGreaterThan(0);
     expect(raw.mitigation_templates.length).toBeGreaterThan(0);
     for (const trigger of raw.triggers) {

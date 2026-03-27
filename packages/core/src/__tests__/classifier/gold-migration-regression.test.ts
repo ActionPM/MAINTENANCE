@@ -147,7 +147,7 @@ describe('version-aware prompt dispatch', () => {
   });
 
   it('PROMPT_VERSION is >= 2.0.0 (evidence-based classifier)', () => {
-    expect(PROMPT_VERSION).toBe('2.3.0');
+    expect(PROMPT_VERSION).toBe('2.4.0');
   });
 });
 

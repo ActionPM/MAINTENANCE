@@ -13,6 +13,9 @@ export const DOMAIN_HINTS_VERSION = '2.2.0';
 /** The prompt version boundary for HVAC classification hints (added in 2.3.0). */
 export const HVAC_HINTS_VERSION = '2.3.0';
 
+/** The prompt version boundary for electrical safety escalation hints (added in 2.4.0). */
+export const ELECTRICAL_SAFETY_HINTS_VERSION = '2.4.0';
+
 const DOMAIN_HINTS_BLOCK = `
 DOMAIN ASSIGNMENT HINTS:
 - Intercom, buzzer, door-entry, and visitor-access issues are management (general/intercom)
@@ -29,6 +32,19 @@ HVAC CLASSIFICATION HINTS:
   Maintenance_Object "needs_object" unless the tenant names a specific part.
 - If the issue is clearly in-unit (e.g., "my heat", "in my apartment"), set Location to "suite"
   and Sub_Location to "general" even without a specific room name.`;
+
+const ELECTRICAL_SAFETY_HINTS_BLOCK = `
+ELECTRICAL SAFETY ESCALATION:
+- Active electrical hazards are EMERGENCY priority, overriding the general priority guidance:
+  - sparks, arcing, or electrical fire
+  - exposed live wires
+  - electric shock (tenant reports being shocked)
+  - smoke or burning from an electrical component (outlet, switch, panel)
+  - electrical component that is uncomfortably hot to touch (outlet, switch, breaker panel)
+- Routine electrical malfunctions are NOT emergency:
+  - breaker trips, flickering lights, non-working outlets (without active hazard signals above)
+  - generic "electrical issue", "unsafe", or "hazard" without specific live-hazard evidence
+- Suite-wide no power is a separate concern and is NOT classified via this rule.`;
 
 const PRIORITY_GUIDANCE_BLOCK = `
 PRIORITY GUIDANCE:
@@ -48,6 +64,7 @@ export function buildClassifierSystemPromptV1(
     includePriorityGuidance?: boolean;
     includeDomainHints?: boolean;
     includeHvacHints?: boolean;
+    includeElectricalSafetyHints?: boolean;
   },
 ): string {
   const taxonomyBlock = Object.entries(taxonomy)
@@ -85,7 +102,7 @@ Examples:
 - shelf + no_heat = INVALID (shelves don't have heating problems)
 
 When unsure about a constrained field, use the appropriate "other_*" or "general" value and report it in missing_fields.
-${options?.includePriorityGuidance ? PRIORITY_GUIDANCE_BLOCK : ''}${options?.includeDomainHints ? DOMAIN_HINTS_BLOCK : ''}${options?.includeHvacHints ? HVAC_HINTS_BLOCK : ''}
+${options?.includePriorityGuidance ? PRIORITY_GUIDANCE_BLOCK : ''}${options?.includeDomainHints ? DOMAIN_HINTS_BLOCK : ''}${options?.includeHvacHints ? HVAC_HINTS_BLOCK : ''}${options?.includeElectricalSafetyHints ? ELECTRICAL_SAFETY_HINTS_BLOCK : ''}
 RESPOND WITH ONLY a JSON object (no markdown, no explanation):
 {
   "issue_id": "<same as input>",
@@ -132,6 +149,7 @@ export function buildClassifierSystemPromptV2(
     includePriorityGuidance?: boolean;
     includeDomainHints?: boolean;
     includeHvacHints?: boolean;
+    includeElectricalSafetyHints?: boolean;
   },
 ): string {
   const taxonomyBlock = Object.entries(taxonomy)
@@ -168,7 +186,7 @@ NEEDS_OBJECT GUIDANCE:
       : ''
   }
 
-${options?.includePriorityGuidance ? PRIORITY_GUIDANCE_BLOCK : ''}${options?.includeDomainHints ? DOMAIN_HINTS_BLOCK : ''}${options?.includeHvacHints ? HVAC_HINTS_BLOCK : ''}
+${options?.includePriorityGuidance ? PRIORITY_GUIDANCE_BLOCK : ''}${options?.includeDomainHints ? DOMAIN_HINTS_BLOCK : ''}${options?.includeHvacHints ? HVAC_HINTS_BLOCK : ''}${options?.includeElectricalSafetyHints ? ELECTRICAL_SAFETY_HINTS_BLOCK : ''}
 MISSING_FIELDS:
 - List fields you omitted from classification because the text did not support a value.
 - Also list fields where you assigned a value but have low certainty.
@@ -211,18 +229,22 @@ export function buildClassifierSystemPrompt(taxonomy: Taxonomy, promptVersion?: 
   const includeDomainHints =
     !!promptVersion && compareSemver(promptVersion, DOMAIN_HINTS_VERSION) >= 0;
   const includeHvacHints = !!promptVersion && compareSemver(promptVersion, HVAC_HINTS_VERSION) >= 0;
+  const includeElectricalSafetyHints =
+    !!promptVersion && compareSemver(promptVersion, ELECTRICAL_SAFETY_HINTS_VERSION) >= 0;
 
   if (promptVersion && compareSemver(promptVersion, EVIDENCE_BASED_PROMPT_VERSION) >= 0) {
     return buildClassifierSystemPromptV2(taxonomy, {
       includePriorityGuidance,
       includeDomainHints,
       includeHvacHints,
+      includeElectricalSafetyHints,
     });
   }
   return buildClassifierSystemPromptV1(taxonomy, {
     includePriorityGuidance,
     includeDomainHints,
     includeHvacHints,
+    includeElectricalSafetyHints,
   });
 }
 

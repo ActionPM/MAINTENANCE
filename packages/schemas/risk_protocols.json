@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "triggers": [
     {
       "trigger_id": "fire-001",
@@ -53,12 +53,23 @@
       "trigger_id": "safety-001",
       "name": "Electrical Safety Risk",
       "grammar": {
-        "keyword_any": ["sparks", "sparking", "electrical fire", "exposed wires", "shock"],
-        "regex_any": ["\\b(spark(s|ing)?|exposed\\s+wires?|electric(al)?\\s+(shock|fire))\\b"],
+        "keyword_any": [
+          "sparks", "sparking", "arcing",
+          "electrical fire", "exposed wires", "exposed live wires", "electric shock", "electrical shock",
+          "burning outlet", "smoking outlet",
+          "hot outlet", "hot switch", "hot breaker panel"
+        ],
+        "regex_any": [
+          "\\b(spark(s|ing)?|arc(s|ing)?)\\b",
+          "\\b(exposed\\s+(live\\s+)?wires?)\\b",
+          "\\b(electric(al)?\\s+(shock|fire))\\b",
+          "\\b(outlet|switch(\\s+plate)?|panel|breaker\\s*panel)\\s+(is\\s+)?(too\\s+)?(hot|burning(\\s+hot)?|smoking)\\b",
+          "\\b(hot|burning|smoking)\\s+(outlet|switch(\\s+plate)?|panel|breaker\\s*panel)\\b"
+        ],
         "taxonomy_path_any": ["maintenance.electrical.safety_risk"]
       },
       "requires_confirmation": true,
-      "severity": "high",
+      "severity": "emergency",
       "mitigation_template_id": "mit-electrical"
     }
   ],
@@ -111,11 +122,12 @@
     {
       "template_id": "mit-electrical",
       "name": "Electrical Safety",
-      "message_template": "Please stay away from any sparking outlets, exposed wires, or damaged electrical components. Do not touch them. We are routing this to emergency maintenance.",
+      "message_template": "Please stay away from any sparking outlets, exposed wires, hot electrical components, or damaged electrical components. Do not touch them. If safe, turn off the breaker for the affected area. We are routing this to emergency maintenance.",
       "safety_instructions": [
-        "Do not touch exposed wires or sparking outlets",
+        "Do not touch exposed wires, sparking outlets, or hot electrical components",
         "Turn off the breaker for the affected area if safe",
-        "Keep children and pets away from the area"
+        "Keep children and pets away from the area",
+        "If a component is hot or smoking, do not attempt to unplug it — turn off the breaker instead"
       ]
     }
   ]

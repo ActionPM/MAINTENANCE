@@ -1,5 +1,5 @@
 {
-  "version": "1.6.0",
+  "version": "1.7.0",
   "fields": {
     "Category": {
       "maintenance": {
@@ -169,7 +169,20 @@
           "burning",
           "burning smell",
           "co alarm going off",
-          "carbon monoxide alarm going off"
+          "carbon monoxide alarm going off",
+          "sparks",
+          "sparking",
+          "arcing",
+          "exposed wires",
+          "exposed live wires",
+          "electrical fire",
+          "electric shock",
+          "electrical shock",
+          "hot outlet",
+          "hot switch",
+          "hot breaker panel",
+          "burning outlet",
+          "smoking outlet"
         ],
         "regex": [
           "\\b(fire|flood(ing|ed)?|burst\\s+pipe)\\b",
@@ -178,16 +191,18 @@
           "\\bsmoke\\b(?!\\s*(alarm|detector))",
           "\\bcarbon\\s+monoxide\\b(?!\\s*(alarm|detector))",
           "\\b(co|carbon\\s+monoxide)\\s*(alarm|detector)\\s*(going\\s+off|beeping|sounding|activated)\\b",
-          "\\b(falling\\s+off|collaps(ed|ing)|structur(al|e)\\s+(damage|danger|failure))\\b"
+          "\\b(falling\\s+off|collaps(ed|ing)|structur(al|e)\\s+(damage|danger|failure))\\b",
+          "\\b(spark(s|ing)?|arc(s|ing)?)\\b",
+          "\\b(exposed\\s+(live\\s+)?wires?)\\b",
+          "\\b(electric(al)?\\s+(shock|fire))\\b",
+          "\\b(outlet|switch(\\s+plate)?|panel|breaker\\s*panel)\\s+(is\\s+)?(too\\s+)?(hot|burning(\\s+hot)?|smoking)\\b",
+          "\\b(hot|burning|smoking)\\s+(outlet|switch(\\s+plate)?|panel|breaker\\s*panel)\\b"
         ]
       },
       "high": {
         "keywords": [
           "no water",
           "no hot water",
-          "sparks",
-          "sparking",
-          "exposed wires",
           "infestation",
           "dangerous",
           "mold",
@@ -211,7 +226,6 @@
           "\\b(no\\s+(water|hot\\s+water|heat|heating|electricity|power))\\b",
           "\\b(locked\\s+out|broken\\s+lock)\\b",
           "\\b(water\\s+damage|major\\s+leak)\\b",
-          "\\b(spark(s|ing)?|exposed\\s+wires?)\\b",
           "\\b(safety\\s+(issue|risk|hazard)|unsafe|danger(ous)?)\\b"
         ]
       },

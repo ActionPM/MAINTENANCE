@@ -4,7 +4,7 @@ import { loadRiskProtocols, loadEscalationPlans } from '@wo-agent/schemas';
 describe('loadRiskProtocols', () => {
   it('loads and returns typed risk protocols from JSON', () => {
     const protocols = loadRiskProtocols();
-    expect(protocols.version).toBe('1.0.0');
+    expect(protocols.version).toBe('1.1.0');
     expect(protocols.triggers.length).toBeGreaterThan(0);
     expect(protocols.mitigation_templates.length).toBeGreaterThan(0);
 

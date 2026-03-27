@@ -17,9 +17,9 @@ export interface PinnedVersions {
  */
 export const TAXONOMY_VERSION = '1.0.0';
 export const SCHEMA_VERSION = '1.0.0';
-export const PROMPT_VERSION = '2.3.0';
+export const PROMPT_VERSION = '2.4.0';
 export const DEFAULT_MODEL_ID = 'claude-sonnet-4-20250514';
-export const CUE_VERSION = '1.6.0';
+export const CUE_VERSION = '1.7.0';
 
 /** Default cue_version for pre-migration sessions/WOs that lack the field. */
 export const DEFAULT_CUE_VERSION = '1.2.0';
