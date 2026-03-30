@@ -54,10 +54,19 @@
       "name": "Electrical Safety Risk",
       "grammar": {
         "keyword_any": [
-          "sparks", "sparking", "arcing",
-          "electrical fire", "exposed wires", "exposed live wires", "electric shock", "electrical shock",
-          "burning outlet", "smoking outlet",
-          "hot outlet", "hot switch", "hot breaker panel"
+          "sparks",
+          "sparking",
+          "arcing",
+          "electrical fire",
+          "exposed wires",
+          "exposed live wires",
+          "electric shock",
+          "electrical shock",
+          "burning outlet",
+          "smoking outlet",
+          "hot outlet",
+          "hot switch",
+          "hot breaker panel"
         ],
         "regex_any": [
           "\\b(spark(s|ing)?|arc(s|ing)?)\\b",

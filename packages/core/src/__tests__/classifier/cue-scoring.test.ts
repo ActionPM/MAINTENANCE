@@ -663,13 +663,21 @@ describe('electrical safety emergency cue coverage', () => {
   });
 
   it('"exposed live wires in bedroom" → Priority=emergency, score >= 0.6', () => {
-    const result = computeCueStrengthForField('exposed live wires in bedroom', 'Priority', realCues);
+    const result = computeCueStrengthForField(
+      'exposed live wires in bedroom',
+      'Priority',
+      realCues,
+    );
     expect(result.topLabel).toBe('emergency');
     expect(result.score).toBeGreaterThanOrEqual(0.6);
   });
 
   it('"electrical shock from the switch" → Priority=emergency, score >= 0.6', () => {
-    const result = computeCueStrengthForField('electrical shock from the switch', 'Priority', realCues);
+    const result = computeCueStrengthForField(
+      'electrical shock from the switch',
+      'Priority',
+      realCues,
+    );
     expect(result.topLabel).toBe('emergency');
     expect(result.score).toBeGreaterThanOrEqual(0.6);
   });
