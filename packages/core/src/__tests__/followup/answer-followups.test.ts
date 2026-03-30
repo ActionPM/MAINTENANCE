@@ -389,4 +389,164 @@ describe('handleAnswerFollowups', () => {
       undefined,
     );
   });
+
+  it('does not re-ask Category after maintenance evidence in follow-up answers (BUG-004)', async () => {
+    // BUG-004 scenario: generic opener scores Category.maintenance ~0 (below gating),
+    // but tenant follow-up answers contain maintenance keywords ("leak", "drain", "suite")
+    // that should enrich the cue text and push Category confidence above gating threshold.
+    const BUG004_CUES: CueDictionary = {
+      version: '1.0.0',
+      fields: {
+        Category: {
+          maintenance: { keywords: ['leak', 'drain', 'broken', 'repair'], regex: [] },
+          management: { keywords: ['rent', 'lease', 'payment'], regex: [] },
+        },
+        Maintenance_Category: {
+          plumbing: { keywords: ['leak', 'drain', 'pipe'], regex: [] },
+        },
+        Maintenance_Object: {
+          drain: { keywords: ['drain'], regex: [] },
+        },
+        Maintenance_Problem: {
+          leak: { keywords: ['leak', 'leaking'], regex: [] },
+        },
+        Location: {
+          suite: { keywords: ['suite', 'apartment', 'unit'], regex: [] },
+        },
+      },
+    };
+
+    // Classifier returns maintenance with model_confidence 0.7 for Category.
+    // Without cue enrichment: confidence ~0.38 (low, below 0.70 gating).
+    // With enrichment: confidence ~0.78 (resolved medium, above 0.70 gating).
+    const maintenanceOutput: IssueClassifierOutput = {
+      issue_id: 'i1',
+      classification: {
+        Category: 'maintenance',
+        Location: 'suite',
+        Sub_Location: 'bathroom',
+        Maintenance_Category: 'plumbing',
+        Maintenance_Object: 'drain',
+        Maintenance_Problem: 'leak',
+        Management_Category: 'not_applicable',
+        Management_Object: 'not_applicable',
+        Priority: 'normal',
+      },
+      model_confidence: {
+        Category: 0.7,
+        Location: 0.9,
+        Sub_Location: 0.85,
+        Maintenance_Category: 0.9,
+        Maintenance_Object: 0.9,
+        Maintenance_Problem: 0.9,
+        Management_Category: 0.0,
+        Management_Object: 0.0,
+        Priority: 0.9,
+      },
+      missing_fields: [],
+      needs_human_triage: false,
+    };
+
+    const bug004Questions: FollowUpQuestion[] = [
+      {
+        question_id: 'q-mp',
+        field_target: 'Maintenance_Problem',
+        prompt: 'What is the problem?',
+        options: ['leak', 'clog', 'broken'],
+        answer_type: 'enum',
+      },
+      {
+        question_id: 'q-loc',
+        field_target: 'Location',
+        prompt: 'Where is it?',
+        options: ['suite', 'building_interior'],
+        answer_type: 'enum',
+      },
+      {
+        question_id: 'q-obj',
+        field_target: 'Maintenance_Object',
+        prompt: 'What object?',
+        options: ['drain', 'sink', 'toilet'],
+        answer_type: 'enum',
+      },
+    ];
+
+    let counter = 0;
+    const priorResults: IssueClassificationResult[] = [
+      {
+        issue_id: 'i1',
+        classifierOutput: {
+          ...maintenanceOutput,
+          model_confidence: { ...maintenanceOutput.model_confidence, Category: 0.3 },
+        },
+        computedConfidence: { Category: 0.3 },
+        fieldsNeedingInput: ['Category', 'Maintenance_Problem', 'Location', 'Maintenance_Object'],
+        shouldAskFollowup: true,
+        followupTypes: {},
+        constraintPassed: true,
+      },
+    ];
+
+    let session = createSession({
+      conversation_id: 'conv-bug004',
+      tenant_user_id: 'user-1',
+      tenant_account_id: 'acct-1',
+      authorized_unit_ids: ['u1'],
+      pinned_versions: VERSIONS,
+    });
+    session = updateSessionState(session, ConversationState.NEEDS_TENANT_INPUT);
+    session = setSplitIssues(session, [
+      { issue_id: 'i1', summary: 'plumbing issue', raw_excerpt: 'I have a plumbing issue' },
+    ]);
+    session = setClassificationResults(session, priorResults);
+    session = updateFollowUpTracking(session, bug004Questions);
+    session = setPendingFollowUpQuestions(session, bug004Questions);
+
+    const ctx = {
+      session,
+      request: {
+        conversation_id: 'conv-bug004',
+        action_type: 'ANSWER_FOLLOWUPS' as any,
+        actor: ActorType.TENANT,
+        tenant_input: {
+          answers: [
+            { question_id: 'q-mp', answer: 'leak' },
+            { question_id: 'q-loc', answer: 'suite' },
+            { question_id: 'q-obj', answer: 'drain' },
+          ],
+        },
+        auth_context: {
+          tenant_user_id: 'user-1',
+          tenant_account_id: 'acct-1',
+          authorized_unit_ids: ['u1'],
+        },
+      },
+      deps: {
+        eventRepo: { insert: vi.fn(), query: vi.fn().mockResolvedValue([]) },
+        sessionStore: { get: vi.fn(), save: vi.fn() },
+        idGenerator: () => `id-${++counter}`,
+        clock: () => '2026-03-28T10:00:00Z',
+        issueClassifier: vi.fn().mockResolvedValue(maintenanceOutput),
+        followUpGenerator: vi.fn().mockResolvedValue({ questions: [] }),
+        cueDict: BUG004_CUES,
+        taxonomy,
+        followUpCaps: DEFAULT_FOLLOWUP_CAPS,
+      } as any,
+    };
+
+    const result = await handleAnswerFollowups(ctx);
+
+    // Category should NOT be in fieldsNeedingInput (enriched cue text pushes it above gating)
+    const fieldsNeeding = result.session.classification_results![0].fieldsNeedingInput;
+    expect(fieldsNeeding).not.toContain('Category');
+
+    // Management fields should be pruned by category gating
+    expect(fieldsNeeding).not.toContain('Management_Category');
+    expect(fieldsNeeding).not.toContain('Management_Object');
+
+    // Any remaining follow-ups should be maintenance-specific only
+    for (const f of fieldsNeeding) {
+      expect(f).not.toMatch(/^Management_/);
+    }
+  });
 });

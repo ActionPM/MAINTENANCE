@@ -297,4 +297,178 @@ describe('e2e toilet leak scenario', () => {
     );
     expect(violationEvents.length).toBe(0);
   });
+
+  it('BUG-004: generic maintenance opener + maintenance follow-up answers → no redundant category re-ask', async () => {
+    // Reproduction: generic opener "I have a plumbing issue" has no strong Category cue
+    // keywords. After follow-up answers with maintenance evidence ("leak", "suite", "drain"),
+    // the enriched cue text should push Category above gating threshold and prune management fields.
+    let followUpCallCount = 0;
+
+    // Phase 1: vague classification — Category model_confidence is moderate (0.7)
+    // but without cue support, overall confidence is below gating threshold.
+    const phase1Output: IssueClassifierOutput = {
+      issue_id: ISSUE_ID,
+      classification: {
+        Category: 'maintenance',
+        Location: 'suite',
+        Sub_Location: 'general',
+        Maintenance_Category: 'plumbing',
+        Maintenance_Object: 'drain',
+        Maintenance_Problem: 'leak',
+        Priority: 'normal',
+      },
+      model_confidence: {
+        Category: 0.4,
+        Location: 0.05,
+        Sub_Location: 0.05,
+        Maintenance_Category: 0.7,
+        Maintenance_Object: 0.05,
+        Maintenance_Problem: 0.7,
+        Priority: 0.05,
+      },
+      missing_fields: [],
+      needs_human_triage: false,
+    };
+
+    // Phase 2: re-classification after tenant answers — higher model_confidence
+    const phase2Output: IssueClassifierOutput = {
+      issue_id: ISSUE_ID,
+      classification: {
+        Category: 'maintenance',
+        Location: 'suite',
+        Sub_Location: 'bathroom',
+        Maintenance_Category: 'plumbing',
+        Maintenance_Object: 'drain',
+        Maintenance_Problem: 'leak',
+        Management_Category: 'not_applicable',
+        Management_Object: 'not_applicable',
+        Priority: 'high',
+      },
+      model_confidence: {
+        Category: 0.7,
+        Location: 0.9,
+        Sub_Location: 0.85,
+        Maintenance_Category: 0.9,
+        Maintenance_Object: 0.9,
+        Maintenance_Problem: 0.9,
+        Management_Category: 0.0,
+        Management_Object: 0.0,
+        Priority: 0.85,
+      },
+      missing_fields: [],
+      needs_human_triage: false,
+    };
+
+    let classifierCallCount = 0;
+    const mockClassifier = vi.fn(async () => {
+      classifierCallCount++;
+      return classifierCallCount === 1 ? phase1Output : phase2Output;
+    });
+
+    const followUpQuestions: FollowUpQuestion[] = [
+      {
+        question_id: 'q-mp',
+        field_target: 'Maintenance_Problem',
+        prompt: 'What is the problem?',
+        options: ['leak', 'clog'],
+        answer_type: 'enum' as const,
+      },
+      {
+        question_id: 'q-loc',
+        field_target: 'Location',
+        prompt: 'Where?',
+        options: ['suite', 'building_interior'],
+        answer_type: 'enum' as const,
+      },
+      {
+        question_id: 'q-obj',
+        field_target: 'Maintenance_Object',
+        prompt: 'What object?',
+        options: ['drain', 'sink', 'toilet'],
+        answer_type: 'enum' as const,
+      },
+    ];
+
+    const mockFollowUpGenerator = vi.fn(async () => {
+      followUpCallCount++;
+      return { questions: followUpQuestions };
+    });
+
+    let idCounter = 100;
+    const eventRepo = new InMemoryEventStore();
+    const deps = {
+      eventRepo,
+      idGenerator: () => `id-${++idCounter}`,
+      clock: () => '2026-03-28T10:01:00Z',
+      issueClassifier: mockClassifier,
+      followUpGenerator: mockFollowUpGenerator,
+      cueDict: cueJson as CueDictionary,
+      taxonomy,
+      confidenceConfig: RELAXED_CONFIDENCE,
+      followUpCaps: DEFAULT_FOLLOWUP_CAPS,
+    };
+
+    // Phase 1: Start classification with generic opener
+    const session1 = makeSession({
+      split_issues: [
+        {
+          issue_id: ISSUE_ID,
+          summary: 'Tenant reports a plumbing issue',
+          raw_excerpt: 'I have a plumbing issue',
+        },
+      ],
+    });
+    const ctx1: ActionHandlerContext = {
+      session: session1,
+      request: { action_type: 'START_CLASSIFICATION', actor: 'system' } as any,
+      deps: deps as any,
+    };
+
+    const result1 = await handleStartClassification(ctx1);
+    expect(result1.newState).toBe(ConversationState.NEEDS_TENANT_INPUT);
+
+    const sessionAfterPhase1 = result1.session;
+    const pendingQuestions = sessionAfterPhase1.pending_followup_questions!;
+    expect(pendingQuestions.length).toBeGreaterThan(0);
+
+    // Phase 2: Tenant provides maintenance-specific answers
+    const bug004Answers: Record<string, string> = {
+      Maintenance_Problem: 'leak',
+      Location: 'suite',
+      Maintenance_Object: 'drain',
+    };
+    const answers = pendingQuestions.map((q) => ({
+      question_id: q.question_id,
+      answer: bug004Answers[q.field_target] ?? 'unknown',
+    }));
+
+    const sessionForAnswer = {
+      ...sessionAfterPhase1,
+      state: ConversationState.NEEDS_TENANT_INPUT,
+    };
+
+    const ctx2: ActionHandlerContext = {
+      session: sessionForAnswer,
+      request: {
+        action_type: 'ANSWER_FOLLOWUPS',
+        actor: 'tenant',
+        tenant_input: { answers },
+      } as any,
+      deps: deps as any,
+    };
+
+    const result2 = await handleAnswerFollowups(ctx2);
+
+    // Should reach confirmation (or at most have only maintenance-specific follow-ups)
+    expect(result2.newState).toBe(ConversationState.TENANT_CONFIRMATION_PENDING);
+
+    // Verify no management fields in the final classification result's fieldsNeedingInput
+    const finalResults = result2.session.classification_results;
+    if (finalResults) {
+      for (const r of finalResults) {
+        expect(r.fieldsNeedingInput).not.toContain('Management_Category');
+        expect(r.fieldsNeedingInput).not.toContain('Management_Object');
+      }
+    }
+  });
 });

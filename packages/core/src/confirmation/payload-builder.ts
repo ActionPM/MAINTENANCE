@@ -1,6 +1,14 @@
 import { createHash } from 'node:crypto';
+import { TAXONOMY_FIELD_NAMES, getTaxonomyLabel, getFieldLabel } from '@wo-agent/schemas';
 import type { SplitIssue } from '@wo-agent/schemas';
 import type { IssueClassificationResult } from '../session/types.js';
+
+export interface DisplayField {
+  readonly field: string;
+  readonly field_label: string;
+  readonly value: string;
+  readonly value_label: string;
+}
 
 export interface ConfirmationIssue {
   readonly issue_id: string;
@@ -10,6 +18,7 @@ export interface ConfirmationIssue {
   readonly confidence_by_field: Record<string, number>;
   readonly missing_fields: readonly string[];
   readonly needs_human_triage: boolean;
+  readonly display_fields?: readonly DisplayField[];
 }
 
 export interface ConfirmationPayload {
@@ -41,14 +50,28 @@ export function buildConfirmationPayload(
       };
     }
 
+    const classification = { ...result.classifierOutput.classification };
+    const display_fields: DisplayField[] = [];
+    for (const fieldName of TAXONOMY_FIELD_NAMES) {
+      const value = classification[fieldName];
+      if (!value || value === 'not_applicable') continue;
+      display_fields.push({
+        field: fieldName,
+        field_label: getFieldLabel(fieldName),
+        value,
+        value_label: getTaxonomyLabel(fieldName, value),
+      });
+    }
+
     return {
       issue_id: issue.issue_id,
       summary: issue.summary,
       raw_excerpt: issue.raw_excerpt,
-      classification: { ...result.classifierOutput.classification },
+      classification,
       confidence_by_field: { ...result.computedConfidence },
       missing_fields: [...result.classifierOutput.missing_fields],
       needs_human_triage: result.classifierOutput.needs_human_triage,
+      display_fields,
     };
   });
 

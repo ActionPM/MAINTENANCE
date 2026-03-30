@@ -13,7 +13,7 @@ export {
 export type { Taxonomy, TaxonomyFieldName } from './taxonomy.js';
 
 // --- Taxonomy Labels ---
-export { getTaxonomyLabel } from './taxonomy-labels.js';
+export { getTaxonomyLabel, getFieldLabel } from './taxonomy-labels.js';
 
 // --- Taxonomy Constraints ---
 export {

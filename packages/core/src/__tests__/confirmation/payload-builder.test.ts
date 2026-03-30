@@ -4,6 +4,7 @@ import {
   computeContentHash,
   type ConfirmationPayload,
   type ConfirmationIssue,
+  type DisplayField,
 } from '../../confirmation/payload-builder.js';
 import type { IssueClassificationResult } from '../../session/types.js';
 import type { SplitIssue } from '@wo-agent/schemas';
@@ -87,6 +88,126 @@ describe('buildConfirmationPayload', () => {
     const payload = buildConfirmationPayload(SPLIT_ISSUES, partial);
     expect(payload.issues[1].needs_human_triage).toBe(true);
     expect(payload.issues[1].classification).toEqual({});
+  });
+});
+
+const PEST_CONTROL_ISSUES: readonly SplitIssue[] = [
+  {
+    issue_id: 'issue-pest',
+    summary: 'Cockroaches in kitchen',
+    raw_excerpt: 'I keep seeing cockroaches in the kitchen',
+  },
+];
+
+const PEST_CONTROL_RESULTS: readonly IssueClassificationResult[] = [
+  {
+    issue_id: 'issue-pest',
+    classifierOutput: {
+      issue_id: 'issue-pest',
+      classification: {
+        Category: 'maintenance',
+        Location: 'suite',
+        Sub_Location: 'kitchen',
+        Maintenance_Category: 'pest_control',
+        Maintenance_Object: 'insect',
+        Maintenance_Problem: 'infestation',
+        Management_Category: 'not_applicable',
+        Management_Object: 'not_applicable',
+        Priority: 'normal',
+      },
+      model_confidence: {
+        Category: 0.95,
+        Location: 0.9,
+        Sub_Location: 0.9,
+        Maintenance_Category: 0.95,
+        Maintenance_Object: 0.9,
+        Maintenance_Problem: 0.9,
+        Management_Category: 0.0,
+        Management_Object: 0.0,
+        Priority: 0.85,
+      },
+      missing_fields: [],
+      needs_human_triage: false,
+    },
+    computedConfidence: {
+      Category: 0.95,
+      Location: 0.9,
+      Sub_Location: 0.9,
+      Maintenance_Category: 0.95,
+      Maintenance_Object: 0.9,
+      Maintenance_Problem: 0.9,
+      Management_Category: 0.0,
+      Management_Object: 0.0,
+      Priority: 0.85,
+    },
+    fieldsNeedingInput: [],
+    shouldAskFollowup: false,
+    followupTypes: {},
+    constraintPassed: true,
+  },
+];
+
+describe('display_fields in buildConfirmationPayload', () => {
+  it('display_fields are ordered per TAXONOMY_FIELD_NAMES and exclude not_applicable', () => {
+    const payload = buildConfirmationPayload(PEST_CONTROL_ISSUES, PEST_CONTROL_RESULTS);
+    const issue = payload.issues[0];
+    expect(issue.display_fields).toBeDefined();
+    const fields = issue.display_fields!.map((df) => df.field);
+
+    // Should include maintenance fields but NOT Management_Category or Management_Object
+    expect(fields).toContain('Category');
+    expect(fields).toContain('Location');
+    expect(fields).toContain('Sub_Location');
+    expect(fields).toContain('Maintenance_Category');
+    expect(fields).toContain('Maintenance_Object');
+    expect(fields).toContain('Maintenance_Problem');
+    expect(fields).toContain('Priority');
+    expect(fields).not.toContain('Management_Category');
+    expect(fields).not.toContain('Management_Object');
+
+    // Verify canonical order (Category < Location < Sub_Location < ... < Priority)
+    const expectedOrder = [
+      'Category',
+      'Location',
+      'Sub_Location',
+      'Maintenance_Category',
+      'Maintenance_Object',
+      'Maintenance_Problem',
+      'Priority',
+    ];
+    expect(fields).toEqual(expectedOrder);
+  });
+
+  it('display_fields use human-readable field and value labels', () => {
+    const payload = buildConfirmationPayload(PEST_CONTROL_ISSUES, PEST_CONTROL_RESULTS);
+    const issue = payload.issues[0];
+    const df = issue.display_fields!;
+
+    const catField = df.find((d) => d.field === 'Category');
+    expect(catField?.field_label).toBe('Category');
+    expect(catField?.value_label).toBe('Maintenance');
+
+    const maintCat = df.find((d) => d.field === 'Maintenance_Category');
+    expect(maintCat?.field_label).toBe('Maintenance type');
+    expect(maintCat?.value_label).toBe('Pest control');
+
+    const subLoc = df.find((d) => d.field === 'Sub_Location');
+    expect(subLoc?.field_label).toBe('Sub-location');
+    expect(subLoc?.value_label).toBe('Kitchen');
+  });
+
+  it('classification record is preserved with not_applicable entries', () => {
+    const payload = buildConfirmationPayload(PEST_CONTROL_ISSUES, PEST_CONTROL_RESULTS);
+    const issue = payload.issues[0];
+
+    // Classification still has not_applicable
+    expect(issue.classification.Management_Category).toBe('not_applicable');
+    expect(issue.classification.Management_Object).toBe('not_applicable');
+
+    // But display_fields does not
+    const dfFields = issue.display_fields!.map((d) => d.field);
+    expect(dfFields).not.toContain('Management_Category');
+    expect(dfFields).not.toContain('Management_Object');
   });
 });
 

@@ -18,7 +18,7 @@ import type {
 } from '@wo-agent/schemas';
 import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
 import { callIssueClassifier } from '../../classifier/issue-classifier.js';
-import { computeCueScores } from '../../classifier/cue-scoring.js';
+import { computeCueScores, buildEnrichedCueText } from '../../classifier/cue-scoring.js';
 import {
   computeAllFieldConfidences,
   extractFlatConfidence,
@@ -149,7 +149,12 @@ export async function handleAnswerFollowups(
   let anyFieldsNeedInput = false;
 
   for (const issue of issues) {
-    const cueScoreMap = computeCueScores(`${issue.summary} ${issue.raw_excerpt}`, cueDict);
+    const enrichedText = buildEnrichedCueText(
+      issue.summary,
+      issue.raw_excerpt,
+      issue.issue_id === targetIssueId ? followupAnswers : undefined,
+    );
+    const cueScoreMap = computeCueScores(enrichedText, cueDict);
     const cueScoresForInput: Record<string, number> = {};
     for (const [field, result] of Object.entries(cueScoreMap)) {
       cueScoresForInput[field] = result.score;

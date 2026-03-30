@@ -58,6 +58,29 @@
   gap: 0.5rem;
 }
 
+.fieldRow {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  font-size: 0.875rem;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.fieldRow:last-child {
+  border-bottom: none;
+}
+
+.fieldLabel {
+  flex: 0 0 auto;
+  min-width: 8rem;
+  font-weight: 500;
+  color: #555;
+}
+
+.fieldValue {
+  color: #1a1a1a;
+}
+
 .submitBtn {
   padding: 0.625rem 1.5rem;
   background: #0066cc;

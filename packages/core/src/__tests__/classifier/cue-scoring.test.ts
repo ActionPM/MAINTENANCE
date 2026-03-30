@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { computeCueScores, computeCueStrengthForField } from '../../classifier/cue-scoring.js';
+import {
+  computeCueScores,
+  computeCueStrengthForField,
+  buildEnrichedCueText,
+} from '../../classifier/cue-scoring.js';
 import type { CueDictionary } from '@wo-agent/schemas';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -746,5 +750,47 @@ describe('electrical safety emergency cue coverage', () => {
   it('"no power in whole apartment" → NOT emergency', () => {
     const result = computeCueStrengthForField('no power in whole apartment', 'Priority', realCues);
     expect(result.topLabel).not.toBe('emergency');
+  });
+});
+
+describe('buildEnrichedCueText', () => {
+  it('returns base text when no follow-up answers exist', () => {
+    const result = buildEnrichedCueText('summary', 'excerpt');
+    expect(result).toBe('summary excerpt');
+  });
+
+  it('returns base text when followupAnswers is undefined', () => {
+    const result = buildEnrichedCueText('summary', 'excerpt', undefined);
+    expect(result).toBe('summary excerpt');
+  });
+
+  it('returns base text when followupAnswers is empty', () => {
+    const result = buildEnrichedCueText('summary', 'excerpt', []);
+    expect(result).toBe('summary excerpt');
+  });
+
+  it('appends follow-up answers as field_target: answer lines', () => {
+    const result = buildEnrichedCueText('summary', 'excerpt', [
+      { field_target: 'Maintenance_Problem', answer: 'leak' },
+    ]);
+    expect(result).toBe('summary excerpt\nMaintenance_Problem: leak');
+  });
+
+  it('appends multiple follow-up answers', () => {
+    const result = buildEnrichedCueText('summary', 'excerpt', [
+      { field_target: 'Maintenance_Problem', answer: 'leak' },
+      { field_target: 'Location', answer: 'suite' },
+      { field_target: 'Maintenance_Object', answer: 'drain' },
+    ]);
+    expect(result).toBe(
+      'summary excerpt\nMaintenance_Problem: leak\nLocation: suite\nMaintenance_Object: drain',
+    );
+  });
+
+  it('stringifies boolean answers', () => {
+    const result = buildEnrichedCueText('summary', 'excerpt', [
+      { field_target: 'Category', answer: true },
+    ]);
+    expect(result).toBe('summary excerpt\nCategory: true');
   });
 });

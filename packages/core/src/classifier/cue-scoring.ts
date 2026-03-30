@@ -82,6 +82,26 @@ export function computeCueStrengthForField(
 }
 
 /**
+ * Build enriched text for cue scoring that includes follow-up answers.
+ * When follow-up answers are present, their tokens (e.g., "leak", "drain")
+ * enter the cue keyword matching corpus, improving cue-based confidence.
+ *
+ * BUG-004 fix: Without this, cue scores are computed from the initial
+ * summary + excerpt only, so tenant follow-up answers never improve
+ * cue-based confidence.
+ */
+export function buildEnrichedCueText(
+  baseSummary: string,
+  baseExcerpt: string,
+  followupAnswers?: readonly { field_target: string; answer: string | boolean }[],
+): string {
+  const base = `${baseSummary} ${baseExcerpt}`;
+  if (!followupAnswers || followupAnswers.length === 0) return base;
+  const answerLines = followupAnswers.map((a) => `${a.field_target}: ${String(a.answer)}`);
+  return `${base}\n${answerLines.join('\n')}`;
+}
+
+/**
  * Compute cue scores for ALL fields in the cue dictionary (spec 14.4).
  * Returns a map of field name to CueFieldResult.
  */

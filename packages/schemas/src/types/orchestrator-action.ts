@@ -208,6 +208,12 @@ export interface ConversationSnapshot {
       readonly confidence_by_field: Record<string, number>;
       readonly missing_fields: readonly string[];
       readonly needs_human_triage: boolean;
+      readonly display_fields?: readonly {
+        readonly field: string;
+        readonly field_label: string;
+        readonly value: string;
+        readonly value_label: string;
+      }[];
     }[];
   };
   readonly work_order_ids?: readonly string[];

@@ -72,5 +72,16 @@
       "emergency": "Emergency",
       "other_priority": "Other"
     }
+  },
+  "field_labels": {
+    "Category": "Category",
+    "Location": "Location",
+    "Sub_Location": "Sub-location",
+    "Maintenance_Category": "Maintenance type",
+    "Maintenance_Object": "Maintenance object",
+    "Maintenance_Problem": "Problem",
+    "Management_Category": "Management type",
+    "Management_Object": "Management object",
+    "Priority": "Priority"
   }
 }

@@ -1,6 +1,8 @@
 import labelsJson from '../taxonomy-labels.json' with { type: 'json' };
 
 const labels: Record<string, Record<string, string>> = labelsJson.labels;
+const fieldLabelsMap: Record<string, string> =
+  (labelsJson as Record<string, unknown>).field_labels as Record<string, string>;
 
 /**
  * Look up a display-friendly label for a taxonomy slug.
@@ -13,4 +15,16 @@ export function getTaxonomyLabel(field: string, slug: string): string {
     return fieldLabels[slug];
   }
   return slug.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
+}
+
+/**
+ * Look up a display-friendly label for a taxonomy field name.
+ * Returns the mapped label from field_labels, falling back to
+ * field.replace(/_/g, ' ') for unknown fields.
+ */
+export function getFieldLabel(field: string): string {
+  if (fieldLabelsMap && fieldLabelsMap[field]) {
+    return fieldLabelsMap[field];
+  }
+  return field.replace(/_/g, ' ');
 }

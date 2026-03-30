@@ -1,4 +1,4 @@
-export { computeCueScores, computeCueStrengthForField } from './cue-scoring.js';
+export { computeCueScores, computeCueStrengthForField, buildEnrichedCueText } from './cue-scoring.js';
 export type { CueFieldResult, CueScoreMap } from './cue-scoring.js';
 
 export {

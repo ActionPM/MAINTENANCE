@@ -3,6 +3,13 @@
 import { getTaxonomyLabel } from '@wo-agent/schemas';
 import styles from './confirmation-panel.module.css';
 
+interface DisplayField {
+  field: string;
+  field_label: string;
+  value: string;
+  value_label: string;
+}
+
 interface ConfirmationIssue {
   issue_id: string;
   summary: string;
@@ -11,6 +18,7 @@ interface ConfirmationIssue {
   confidence_by_field: Record<string, number>;
   missing_fields: readonly string[];
   needs_human_triage: boolean;
+  display_fields?: readonly DisplayField[];
 }
 
 interface ConfirmationPanelProps {
@@ -33,11 +41,20 @@ export function ConfirmationPanel({
           <p className={styles.issueSummary}>{issue.summary}</p>
 
           <div className={styles.labels}>
-            {Object.entries(issue.classification).map(([field, value]) => (
-              <span key={field} className={styles.label}>
-                {getTaxonomyLabel(field, value)}
-              </span>
-            ))}
+            {issue.display_fields ? (
+              issue.display_fields.map((df) => (
+                <div key={df.field} className={styles.fieldRow}>
+                  <span className={styles.fieldLabel}>{df.field_label}</span>
+                  <span className={styles.fieldValue}>{df.value_label}</span>
+                </div>
+              ))
+            ) : (
+              Object.entries(issue.classification).map(([field, value]) => (
+                <span key={field} className={styles.label}>
+                  {getTaxonomyLabel(field, value)}
+                </span>
+              ))
+            )}
           </div>
 
           {issue.needs_human_triage && <span className={styles.triageBadge}>Review needed</span>}
