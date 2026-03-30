@@ -17,9 +17,9 @@
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.78.0",
+    "@anthropic-ai/sdk": "^0.79.0",
     "@wo-agent/schemas": "workspace:*",
-    "jose": "^6.0.0"
+    "jose": "^6.2.1"
   },
   "devDependencies": {
     "@types/node": "^25.3.0",
