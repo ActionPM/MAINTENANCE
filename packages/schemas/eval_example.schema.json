@@ -52,8 +52,15 @@
           "Management_Object": { "type": "string" },
           "Priority": { "type": "string" }
         },
-        "required": ["Category"],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "anyOf": [
+          {
+            "maxProperties": 0
+          },
+          {
+            "required": ["Category"]
+          }
+        ]
       }
     },
     "expected_missing_fields": { "type": "array", "items": { "type": "string" } },

@@ -99,7 +99,7 @@
         ]
       },
       "building_interior": {
-        "keywords": ["hallway", "lobby", "elevator", "stairwell", "laundry room"],
+        "keywords": ["hallway", "gym", "lobby", "elevator", "stairwell", "laundry room"],
         "regex": []
       },
       "building_exterior": {

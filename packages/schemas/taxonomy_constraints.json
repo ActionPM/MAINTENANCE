@@ -1,7 +1,6 @@
 {
   "version": "1.0.0",
   "description": "Hierarchical parent-child relationships between taxonomy fields. Keys follow ParentField_to_ChildField naming convention.",
-
   "Location_to_Sub_Location": {
     "suite": [
       "kitchen",
@@ -43,7 +42,6 @@
       "surface_parking"
     ]
   },
-
   "Sub_Location_to_Maintenance_Category": {
     "kitchen": [
       "plumbing",
@@ -57,7 +55,6 @@
       "general_maintenance",
       "appliance",
       "tile",
-      "other_issue",
       "other_maintenance_category"
     ],
     "bathroom": [
@@ -71,7 +68,6 @@
       "pest_control",
       "general_maintenance",
       "tile",
-      "other_issue",
       "other_maintenance_category"
     ],
     "common_living_dining": [
@@ -86,7 +82,6 @@
       "general_maintenance",
       "appliance",
       "tile",
-      "other_issue",
       "other_maintenance_category"
     ],
     "bedroom": [
@@ -100,7 +95,6 @@
       "pest_control",
       "general_maintenance",
       "tile",
-      "other_issue",
       "other_maintenance_category"
     ],
     "closets": [
@@ -111,18 +105,16 @@
       "paint",
       "general_maintenance",
       "pest_control",
-      "other_issue",
       "other_maintenance_category"
     ],
-    "keys_locks": ["locksmith", "general_maintenance", "other_issue", "other_maintenance_category"],
-    "windows": ["carpentry", "general_maintenance", "other_issue", "other_maintenance_category"],
+    "keys_locks": ["locksmith", "general_maintenance", "other_maintenance_category"],
+    "windows": ["carpentry", "general_maintenance", "other_maintenance_category"],
     "balcony": [
       "carpentry",
       "flooring",
       "drywall_plaster",
       "paint",
       "general_maintenance",
-      "other_issue",
       "other_maintenance_category"
     ],
     "ceiling": [
@@ -131,7 +123,6 @@
       "drywall_plaster",
       "paint",
       "general_maintenance",
-      "other_issue",
       "other_maintenance_category"
     ],
     "general": [
@@ -148,7 +139,6 @@
       "appliance",
       "roofing",
       "tile",
-      "other_issue",
       "other_maintenance_category"
     ],
     "entire_unit": [
@@ -165,7 +155,6 @@
       "appliance",
       "roofing",
       "tile",
-      "other_issue",
       "other_maintenance_category"
     ],
     "multiple_rooms": [
@@ -182,7 +171,6 @@
       "appliance",
       "roofing",
       "tile",
-      "other_issue",
       "other_maintenance_category"
     ],
     "entrance_lobby": [
@@ -193,7 +181,6 @@
       "general_maintenance",
       "locksmith",
       "tile",
-      "other_issue",
       "other_maintenance_category"
     ],
     "hallways_stairwells": [
@@ -203,17 +190,15 @@
       "paint",
       "general_maintenance",
       "tile",
-      "other_issue",
       "other_maintenance_category"
     ],
-    "elevator": ["electrical", "general_maintenance", "other_issue", "other_maintenance_category"],
+    "elevator": ["electrical", "general_maintenance", "other_maintenance_category"],
     "laundry": [
       "plumbing",
       "electrical",
       "appliance",
       "flooring",
       "general_maintenance",
-      "other_issue",
       "other_maintenance_category"
     ],
     "locker_room": [
@@ -221,31 +206,16 @@
       "electrical",
       "locksmith",
       "general_maintenance",
-      "other_issue",
       "other_maintenance_category"
     ],
-    "gym": [
-      "electrical",
-      "flooring",
-      "general_maintenance",
-      "other_issue",
-      "other_maintenance_category"
-    ],
-    "pool": [
-      "plumbing",
-      "electrical",
-      "tile",
-      "general_maintenance",
-      "other_issue",
-      "other_maintenance_category"
-    ],
+    "gym": ["electrical", "flooring", "general_maintenance", "other_maintenance_category"],
+    "pool": ["plumbing", "electrical", "tile", "general_maintenance", "other_maintenance_category"],
     "party_room": [
       "electrical",
       "flooring",
       "drywall_plaster",
       "paint",
       "general_maintenance",
-      "other_issue",
       "other_maintenance_category"
     ],
     "other_amenity": [
@@ -257,7 +227,6 @@
       "drywall_plaster",
       "paint",
       "general_maintenance",
-      "other_issue",
       "other_maintenance_category"
     ],
     "mechanical_room": [
@@ -265,48 +234,29 @@
       "electrical",
       "hvac",
       "general_maintenance",
-      "other_issue",
       "other_maintenance_category"
     ],
-    "cable_room": [
-      "electrical",
-      "general_maintenance",
-      "other_issue",
-      "other_maintenance_category"
-    ],
-    "bike_locker": [
-      "locksmith",
-      "general_maintenance",
-      "other_issue",
-      "other_maintenance_category"
-    ],
+    "cable_room": ["electrical", "general_maintenance", "other_maintenance_category"],
+    "bike_locker": ["locksmith", "general_maintenance", "other_maintenance_category"],
     "parking_garage": [
       "plumbing",
       "electrical",
       "flooring",
       "general_maintenance",
-      "other_issue",
       "other_maintenance_category"
     ],
-    "landscape": ["general_maintenance", "other_issue", "other_maintenance_category"],
-    "hardscape": ["general_maintenance", "other_issue", "other_maintenance_category"],
-    "facade": [
-      "drywall_plaster",
-      "paint",
-      "general_maintenance",
-      "other_issue",
-      "other_maintenance_category"
-    ],
-    "roof": ["roofing", "general_maintenance", "other_issue", "other_maintenance_category"],
+    "landscape": ["general_maintenance", "other_maintenance_category"],
+    "hardscape": ["general_maintenance", "other_maintenance_category"],
+    "facade": ["drywall_plaster", "paint", "general_maintenance", "other_maintenance_category"],
+    "roof": ["roofing", "general_maintenance", "other_maintenance_category"],
     "mechanical": [
       "plumbing",
       "electrical",
       "hvac",
       "general_maintenance",
-      "other_issue",
       "other_maintenance_category"
     ],
-    "garbage": ["general_maintenance", "pest_control", "other_issue", "other_maintenance_category"],
+    "garbage": ["general_maintenance", "pest_control", "other_maintenance_category"],
     "amenity": [
       "plumbing",
       "electrical",
@@ -314,15 +264,9 @@
       "carpentry",
       "flooring",
       "general_maintenance",
-      "other_issue",
       "other_maintenance_category"
     ],
-    "surface_parking": [
-      "electrical",
-      "general_maintenance",
-      "other_issue",
-      "other_maintenance_category"
-    ],
+    "surface_parking": ["electrical", "general_maintenance", "other_maintenance_category"],
     "other_sub_location": [
       "plumbing",
       "electrical",
@@ -337,11 +281,9 @@
       "appliance",
       "roofing",
       "tile",
-      "other_issue",
       "other_maintenance_category"
     ]
   },
-
   "Maintenance_Category_to_Maintenance_Object": {
     "plumbing": [
       "toilet",
@@ -352,8 +294,7 @@
       "shower",
       "bathtub",
       "other_object",
-      "needs_object",
-      "other_maintenance_object"
+      "needs_object"
     ],
     "electrical": [
       "breaker",
@@ -364,17 +305,9 @@
       "smoke_detector",
       "exhaust_fan",
       "other_object",
-      "needs_object",
-      "other_maintenance_object"
+      "needs_object"
     ],
-    "hvac": [
-      "radiator",
-      "thermostat",
-      "exhaust_fan",
-      "other_object",
-      "needs_object",
-      "other_maintenance_object"
-    ],
+    "hvac": ["radiator", "thermostat", "exhaust_fan", "other_object", "needs_object"],
     "carpentry": [
       "door",
       "cabinet",
@@ -384,36 +317,11 @@
       "screen",
       "blind",
       "other_object",
-      "needs_object",
-      "other_maintenance_object"
+      "needs_object"
     ],
-    "flooring": [
-      "floor",
-      "tile",
-      "carpet",
-      "wood",
-      "laminate",
-      "other_object",
-      "needs_object",
-      "other_maintenance_object"
-    ],
-    "drywall_plaster": [
-      "wall",
-      "ceiling",
-      "other_object",
-      "needs_object",
-      "other_maintenance_object"
-    ],
-    "paint": [
-      "wall",
-      "ceiling",
-      "paint",
-      "door",
-      "baseboard",
-      "other_object",
-      "needs_object",
-      "other_maintenance_object"
-    ],
+    "flooring": ["floor", "tile", "carpet", "wood", "laminate", "other_object", "needs_object"],
+    "drywall_plaster": ["wall", "ceiling", "other_object", "needs_object"],
+    "paint": ["wall", "ceiling", "paint", "door", "baseboard", "other_object", "needs_object"],
     "pest_control": [
       "pests",
       "cockroaches",
@@ -421,8 +329,7 @@
       "bedbugs",
       "rodents",
       "other_object",
-      "needs_object",
-      "other_maintenance_object"
+      "needs_object"
     ],
     "general_maintenance": [
       "door",
@@ -439,17 +346,9 @@
       "exhaust_fan",
       "bathtub",
       "other_object",
-      "needs_object",
-      "other_maintenance_object"
+      "needs_object"
     ],
-    "locksmith": [
-      "lock",
-      "key",
-      "door",
-      "other_object",
-      "needs_object",
-      "other_maintenance_object"
-    ],
+    "locksmith": ["lock", "key", "door", "other_object", "needs_object"],
     "appliance": [
       "fridge",
       "dishwasher",
@@ -460,15 +359,12 @@
       "dryer",
       "range_hood",
       "other_object",
-      "needs_object",
-      "other_maintenance_object"
+      "needs_object"
     ],
-    "roofing": ["roof", "other_object", "needs_object", "other_maintenance_object"],
-    "tile": ["tile", "grout", "other_object", "needs_object", "other_maintenance_object"],
-    "other_issue": ["other_object", "needs_object", "other_maintenance_object"],
-    "other_maintenance_category": ["other_object", "needs_object", "other_maintenance_object"]
+    "roofing": ["roof", "other_object", "needs_object"],
+    "tile": ["tile", "grout", "other_object", "needs_object"],
+    "other_maintenance_category": ["other_object", "needs_object"]
   },
-
   "Maintenance_Object_to_Maintenance_Problem": {
     "toilet": ["leak", "clog", "not_working", "broken_damaged", "other_problem"],
     "sink": ["leak", "drain", "clog", "not_working", "broken_damaged", "other_problem"],
@@ -584,26 +480,8 @@
       "noise_vibration",
       "missing",
       "other_problem"
-    ],
-    "other_maintenance_object": [
-      "leak",
-      "drain",
-      "clog",
-      "not_working",
-      "no_water",
-      "no_heat",
-      "flood",
-      "infestation",
-      "broken_damaged",
-      "safety_risk",
-      "smell",
-      "low_pressure",
-      "noise_vibration",
-      "missing",
-      "other_problem"
     ]
   },
-
   "Maintenance_Object_to_Sub_Location": {
     "toilet": ["bathroom"],
     "sink": ["kitchen", "bathroom", "laundry"],
@@ -917,42 +795,6 @@
       "other_sub_location"
     ],
     "needs_object": [
-      "kitchen",
-      "bathroom",
-      "common_living_dining",
-      "bedroom",
-      "closets",
-      "keys_locks",
-      "windows",
-      "balcony",
-      "ceiling",
-      "general",
-      "entrance_lobby",
-      "hallways_stairwells",
-      "elevator",
-      "laundry",
-      "locker_room",
-      "gym",
-      "pool",
-      "party_room",
-      "other_amenity",
-      "mechanical_room",
-      "cable_room",
-      "bike_locker",
-      "parking_garage",
-      "landscape",
-      "hardscape",
-      "facade",
-      "roof",
-      "mechanical",
-      "garbage",
-      "amenity",
-      "surface_parking",
-      "entire_unit",
-      "multiple_rooms",
-      "other_sub_location"
-    ],
-    "other_maintenance_object": [
       "kitchen",
       "bathroom",
       "common_living_dining",

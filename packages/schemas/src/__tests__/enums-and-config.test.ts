@@ -33,7 +33,6 @@ describe('Taxonomy', () => {
   it('taxonomy singleton is populated', () => {
     expect(taxonomy.Category).toContain('maintenance');
     expect(taxonomy.Category).toContain('management');
-    expect(taxonomy.Category).toContain('other_category');
     expect(taxonomy.Priority).toContain('emergency');
   });
 

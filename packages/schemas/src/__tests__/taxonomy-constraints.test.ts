@@ -100,10 +100,8 @@ describe('taxonomy_constraints.json', () => {
     }
   });
 
-  // I4: Verify other_issue is handled
-  it('other_issue and other_maintenance_category appear in Maintenance_Category_to_Maintenance_Object', () => {
+  it('other_maintenance_category appears in Maintenance_Category_to_Maintenance_Object', () => {
     constraints = loadTaxonomyConstraints();
-    expect(constraints.Maintenance_Category_to_Maintenance_Object['other_issue']).toBeDefined();
     expect(
       constraints.Maintenance_Category_to_Maintenance_Object['other_maintenance_category'],
     ).toBeDefined();

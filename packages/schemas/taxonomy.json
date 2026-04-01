@@ -1,5 +1,5 @@
 {
-  "Category": ["maintenance", "management", "other_category"],
+  "Category": ["maintenance", "management"],
 
   "Location": ["suite", "building_interior", "building_exterior"],
 
@@ -54,7 +54,6 @@
     "appliance",
     "roofing",
     "tile",
-    "other_issue",
     "other_maintenance_category",
     "not_applicable"
   ],
@@ -111,7 +110,6 @@
     "other_object",
     "no_object",
     "needs_object",
-    "other_maintenance_object",
     "not_applicable"
   ],
 
@@ -134,14 +132,7 @@
     "not_applicable"
   ],
 
-  "Management_Category": [
-    "accounting",
-    "lease",
-    "general",
-    "other_mgmt_cat",
-    "other_management_category",
-    "not_applicable"
-  ],
+  "Management_Category": ["accounting", "lease", "general", "other_mgmt_cat", "not_applicable"],
 
   "Management_Object": [
     "rent_increases",
@@ -168,9 +159,8 @@
     "other_mgmt_obj",
     "no_object",
     "needs_object",
-    "other_management_object",
     "not_applicable"
   ],
 
-  "Priority": ["low", "normal", "high", "emergency", "other_priority"]
+  "Priority": ["low", "normal", "high", "emergency"]
 }

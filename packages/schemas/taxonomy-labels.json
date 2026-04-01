@@ -39,8 +39,7 @@
     },
     "Category": {
       "maintenance": "Maintenance",
-      "management": "Management",
-      "other_category": "Other"
+      "management": "Management"
     },
     "Location": {
       "suite": "Your unit",
@@ -61,7 +60,6 @@
       "appliance": "Appliance",
       "roofing": "Roofing",
       "tile": "Tile",
-      "other_issue": "Other issue",
       "other_maintenance_category": "Other",
       "not_applicable": "N/A"
     },
@@ -69,8 +67,7 @@
       "low": "Low",
       "normal": "Normal",
       "high": "High",
-      "emergency": "Emergency",
-      "other_priority": "Other"
+      "emergency": "Emergency"
     }
   },
   "field_labels": {

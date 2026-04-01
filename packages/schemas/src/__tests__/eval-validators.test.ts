@@ -50,6 +50,22 @@ describe('validateEvalExample', () => {
     expect(result.errors).toHaveLength(0);
   });
 
+  it('accepts fully unresolved empty expected classifications for underspecified eval cases', () => {
+    const example = validGoldExample();
+    example.expected_classification_by_issue = [{}];
+    const result = validateEvalExample(example);
+    expect(result.valid).toBe(true);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  it('rejects partial expected classifications that omit Category', () => {
+    const example = validGoldExample();
+    example.expected_classification_by_issue = [{ Priority: 'high' }];
+    const result = validateEvalExample(example);
+    expect(result.valid).toBe(false);
+    expect(result.errors.length).toBeGreaterThan(0);
+  });
+
   it('rejects when required fields are missing', () => {
     const { example_id, dataset_type, ...rest } = validGoldExample();
     const result = validateEvalExample(rest);
