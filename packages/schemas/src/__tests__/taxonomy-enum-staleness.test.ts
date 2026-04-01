@@ -5,7 +5,12 @@ import { fileURLToPath } from 'node:url';
 import { loadTaxonomy } from '../taxonomy.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const generatedPath = resolve(__dirname, '..', '..', 'taxonomy-classification.generated.schema.json');
+const generatedPath = resolve(
+  __dirname,
+  '..',
+  '..',
+  'taxonomy-classification.generated.schema.json',
+);
 
 describe('taxonomy-enum staleness guard', () => {
   it('generated schema matches current taxonomy.json', () => {

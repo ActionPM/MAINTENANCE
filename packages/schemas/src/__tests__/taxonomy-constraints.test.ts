@@ -133,9 +133,7 @@ describe('constraint coverage completeness', () => {
       const map = constraints[mapName] as unknown as Record<string, readonly string[]>;
       const excluded = PARENT_EXCLUSIONS[parentField] ?? [];
       const parentValues = taxonomy[parentField];
-      const missing = parentValues.filter(
-        (val: string) => !map[val] && !excluded.includes(val),
-      );
+      const missing = parentValues.filter((val: string) => !map[val] && !excluded.includes(val));
       expect(missing, `Missing ${mapName} entries: ${missing.join(', ')}`).toEqual([]);
     });
   }

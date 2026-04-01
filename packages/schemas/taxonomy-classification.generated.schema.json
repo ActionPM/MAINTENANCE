@@ -7,18 +7,11 @@
       "properties": {
         "Category": {
           "type": "string",
-          "enum": [
-            "maintenance",
-            "management"
-          ]
+          "enum": ["maintenance", "management"]
         },
         "Location": {
           "type": "string",
-          "enum": [
-            "suite",
-            "building_interior",
-            "building_exterior"
-          ]
+          "enum": ["suite", "building_interior", "building_exterior"]
         },
         "Sub_Location": {
           "type": "string",
@@ -159,13 +152,7 @@
         },
         "Management_Category": {
           "type": "string",
-          "enum": [
-            "accounting",
-            "lease",
-            "general",
-            "other_mgmt_cat",
-            "not_applicable"
-          ]
+          "enum": ["accounting", "lease", "general", "other_mgmt_cat", "not_applicable"]
         },
         "Management_Object": {
           "type": "string",
@@ -199,12 +186,7 @@
         },
         "Priority": {
           "type": "string",
-          "enum": [
-            "low",
-            "normal",
-            "high",
-            "emergency"
-          ]
+          "enum": ["low", "normal", "high", "emergency"]
         }
       },
       "additionalProperties": false
