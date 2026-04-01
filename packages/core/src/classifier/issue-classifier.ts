@@ -56,18 +56,26 @@ export async function callIssueClassifier(
   // --- Phase 1: Schema + taxonomy value validation with one retry ---
   let validated: IssueClassifierOutput | null = null;
   let lastSchemaError: unknown;
+  let lastRaw: unknown;
 
   for (let attempt = 0; attempt < 2; attempt++) {
     let raw: unknown;
     try {
       let retryHint = 'schema_errors';
-      if (
-        Array.isArray(lastSchemaError) &&
-        lastSchemaError.some(
-          (e: Record<string, unknown>) =>
-            e.field === 'Maintenance_Problem' && e.value === 'needs_object',
-        )
-      ) {
+      const hasNeedsObjectMisplacement =
+        // Taxonomy validation error format (pre-enum schema)
+        (Array.isArray(lastSchemaError) &&
+          lastSchemaError.some(
+            (e: Record<string, unknown>) =>
+              e.field === 'Maintenance_Problem' && e.value === 'needs_object',
+          )) ||
+        // Schema enum validation: check the raw data for the misplaced value
+        (lastRaw != null &&
+          typeof lastRaw === 'object' &&
+          'classification' in lastRaw &&
+          (lastRaw as Record<string, Record<string, unknown>>).classification
+            ?.Maintenance_Problem === 'needs_object');
+      if (hasNeedsObjectMisplacement) {
         retryHint =
           'schema_errors — "needs_object" is only valid for the Maintenance_Object field, not Maintenance_Problem. Use "other_problem" or "not_working" for Maintenance_Problem.';
       }
@@ -86,6 +94,7 @@ export async function callIssueClassifier(
     const schemaResult = validateClassifierOutput(raw);
     if (!schemaResult.valid) {
       lastSchemaError = schemaResult.errors;
+      lastRaw = raw;
       await metricsRecorder?.record({
         metric_name: 'schema_validation_failure_total',
         metric_value: 1,
@@ -105,6 +114,7 @@ export async function callIssueClassifier(
     );
     if (domainResult.invalidValues.length > 0) {
       lastSchemaError = domainResult.invalidValues;
+      lastRaw = raw;
       await metricsRecorder?.record({
         metric_name: 'schema_validation_failure_total',
         metric_value: 1,

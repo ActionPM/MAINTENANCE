@@ -23,7 +23,7 @@ describe('resolveValidOptions', () => {
     expect(options).toContain('toilet');
     expect(options).toContain('sink');
     expect(options).not.toContain('breaker');
-    expect(options).not.toContain('fridge');
+    expect(options).not.toContain('light');
   });
 
   it('returns only valid problems for toilet', () => {
@@ -176,5 +176,81 @@ describe('resolveConstraintImpliedFields', () => {
     };
     const implied = resolveConstraintImpliedFields(classification, constraints);
     expect(implied['Maintenance_Object']).toBeUndefined();
+  });
+});
+
+describe('appliance-leak cross-category constraint', () => {
+  it('dishwasher is reachable under plumbing for kitchen leaks', () => {
+    const objects = resolveValidOptions(
+      'Maintenance_Object',
+      {
+        Sub_Location: 'kitchen',
+        Maintenance_Category: 'plumbing',
+      },
+      constraints,
+    );
+    expect(objects).toContain('dishwasher');
+    expect(objects).toContain('fridge');
+  });
+
+  it('dishwasher still reachable under appliance', () => {
+    const objects = resolveValidOptions(
+      'Maintenance_Object',
+      {
+        Sub_Location: 'kitchen',
+        Maintenance_Category: 'appliance',
+      },
+      constraints,
+    );
+    expect(objects).toContain('dishwasher');
+  });
+
+  it('leak is a valid problem for dishwasher', () => {
+    const problems = resolveValidOptions(
+      'Maintenance_Problem',
+      {
+        Maintenance_Object: 'dishwasher',
+      },
+      constraints,
+    );
+    expect(problems).toContain('leak');
+  });
+});
+
+describe('not_applicable bypass', () => {
+  it('returns null (unconstrained) when Maintenance_Category is not_applicable', () => {
+    const result = resolveValidOptions(
+      'Maintenance_Object',
+      {
+        Category: 'management',
+        Maintenance_Category: 'not_applicable',
+      },
+      constraints,
+    );
+    expect(result).toBeNull();
+  });
+
+  it('returns null (unconstrained) when Maintenance_Object is not_applicable', () => {
+    const result = resolveValidOptions(
+      'Maintenance_Problem',
+      {
+        Category: 'management',
+        Maintenance_Object: 'not_applicable',
+      },
+      constraints,
+    );
+    expect(result).toBeNull();
+  });
+
+  it('does not auto-resolve not_applicable via constraint implication', () => {
+    const implied = resolveConstraintImpliedFields(
+      {
+        Category: 'management',
+        Maintenance_Category: 'not_applicable',
+        Maintenance_Object: 'not_applicable',
+      },
+      constraints,
+    );
+    expect(implied).toEqual({});
   });
 });

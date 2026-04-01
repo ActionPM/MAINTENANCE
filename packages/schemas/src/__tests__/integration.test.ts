@@ -248,9 +248,10 @@ describe('Integration — round-trip: build valid data, validate, access typed r
   });
 });
 
-describe('Integration — all 11 schema/config JSON files exist', () => {
+describe('Integration — all 12 schema/config JSON files exist', () => {
   const schemaFiles = [
     'taxonomy.json',
+    'taxonomy-classification.generated.schema.json',
     'orchestrator_action.schema.json',
     'issue_split.schema.json',
     'classification.schema.json',

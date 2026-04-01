@@ -107,3 +107,36 @@ describe('taxonomy_constraints.json', () => {
     ).toBeDefined();
   });
 });
+
+describe('constraint coverage completeness', () => {
+  // Values intentionally excluded from parent constraint mappings.
+  // Documented in taxonomy_constraints.json _meta.not_applicable_policy.
+  const PARENT_EXCLUSIONS: Record<string, string[]> = {
+    Maintenance_Category: ['not_applicable'],
+    Maintenance_Object: ['not_applicable'],
+  };
+
+  const CONSTRAINT_MAP_PARENTS: Array<{
+    mapName: keyof TaxonomyConstraints;
+    parentField: keyof typeof taxonomy;
+  }> = [
+    { mapName: 'Location_to_Sub_Location', parentField: 'Location' },
+    { mapName: 'Sub_Location_to_Maintenance_Category', parentField: 'Sub_Location' },
+    { mapName: 'Maintenance_Category_to_Maintenance_Object', parentField: 'Maintenance_Category' },
+    { mapName: 'Maintenance_Object_to_Maintenance_Problem', parentField: 'Maintenance_Object' },
+    { mapName: 'Maintenance_Object_to_Sub_Location', parentField: 'Maintenance_Object' },
+  ];
+
+  for (const { mapName, parentField } of CONSTRAINT_MAP_PARENTS) {
+    it(`every ${parentField} value has a ${mapName} entry or is excluded`, () => {
+      const constraints = loadTaxonomyConstraints();
+      const map = constraints[mapName] as unknown as Record<string, readonly string[]>;
+      const excluded = PARENT_EXCLUSIONS[parentField] ?? [];
+      const parentValues = taxonomy[parentField];
+      const missing = parentValues.filter(
+        (val: string) => !map[val] && !excluded.includes(val),
+      );
+      expect(missing, `Missing ${mapName} entries: ${missing.join(', ')}`).toEqual([]);
+    });
+  }
+});

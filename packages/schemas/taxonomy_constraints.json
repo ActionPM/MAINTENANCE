@@ -1,6 +1,9 @@
 {
   "version": "1.0.0",
   "description": "Hierarchical parent-child relationships between taxonomy fields. Keys follow ParentField_to_ChildField naming convention.",
+  "_meta": {
+    "not_applicable_policy": "not_applicable values intentionally have no parent entries in constraint maps. When a field is not_applicable, constraint resolution returns null (unconstrained) for its children. This is correct: not_applicable means the axis does not apply, so constraining children is meaningless."
+  },
   "Location_to_Sub_Location": {
     "suite": [
       "kitchen",
@@ -293,6 +296,9 @@
       "pipe",
       "shower",
       "bathtub",
+      "dishwasher",
+      "fridge",
+      "washer",
       "other_object",
       "needs_object"
     ],

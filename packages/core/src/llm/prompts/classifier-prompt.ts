@@ -91,7 +91,7 @@ HIERARCHICAL CONSTRAINTS:
 Fields are not independent — they must be logically consistent with each other.
 - Location constrains Sub_Location: "suite" Sub_Locations include kitchen, bathroom, bedroom, etc. "building_interior" includes elevator, parking_garage, etc.
 - Sub_Location constrains Maintenance_Category: e.g., "elevator" only allows electrical, general_maintenance.
-- Maintenance_Category constrains Maintenance_Object: e.g., "plumbing" allows toilet, sink, pipe, etc. NOT breaker, fridge.
+- Maintenance_Category constrains Maintenance_Object: e.g., "plumbing" allows toilet, sink, pipe, dishwasher, fridge, etc. NOT breaker, light.
 - Maintenance_Object constrains Maintenance_Problem: e.g., "toilet" allows leak, clog, not_working. NOT no_heat, infestation.
 - Maintenance_Object constrains Sub_Location: e.g., "toilet" must be in bathroom. "fridge" must be in kitchen.
 
@@ -195,7 +195,7 @@ HIERARCHICAL CONSTRAINTS:
 Fields are not independent — they must be logically consistent with each other.
 - Location constrains Sub_Location: "suite" Sub_Locations include kitchen, bathroom, bedroom, etc. "building_interior" includes elevator, parking_garage, etc.
 - Sub_Location constrains Maintenance_Category: e.g., "elevator" only allows electrical, general_maintenance.
-- Maintenance_Category constrains Maintenance_Object: e.g., "plumbing" allows toilet, sink, pipe, etc. NOT breaker, fridge.
+- Maintenance_Category constrains Maintenance_Object: e.g., "plumbing" allows toilet, sink, pipe, dishwasher, fridge, etc. NOT breaker, light.
 - Maintenance_Object constrains Maintenance_Problem: e.g., "toilet" allows leak, clog, not_working. NOT no_heat, infestation.
 - Maintenance_Object constrains Sub_Location: e.g., "toilet" must be in bathroom. "fridge" must be in kitchen.
 

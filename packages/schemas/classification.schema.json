@@ -46,8 +46,7 @@
       "properties": {
         "issue_id": { "type": "string" },
         "classification": {
-          "type": "object",
-          "additionalProperties": { "type": "string" }
+          "$ref": "taxonomy-classification.generated.schema.json#/definitions/TaxonomyClassification"
         },
         "model_confidence": {
           "type": "object",

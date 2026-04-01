@@ -1,0 +1,213 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "taxonomy-classification.generated.schema.json",
+  "definitions": {
+    "TaxonomyClassification": {
+      "type": "object",
+      "properties": {
+        "Category": {
+          "type": "string",
+          "enum": [
+            "maintenance",
+            "management"
+          ]
+        },
+        "Location": {
+          "type": "string",
+          "enum": [
+            "suite",
+            "building_interior",
+            "building_exterior"
+          ]
+        },
+        "Sub_Location": {
+          "type": "string",
+          "enum": [
+            "kitchen",
+            "bathroom",
+            "common_living_dining",
+            "bedroom",
+            "closets",
+            "keys_locks",
+            "windows",
+            "balcony",
+            "ceiling",
+            "general",
+            "entrance_lobby",
+            "hallways_stairwells",
+            "elevator",
+            "laundry",
+            "locker_room",
+            "gym",
+            "pool",
+            "party_room",
+            "other_amenity",
+            "mechanical_room",
+            "cable_room",
+            "bike_locker",
+            "parking_garage",
+            "landscape",
+            "hardscape",
+            "facade",
+            "roof",
+            "mechanical",
+            "garbage",
+            "amenity",
+            "surface_parking",
+            "entire_unit",
+            "multiple_rooms",
+            "other_sub_location"
+          ]
+        },
+        "Maintenance_Category": {
+          "type": "string",
+          "enum": [
+            "plumbing",
+            "electrical",
+            "hvac",
+            "carpentry",
+            "flooring",
+            "drywall_plaster",
+            "paint",
+            "pest_control",
+            "general_maintenance",
+            "locksmith",
+            "appliance",
+            "roofing",
+            "tile",
+            "other_maintenance_category",
+            "not_applicable"
+          ]
+        },
+        "Maintenance_Object": {
+          "type": "string",
+          "enum": [
+            "toilet",
+            "sink",
+            "faucet",
+            "drain",
+            "pipe",
+            "shower",
+            "breaker",
+            "fuse",
+            "switch",
+            "outlet",
+            "light",
+            "radiator",
+            "thermostat",
+            "door",
+            "cabinet",
+            "shelf",
+            "baseboard",
+            "floor",
+            "tile",
+            "carpet",
+            "wood",
+            "laminate",
+            "wall",
+            "ceiling",
+            "paint",
+            "pests",
+            "cockroaches",
+            "ants",
+            "bedbugs",
+            "rodents",
+            "lock",
+            "key",
+            "fridge",
+            "dishwasher",
+            "oven",
+            "microwave",
+            "stove",
+            "washer",
+            "dryer",
+            "range_hood",
+            "roof",
+            "grout",
+            "bathtub",
+            "window",
+            "smoke_detector",
+            "exhaust_fan",
+            "screen",
+            "blind",
+            "other_object",
+            "no_object",
+            "needs_object",
+            "not_applicable"
+          ]
+        },
+        "Maintenance_Problem": {
+          "type": "string",
+          "enum": [
+            "leak",
+            "drain",
+            "clog",
+            "not_working",
+            "no_water",
+            "no_heat",
+            "flood",
+            "infestation",
+            "broken_damaged",
+            "safety_risk",
+            "smell",
+            "low_pressure",
+            "noise_vibration",
+            "missing",
+            "other_problem",
+            "not_applicable"
+          ]
+        },
+        "Management_Category": {
+          "type": "string",
+          "enum": [
+            "accounting",
+            "lease",
+            "general",
+            "other_mgmt_cat",
+            "not_applicable"
+          ]
+        },
+        "Management_Object": {
+          "type": "string",
+          "enum": [
+            "rent_increases",
+            "rent_charges",
+            "banking",
+            "rent_receipt",
+            "move_out",
+            "sublet_assign",
+            "rentable_item",
+            "add_remove_tenant",
+            "move_in",
+            "lease_inquiry",
+            "complaint",
+            "booking_scheduling",
+            "legal_matters",
+            "technical_issues",
+            "accommodations",
+            "chargebacks",
+            "general_feedback",
+            "questions",
+            "parking",
+            "intercom",
+            "building_access",
+            "other_mgmt_obj",
+            "no_object",
+            "needs_object",
+            "not_applicable"
+          ]
+        },
+        "Priority": {
+          "type": "string",
+          "enum": [
+            "low",
+            "normal",
+            "high",
+            "emergency"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

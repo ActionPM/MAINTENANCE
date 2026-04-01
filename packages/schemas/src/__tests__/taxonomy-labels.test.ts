@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { getTaxonomyLabel, getFieldLabel } from '../taxonomy-labels.js';
+import { loadTaxonomy } from '../taxonomy.js';
+import labelsJson from '../../taxonomy-labels.json' with { type: 'json' };
 
 describe('getFieldLabel', () => {
   it('returns mapped label for Maintenance_Category', () => {
@@ -54,5 +56,22 @@ describe('getTaxonomyLabel (existing)', () => {
 
   it('falls back for unknown value', () => {
     expect(getTaxonomyLabel('Category', 'unknown_value')).toBe('Unknown value');
+  });
+});
+
+describe('label completeness', () => {
+  it('every taxonomy value has a display label in taxonomy-labels.json', () => {
+    const taxonomy = loadTaxonomy();
+    const labels = labelsJson.labels as Record<string, Record<string, string>>;
+    const missing: string[] = [];
+    for (const [field, values] of Object.entries(taxonomy)) {
+      for (const value of values) {
+        const label = labels[field]?.[value];
+        if (!label) {
+          missing.push(`${field}.${value}`);
+        }
+      }
+    }
+    expect(missing, `Missing labels:\n${missing.join('\n')}`).toEqual([]);
   });
 });
