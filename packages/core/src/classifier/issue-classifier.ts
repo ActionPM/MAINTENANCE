@@ -1,6 +1,7 @@
 import type { IssueClassifierInput, IssueClassifierOutput, Taxonomy } from '@wo-agent/schemas';
 import { validateClassifierOutput, validateClassificationAgainstTaxonomy } from '@wo-agent/schemas';
 import type { MetricsRecorder, ObservabilityContext } from '../observability/types.js';
+import { ClassifierTriageReason } from './triage-routing.js';
 
 export enum ClassifierErrorCode {
   SCHEMA_VALIDATION_FAILED = 'SCHEMA_VALIDATION_FAILED',
@@ -25,6 +26,7 @@ export interface ClassifierResult {
   /** Both attempts stored for audit when needs_human_triage */
   readonly conflicting?: readonly IssueClassifierOutput[];
   readonly error?: string;
+  readonly triage_reason?: ClassifierTriageReason;
 }
 
 export type LlmClassifierFn = (
@@ -122,6 +124,7 @@ export async function callIssueClassifier(
     return {
       status: 'llm_fail',
       error: `IssueClassifier output failed schema/taxonomy validation after retry: ${JSON.stringify(lastSchemaError)}`,
+      triage_reason: ClassifierTriageReason.SCHEMA_VALIDATION_RETRY_FAILED,
     };
   }
 
@@ -154,6 +157,7 @@ export async function callIssueClassifier(
       status: 'needs_human_triage',
       conflicting: [validated],
       error: 'LLM call failed on category gating retry',
+      triage_reason: ClassifierTriageReason.CATEGORY_GATING_RETRY_FAILED,
     };
   }
 
@@ -172,6 +176,7 @@ export async function callIssueClassifier(
       status: 'needs_human_triage',
       conflicting: [validated],
       error: 'Category gating retry failed schema validation',
+      triage_reason: ClassifierTriageReason.CATEGORY_GATING_RETRY_FAILED,
     };
   }
 
@@ -186,6 +191,7 @@ export async function callIssueClassifier(
       status: 'needs_human_triage',
       conflicting: [validated, retrySchema.data!],
       error: 'Category gating still contradictory after constrained retry',
+      triage_reason: ClassifierTriageReason.CATEGORY_GATING_RETRY_FAILED,
     };
   }
 

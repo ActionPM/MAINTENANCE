@@ -69,6 +69,7 @@ describe('callIssueClassifier', () => {
     const llmCall = vi.fn().mockResolvedValue(badOutput);
     const result = await callIssueClassifier(VALID_INPUT, llmCall, taxonomy);
     expect(result.status).toBe('llm_fail');
+    expect(result.triage_reason).toBe('schema_validation_retry_failed');
     expect(llmCall).toHaveBeenCalledTimes(2);
   });
 
@@ -96,7 +97,7 @@ describe('callIssueClassifier', () => {
         ...VALID_OUTPUT.classification,
         Category: 'management',
         Maintenance_Category: 'other_maintenance_category',
-        Maintenance_Object: 'other_maintenance_object',
+        Maintenance_Object: 'other_object',
         Maintenance_Problem: 'other_problem',
         Management_Category: 'accounting',
         Management_Object: 'rent_charges',
@@ -120,6 +121,7 @@ describe('callIssueClassifier', () => {
     const llmCall = vi.fn().mockResolvedValue(contradictory);
     const result = await callIssueClassifier(VALID_INPUT, llmCall, taxonomy);
     expect(result.status).toBe('needs_human_triage');
+    expect(result.triage_reason).toBe('category_gating_retry_failed');
     expect(result.conflicting).toHaveLength(2);
     expect(llmCall).toHaveBeenCalledTimes(2);
   });

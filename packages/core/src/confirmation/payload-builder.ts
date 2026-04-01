@@ -18,6 +18,7 @@ export interface ConfirmationIssue {
   readonly confidence_by_field: Record<string, number>;
   readonly missing_fields: readonly string[];
   readonly needs_human_triage: boolean;
+  readonly recoverable_via_followup: boolean;
   readonly display_fields?: readonly DisplayField[];
 }
 
@@ -47,6 +48,7 @@ export function buildConfirmationPayload(
         confidence_by_field: {},
         missing_fields: [],
         needs_human_triage: true,
+        recoverable_via_followup: false,
       };
     }
 
@@ -71,6 +73,7 @@ export function buildConfirmationPayload(
       confidence_by_field: { ...result.computedConfidence },
       missing_fields: [...result.classifierOutput.missing_fields],
       needs_human_triage: result.classifierOutput.needs_human_triage,
+      recoverable_via_followup: result.recoverable_via_followup,
       display_fields,
     };
   });

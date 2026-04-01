@@ -2,6 +2,7 @@ import {
   ConversationState,
   DEFAULT_CONFIDENCE_CONFIG,
   DEFAULT_FOLLOWUP_CAPS,
+  type Taxonomy,
   taxonomyConstraints,
   validateHierarchicalConstraints,
 } from '@wo-agent/schemas';
@@ -14,11 +15,15 @@ import type {
 } from '@wo-agent/schemas';
 import { resolveConstraintImpliedFields } from '../../classifier/constraint-resolver.js';
 import { checkCompleteness } from '../../classifier/completeness-gate.js';
-import { EVIDENCE_BASED_PROMPT_VERSION } from '../../llm/prompts/classifier-prompt.js';
-import { compareSemver } from '@wo-agent/schemas';
 import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
 import { callIssueClassifier } from '../../classifier/issue-classifier.js';
 import { computeCueScores } from '../../classifier/cue-scoring.js';
+import {
+  ClassifierTriageReason,
+  RoutingReason,
+  computeRecoverableViaFollowup,
+  normalizeCrossDomainClassification,
+} from '../../classifier/triage-routing.js';
 import {
   computeAllFieldConfidences,
   extractFlatConfidence,
@@ -35,7 +40,6 @@ import type { IssueClassificationResult } from '../../session/types.js';
 import type { ConversationSession } from '../../session/types.js';
 import type { SplitIssue } from '@wo-agent/schemas';
 import { SystemEvent } from '../../state-machine/system-events.js';
-import { resolveLlmClassifySuccess } from '../../state-machine/guards.js';
 import { checkFollowUpCaps } from '../../followup/caps.js';
 import { callFollowUpGenerator } from '../../followup/followup-generator.js';
 import { buildFollowUpQuestionsEvent } from '../../followup/event-builder.js';
@@ -58,6 +62,49 @@ function applyConfirmationTracking(
     sourceTextHash: sourceHash,
     splitHash,
   });
+}
+
+function serializeClassificationResults(results: readonly IssueClassificationResult[]) {
+  return results.map((result) => ({
+    issue_id: result.issue_id,
+    classification: result.classifierOutput.classification,
+    computed_confidence: result.computedConfidence,
+    fields_needing_input: result.fieldsNeedingInput,
+    needs_human_triage: result.classifierOutput.needs_human_triage,
+    recoverable_via_followup: result.recoverable_via_followup,
+    classifier_triage_reason: result.classifier_triage_reason,
+    routing_reason: result.routing_reason,
+  }));
+}
+
+function assignRoutingReason(
+  results: readonly IssueClassificationResult[],
+  routingReason: RoutingReason,
+  predicate?: (result: IssueClassificationResult) => boolean,
+): IssueClassificationResult[] {
+  return results.map((result) =>
+    predicate && !predicate(result)
+      ? result
+      : {
+          ...result,
+          routing_reason: routingReason,
+        },
+  );
+}
+
+function forceReviewRouting(
+  results: readonly IssueClassificationResult[],
+  routingReason: RoutingReason,
+): IssueClassificationResult[] {
+  return results.map((result) => ({
+    ...result,
+    classifierOutput: { ...result.classifierOutput, needs_human_triage: true },
+    fieldsNeedingInput: [],
+    shouldAskFollowup: false,
+    followupTypes: {},
+    recoverable_via_followup: false,
+    routing_reason: routingReason,
+  }));
 }
 
 /**
@@ -143,6 +190,7 @@ export async function handleStartClassification(
     }
 
     let output: IssueClassifierOutput;
+    let classifierTriageReason = classifierResult.triage_reason;
     if (classifierResult.status === 'needs_human_triage') {
       output = {
         ...(classifierResult.conflicting?.[0] ?? {
@@ -202,6 +250,7 @@ export async function handleStartClassification(
         );
         if (!postRetryCheck.valid) {
           output = { ...output, needs_human_triage: true };
+          classifierTriageReason = ClassifierTriageReason.CONSTRAINT_RETRY_FAILED;
           await deps.eventRepo.insert({
             event_id: deps.idGenerator(),
             event_type: 'classification_hierarchy_violation_unresolved',
@@ -230,44 +279,18 @@ export async function handleStartClassification(
       });
     }
 
-    // Step C: Completeness gate (v2+ only) — check for blank meaningful fields
-    const isEvidenceBasedPrompt =
-      compareSemver(session.pinned_versions.prompt_version, EVIDENCE_BASED_PROMPT_VERSION) >= 0;
+    // Step C: Completeness gate — check for blank meaningful fields
     let completenessIncomplete: string[] = [];
     let completenessFollowupTypes: Record<string, string> = {};
 
-    if (isEvidenceBasedPrompt && !output.needs_human_triage) {
-      const category = output.classification.Category ?? '';
-      // Auto-normalize cross-domain fields for v2 prompt
-      if (category === 'management') {
-        if (!output.classification.Maintenance_Category) {
-          output = {
-            ...output,
-            classification: {
-              ...output.classification,
-              Maintenance_Category: 'not_applicable',
-              Maintenance_Object: 'not_applicable',
-              Maintenance_Problem: 'not_applicable',
-            },
-          };
-        }
-      } else if (category === 'maintenance') {
-        if (!output.classification.Management_Category) {
-          output = {
-            ...output,
-            classification: {
-              ...output.classification,
-              Management_Category: 'not_applicable',
-              Management_Object: 'not_applicable',
-            },
-          };
-        }
-      }
-
-      const completenessResult = checkCompleteness(output.classification, category);
-      completenessIncomplete = [...completenessResult.incompleteFields];
-      completenessFollowupTypes = { ...completenessResult.followupTypes };
-    }
+    output = {
+      ...output,
+      classification: normalizeCrossDomainClassification(output.classification),
+    };
+    const category = output.classification.Category ?? '';
+    const completenessResult = checkCompleteness(output.classification, category);
+    completenessIncomplete = [...completenessResult.incompleteFields];
+    completenessFollowupTypes = { ...completenessResult.followupTypes };
 
     // Step D: Confidence with constraint boost (C2) — only on populated fields
     const confidenceDetail = computeAllFieldConfidences({
@@ -279,14 +302,12 @@ export async function handleStartClassification(
     });
     const computedConfidence = extractFlatConfidence(confidenceDetail);
 
-    let fieldsNeedingInput = output.needs_human_triage
-      ? []
-      : determineFieldsNeedingInput({
-          confidenceByField: confidenceDetail,
-          config: confidenceConfig,
-          missingFields: output.missing_fields,
-          classificationOutput: output.classification,
-        });
+    let fieldsNeedingInput = determineFieldsNeedingInput({
+      confidenceByField: confidenceDetail,
+      config: confidenceConfig,
+      missingFields: output.missing_fields,
+      classificationOutput: output.classification,
+    });
 
     // Short-circuit: remove constraint-implied fields — deterministically resolved.
     if (Object.keys(impliedFields).length > 0) {
@@ -304,6 +325,14 @@ export async function handleStartClassification(
       anyFieldsNeedInput = true;
     }
 
+    const recoverableViaFollowup = computeRecoverableViaFollowup({
+      needsHumanTriage: output.needs_human_triage,
+      fieldsNeedingInput,
+      classification: output.classification,
+      taxonomy: taxonomy as Taxonomy,
+      taxonomyVersion,
+    });
+
     classificationResults.push({
       issue_id: issue.issue_id,
       classifierOutput: output,
@@ -312,6 +341,8 @@ export async function handleStartClassification(
       shouldAskFollowup: fieldsNeedingInput.length > 0,
       followupTypes: completenessFollowupTypes,
       constraintPassed: !output.needs_human_triage,
+      recoverable_via_followup: recoverableViaFollowup,
+      classifier_triage_reason: classifierTriageReason,
     });
   }
 
@@ -334,11 +365,57 @@ export async function handleStartClassification(
   }
 
   let updatedSession = setClassificationResults(session, classificationResults);
+  const anyRecoverableTriageIssue = classificationResults.some(
+    (result) => result.classifierOutput.needs_human_triage && result.recoverable_via_followup,
+  );
+  const anyUnrecoverableTriageIssue = classificationResults.some(
+    (result) => result.classifierOutput.needs_human_triage && !result.recoverable_via_followup,
+  );
+
+  if (anyUnrecoverableTriageIssue) {
+    // Review routing is conversation-scoped by product decision. Preserve per-issue
+    // recoverability in recoverable_via_followup so observers can still identify
+    // which issues were individually recoverable after the whole conversation is
+    // forced onto the review path.
+    const routedResults = assignRoutingReason(
+      classificationResults,
+      RoutingReason.UNRECOVERABLE_CLASSIFICATION,
+    );
+    updatedSession = setClassificationResults(updatedSession, routedResults);
+    updatedSession = applyConfirmationTracking(updatedSession, issues, deps.clock);
+
+    return {
+      newState: ConversationState.TENANT_CONFIRMATION_PENDING,
+      session: updatedSession,
+      intermediateSteps: [intermediateStep],
+      finalSystemAction: SystemEvent.LLM_CLASSIFY_SUCCESS,
+      uiMessages: [
+        {
+          role: 'agent',
+          content:
+            "I've classified your issue(s), but some details still need human review. Please review and submit this request for review.",
+        },
+      ],
+      eventPayload: {
+        classification_results: serializeClassificationResults(routedResults),
+      },
+      eventType: 'state_transition',
+    };
+  }
 
   // --- Follow-up generation when fields need input ---
   if (anyFieldsNeedInput) {
+    const routedResults = anyRecoverableTriageIssue
+      ? assignRoutingReason(
+          classificationResults,
+          RoutingReason.RECOVERED_VIA_FOLLOWUP,
+          (result) => result.classifierOutput.needs_human_triage && result.recoverable_via_followup,
+        )
+      : [...classificationResults];
+    updatedSession = setClassificationResults(updatedSession, routedResults);
+
     const followUpCaps: FollowUpCaps = deps.followUpCaps ?? DEFAULT_FOLLOWUP_CAPS;
-    const allFieldsNeedingInput = classificationResults.flatMap((r) => [...r.fieldsNeedingInput]);
+    const allFieldsNeedingInput = routedResults.flatMap((r) => [...r.fieldsNeedingInput]);
 
     const capsCheck = checkFollowUpCaps({
       turnNumber: updatedSession.followup_turn_number + 1,
@@ -349,15 +426,7 @@ export async function handleStartClassification(
     });
 
     if (capsCheck.escapeHatch) {
-      // Escape hatch: mark all issues as needs_human_triage
-      const triageResults = classificationResults.map((r) => ({
-        ...r,
-        classifierOutput: { ...r.classifierOutput, needs_human_triage: true },
-        fieldsNeedingInput: [] as string[],
-        shouldAskFollowup: false,
-        followupTypes: {},
-        constraintPassed: true,
-      }));
+      const triageResults = forceReviewRouting(routedResults, RoutingReason.CAPS_EXHAUSTED);
       updatedSession = setClassificationResults(updatedSession, triageResults);
       updatedSession = applyConfirmationTracking(updatedSession, issues, deps.clock);
 
@@ -370,16 +439,20 @@ export async function handleStartClassification(
           {
             role: 'agent',
             content:
-              "I've classified your issue(s) but couldn't resolve all details. A human will review the remaining items.",
+              "I've classified your issue(s), but I can't ask more follow-up questions in this flow. Please review and submit this request for human review.",
           },
         ],
-        eventPayload: { escape_hatch: true, reason: capsCheck.reason },
+        eventPayload: {
+          escape_hatch: true,
+          reason: capsCheck.reason,
+          classification_results: serializeClassificationResults(triageResults),
+        },
         eventType: 'state_transition',
       };
     }
 
     // Call FollowUpGenerator for the first issue with fields needing input
-    const targetIssue = classificationResults.find((r) => r.fieldsNeedingInput.length > 0)!;
+    const targetIssue = routedResults.find((r) => r.fieldsNeedingInput.length > 0)!;
     const targetIssueData = issues.find((i) => i.issue_id === targetIssue.issue_id);
     const followUpInput: FollowUpGeneratorInput = {
       issue_id: targetIssue.issue_id,
@@ -407,15 +480,10 @@ export async function handleStartClassification(
       );
 
       if (followUpResult.status === 'llm_fail') {
-        // FollowUp generation failed — fall through to escape hatch
-        const triageResults = classificationResults.map((r) => ({
-          ...r,
-          classifierOutput: { ...r.classifierOutput, needs_human_triage: true },
-          fieldsNeedingInput: [] as string[],
-          shouldAskFollowup: false,
-          followupTypes: {},
-          constraintPassed: true,
-        }));
+        const triageResults = forceReviewRouting(
+          routedResults,
+          RoutingReason.FOLLOWUP_GENERATION_FAILED,
+        );
         updatedSession = setClassificationResults(updatedSession, triageResults);
         updatedSession = applyConfirmationTracking(updatedSession, issues, deps.clock);
 
@@ -428,10 +496,13 @@ export async function handleStartClassification(
             {
               role: 'agent',
               content:
-                "I've classified your issue(s) but had trouble generating follow-up questions. A human will review.",
+                "I've classified your issue(s), but I couldn't generate the follow-up questions needed to finish intake. Please review and submit this request for human review.",
             },
           ],
-          eventPayload: { followup_generation_failed: true },
+          eventPayload: {
+            followup_generation_failed: true,
+            classification_results: serializeClassificationResults(triageResults),
+          },
           eventType: 'state_transition',
         };
       }
@@ -442,14 +513,10 @@ export async function handleStartClassification(
       // instead of transitioning to needs_tenant_input with an empty pending list
       // (which would deadlock because ANSWER_FOLLOWUPS rejects NO_PENDING_QUESTIONS).
       if (followUpQuestions.length === 0) {
-        const triageResults = classificationResults.map((r) => ({
-          ...r,
-          classifierOutput: { ...r.classifierOutput, needs_human_triage: true },
-          fieldsNeedingInput: [] as string[],
-          shouldAskFollowup: false,
-          followupTypes: {},
-          constraintPassed: true,
-        }));
+        const triageResults = forceReviewRouting(
+          routedResults,
+          RoutingReason.FOLLOWUP_GENERATION_FAILED,
+        );
         updatedSession = setClassificationResults(updatedSession, triageResults);
         updatedSession = applyConfirmationTracking(updatedSession, issues, deps.clock);
 
@@ -462,26 +529,22 @@ export async function handleStartClassification(
             {
               role: 'agent',
               content:
-                "I've classified your issue(s) but couldn't generate follow-up questions. A human will review.",
+                "I've classified your issue(s), but I couldn't generate the follow-up questions needed to finish intake. Please review and submit this request for human review.",
             },
           ],
           eventPayload: {
             escape_hatch: true,
             reason: 'followup_generator_returned_empty_questions',
+            classification_results: serializeClassificationResults(triageResults),
           },
           eventType: 'state_transition',
         };
       }
     } catch {
-      // LLM exception — escape hatch
-      const triageResults = classificationResults.map((r) => ({
-        ...r,
-        classifierOutput: { ...r.classifierOutput, needs_human_triage: true },
-        fieldsNeedingInput: [] as string[],
-        shouldAskFollowup: false,
-        followupTypes: {},
-        constraintPassed: true,
-      }));
+      const triageResults = forceReviewRouting(
+        routedResults,
+        RoutingReason.FOLLOWUP_GENERATION_FAILED,
+      );
       updatedSession = setClassificationResults(updatedSession, triageResults);
       updatedSession = applyConfirmationTracking(updatedSession, issues, deps.clock);
 
@@ -494,10 +557,13 @@ export async function handleStartClassification(
           {
             role: 'agent',
             content:
-              "I've classified your issue(s) but had trouble generating follow-up questions. A human will review.",
+              "I've classified your issue(s), but I couldn't generate the follow-up questions needed to finish intake. Please review and submit this request for human review.",
           },
         ],
-        eventPayload: { followup_generation_error: true },
+        eventPayload: {
+          followup_generation_error: true,
+          classification_results: serializeClassificationResults(triageResults),
+        },
         eventType: 'state_transition',
       };
     }
@@ -530,25 +596,17 @@ export async function handleStartClassification(
         },
       ],
       eventPayload: {
-        classification_results: classificationResults.map((r) => ({
-          issue_id: r.issue_id,
-          classification: r.classifierOutput.classification,
-          computed_confidence: r.computedConfidence,
-          needs_human_triage: r.classifierOutput.needs_human_triage,
-        })),
+        classification_results: serializeClassificationResults(routedResults),
       },
       eventType: 'state_transition',
     };
   }
 
   // All fields resolved — proceed to confirmation
-  const targetState = resolveLlmClassifySuccess({
-    fields_needing_input: [],
-  });
   updatedSession = applyConfirmationTracking(updatedSession, issues, deps.clock);
 
   return {
-    newState: targetState,
+    newState: ConversationState.TENANT_CONFIRMATION_PENDING,
     session: updatedSession,
     intermediateSteps: [intermediateStep],
     finalSystemAction: SystemEvent.LLM_CLASSIFY_SUCCESS,
@@ -559,12 +617,7 @@ export async function handleStartClassification(
       },
     ],
     eventPayload: {
-      classification_results: classificationResults.map((r) => ({
-        issue_id: r.issue_id,
-        classification: r.classifierOutput.classification,
-        computed_confidence: r.computedConfidence,
-        needs_human_triage: r.classifierOutput.needs_human_triage,
-      })),
+      classification_results: serializeClassificationResults(classificationResults),
     },
     eventType: 'state_transition',
   };

@@ -109,7 +109,9 @@ describe('needs_object persistence (constraint resolver)', () => {
       Sub_Location: 'general',
       Maintenance_Object: 'toilet',
     };
-    const implied = resolveConstraintImpliedFields(classification, constraints);
+    const implied = resolveConstraintImpliedFields(classification, constraints, undefined, {
+      mode: 'all',
+    });
     expect(implied['Sub_Location']).toBe('bathroom');
   });
 });

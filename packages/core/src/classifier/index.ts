@@ -1,4 +1,8 @@
-export { computeCueScores, computeCueStrengthForField, buildEnrichedCueText } from './cue-scoring.js';
+export {
+  computeCueScores,
+  computeCueStrengthForField,
+  buildEnrichedCueText,
+} from './cue-scoring.js';
 export type { CueFieldResult, CueScoreMap } from './cue-scoring.js';
 
 export {
@@ -21,8 +25,18 @@ export { DEFAULT_FIELD_POLICY } from './confidence.js';
 
 export { callIssueClassifier, ClassifierError, ClassifierErrorCode } from './issue-classifier.js';
 export type { ClassifierResult } from './issue-classifier.js';
+export {
+  ClassifierTriageReason,
+  RoutingReason,
+  computeRecoverableViaFollowup,
+  normalizeCrossDomainClassification,
+} from './triage-routing.js';
 
-export { resolveValidOptions, resolveConstraintImpliedFields } from './constraint-resolver.js';
+export {
+  resolveValidOptions,
+  resolveConstraintImpliedFields,
+  isConstraintResolvedValue,
+} from './constraint-resolver.js';
 
 export {
   checkCompleteness,
@@ -32,3 +46,10 @@ export {
 export type { CompletenessResult, CompletenessPolicy } from './completeness-gate.js';
 
 export type { ClassificationEvent } from './classification-event.js';
+
+export {
+  invalidateStaleDescendants,
+  getForwardDescendants,
+  type InvalidationResult,
+  type ClearedField,
+} from './descendant-invalidation.js';

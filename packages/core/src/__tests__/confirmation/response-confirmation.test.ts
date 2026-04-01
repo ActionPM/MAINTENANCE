@@ -39,6 +39,7 @@ function makeSession(state: ConversationState): ConversationSession {
         shouldAskFollowup: false,
         followupTypes: {},
         constraintPassed: true,
+        recoverable_via_followup: false,
       },
     ],
     prior_state_before_error: null,
@@ -60,6 +61,7 @@ function makeSession(state: ConversationState): ConversationSession {
     escalation_state: 'none' as const,
     escalation_plan_id: null,
     queued_messages: [],
+    confirmed_followup_answers: {},
   };
 }
 

@@ -169,6 +169,8 @@ export interface FieldPolicyMetadata {
   readonly riskRelevantFields: readonly string[];
 }
 
+// Keep this aligned with DEFAULT_COMPLETENESS_POLICY: blank-field recovery relies
+// on the combination of both policies to decide which follow-ups are mandatory.
 /**
  * Default field policy derived from the taxonomy structure.
  * This is the single source of truth for which fields are required
@@ -178,7 +180,12 @@ export interface FieldPolicyMetadata {
  */
 export const DEFAULT_FIELD_POLICY: FieldPolicyMetadata = {
   requiredFields: ['Category', 'Location', 'Sub_Location', 'Priority'],
-  riskRelevantFields: ['Priority', 'Maintenance_Category', 'Maintenance_Problem'],
+  riskRelevantFields: [
+    'Priority',
+    'Maintenance_Category',
+    'Maintenance_Object',
+    'Maintenance_Problem',
+  ],
 } as const;
 
 export interface DetermineFieldsOptions {
@@ -187,7 +194,12 @@ export interface DetermineFieldsOptions {
   readonly missingFields?: readonly string[];
   readonly classificationOutput?: Record<string, string>;
   readonly fieldPolicy?: FieldPolicyMetadata;
+  readonly confirmedFields?: ReadonlySet<string>;
 }
+
+// Blank/unresolved fallback in determineFieldsNeedingInput depends on this policy
+// together with DEFAULT_COMPLETENESS_POLICY. Keep both aligned when required-field
+// expectations change.
 
 /**
  * Determine which fields need tenant input based on confidence bands,
@@ -203,6 +215,19 @@ export function determineFieldsNeedingInput(opts: DetermineFieldsOptions): strin
   const fieldPolicy = opts.fieldPolicy ?? DEFAULT_FIELD_POLICY;
   const config = opts.config;
   const needed = new Set<string>();
+  if (opts.classificationOutput) {
+    const unconditionalFields = new Set([
+      ...fieldPolicy.requiredFields,
+      ...fieldPolicy.riskRelevantFields,
+    ]);
+
+    for (const field of unconditionalFields) {
+      const value = opts.classificationOutput[field];
+      if (value == null || value === '' || value === 'needs_object') {
+        needed.add(field);
+      }
+    }
+  }
 
   for (const [field, detail] of Object.entries(opts.confidenceByField)) {
     const band = classifyConfidenceBand(detail.confidence, config);
@@ -221,7 +246,13 @@ export function determineFieldsNeedingInput(opts: DetermineFieldsOptions): strin
       const isEmergencyPriority =
         field === 'Priority' && opts.classificationOutput?.['Priority'] === 'emergency';
 
-      if (isResolvedMedium && !isEmergencyPriority) {
+      // BUG-011 Fix C: Sub_Location always requires tenant confirmation in medium band,
+      // unless the tenant has already confirmed it (via a prior follow-up answer pin).
+      const alwaysConfirmFields = new Set(['Sub_Location']);
+      const requiresConfirmation =
+        alwaysConfirmFields.has(field) && !opts.confirmedFields?.has(field);
+
+      if (isResolvedMedium && !isEmergencyPriority && !requiresConfirmation) {
         // Accepted — do not add to needed
       } else {
         // Original medium-band logic: ask if required OR risk-relevant

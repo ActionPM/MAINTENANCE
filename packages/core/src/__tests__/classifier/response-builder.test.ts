@@ -21,6 +21,7 @@ describe('buildResponse with classification', () => {
         shouldAskFollowup: false,
         followupTypes: {},
         constraintPassed: true,
+        recoverable_via_followup: false,
       },
     ];
 

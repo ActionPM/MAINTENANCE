@@ -43,6 +43,7 @@ describe('setClassificationResults', () => {
         shouldAskFollowup: false,
         followupTypes: {},
         constraintPassed: true,
+        recoverable_via_followup: false,
       },
     ];
     vi.advanceTimersByTime(1000);
@@ -75,6 +76,7 @@ describe('setClassificationResults', () => {
         shouldAskFollowup: false,
         followupTypes: {},
         constraintPassed: true,
+        recoverable_via_followup: false,
       },
     ]);
     const cleared = setClassificationResults(session, null);

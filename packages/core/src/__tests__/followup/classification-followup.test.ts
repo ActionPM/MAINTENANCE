@@ -128,7 +128,7 @@ describe('handleStartClassification with follow-up generation', () => {
     expect(result.newState).toBe(ConversationState.NEEDS_TENANT_INPUT);
     // Session should have pending questions
     expect(result.session.pending_followup_questions).toHaveLength(1);
-    expect(result.session.pending_followup_questions![0].field_target).toBe('Priority');
+    expect(result.session.pending_followup_questions![0].field_target).toBe('Location');
     // Session tracking should be updated
     expect(result.session.followup_turn_number).toBe(1);
     expect(result.session.total_questions_asked).toBe(1);

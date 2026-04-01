@@ -208,6 +208,7 @@ describe('handleAnswerFollowups', () => {
         shouldAskFollowup: false,
         followupTypes: {},
         constraintPassed: true,
+        recoverable_via_followup: false,
       },
     ]);
     session = setPendingFollowUpQuestions(session, [
@@ -255,6 +256,7 @@ describe('handleConfirmSubmission', () => {
         shouldAskFollowup: false,
         followupTypes: {},
         constraintPassed: true,
+        recoverable_via_followup: false,
       },
     ]);
     session = {

@@ -334,12 +334,23 @@ describe('Classification integration', () => {
   // ---------------------------------------------------------------
   // 6. Re-classification after ANSWER_FOLLOWUPS
   // ---------------------------------------------------------------
-  it('re-classification after ANSWER_FOLLOWUPS walks from needs_tenant_input to tenant_confirmation_pending', async () => {
-    // Step 1: Initial classification reports missing_fields -> needs_tenant_input
-    // Step 2: Re-classification after followup has no missing_fields -> tenant_confirmation_pending
+  it('re-classification after ANSWER_FOLLOWUPS reaches tenant_confirmation_pending once the active frontier fields are answered', async () => {
+    // Step 1: Initial classification reports Priority missing, but the current
+    // frontier still asks the hierarchy field first (Location, then Sub_Location).
+    // Step 2: After answering each frontier field, re-classification refines.
+    // BUG-011 Fix C: Sub_Location requires explicit tenant confirmation in medium band.
     const classificationWithMissing: IssueClassifierOutput = {
       ...VALID_CLASSIFICATION,
-      missing_fields: ['Priority', 'Location'],
+      missing_fields: ['Priority'],
+    };
+    const resolvedClassification: IssueClassifierOutput = {
+      ...VALID_CLASSIFICATION,
+      model_confidence: {
+        ...VALID_CLASSIFICATION.model_confidence,
+        Location: 0.95,
+        Sub_Location: 0.95,
+        Priority: 0.95,
+      },
     };
 
     let callCount = 0;
@@ -350,7 +361,7 @@ describe('Classification integration', () => {
         return classificationWithMissing;
       }
       // Re-classification after followup: complete, no missing fields
-      return VALID_CLASSIFICATION;
+      return resolvedClassification;
     });
 
     const deps = makeDeps({ classifierFn });
@@ -382,21 +393,37 @@ describe('Classification integration', () => {
       ConversationState.NEEDS_TENANT_INPUT,
     );
 
-    // Step 2: Dispatch ANSWER_FOLLOWUPS with tenant answers (question_ids must match pending questions)
+    // Step 2a: Answer Location (the first frontier field)
+    const locResult = await dispatch({
+      conversation_id: convId,
+      action_type: ActionType.ANSWER_FOLLOWUPS,
+      actor: ActorType.TENANT,
+      tenant_input: {
+        answers: [{ question_id: 'q-location', answer: 'suite' }],
+      },
+      auth_context: AUTH,
+    });
+
+    // BUG-011 Fix C: Sub_Location still needs confirmation (medium band, not yet confirmed)
+    expect(locResult.response.conversation_snapshot.state).toBe(
+      ConversationState.NEEDS_TENANT_INPUT,
+    );
+
+    // Step 2b: Answer Sub_Location (deterministic fallback question)
+    const subLocQ = locResult.response.conversation_snapshot.pending_followup_questions![0];
+    expect(subLocQ.field_target).toBe('Sub_Location');
+
     const followupResult = await dispatch({
       conversation_id: convId,
       action_type: ActionType.ANSWER_FOLLOWUPS,
       actor: ActorType.TENANT,
       tenant_input: {
-        answers: [
-          { question_id: 'q-priority', answer: 'normal' },
-          { question_id: 'q-location', answer: 'suite' },
-        ],
+        answers: [{ question_id: subLocQ.question_id, answer: 'bathroom' }],
       },
       auth_context: AUTH,
     });
 
-    // Should now be in tenant_confirmation_pending
+    // After confirming Sub_Location, all fields resolved → confirmation pending
     expect(followupResult.response.conversation_snapshot.state).toBe(
       ConversationState.TENANT_CONFIRMATION_PENDING,
     );

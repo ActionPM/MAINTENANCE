@@ -147,7 +147,7 @@ describe('confidence integration: obvious management request', () => {
     Location: 'suite',
     Sub_Location: 'general',
     Maintenance_Category: 'other_maintenance_category',
-    Maintenance_Object: 'other_maintenance_object',
+    Maintenance_Object: 'other_object',
     Maintenance_Problem: 'other_problem',
     Management_Category: 'accounting',
     Management_Object: 'rent_receipt',

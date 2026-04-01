@@ -16,9 +16,20 @@ const payload = {
       confidence_by_field: { Category: 0.95, Sub_Location: 0.88 } as Record<string, number>,
       missing_fields: [] as string[],
       needs_human_triage: false,
+      recoverable_via_followup: false,
       display_fields: [
-        { field: 'Category', field_label: 'Category', value: 'maintenance', value_label: 'Maintenance' },
-        { field: 'Sub_Location', field_label: 'Sub-location', value: 'kitchen', value_label: 'Kitchen' },
+        {
+          field: 'Category',
+          field_label: 'Category',
+          value: 'maintenance',
+          value_label: 'Maintenance',
+        },
+        {
+          field: 'Sub_Location',
+          field_label: 'Sub-location',
+          value: 'kitchen',
+          value_label: 'Kitchen',
+        },
       ],
     },
     {
@@ -29,8 +40,14 @@ const payload = {
       confidence_by_field: { Category: 0.72 } as Record<string, number>,
       missing_fields: ['Sub_Location'],
       needs_human_triage: true,
+      recoverable_via_followup: false,
       display_fields: [
-        { field: 'Category', field_label: 'Category', value: 'maintenance', value_label: 'Maintenance' },
+        {
+          field: 'Category',
+          field_label: 'Category',
+          value: 'maintenance',
+          value_label: 'Maintenance',
+        },
       ],
     },
   ],
@@ -54,11 +71,27 @@ const pestControlPayload = {
       confidence_by_field: {} as Record<string, number>,
       missing_fields: [] as string[],
       needs_human_triage: false,
+      recoverable_via_followup: false,
       display_fields: [
-        { field: 'Category', field_label: 'Category', value: 'maintenance', value_label: 'Maintenance' },
+        {
+          field: 'Category',
+          field_label: 'Category',
+          value: 'maintenance',
+          value_label: 'Maintenance',
+        },
         { field: 'Location', field_label: 'Location', value: 'suite', value_label: 'Your unit' },
-        { field: 'Sub_Location', field_label: 'Sub-location', value: 'kitchen', value_label: 'Kitchen' },
-        { field: 'Maintenance_Category', field_label: 'Maintenance type', value: 'pest_control', value_label: 'Pest control' },
+        {
+          field: 'Sub_Location',
+          field_label: 'Sub-location',
+          value: 'kitchen',
+          value_label: 'Kitchen',
+        },
+        {
+          field: 'Maintenance_Category',
+          field_label: 'Maintenance type',
+          value: 'pest_control',
+          value_label: 'Pest control',
+        },
         { field: 'Priority', field_label: 'Priority', value: 'normal', value_label: 'Normal' },
       ],
     },
@@ -78,6 +111,7 @@ const legacyPayload = {
       confidence_by_field: { Category: 0.95 } as Record<string, number>,
       missing_fields: [] as string[],
       needs_human_triage: false,
+      recoverable_via_followup: false,
       // No display_fields — fallback to chip rendering
     },
   ],
@@ -100,6 +134,14 @@ describe('ConfirmationPanel', () => {
   it('shows human triage badge when needed', () => {
     render(<ConfirmationPanel payload={payload} onConfirm={vi.fn()} />);
     expect(screen.getByText(/review needed/i)).toBeInTheDocument();
+  });
+
+  it('switches heading and button copy for unrecoverable review states', () => {
+    render(<ConfirmationPanel payload={payload} onConfirm={vi.fn()} />);
+    expect(
+      screen.getByText(/partial classification: a team member will review this request/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /submit for review/i })).toBeInTheDocument();
   });
 
   it('calls onConfirm when confirmed', async () => {

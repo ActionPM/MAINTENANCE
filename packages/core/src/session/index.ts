@@ -2,6 +2,8 @@ export type {
   ConversationSession,
   CreateSessionInput,
   IssueClassificationResult,
+  ClassifierTriageReason,
+  RoutingReason,
 } from './types.js';
 export {
   createSession,
@@ -21,6 +23,8 @@ export {
   setRiskTriggers,
   setEscalationState,
   setBuildingId,
+  mergeConfirmedFollowupAnswers,
+  removeConfirmedFollowupAnswers,
   type ExpirationConfig,
   type ConfirmationTrackingInput,
   type ScopeInput,

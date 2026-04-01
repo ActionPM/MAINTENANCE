@@ -20,7 +20,7 @@ import type {
   FollowUpQuestion,
   CueDictionary,
 } from '@wo-agent/schemas';
-import type { IssueClassificationResult } from '../../session/types.js';
+import type { IssueClassificationResult, ConversationSession } from '../../session/types.js';
 
 const taxonomy = loadTaxonomy();
 
@@ -116,6 +116,7 @@ function makeAnswerContext(overrides?: {
       shouldAskFollowup: false,
       followupTypes: {},
       constraintPassed: true,
+      recoverable_via_followup: false,
     },
   ];
 
@@ -130,6 +131,10 @@ function makeAnswerContext(overrides?: {
   session = setSplitIssues(session, [
     { issue_id: 'i1', summary: 'Toilet leaking', raw_excerpt: 'My toilet is leaking' },
   ]);
+  session = {
+    ...session,
+    confirmed_followup_answers: { i1: { Sub_Location: 'bathroom' } },
+  } satisfies ConversationSession;
   session = setClassificationResults(session, priorResults);
   session = updateFollowUpTracking(session, PENDING_QUESTIONS);
   session = setPendingFollowUpQuestions(session, PENDING_QUESTIONS);
@@ -253,16 +258,19 @@ describe('handleAnswerFollowups', () => {
   it('triggers escape hatch when re-ask limit reached for all fields', async () => {
     const stillLowConf: IssueClassifierOutput = {
       ...HIGH_CONF_OUTPUT,
-      model_confidence: { ...HIGH_CONF_OUTPUT.model_confidence, Priority: 0.4 },
+      model_confidence: { ...HIGH_CONF_OUTPUT.model_confidence, Sub_Location: 0.4 },
     };
     const ctx = makeAnswerContext({
       classifierFn: vi.fn().mockResolvedValue(stillLowConf),
-      cueDict: MINI_CUES,
+      cueDict: FULL_CUES,
     });
-    // Simulate Priority already asked 3 times (initial + 2 re-asks = max_reasks exhausted)
+    // Simulate Sub_Location already asked 3 times (initial + 2 re-asks = max_reasks exhausted).
+    // Priority is answered in this turn and pinned, so it is not eligible for re-ask exhaustion.
+    // Clear confirmed_followup_answers so Sub_Location is not auto-accepted (Fix C).
     ctx.session = {
       ...ctx.session,
-      previous_questions: [{ field_target: 'Priority', times_asked: 3 }],
+      previous_questions: [{ field_target: 'Sub_Location', times_asked: 3 }],
+      confirmed_followup_answers: {},
     } as any;
 
     const result = await handleAnswerFollowups(ctx);
@@ -299,6 +307,11 @@ describe('handleAnswerFollowups', () => {
         ],
       }),
     });
+    // Clear confirmed_followup_answers so Sub_Location is not auto-accepted (Fix C)
+    ctx.session = {
+      ...ctx.session,
+      confirmed_followup_answers: {},
+    } satisfies ConversationSession;
     // Add Sub_Location to pending questions so we have two low-confidence fields
     ctx.session = setPendingFollowUpQuestions(ctx.session, [
       ...PENDING_QUESTIONS,
@@ -349,7 +362,7 @@ describe('handleAnswerFollowups', () => {
     ];
     const ctx = makeAnswerContext({
       classifierFn: vi.fn().mockResolvedValue(stillLowConf),
-      cueDict: MINI_CUES,
+      cueDict: FULL_CUES,
     });
     ctx.session = setPendingFollowUpQuestions(ctx.session, pendingBoth);
     ctx.session = updateFollowUpTracking(ctx.session, pendingBoth);
@@ -358,7 +371,7 @@ describe('handleAnswerFollowups', () => {
       tenant_input: {
         answers: [
           { question_id: 'q1', answer: 'normal', received_at: '2026-02-25T12:05:00.000Z' },
-          { question_id: 'q-sub', answer: 'kitchen', received_at: '2026-02-25T12:05:00.000Z' },
+          { question_id: 'q-sub', answer: 'bathroom', received_at: '2026-02-25T12:05:00.000Z' },
         ],
       },
     } as any;
@@ -484,6 +497,7 @@ describe('handleAnswerFollowups', () => {
         shouldAskFollowup: true,
         followupTypes: {},
         constraintPassed: true,
+        recoverable_via_followup: false,
       },
     ];
 

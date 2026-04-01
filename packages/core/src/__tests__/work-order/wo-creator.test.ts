@@ -44,6 +44,7 @@ const baseSession = (): ConversationSession => {
       shouldAskFollowup: false,
       followupTypes: {},
       constraintPassed: true,
+      recoverable_via_followup: false,
     },
     {
       issue_id: 'iss-2',
@@ -59,6 +60,7 @@ const baseSession = (): ConversationSession => {
       shouldAskFollowup: false,
       followupTypes: {},
       constraintPassed: true,
+      recoverable_via_followup: false,
     },
   ]);
   return s;
@@ -185,6 +187,7 @@ describe('createWorkOrders', () => {
         shouldAskFollowup: false,
         followupTypes: {},
         constraintPassed: true,
+        recoverable_via_followup: false,
       },
     ]);
     session = setSplitIssues(session, [

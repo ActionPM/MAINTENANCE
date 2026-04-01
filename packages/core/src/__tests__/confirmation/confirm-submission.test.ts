@@ -46,6 +46,7 @@ const CLASSIFICATION_RESULTS: IssueClassificationResult[] = [
     shouldAskFollowup: false,
     followupTypes: {},
     constraintPassed: true,
+    recoverable_via_followup: false,
   },
 ];
 
@@ -80,6 +81,7 @@ function makeSession(overrides: Partial<ConversationSession> = {}): Conversation
     escalation_plan_id: null,
     queued_messages: [],
     ...overrides,
+    confirmed_followup_answers: overrides.confirmed_followup_answers ?? {},
   };
 }
 
@@ -211,6 +213,7 @@ describe('handleConfirmSubmission', () => {
         shouldAskFollowup: false,
         followupTypes: {},
         constraintPassed: true,
+        recoverable_via_followup: false,
       },
       {
         issue_id: 'issue-2',
@@ -226,6 +229,7 @@ describe('handleConfirmSubmission', () => {
         shouldAskFollowup: false,
         followupTypes: {},
         constraintPassed: true,
+        recoverable_via_followup: false,
       },
     ];
 

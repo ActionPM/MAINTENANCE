@@ -127,7 +127,12 @@ export {
   callIssueClassifier,
   ClassifierError,
   ClassifierErrorCode,
+  ClassifierTriageReason,
+  RoutingReason,
+  computeRecoverableViaFollowup,
+  normalizeCrossDomainClassification,
   resolveConstraintImpliedFields,
+  isConstraintResolvedValue,
   resolveValidOptions,
   checkCompleteness,
   DEFAULT_COMPLETENESS_POLICY,
@@ -143,6 +148,8 @@ export type {
   ComputeAllInput,
   DetermineFieldsOptions,
   ClassifierResult,
+  ClassifierTriageReason as ClassifierLayerTriageReason,
+  RoutingReason as ClassifierLayerRoutingReason,
   ClassificationEvent,
 } from './classifier/index.js';
 
@@ -160,6 +167,7 @@ export {
   callFollowUpGenerator,
   FollowUpGeneratorError,
   FollowUpGeneratorErrorCode,
+  selectFollowUpFrontierFields,
   buildFollowUpQuestionsEvent,
   buildFollowUpAnswersEvent,
 } from './followup/index.js';

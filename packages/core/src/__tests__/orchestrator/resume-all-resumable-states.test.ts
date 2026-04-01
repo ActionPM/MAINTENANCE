@@ -68,6 +68,7 @@ function makeSession(state: ConversationState): ConversationSession {
     escalation_state: 'none',
     escalation_plan_id: null,
     queued_messages: [],
+    confirmed_followup_answers: {},
   };
 }
 

@@ -33,6 +33,7 @@ const mockSession: ConversationSession = {
   escalation_state: 'none' as const,
   escalation_plan_id: null,
   queued_messages: [],
+  confirmed_followup_answers: {},
 };
 
 describe('buildResponse — artifacts (S10-03)', () => {

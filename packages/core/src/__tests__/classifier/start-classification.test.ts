@@ -234,6 +234,63 @@ describe('handleStartClassification', () => {
     expect(result.session.classification_results![0].fieldsNeedingInput).toContain('Location');
   });
 
+  it('falls back to a deterministic frontier question when the LLM misses the active field', async () => {
+    const plumbingIssueOutput: IssueClassifierOutput = {
+      ...VALID_CLASSIFICATION,
+      classification: {
+        Category: 'maintenance',
+        Maintenance_Category: 'plumbing',
+        Maintenance_Object: 'needs_object',
+        Maintenance_Problem: 'other_problem',
+        Management_Category: 'not_applicable',
+        Management_Object: 'not_applicable',
+        Priority: 'normal',
+      },
+      model_confidence: {
+        Category: 0.95,
+        Maintenance_Category: 0.95,
+        Maintenance_Object: 0.5,
+        Maintenance_Problem: 0.5,
+        Management_Category: 0.95,
+        Management_Object: 0.95,
+        Priority: 0.95,
+      },
+      missing_fields: ['Location', 'Sub_Location'],
+    };
+
+    const ctx = makeContext({
+      issues: [
+        {
+          issue_id: 'i1',
+          summary: 'Plumbing issue reported',
+          raw_excerpt: 'I have a plumbing issue',
+        },
+      ],
+      classifierFn: vi.fn().mockResolvedValue(plumbingIssueOutput),
+    });
+    (ctx.deps as any).followUpGenerator = vi.fn().mockResolvedValue({
+      questions: [
+        {
+          question_id: 'q1',
+          field_target: 'Maintenance_Category',
+          prompt: 'What kind of maintenance issue is this?',
+          options: ['plumbing'],
+          answer_type: 'enum',
+        },
+      ],
+    });
+
+    const result = await handleStartClassification(ctx);
+    expect(result.newState).toBe(ConversationState.NEEDS_TENANT_INPUT);
+    expect(result.session.pending_followup_questions).toHaveLength(1);
+    expect(result.session.pending_followup_questions![0]).toMatchObject({
+      field_target: 'Location',
+      prompt: 'Where is this issue located?',
+      options: ['suite', 'building_interior', 'building_exterior'],
+      answer_type: 'enum',
+    });
+  });
+
   it('routes to needs_tenant_input when classification contains needs_object', async () => {
     const needsObjectOutput: IssueClassifierOutput = {
       ...VALID_CLASSIFICATION,

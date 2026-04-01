@@ -282,4 +282,26 @@ describe('PostgresEventStore', () => {
     expect(payload.violations).toEqual(['cat_mismatch']);
     expect(pool.lastQuery!.values[2]).toBe('classification_hierarchy_violation_unresolved');
   });
+
+  it('insert() routes ClassificationEvent (pinned answer contradiction) with issue_id in payload', async () => {
+    const event = {
+      event_id: 'cls-pin-1',
+      conversation_id: 'c-1',
+      event_type: 'classification_pinned_answer_contradiction' as const,
+      issue_id: 'iss-pin',
+      payload: {
+        violations: ['Management_Category is not valid for maintenance'],
+        pinned_fields: { Management_Category: 'rent_issues' },
+      },
+      created_at: '2026-03-04T00:00:00Z',
+    };
+
+    await store.insert(event);
+
+    const payload = JSON.parse(pool.lastQuery!.values[3] as string);
+    expect(payload.issue_id).toBe('iss-pin');
+    expect(payload.violations).toEqual(['Management_Category is not valid for maintenance']);
+    expect(payload.pinned_fields).toEqual({ Management_Category: 'rent_issues' });
+    expect(pool.lastQuery!.values[2]).toBe('classification_pinned_answer_contradiction');
+  });
 });

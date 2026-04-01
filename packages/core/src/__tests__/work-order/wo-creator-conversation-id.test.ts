@@ -55,6 +55,7 @@ function makeSession(): ConversationSession {
         shouldAskFollowup: false,
         followupTypes: {},
         constraintPassed: true,
+        recoverable_via_followup: false,
       },
     ],
     prior_state_before_error: null,
@@ -76,5 +77,6 @@ function makeSession(): ConversationSession {
     escalation_state: 'none',
     escalation_plan_id: null,
     queued_messages: [],
+    confirmed_followup_answers: {},
   };
 }

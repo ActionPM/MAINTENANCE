@@ -19,12 +19,24 @@ type AnyEvent =
 /*  Structural type guards                                            */
 /* ------------------------------------------------------------------ */
 
+const CLASSIFICATION_EVENT_TYPES = new Set<ClassificationEvent['event_type']>([
+  'classification_hierarchy_violation_unresolved',
+  'classification_constraint_resolution',
+  'classification_pinned_answer_contradiction',
+  'classification_descendant_invalidation',
+]);
+
 function isNotificationEvent(e: AnyEvent): e is NotificationEvent {
   return 'notification_id' in e;
 }
 
 function isClassificationEvent(e: AnyEvent): e is ClassificationEvent {
-  return 'issue_id' in e && !('turn_number' in e) && !('notification_id' in e);
+  return (
+    'issue_id' in e &&
+    'event_type' in e &&
+    typeof e.event_type === 'string' &&
+    CLASSIFICATION_EVENT_TYPES.has(e.event_type as ClassificationEvent['event_type'])
+  );
 }
 
 function isFollowUpEvent(e: AnyEvent): e is FollowUpEvent {

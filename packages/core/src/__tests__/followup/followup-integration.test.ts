@@ -123,9 +123,13 @@ function makeDeps(overrides?: {
 }) {
   let counter = 0;
   let classifierCallCount = 0;
+  // BUG-011 Fix C prevents Sub_Location from resolved-medium auto-accept on initial
+  // classification (no confirmedFields). Two follow-up rounds are now needed:
+  // Sub_Location first (hierarchy position 2), then Priority.
   const classifierResponses = overrides?.classifierResponses ?? [
-    MISSING_PRIORITY_CLASSIFICATION, // First classification: missing Priority → follow-up
-    HIGH_CONF_CLASSIFICATION, // Re-classification after follow-up: complete
+    MISSING_PRIORITY_CLASSIFICATION, // 1st classification: Sub_Location + Priority need input
+    MISSING_PRIORITY_CLASSIFICATION, // 2nd classification (after Sub_Location answered): Priority still needs input
+    HIGH_CONF_CLASSIFICATION, // 3rd classification (after Priority answered): all resolved
   ];
 
   return {
@@ -226,7 +230,23 @@ describe('Follow-up loop integration', () => {
       classResult.response.conversation_snapshot.pending_followup_questions!.length,
     ).toBeGreaterThan(0);
 
-    // Answer follow-up → re-classify → tenant_confirmation_pending
+    // BUG-011 Fix C: Sub_Location is now in fieldsNeedingInput (medium band, not auto-accepted
+    // on initial classification). Frontier selector picks it first (hierarchy position 2).
+    const subLocQ = classResult.response.conversation_snapshot.pending_followup_questions![0];
+    const r4_5 = await dispatch({
+      conversation_id: convId,
+      action_type: ActionType.ANSWER_FOLLOWUPS,
+      actor: ActorType.TENANT,
+      tenant_input: {
+        answers: [{ question_id: subLocQ.question_id, answer: 'bathroom' }],
+      },
+      auth_context: AUTH,
+    });
+
+    // After answering Sub_Location, Priority still needs input
+    expect(r4_5.response.conversation_snapshot.state).toBe(ConversationState.NEEDS_TENANT_INPUT);
+
+    // Now answer Priority → re-classify → tenant_confirmation_pending
     const r5 = await dispatch({
       conversation_id: convId,
       action_type: ActionType.ANSWER_FOLLOWUPS,
@@ -249,7 +269,7 @@ describe('Follow-up loop integration', () => {
 
   it('escape hatch: caps exhausted after multiple turns', async () => {
     // Classifier always returns missing Priority — never resolves.
-    // Using FULL_CUES so other fields are fine, only Priority triggers follow-up.
+    // BUG-011 Fix C also puts Sub_Location in fieldsNeedingInput on initial classification.
     const deps = makeDeps({
       classifierResponses: Array(20).fill(MISSING_PRIORITY_CLASSIFICATION),
     });
@@ -260,23 +280,26 @@ describe('Follow-up loop integration', () => {
       ConversationState.NEEDS_TENANT_INPUT,
     );
 
-    // Keep answering follow-ups until escape hatch triggers
+    // Keep answering follow-ups until escape hatch triggers.
+    // Answer whatever question is actually pending (Sub_Location first, then Priority).
     let state: string = ConversationState.NEEDS_TENANT_INPUT;
     let rounds = 0;
     const maxRounds = 15; // Safety: should escape well before this
+    let lastSnapshot = classResult.response.conversation_snapshot;
 
     while (state === ConversationState.NEEDS_TENANT_INPUT && rounds < maxRounds) {
+      const pendingQ = lastSnapshot.pending_followup_questions?.[0];
       const r = await dispatch({
         conversation_id: convId,
         action_type: ActionType.ANSWER_FOLLOWUPS,
         actor: ActorType.TENANT,
         tenant_input: {
-          // Always answer with q1 (matching the pending question)
-          answers: [{ question_id: 'q1', answer: 'normal' }],
+          answers: [{ question_id: pendingQ?.question_id ?? 'q1', answer: 'normal' }],
         },
         auth_context: AUTH,
       });
       state = r.response.conversation_snapshot.state;
+      lastSnapshot = r.response.conversation_snapshot;
       rounds++;
     }
 
@@ -320,9 +343,23 @@ describe('Follow-up loop integration', () => {
     });
     const dispatch = createDispatcher(deps as any);
 
-    const { convId } = await walkToFollowUp(dispatch);
+    const { convId, result: classResult } = await walkToFollowUp(dispatch);
 
-    // Answer first round — Priority was asked, tenant answers it
+    // BUG-011 Fix C: Sub_Location is asked first (hierarchy position 2).
+    // Answer it before Priority becomes the frontier field.
+    const subLocQ = classResult.response.conversation_snapshot.pending_followup_questions![0];
+    const r_sub = await dispatch({
+      conversation_id: convId,
+      action_type: ActionType.ANSWER_FOLLOWUPS,
+      actor: ActorType.TENANT,
+      tenant_input: {
+        answers: [{ question_id: subLocQ.question_id, answer: 'bathroom' }],
+      },
+      auth_context: AUTH,
+    });
+    expect(r_sub.response.conversation_snapshot.state).toBe(ConversationState.NEEDS_TENANT_INPUT);
+
+    // Now answer Priority
     const r = await dispatch({
       conversation_id: convId,
       action_type: ActionType.ANSWER_FOLLOWUPS,
@@ -333,8 +370,7 @@ describe('Follow-up loop integration', () => {
       auth_context: AUTH,
     });
 
-    // Answered field should be resolved — no more follow-ups needed
-    // (Priority was the only field needing input, and tenant answered it)
+    // Both Sub_Location and Priority answered — should resolve to confirmation
     expect(r.response.conversation_snapshot.state).toBe(
       ConversationState.TENANT_CONFIRMATION_PENDING,
     );
@@ -342,12 +378,14 @@ describe('Follow-up loop integration', () => {
     // Read internal session from the session store to verify tracking fields
     const session = await deps.sessionStore.get(convId);
     expect(session).not.toBeNull();
-    // After initial classification (turn 1), answer resolved Priority immediately
-    expect(session!.followup_turn_number).toBeGreaterThanOrEqual(1);
-    expect(session!.total_questions_asked).toBeGreaterThanOrEqual(1);
-    // previous_questions tracks unique fields — Priority was asked at least once
-    expect(session!.previous_questions.length).toBeGreaterThanOrEqual(1);
+    // After two follow-up rounds (Sub_Location then Priority)
+    expect(session!.followup_turn_number).toBeGreaterThanOrEqual(2);
+    expect(session!.total_questions_asked).toBeGreaterThanOrEqual(2);
+    // previous_questions tracks unique fields — both Sub_Location and Priority were asked
+    expect(session!.previous_questions.length).toBeGreaterThanOrEqual(2);
     const priorityEntry = session!.previous_questions.find((p) => p.field_target === 'Priority');
     expect(priorityEntry).toBeDefined();
+    const subLocEntry = session!.previous_questions.find((p) => p.field_target === 'Sub_Location');
+    expect(subLocEntry).toBeDefined();
   });
 });

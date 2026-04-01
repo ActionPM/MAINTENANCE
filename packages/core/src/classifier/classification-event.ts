@@ -7,7 +7,9 @@ export interface ClassificationEvent {
   readonly conversation_id: string;
   readonly event_type:
     | 'classification_hierarchy_violation_unresolved'
-    | 'classification_constraint_resolution';
+    | 'classification_constraint_resolution'
+    | 'classification_pinned_answer_contradiction'
+    | 'classification_descendant_invalidation';
   readonly issue_id: string;
   readonly payload: Record<string, unknown>;
   readonly created_at: string;

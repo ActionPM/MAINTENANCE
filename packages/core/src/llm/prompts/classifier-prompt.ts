@@ -81,7 +81,7 @@ ${taxonomyBlock}
 RULES:
 1. Every classification field MUST use a value from the taxonomy above. No free-text.
 2. If the issue is "maintenance", set Management_Category to "other_mgmt_cat" and Management_Object to "other_mgmt_obj".
-3. If the issue is "management", set Maintenance_Category to "other_maintenance_category", Maintenance_Object to "other_maintenance_object", and Maintenance_Problem to "other_problem".
+3. If the issue is "management", set Maintenance_Category to "not_applicable", Maintenance_Object to "not_applicable", and Maintenance_Problem to "not_applicable".
 4. Provide a model_confidence score (0.0 to 1.0) for each field reflecting your certainty.
 5. List any fields where you lack sufficient information in missing_fields.
 6. Set needs_human_triage to false unless you truly cannot classify the issue.

@@ -35,6 +35,10 @@ RULES:
     the whole unit, always include "entire_unit" (present it as "Entire apartment") and
     "multiple_rooms" (present it as "Multiple rooms") alongside room-specific options.
     Tenants often experience these issues unit-wide, not in a single room.
+15. Ask questions in dependency order. For maintenance issues, prioritize:
+    Location → Sub_Location → Maintenance_Category → Maintenance_Object → Maintenance_Problem.
+    For management issues, prioritize: Management_Category → Management_Object.
+    Do NOT ask about a downstream field if an upstream parent field is still unresolved.
 
 RESPOND WITH ONLY a JSON object (no markdown, no explanation):
 {
@@ -89,7 +93,7 @@ export function buildFollowUpUserMessage(
   const constraintHints: string[] = [];
   for (const field of input.fields_needing_input) {
     const valid = resolveValidOptions(field, input.classification, taxonomyConstraints);
-    if (valid && valid.length <= 10) {
+    if (valid && valid.length <= 25) {
       constraintHints.push(`  ${field}: valid options are [${valid.join(', ')}]`);
     }
   }

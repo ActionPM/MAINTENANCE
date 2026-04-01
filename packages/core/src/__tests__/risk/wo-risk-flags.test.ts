@@ -46,6 +46,7 @@ describe('WO creation with risk flags', () => {
         shouldAskFollowup: false,
         followupTypes: {},
         constraintPassed: true,
+        recoverable_via_followup: false,
       },
     ]);
 

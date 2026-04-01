@@ -8,6 +8,8 @@ import type {
   MatchedTrigger,
   EscalationState,
 } from '@wo-agent/schemas';
+import type { ClassifierTriageReason, RoutingReason } from '../classifier/triage-routing.js';
+export type { ClassifierTriageReason, RoutingReason } from '../classifier/triage-routing.js';
 
 /**
  * Per-issue classification result stored on the session.
@@ -21,6 +23,9 @@ export interface IssueClassificationResult {
   readonly shouldAskFollowup: boolean;
   readonly followupTypes: Record<string, string>;
   readonly constraintPassed: boolean;
+  readonly recoverable_via_followup: boolean;
+  readonly classifier_triage_reason?: ClassifierTriageReason;
+  readonly routing_reason?: RoutingReason;
 }
 
 /**
@@ -68,6 +73,8 @@ export interface ConversationSession {
   readonly escalation_plan_id: string | null;
   /** Messages queued as potential new issues during follow-ups (spec §12.2) */
   readonly queued_messages: readonly string[];
+  /** Per-issue tenant-confirmed enum follow-up answers accumulated across rounds. */
+  readonly confirmed_followup_answers: Readonly<Record<string, Readonly<Record<string, string>>>>;
 }
 
 export interface CreateSessionInput {

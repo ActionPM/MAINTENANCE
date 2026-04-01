@@ -52,6 +52,7 @@ export function createSession(input: CreateSessionInput): ConversationSession {
     escalation_state: 'none',
     escalation_plan_id: null,
     queued_messages: [],
+    confirmed_followup_answers: {},
   };
 }
 
@@ -287,5 +288,57 @@ export function setEscalationState(
     ...session,
     escalation_state: state,
     ...(planId !== undefined ? { escalation_plan_id: planId } : {}),
+  };
+}
+
+/**
+ * Merge newly confirmed enum follow-up answers into the session's per-issue map.
+ */
+export function mergeConfirmedFollowupAnswers(
+  session: ConversationSession,
+  issueId: string,
+  newAnswers: Readonly<Record<string, string>>,
+): ConversationSession {
+  const existing = session.confirmed_followup_answers ?? {};
+  return {
+    ...session,
+    confirmed_followup_answers: {
+      ...existing,
+      [issueId]: { ...(existing[issueId] ?? {}), ...newAnswers },
+    },
+  };
+}
+
+/**
+ * Remove specified fields from the confirmed follow-up answers for a given issue.
+ * Used when descendant invalidation clears stale pins after a parent re-confirmation.
+ *
+ * Returns the session unchanged if no fields match or the issue has no pins.
+ */
+export function removeConfirmedFollowupAnswers(
+  session: ConversationSession,
+  issueId: string,
+  fieldsToRemove: readonly string[],
+): ConversationSession {
+  const existing = session.confirmed_followup_answers ?? {};
+  const issuePins = existing[issueId];
+  if (!issuePins || fieldsToRemove.length === 0) return session;
+
+  const updated = { ...issuePins };
+  let changed = false;
+  for (const field of fieldsToRemove) {
+    if (field in updated) {
+      delete updated[field];
+      changed = true;
+    }
+  }
+  if (!changed) return session;
+
+  return {
+    ...session,
+    confirmed_followup_answers: {
+      ...existing,
+      [issueId]: updated,
+    },
   };
 }

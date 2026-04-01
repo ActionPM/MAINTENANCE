@@ -121,6 +121,7 @@ describe('ChatShell', () => {
             confidence_by_field: { Category: 0.95 },
             missing_fields: [],
             needs_human_triage: false,
+            recoverable_via_followup: false,
           },
         ],
       },

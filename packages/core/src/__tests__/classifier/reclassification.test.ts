@@ -91,6 +91,7 @@ function makeFollowupContext(overrides?: {
       shouldAskFollowup: false,
       followupTypes: {},
       constraintPassed: true,
+      recoverable_via_followup: false,
     },
   ];
 
@@ -254,6 +255,7 @@ describe('handleAnswerFollowups (re-classification)', () => {
         shouldAskFollowup: false,
         followupTypes: {},
         constraintPassed: true,
+        recoverable_via_followup: false,
       },
       {
         issue_id: 'i2',
@@ -267,6 +269,7 @@ describe('handleAnswerFollowups (re-classification)', () => {
         shouldAskFollowup: false,
         followupTypes: {},
         constraintPassed: true,
+        recoverable_via_followup: false,
       },
     ]);
 

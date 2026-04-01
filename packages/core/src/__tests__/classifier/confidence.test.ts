@@ -306,7 +306,7 @@ describe('category gating', () => {
     const classification = {
       Category: 'management',
       Maintenance_Category: 'other_maintenance_category',
-      Maintenance_Object: 'other_maintenance_object',
+      Maintenance_Object: 'other_object',
       Maintenance_Problem: 'other_problem',
     };
     const result = determineFieldsNeedingInput({
@@ -538,6 +538,31 @@ describe('resolved medium acceptance', () => {
       config,
     });
     expect(result).toContain('Category');
+  });
+
+  it('Sub_Location at resolved-medium (0.84, disagreement=0, ambiguity=0) → IN fieldsNeedingInput (BUG-011)', () => {
+    const result = determineFieldsNeedingInput({
+      confidenceByField: { Sub_Location: detailWith(0.84) },
+      config,
+    });
+    expect(result).toContain('Sub_Location');
+  });
+
+  it('Maintenance_Category at same resolved-medium conditions → NOT in fieldsNeedingInput', () => {
+    const result = determineFieldsNeedingInput({
+      confidenceByField: { Maintenance_Category: detailWith(0.84) },
+      config,
+    });
+    expect(result).not.toContain('Maintenance_Category');
+  });
+
+  it('Sub_Location at resolved-medium with confirmedFields → NOT in fieldsNeedingInput (already confirmed)', () => {
+    const result = determineFieldsNeedingInput({
+      confidenceByField: { Sub_Location: detailWith(0.84) },
+      config,
+      confirmedFields: new Set(['Sub_Location']),
+    });
+    expect(result).not.toContain('Sub_Location');
   });
 });
 

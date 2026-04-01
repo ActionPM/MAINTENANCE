@@ -29,6 +29,7 @@ const CLASSIFICATION_RESULTS: readonly IssueClassificationResult[] = [
     shouldAskFollowup: false,
     followupTypes: {},
     constraintPassed: true,
+    recoverable_via_followup: false,
   },
   {
     issue_id: 'issue-2',
@@ -44,6 +45,7 @@ const CLASSIFICATION_RESULTS: readonly IssueClassificationResult[] = [
     shouldAskFollowup: false,
     followupTypes: {},
     constraintPassed: true,
+    recoverable_via_followup: false,
   },
 ];
 
@@ -75,6 +77,12 @@ describe('buildConfirmationPayload', () => {
     const payload = buildConfirmationPayload(SPLIT_ISSUES, CLASSIFICATION_RESULTS);
     expect(payload.issues[0].needs_human_triage).toBe(false);
     expect(payload.issues[1].needs_human_triage).toBe(true);
+  });
+
+  it('propagates recoverable_via_followup to confirmation issues', () => {
+    const payload = buildConfirmationPayload(SPLIT_ISSUES, CLASSIFICATION_RESULTS);
+    expect(payload.issues[0].recoverable_via_followup).toBe(false);
+    expect(payload.issues[1].recoverable_via_followup).toBe(false);
   });
 
   it('includes missing fields from classifier output', () => {
@@ -144,6 +152,7 @@ const PEST_CONTROL_RESULTS: readonly IssueClassificationResult[] = [
     shouldAskFollowup: false,
     followupTypes: {},
     constraintPassed: true,
+    recoverable_via_followup: false,
   },
 ];
 

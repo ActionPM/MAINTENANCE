@@ -21,6 +21,7 @@ describe('buildConfirmationEvent', () => {
             confidence_by_field: { Category: 0.9 },
             missing_fields: [],
             needs_human_triage: false,
+            recoverable_via_followup: false,
           },
         ],
       },
