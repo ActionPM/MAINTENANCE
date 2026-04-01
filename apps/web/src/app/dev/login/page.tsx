@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import type { BuildInfo } from '@/lib/build-info';
 
 interface Persona {
   key: string;
@@ -35,6 +36,29 @@ export default function DevLoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [buildInfo, setBuildInfo] = useState<BuildInfo | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadBuildInfo() {
+      try {
+        const res = await fetch('/api/dev/build-info', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = (await res.json()) as BuildInfo;
+        if (!cancelled) {
+          setBuildInfo(data);
+        }
+      } catch {
+        // Build info is diagnostic only; ignore failures.
+      }
+    }
+
+    void loadBuildInfo();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function login(persona: Persona) {
     setLoading(persona.key);
@@ -74,6 +98,34 @@ export default function DevLoginPage() {
       <p style={{ color: '#666', marginBottom: '2rem', fontSize: '0.9rem' }}>
         Pick a demo persona to get a token and open the chat UI.
       </p>
+
+      {buildInfo && (
+        <div
+          style={{
+            background: '#eff6ff',
+            border: '1px solid #bfdbfe',
+            borderRadius: 6,
+            padding: '0.75rem 1rem',
+            marginBottom: '1rem',
+            color: '#1e3a8a',
+            fontSize: '0.8rem',
+            lineHeight: 1.5,
+          }}
+        >
+          <div>
+            <strong>Build marker:</strong> {buildInfo.marker}
+          </div>
+          <div>
+            <strong>Commit:</strong> {buildInfo.commit_sha ?? 'local-or-unknown'}
+          </div>
+          <div>
+            <strong>Branch:</strong> {buildInfo.branch ?? 'local-or-unknown'}
+          </div>
+          <div>
+            <strong>Env:</strong> {buildInfo.vercel_env ?? 'local-or-unknown'}
+          </div>
+        </div>
+      )}
 
       {error && (
         <div

@@ -94,6 +94,11 @@ interface Stores {
   metricsRecorder: MetricsRecorder;
 }
 
+interface PersistentFactoryState {
+  stores: Stores;
+  erpAdapter: MockERPAdapter;
+}
+
 function createStores(): Stores {
   const databaseUrl = getDatabaseUrl();
 
@@ -270,11 +275,26 @@ interface FactoryDeps {
   alertSink: AlertSink;
 }
 
-const globalForFactory = globalThis as unknown as { __woAgentDeps?: FactoryDeps };
+const globalForFactory = globalThis as unknown as {
+  __woAgentDeps?: FactoryDeps;
+  __woAgentPersistent?: PersistentFactoryState;
+};
+
+function getPersistentFactoryState(): PersistentFactoryState {
+  if (!globalForFactory.__woAgentPersistent) {
+    globalForFactory.__woAgentPersistent = {
+      stores: createStores(),
+      erpAdapter: new MockERPAdapter(),
+    };
+  }
+
+  return globalForFactory.__woAgentPersistent;
+}
 
 function ensureInitialized(): FactoryDeps {
-  if (!globalForFactory.__woAgentDeps) {
-    const stores = createStores();
+  const useRuntimeCache = process.env.NODE_ENV === 'production';
+  if (!useRuntimeCache || !globalForFactory.__woAgentDeps) {
+    const { stores, erpAdapter } = getPersistentFactoryState();
     const smsSender = new MockSmsSender();
     const idGenerator = () => randomUUID();
     const clock = () => new Date().toISOString();
@@ -316,7 +336,6 @@ function ensureInitialized(): FactoryDeps {
       metricsRecorder,
     });
 
-    const erpAdapter = new MockERPAdapter();
     const erpSyncService = new ERPSyncService({
       erpAdapter,
       workOrderRepo: stores.workOrderRepo,
@@ -457,7 +476,7 @@ function ensureInitialized(): FactoryDeps {
       clock,
     });
 
-    globalForFactory.__woAgentDeps = {
+    const runtimeDeps: FactoryDeps = {
       eventRepo: stores.eventRepo,
       workOrderRepo: stores.workOrderRepo,
       notificationRepo: stores.notificationRepo,
@@ -477,7 +496,16 @@ function ensureInitialized(): FactoryDeps {
       metricsRecorder,
       alertSink,
     };
+
+    // In development, rebuild runtime dependencies on every access so changes in
+    // handlers/prompts/core imports are picked up without losing in-memory stores.
+    if (useRuntimeCache) {
+      globalForFactory.__woAgentDeps = runtimeDeps;
+    }
+
+    return runtimeDeps;
   }
+
   return globalForFactory.__woAgentDeps;
 }
 
