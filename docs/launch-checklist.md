@@ -28,7 +28,7 @@ Use it for the first real tenant launch, the first pilot building launch, and an
 These values should be re-checked at launch review time rather than trusted blindly.
 
 - Spec tracker baseline:
-  - `DONE`: 141
+  - `DONE`: 143
   - `PARTIAL`: 0
   - `MISSING`: 0
   - `INTENTIONAL_MVP`: 16
@@ -41,6 +41,9 @@ These values should be re-checked at launch review time rather than trusted blin
   - `OR-08` Migration automation: `ADEQUATE`
   - `OR-09` Dependency scanning: `DONE`
   - `OR-13` Security headers: `DONE`
+- Tracker refresh:
+  - `docs/spec-gap-tracker.md` last updated: `2026-03-27`
+  - `docs/operational-readiness.md` last updated: `2026-03-27`
 
 ## 1. Repo And Tracker Gate
 

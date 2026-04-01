@@ -17,7 +17,7 @@ If a row's status, evidence, or limitation has changed and this document was not
 | Field             | Value                                        |
 | ----------------- | -------------------------------------------- |
 | Tracker owner     | ActionPM                                     |
-| Last updated      | 2026-03-18                                   |
+| Last updated      | 2026-03-27                                   |
 | Deployment target | Vercel (serverless) + Neon Postgres (pooled) |
 
 ## Related Documents
@@ -187,9 +187,9 @@ If a row's status, evidence, or limitation has changed and this document was not
 | **Priority**      | —          |
 | **Launch gate**   | —          |
 | **Owner**         | ActionPM   |
-| **Last verified** | 2026-03-18 |
+| **Last verified** | 2026-03-27 |
 
-**Current state:** `.github/workflows/ci.yml` runs lint, auto-format, typecheck, test, and build-web on every PR and push to `main`. Concurrency group cancels in-progress runs. Node version read from `.nvmrc` (currently 24), pnpm 10, `--frozen-lockfile`. The Lint & Format job runs `pnpm format` and checks for git diff instead of `prettier --check` — if files drift, CI auto-commits and pushes the correction back to the PR branch.
+**Current state:** `.github/workflows/ci.yml` runs lint, auto-format, typecheck, test, regression fixture evals, and build-web on every PR and push to `main`. Concurrency group cancels in-progress runs. Node version is read from `.nvmrc` (currently 24), pnpm 10, `--frozen-lockfile`. The Lint & Format job runs `pnpm format` and checks for git diff instead of `prettier --check` — if files drift, CI auto-commits and pushes the correction back to the PR branch.
 
 ---
 
@@ -201,9 +201,9 @@ If a row's status, evidence, or limitation has changed and this document was not
 | **Priority**      | P1           |
 | **Launch gate**   | `pre_launch` |
 | **Owner**         | ActionPM     |
-| **Last verified** | 2026-03-17   |
+| **Last verified** | 2026-03-27   |
 
-**Current state:** Migrations run via a `migrate` job in `.github/workflows/ci.yml` on push to `main`, after all CI jobs pass (`needs: [lint, typecheck, build-web, test]`). Uses `DATABASE_URL` from GitHub secrets. Fails if secret is not configured (fail-closed). Preview deploys do not trigger migrations.
+**Current state:** Migrations run via a `migrate` job in `.github/workflows/ci.yml` on push to `main`, after all CI jobs pass (`needs: [lint, typecheck, build-web, test, regression-evals]`). Uses `DATABASE_URL` from GitHub secrets. Fails if secret is not configured (fail-closed). Preview deploys do not trigger migrations.
 
 **Limitation:** Vercel's native GitHub integration deploys in parallel with CI. The migrate job does not block deploy. For additive migrations (new tables/columns), this is safe — old code doesn't reference new schema objects. For destructive migrations, the operator must coordinate manually.
 
