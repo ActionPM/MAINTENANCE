@@ -1,92 +1,68 @@
 {
-  "run_id": "run-1773238009430",
+  "run_id": "run-1775056805032",
   "runner_type": "issue_level",
   "dataset_manifest_id": "ood-v0.1",
   "taxonomy_version": "2.0.0",
   "schema_version": "1.0.0",
-  "cue_dict_version": "1.2.0",
-  "prompt_version": "fixture-replay",
+  "cue_dict_version": "1.7.0",
+  "prompt_version": "fixture-replay (2.4.0)",
   "model_id": "fixture",
-  "started_at": "2026-03-11T14:06:49.430Z",
-  "completed_at": "2026-03-11T14:06:49.430Z",
+  "started_at": "2026-04-01T15:20:05.032Z",
+  "completed_at": "2026-04-01T15:20:05.032Z",
   "results": [
     {
       "example_id": "ood-001",
       "status": "needs_human_triage",
-      "classification": {
-        "Category": "other_category",
-        "Priority": "other_priority"
-      },
+      "classification": {},
       "hierarchyValid": true,
       "errors": ["Classifier flagged needs_human_triage"]
     },
     {
       "example_id": "ood-002",
       "status": "needs_human_triage",
-      "classification": {
-        "Category": "other_category",
-        "Priority": "other_priority"
-      },
+      "classification": {},
       "hierarchyValid": true,
       "errors": ["Classifier flagged needs_human_triage"]
     },
     {
       "example_id": "ood-003",
       "status": "needs_human_triage",
-      "classification": {
-        "Category": "other_category",
-        "Priority": "other_priority"
-      },
+      "classification": {},
       "hierarchyValid": true,
       "errors": ["Classifier flagged needs_human_triage"]
     },
     {
       "example_id": "ood-004",
       "status": "needs_human_triage",
-      "classification": {
-        "Category": "other_category",
-        "Priority": "other_priority"
-      },
+      "classification": {},
       "hierarchyValid": true,
       "errors": ["Classifier flagged needs_human_triage"]
     },
     {
       "example_id": "ood-005",
       "status": "needs_human_triage",
-      "classification": {
-        "Category": "other_category",
-        "Priority": "other_priority"
-      },
+      "classification": {},
       "hierarchyValid": true,
       "errors": ["Classifier flagged needs_human_triage"]
     },
     {
       "example_id": "ood-006",
       "status": "needs_human_triage",
-      "classification": {
-        "Category": "other_category",
-        "Priority": "other_priority"
-      },
+      "classification": {},
       "hierarchyValid": true,
       "errors": ["Classifier flagged needs_human_triage"]
     },
     {
       "example_id": "ood-007",
       "status": "needs_human_triage",
-      "classification": {
-        "Category": "other_category",
-        "Priority": "other_priority"
-      },
+      "classification": {},
       "hierarchyValid": true,
       "errors": ["Classifier flagged needs_human_triage"]
     },
     {
       "example_id": "ood-008",
       "status": "needs_human_triage",
-      "classification": {
-        "Category": "other_category",
-        "Priority": "other_priority"
-      },
+      "classification": {},
       "hierarchyValid": true,
       "errors": ["Classifier flagged needs_human_triage"]
     },
@@ -107,30 +83,21 @@
     {
       "example_id": "ood-010",
       "status": "needs_human_triage",
-      "classification": {
-        "Category": "other_category",
-        "Priority": "other_priority"
-      },
+      "classification": {},
       "hierarchyValid": true,
       "errors": ["Classifier flagged needs_human_triage"]
     },
     {
       "example_id": "ood-011",
       "status": "needs_human_triage",
-      "classification": {
-        "Category": "other_category",
-        "Priority": "other_priority"
-      },
+      "classification": {},
       "hierarchyValid": true,
       "errors": ["Classifier flagged needs_human_triage"]
     },
     {
       "example_id": "ood-012",
       "status": "needs_human_triage",
-      "classification": {
-        "Category": "other_category",
-        "Priority": "other_priority"
-      },
+      "classification": {},
       "hierarchyValid": true,
       "errors": ["Classifier flagged needs_human_triage"]
     },
@@ -165,10 +132,7 @@
     {
       "example_id": "ood-015",
       "status": "needs_human_triage",
-      "classification": {
-        "Category": "other_category",
-        "Priority": "other_priority"
-      },
+      "classification": {},
       "hierarchyValid": true,
       "errors": ["Classifier flagged needs_human_triage"]
     }
@@ -188,6 +152,8 @@
       "schema_invalid_rate": 0,
       "taxonomy_invalid_rate": 0,
       "contradiction_after_retry_rate": 0,
+      "followup_precision": 1,
+      "followup_recall": 1,
       "example_count": 15
     }
   }
