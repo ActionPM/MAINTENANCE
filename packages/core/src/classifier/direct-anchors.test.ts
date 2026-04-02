@@ -162,3 +162,74 @@ describe('detectDirectAnchor', () => {
     expect(detectDirectAnchor(cueScores, catAmbMax)).toBeNull();
   });
 });
+
+describe('applyDirectAnchorBoost', () => {
+  it('boosts faucet+leak fields to 1.0', () => {
+    const cueScores: CueScoreMap = {
+      Category: makeCueResult('maintenance', 0.6),
+      Maintenance_Category: makeCueResult('plumbing', 0.6),
+      Maintenance_Object: makeCueResult('faucet', 0.6),
+      Maintenance_Problem: makeCueResult('leak', 0.6),
+      Location: makeCueResult('suite', 0.6),
+      Priority: makeCueResult('normal', 0.6),
+    };
+    const boosted = applyDirectAnchorBoost(cueScores, config);
+
+    expect(boosted.Category.score).toBe(1.0);
+    expect(boosted.Category.ambiguity).toBe(0);
+    expect(boosted.Maintenance_Category.score).toBe(1.0);
+    expect(boosted.Maintenance_Object.score).toBe(1.0);
+    expect(boosted.Maintenance_Problem.score).toBe(1.0);
+    // Location and Priority are NOT boosted
+    expect(boosted.Location.score).toBe(0.6);
+    expect(boosted.Priority.score).toBe(0.6);
+  });
+
+  it('returns unchanged map when no anchor matches', () => {
+    const cueScores: CueScoreMap = {
+      Category: makeCueResult('maintenance', 0.6),
+      Maintenance_Category: makeCueResult('plumbing', 0.6),
+      Maintenance_Object: makeCueResult(null, 0),
+      Maintenance_Problem: makeCueResult('leak', 0.6),
+    };
+    const result = applyDirectAnchorBoost(cueScores, config);
+    expect(result).toBe(cueScores); // same reference — no copy
+  });
+
+  it('boosts hvac+no_heat without object — object field unchanged', () => {
+    const cueScores: CueScoreMap = {
+      Category: makeCueResult('maintenance', 0.6),
+      Maintenance_Category: makeCueResult('hvac', 0.6),
+      Maintenance_Object: makeCueResult(null, 0),
+      Maintenance_Problem: makeCueResult('no_heat', 0.6),
+    };
+    const boosted = applyDirectAnchorBoost(cueScores, config);
+
+    expect(boosted.Category.score).toBe(1.0);
+    expect(boosted.Maintenance_Category.score).toBe(1.0);
+    expect(boosted.Maintenance_Problem.score).toBe(1.0);
+    expect(boosted.Maintenance_Object.score).toBe(0); // not boosted
+  });
+
+  it('does not mutate the original CueScoreMap', () => {
+    const cueScores: CueScoreMap = {
+      Category: makeCueResult('maintenance', 0.6),
+      Maintenance_Category: makeCueResult('plumbing', 0.6),
+      Maintenance_Object: makeCueResult('faucet', 0.6),
+      Maintenance_Problem: makeCueResult('leak', 0.6),
+    };
+    applyDirectAnchorBoost(cueScores, config);
+    expect(cueScores.Maintenance_Object.score).toBe(0.6);
+  });
+
+  it('does not boost when Category cue is ambiguous (mixed-domain safety)', () => {
+    const cueScores: CueScoreMap = {
+      Category: makeCueResult('maintenance', 0.6, 0.5), // ambiguous
+      Maintenance_Category: makeCueResult('plumbing', 0.6),
+      Maintenance_Object: makeCueResult('faucet', 0.6),
+      Maintenance_Problem: makeCueResult('leak', 0.6),
+    };
+    const result = applyDirectAnchorBoost(cueScores, config);
+    expect(result).toBe(cueScores); // unchanged — anchor blocked
+  });
+});
