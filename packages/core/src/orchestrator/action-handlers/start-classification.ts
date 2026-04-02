@@ -18,6 +18,7 @@ import { checkCompleteness } from '../../classifier/completeness-gate.js';
 import type { ActionHandlerContext, ActionHandlerResult } from '../types.js';
 import { callIssueClassifier } from '../../classifier/issue-classifier.js';
 import { computeCueScores } from '../../classifier/cue-scoring.js';
+import { applyDirectAnchorBoost } from '../../classifier/direct-anchors.js';
 import {
   ClassifierTriageReason,
   RoutingReason,
@@ -293,10 +294,11 @@ export async function handleStartClassification(
     completenessFollowupTypes = { ...completenessResult.followupTypes };
 
     // Step D: Confidence with constraint boost (C2) — only on populated fields
+    const boostedCueScoreMap = applyDirectAnchorBoost(cueScoreMap, confidenceConfig);
     const confidenceDetail = computeAllFieldConfidences({
       classification: output.classification,
       modelConfidence: output.model_confidence,
-      cueResults: cueScoreMap,
+      cueResults: boostedCueScoreMap,
       config: confidenceConfig,
       impliedFields,
     });
