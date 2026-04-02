@@ -26,9 +26,7 @@ function makeCueResult(topLabel: string | null, score: number, ambiguity = 0) {
 }
 
 describe('anchor rule taxonomy validation', () => {
-  const taxonomy = JSON.parse(
-    readFileSync(resolve(schemasDir, 'taxonomy.json'), 'utf-8'),
-  );
+  const taxonomy = JSON.parse(readFileSync(resolve(schemasDir, 'taxonomy.json'), 'utf-8'));
 
   it('all anchor rule labels exist in taxonomy.json', () => {
     for (const rule of DIRECT_ANCHOR_RULES) {
