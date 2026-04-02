@@ -7,6 +7,7 @@ import {
   classifyConfidenceBand,
 } from '../../classifier/confidence.js';
 import type { FieldConfidenceDetail } from '../../classifier/confidence.js';
+import { applyDirectAnchorBoost } from '../../classifier/direct-anchors.js';
 import { DEFAULT_CONFIDENCE_CONFIG } from '@wo-agent/schemas';
 import classificationCues from '@wo-agent/schemas/classification_cues.json' with { type: 'json' };
 import type { CueDictionary } from '@wo-agent/schemas';
@@ -781,5 +782,75 @@ describe('live confidence drift regressions', () => {
 
     // Priority=emergency must always be confirmed
     expect(fieldsNeedingInput).toContain('Priority');
+  });
+});
+
+describe('confidence integration: direct anchor boost — faucet leak', () => {
+  const text = 'My faucet is leaking';
+
+  const classification = {
+    Category: 'maintenance',
+    Location: 'suite',
+    Sub_Location: 'kitchen',
+    Maintenance_Category: 'plumbing',
+    Maintenance_Object: 'faucet',
+    Maintenance_Problem: 'leak',
+    Management_Category: 'not_applicable',
+    Management_Object: 'not_applicable',
+    Priority: 'normal',
+  };
+
+  const modelConfidence = {
+    Category: 0.95,
+    Location: 0.9,
+    Sub_Location: 0.9,
+    Maintenance_Category: 0.95,
+    Maintenance_Object: 0.9,
+    Maintenance_Problem: 0.95,
+    Management_Category: 0.0,
+    Management_Object: 0.0,
+    Priority: 0.8,
+  };
+
+  it('anchor boost pushes Maintenance_Object above resolved_medium_threshold', () => {
+    const rawCueScores = computeCueScores(text, cueDict);
+    const boostedCueScores = applyDirectAnchorBoost(rawCueScores, config);
+
+    // Maintenance_Object: faucet gets single hit → 0.6 without boost, 1.0 with boost
+    expect(rawCueScores.Maintenance_Object?.score).toBeCloseTo(0.6);
+    expect(boostedCueScores.Maintenance_Object?.score).toBe(1.0);
+
+    const confidences = computeAllFieldConfidences({
+      classification,
+      modelConfidence,
+      cueResults: boostedCueScores,
+      config,
+    });
+
+    // With boosted cue_strength=1.0: conf = 0.40*1.0 + 0.25*1.0 + 0.20*0.9 = 0.83
+    expect(confidences['Maintenance_Object'].confidence).toBeGreaterThanOrEqual(
+      config.resolved_medium_threshold,
+    );
+  });
+
+  it('Maintenance_Object NOT in fieldsNeedingInput after anchor boost', () => {
+    const boostedCueScores = applyDirectAnchorBoost(computeCueScores(text, cueDict), config);
+    const confidences = computeAllFieldConfidences({
+      classification,
+      modelConfidence,
+      cueResults: boostedCueScores,
+      config,
+    });
+
+    const fieldsNeedingInput = determineFieldsNeedingInput({
+      confidenceByField: confidences,
+      config,
+      classificationOutput: classification,
+    });
+
+    expect(fieldsNeedingInput).not.toContain('Maintenance_Object');
+    expect(fieldsNeedingInput).not.toContain('Maintenance_Problem');
+    expect(fieldsNeedingInput).not.toContain('Maintenance_Category');
+    expect(fieldsNeedingInput).not.toContain('Category');
   });
 });
