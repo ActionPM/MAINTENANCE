@@ -854,3 +854,115 @@ describe('confidence integration: direct anchor boost — faucet leak', () => {
     expect(fieldsNeedingInput).not.toContain('Category');
   });
 });
+
+describe('confidence integration: direct anchor boost — toilet clog', () => {
+  const text = 'My toilet is clogged';
+
+  const classification = {
+    Category: 'maintenance',
+    Location: 'suite',
+    Sub_Location: 'bathroom',
+    Maintenance_Category: 'plumbing',
+    Maintenance_Object: 'toilet',
+    Maintenance_Problem: 'clog',
+    Management_Category: 'not_applicable',
+    Management_Object: 'not_applicable',
+    Priority: 'normal',
+  };
+
+  const modelConfidence = {
+    Category: 0.95,
+    Location: 0.85,
+    Sub_Location: 0.9,
+    Maintenance_Category: 0.95,
+    Maintenance_Object: 0.9,
+    Maintenance_Problem: 0.9,
+    Management_Category: 0.0,
+    Management_Object: 0.0,
+    Priority: 0.8,
+  };
+
+  it('anchor fires for toilet+clog, Maintenance_Object crosses resolved_medium', () => {
+    const boostedCueScores = applyDirectAnchorBoost(computeCueScores(text, cueDict), config);
+    expect(boostedCueScores.Maintenance_Object?.score).toBe(1.0);
+
+    const confidences = computeAllFieldConfidences({
+      classification,
+      modelConfidence,
+      cueResults: boostedCueScores,
+      config,
+    });
+
+    expect(confidences['Maintenance_Object'].confidence).toBeGreaterThanOrEqual(
+      config.resolved_medium_threshold,
+    );
+
+    const fieldsNeedingInput = determineFieldsNeedingInput({
+      confidenceByField: confidences,
+      config,
+      classificationOutput: classification,
+    });
+
+    expect(fieldsNeedingInput).not.toContain('Maintenance_Object');
+    expect(fieldsNeedingInput).not.toContain('Maintenance_Category');
+  });
+});
+
+describe('confidence integration: direct anchor boost — no heat (no object)', () => {
+  const text = 'There is no heat in my apartment';
+
+  const classification = {
+    Category: 'maintenance',
+    Location: 'suite',
+    Sub_Location: 'general',
+    Maintenance_Category: 'hvac',
+    Maintenance_Object: 'needs_object',
+    Maintenance_Problem: 'no_heat',
+    Management_Category: 'not_applicable',
+    Management_Object: 'not_applicable',
+    Priority: 'high',
+  };
+
+  const modelConfidence = {
+    Category: 0.95,
+    Location: 0.9,
+    Sub_Location: 0.7,
+    Maintenance_Category: 0.95,
+    Maintenance_Object: 0.5,
+    Maintenance_Problem: 0.95,
+    Management_Category: 0.0,
+    Management_Object: 0.0,
+    Priority: 0.8,
+  };
+
+  it('category+problem anchor fires for hvac+no_heat, boosts Category/Category/Problem but NOT Object', () => {
+    const rawCueScores = computeCueScores(text, cueDict);
+    const boostedCueScores = applyDirectAnchorBoost(rawCueScores, config);
+
+    expect(boostedCueScores.Maintenance_Category?.score).toBe(1.0);
+    expect(boostedCueScores.Maintenance_Problem?.score).toBe(1.0);
+    // Object was not matched — should NOT be boosted
+    expect(boostedCueScores.Maintenance_Object?.score).toBe(rawCueScores.Maintenance_Object?.score);
+  });
+
+  it('Maintenance_Category and Maintenance_Problem NOT in fieldsNeedingInput, Object still needed', () => {
+    const boostedCueScores = applyDirectAnchorBoost(computeCueScores(text, cueDict), config);
+    const confidences = computeAllFieldConfidences({
+      classification,
+      modelConfidence,
+      cueResults: boostedCueScores,
+      config,
+    });
+
+    const fieldsNeedingInput = determineFieldsNeedingInput({
+      confidenceByField: confidences,
+      config,
+      classificationOutput: classification,
+    });
+
+    expect(fieldsNeedingInput).not.toContain('Maintenance_Category');
+    expect(fieldsNeedingInput).not.toContain('Maintenance_Problem');
+    // Object still needs input — "no heat" doesn't tell us which fixture
+    expect(fieldsNeedingInput).toContain('Maintenance_Object');
+  });
+});
