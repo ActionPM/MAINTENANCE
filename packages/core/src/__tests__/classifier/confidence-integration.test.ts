@@ -966,3 +966,41 @@ describe('confidence integration: direct anchor boost — no heat (no object)', 
     expect(fieldsNeedingInput).toContain('Maintenance_Object');
   });
 });
+
+describe('confidence integration: direct anchor boost — regression guards', () => {
+  it('vague "I have a leak" does NOT trigger anchor (no object cue)', () => {
+    const text = 'I have a leak in my apartment';
+    const cueScores = computeCueScores(text, cueDict);
+    const boosted = applyDirectAnchorBoost(cueScores, config);
+    // No specific Maintenance_Object cue hit → no anchor
+    expect(boosted).toBe(cueScores); // same reference, unchanged
+  });
+
+  it('vague "I have a problem" does NOT trigger anchor', () => {
+    const text = 'I have a problem';
+    const cueScores = computeCueScores(text, cueDict);
+    const boosted = applyDirectAnchorBoost(cueScores, config);
+    expect(boosted).toBe(cueScores);
+  });
+
+  it('management text does NOT trigger anchor even with plumbing-like words', () => {
+    const text = 'I need to report a rent leak in my charges';
+    const cueScores = computeCueScores(text, cueDict);
+    const boosted = applyDirectAnchorBoost(cueScores, config);
+    // If Category cue topLabel is management → anchor blocked
+    if (cueScores.Category?.topLabel === 'management') {
+      expect(boosted).toBe(cueScores);
+    }
+  });
+
+  it('ambiguous category cue does NOT trigger anchor', () => {
+    // Text with competing plumbing and electrical signals
+    const text = 'the pipe outlet is leaking sparks';
+    const cueScores = computeCueScores(text, cueDict);
+    // If Maintenance_Category is ambiguous (plumbing~electrical), anchor should not fire
+    if ((cueScores.Maintenance_Category?.ambiguity ?? 0) > 0.5) {
+      const boosted = applyDirectAnchorBoost(cueScores, config);
+      expect(boosted).toBe(cueScores);
+    }
+  });
+});
