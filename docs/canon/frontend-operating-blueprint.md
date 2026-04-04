@@ -1,4 +1,3 @@
-
 # ActionPM Frontend Operating Blueprint
 
 ## 1. Purpose
@@ -6,6 +5,7 @@
 This file defines **how the ActionPM front end is built, reviewed, and released**.
 
 Use it to keep the front end:
+
 - aligned to the maintenance kernel
 - aligned to the taxonomy and shared contracts
 - inside the narrow phase-one workflow boundary
@@ -15,6 +15,7 @@ Use it to keep the front end:
 This file is about the **operating model**.
 
 It does **not** replace:
+
 - `docs/canon/frontend-spec.md` for product-specific frontend rules
 - `docs/canon/kernel-alignment-rules.md` for downstream alignment control
 - `docs/canon/repo-policy.md` for repository mechanics
@@ -25,6 +26,7 @@ It does **not** replace:
 ## 2. Non-negotiable stance
 
 ### Hard rules
+
 - ActionPM is a **governed operational control layer**, not a generic dashboard and not a chatbot.
 - The **maintenance kernel** is the center of the system.
 - The **kernel is the control layer**. It is not the UI and not the ERP.
@@ -43,12 +45,14 @@ It does **not** replace:
 - Ben is the final planning, merge-exception, and release authority.
 
 ### Recommended defaults
+
 - Start lean, but do not collapse real control boundaries.
 - Prefer small durable process over broad theoretical process.
 - Prefer explicit handoffs over blurred ownership.
 - Prefer same-repo alignment with shared contracts over repo separation.
 
 ### Future-state option
+
 - Split specialist roles further only when task volume or drift makes the lean set insufficient.
 
 ---
@@ -58,6 +62,7 @@ It does **not** replace:
 The default model is **lean-first, division-aligned, artifact-driven**.
 
 That means:
+
 - work starts from canon, not from a blank prompt
 - every real task starts with a task packet
 - Claude or Codex always work under an assigned **agent hat** for non-trivial work
@@ -72,6 +77,7 @@ That means:
 Use these agents as **operating modes**, not as separate software systems and not as separate humans.
 
 ### Lean-first starting set
+
 1. Governance and Traceability Orchestrator
 2. UX and Workflow Surface Architect
 3. Client Shell and Maintainability Architect
@@ -82,16 +88,20 @@ Use these agents as **operating modes**, not as separate software systems and no
 8. Delivery and Release Safety Agent
 
 ### Role types
+
 - **Generator:** produces implementation-facing design or code changes
 - **Critic:** reviews work against guarded rules and raises blockers
 - **Auditor:** checks evidence sufficiency and release discipline
 - **Hybrid:** can generate or critique, depending on task
 
 ### Hard rule
+
 For any non-trivial change, Claude and Codex do **not** work “as themselves.” They work under an assigned agent hat.
 
 ### Exception
+
 For small mechanical edits only, a tool may work directly without a named hat if all of the following are true:
+
 - no workflow change
 - no contract change
 - no KPI semantic change
@@ -106,6 +116,7 @@ For small mechanical edits only, a tool may work directly without a named hat if
 Every agent starts from the same top-level sequence.
 
 ### Required reading order
+
 1. `docs/canon/frontend-spec.md`
 2. relevant division notes
 3. task packet
@@ -113,6 +124,7 @@ Every agent starts from the same top-level sequence.
 5. local code context
 
 ### Why this order exists
+
 - `frontend-spec.md` gives the front-end-specific contract first
 - division notes provide the deeper canon
 - the task packet narrows the work to one bounded change
@@ -120,9 +132,11 @@ Every agent starts from the same top-level sequence.
 - the code confirms implementation reality
 
 ### Hard rule
+
 No agent should start from the full repo and “figure it out.”
 
 The starting context must always be bounded by:
+
 - one task id
 - one assigned agent hat
 - one canon subset
@@ -139,24 +153,28 @@ They read a controlled subset.
 ### Default canon subset by agent
 
 #### Governance and Traceability
+
 - `DIV 00` Program and Governance
 - `DIV 01` Product Requirements
 - `DIV 12` Delivery Pipeline
 - `frontend-spec.md`
 
 #### UX and Workflow
+
 - `DIV 01` Product Requirements
 - `DIV 02` User Experience and Presentation
 - `DIV 08` Identity and Security
 - `frontend-spec.md`
 
 #### Client Shell and Maintainability
+
 - `DIV 03` Client Applications
 - `DIV 07` Integration and Interfaces
 - `DIV 12` Delivery Pipeline
 - `frontend-spec.md`
 
 #### Operational Semantics and Interface Contract
+
 - `DIV 01` Product Requirements
 - `DIV 06` Data and Persistence
 - `DIV 07` Integration and Interfaces
@@ -164,30 +182,35 @@ They read a controlled subset.
 - `frontend-spec.md`
 
 #### Security, Session, and Permission
+
 - `DIV 08` Identity and Security
 - `DIV 03` Client Applications
 - relevant workflow packet
 - `frontend-spec.md`
 
 #### Operational Truth and Observability
+
 - `DIV 09` Observability and Operations
 - `DIV 03` Client Applications
 - `DIV 07` Integration and Interfaces
 - `frontend-spec.md`
 
 #### Quality Scenario and Evidence
+
 - `DIV 11` Quality Engineering
 - task packet
 - relevant canon subset
 - changed files
 
 #### Delivery and Release Safety
+
 - `DIV 12` Delivery Pipeline
 - `DIV 10` Infrastructure and Platform when release-sensitive
 - task packet
 - critic and auditor artifacts
 
 ### Practical rule
+
 The task packet must name the affected divisions. Agents should start there, not by re-reading all division notes.
 
 ---
@@ -197,6 +220,7 @@ The task packet must name the affected divisions. Agents should start there, not
 A task packet is the **entry brief for one bounded change**.
 
 It exists so the tools know:
+
 - what problem is being solved
 - what is in scope
 - what is out of scope
@@ -205,11 +229,13 @@ It exists so the tools know:
 - which evidence is required
 
 ### Where task packets live
+
 ```text
 /docs/tasks/FE-xxx/
 ```
 
 ### Minimum required files
+
 ```text
 /docs/tasks/FE-xxx/
   meta.yaml
@@ -218,6 +244,7 @@ It exists so the tools know:
 ```
 
 ### Typical optional files
+
 ```text
   diff-summary.md
   open-questions.md
@@ -231,9 +258,11 @@ It exists so the tools know:
 ```
 
 ### Where task packets come from
+
 Task packets are created by the **Governance and Traceability Orchestrator** before real work starts.
 
 ### Task packet inputs
+
 - Ben’s stated goal
 - relevant canon files
 - affected code area
@@ -242,6 +271,7 @@ Task packets are created by the **Governance and Traceability Orchestrator** bef
 - release sensitivity
 
 ### Required contents of `meta.yaml`
+
 - task id
 - title
 - risk level
@@ -254,6 +284,7 @@ Task packets are created by the **Governance and Traceability Orchestrator** bef
 - canonical artifacts that must be consulted
 
 ### Hard rule
+
 No medium- or high-risk change starts without a task packet.
 
 ---
@@ -263,19 +294,23 @@ No medium- or high-risk change starts without a task packet.
 In this operating model, a skill is a **reusable operating bundle** attached to an agent.
 
 A skill contains:
+
 - one prompt wrapper
 - one or more checklists
 - one or more output templates
 - one enforcement rule in PR, CI, or merge policy
 
 ### Example
+
 A semantics / contract skill may include:
+
 - `.actionpm/agents/semantics-contract.md`
 - `.actionpm/checklists/contract-change.md`
 - `.actionpm/templates/contract-note.md`
 - `.actionpm/templates/kpi-definition-pack.md`
 
 ### Hard rule
+
 A skill is not considered “used” because a prompt mentioned it.
 
 A skill is considered used only when its required artifact exists in the task folder.
@@ -285,50 +320,65 @@ A skill is considered used only when its required artifact exists in the task fo
 ## 9. Daily working loop
 
 ### Step 1 — Create task folder
+
 Create `docs/tasks/FE-xxx/`.
 
 ### Step 2 — Draft the task packet
+
 Governance mode writes:
+
 - `meta.yaml`
 - `feature-packet.md`
 - `review-matrix.md`
 
 ### Step 3 — Assign hats
+
 Choose:
+
 - generator
 - critic
 - auditor if required
 
 ### Step 4 — Run the generator
+
 The generator works only from:
+
 - task packet
 - assigned canon subset
 - changed files
 
 ### Step 5 — Run the critic
+
 The critic reviews:
+
 - the diff
 - the task packet
 - required artifacts
 - guarded rules for that domain
 
 ### Step 6 — Run the auditor when required
+
 The auditor checks:
+
 - scenario coverage
 - evidence sufficiency
 - release impact
 - unresolved blockers
 
 ### Step 7 — Update doc delta
+
 If canon-impact exists, update or propose:
+
 - canonical note change
 - ADR
 - `no-canon-change.md` rationale
 
 ### Step 8 — Merge gate
+
 Do not merge until required artifacts, reviews, and checks are present.
 
 ### Step 9 — Release gate
+
 Do not release until evidence, release record, rollback plan, and Ben approval exist.
 
 ---
@@ -336,6 +386,7 @@ Do not release until evidence, release record, rollback plan, and Ben approval e
 ## 10. Branches and worktrees
 
 ### Hard rules
+
 - one primary worktree per task
 - separate review worktree for medium/high-risk critic or auditor passes
 - no long-lived per-agent worktrees
@@ -343,12 +394,14 @@ Do not release until evidence, release record, rollback plan, and Ben approval e
 - no mixing multiple tasks in one worktree
 
 ### Naming convention
+
 - branch: `feat/FE-042-short-name`
 - task worktree: `../wt/FE-042`
 - critic worktree: `../wt-review/FE-042-security`
 - auditor worktree: `../wt-review/FE-042-quality`
 
 ### Cleanup rule
+
 - review worktrees are deleted after merge decision
 - task worktrees are deleted after merge
 - artifacts remain in `docs/tasks/FE-xxx/`
@@ -358,17 +411,21 @@ Do not release until evidence, release record, rollback plan, and Ben approval e
 ## 11. Review and approval model
 
 ### Default pairing
+
 - Claude Code: default generator for governance-heavy, semantics-heavy, and UX-heavy tasks
 - Codex: default critic for implementation review and constraint checking
 
 ### Inverse pairing
+
 Use Codex as generator and Claude as critic for:
+
 - contained refactors
 - repetitive mechanical edits
 - code organization changes
 - test harness work
 
 ### Hard rules
+
 - no author self-approving in the same profile
 - no release-sensitive merge without cross-profile review
 - no release without explicit evidence and Ben approval
@@ -378,6 +435,7 @@ Use Codex as generator and Claude as critic for:
 ## 12. When an auditor pass is mandatory
 
 An auditor pass is mandatory for:
+
 - workflow or draft-PO changes
 - contract changes
 - KPI semantic or drilldown changes
@@ -392,9 +450,11 @@ An auditor pass is mandatory for:
 ## 13. Documentation maintenance
 
 ### Required posture
+
 Documentation maintenance exists now, but as a **propose-only lane**.
 
 ### It owns
+
 - doc delta review
 - canon-impact detection
 - targeted updates to canonical notes
@@ -402,11 +462,13 @@ Documentation maintenance exists now, but as a **propose-only lane**.
 - drift summaries
 
 ### It must never do alone
+
 - change product scope
 - rewrite canon broadly from inference
 - merge its own updates
 
 ### Trigger it when
+
 - guarded behavior changes
 - contracts change
 - workflow changes
@@ -419,6 +481,7 @@ Documentation maintenance exists now, but as a **propose-only lane**.
 ## 14. Minimum viable setup
 
 Start with:
+
 - the 8-agent lean set
 - task packets
 - one-task-one-worktree rule
@@ -434,6 +497,7 @@ This is the minimum disciplined system.
 ## 15. Source basis
 
 This file is downstream of:
+
 - `2026-04-03 - Front End Execution Plan - Draft 1.md`
 - `2026-04-03 - DIV 00 - Program and Governance - V6.md`
 - `2026-04-03 - DIV 01 - Product Requirements - V6.md`

@@ -12,7 +12,7 @@ const requiredSpecPhrases = [
   'draft Purchase Order',
   'truthful degraded-state',
   'taxonomy',
-  'KPI'
+  'KPI',
 ];
 
 const requiredRulesPhrases = [
@@ -20,7 +20,7 @@ const requiredRulesPhrases = [
   'no shadow contract',
   'drilldown',
   'release-sensitive',
-  'doc gate'
+  'doc gate',
 ];
 
 let failed = false;

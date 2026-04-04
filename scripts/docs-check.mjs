@@ -9,7 +9,7 @@ const required = [
   'frontend-spec.md',
   'kernel-alignment-rules.md',
   'repo-policy.md',
-  'naming-and-worktree-policy.md'
+  'naming-and-worktree-policy.md',
 ];
 
 let failed = false;

@@ -44,6 +44,16 @@ export default tseslint.config(
     },
   },
 
+  // Node.js globals for root scripts
+  {
+    files: ['scripts/**/*.{js,mjs,cjs}'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+
   // Browser + Node globals for web app (Next.js SSR uses both)
   {
     files: ['apps/web/**/*.{ts,tsx}'],

@@ -13,5 +13,5 @@
 ## Scenario List
 
 | Scenario | Expected Result | Evidence | Status |
-| --- | --- | --- | --- |
-| | | | |
+| -------- | --------------- | -------- | ------ |
+|          |                 |          |        |

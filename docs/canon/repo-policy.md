@@ -1,4 +1,3 @@
-
 # ActionPM Frontend Repo Policy
 
 ## 1. Purpose
@@ -6,6 +5,7 @@
 This file defines the repository rules for frontend work.
 
 Use it to keep frontend delivery:
+
 - traceable
 - reviewable
 - aligned to canon
@@ -17,10 +17,13 @@ Use it to keep frontend delivery:
 ## 2. Repo strategy
 
 ### Hard rule
+
 The governed front end lives in the **same repo / workspace** as the maintenance kernel and shared packages.
 
 ### Why
+
 Shared repo structure makes it easier to keep aligned:
+
 - contracts
 - taxonomy
 - validators
@@ -29,6 +32,7 @@ Shared repo structure makes it easier to keep aligned:
 - release evidence
 
 ### Practical shape
+
 The frontend should remain a separate app or package inside the shared workspace, not mixed into kernel code directly.
 
 ---
@@ -53,6 +57,7 @@ docs/
 ```
 
 ### Purpose of each
+
 - `.actionpm/agents/`: agent wrapper files
 - `.actionpm/templates/`: required task and review artifacts
 - `.actionpm/checklists/`: critic and auditor checklists
@@ -67,12 +72,14 @@ docs/
 ## 4. Required canon files
 
 The repo must keep these files current:
+
 - `docs/canon/frontend-operating-blueprint.md`
 - `docs/canon/frontend-spec.md`
 - `docs/canon/kernel-alignment-rules.md`
 - `docs/canon/repo-policy.md`
 
 ### Rule
+
 These files are the first stop for frontend work in this repo. They do not replace the division notes; they make them usable for day-to-day execution.
 
 ---
@@ -80,16 +87,19 @@ These files are the first stop for frontend work in this repo. They do not repla
 ## 5. Task ids and task folders
 
 ### Hard rules
+
 - every non-trivial frontend task gets a task id
 - every non-trivial frontend task gets a folder in `docs/tasks/`
 - task folders are immutable identifiers for work history even after merge
 
 ### Naming convention
+
 - task id: `FE-001`
 - task branch: `feat/FE-001-short-name`
 - task folder: `docs/tasks/FE-001/`
 
 ### Minimum required files
+
 ```text
 meta.yaml
 feature-packet.md
@@ -97,6 +107,7 @@ review-matrix.md
 ```
 
 ### Required `meta.yaml` fields
+
 - task_id
 - title
 - risk
@@ -113,14 +124,17 @@ review-matrix.md
 ## 6. Agent wrappers and skills
 
 ### Hard rule
+
 Agents are implemented as **repo files**, not informal memory.
 
 ### Required location
+
 ```text
 .actionpm/agents/
 ```
 
 ### Each agent file must define
+
 - purpose
 - owned concerns
 - forbidden concerns
@@ -130,13 +144,16 @@ Agents are implemented as **repo files**, not informal memory.
 - merge blockers the agent can raise
 
 ### Skills
+
 A skill is the combined bundle of:
+
 - agent wrapper
 - checklist
 - template
 - enforcement rule
 
 ### Enforcement rule
+
 A skill is not optional when its artifact is required by the task type or risk level.
 
 ---
@@ -144,6 +161,7 @@ A skill is not optional when its artifact is required by the task type or risk l
 ## 7. Worktree and branch policy
 
 ### Hard rules
+
 - one primary worktree per task
 - one task per branch
 - no multiple active tasks in one worktree
@@ -151,16 +169,20 @@ A skill is not optional when its artifact is required by the task type or risk l
 - no direct commits to `main`
 
 ### Review isolation rule
+
 For medium- and high-risk work:
+
 - critic review should happen in a separate review worktree
 - auditor review should happen in a separate review worktree when practical
 
 ### Naming convention
+
 - task worktree: `../wt/FE-042`
 - critic worktree: `../wt-review/FE-042-security`
 - auditor worktree: `../wt-review/FE-042-quality`
 
 ### Cleanup rule
+
 - delete review worktrees after merge decision
 - delete task worktree after merge
 - keep artifacts in `docs/tasks/FE-xxx/`
@@ -170,9 +192,11 @@ For medium- and high-risk work:
 ## 8. PR policy
 
 ### Hard rules
+
 All merges to `main` happen through PRs.
 
 ### PR template must include
+
 - Task ID
 - Title
 - Risk
@@ -191,7 +215,9 @@ All merges to `main` happen through PRs.
 - Ben release approval where applicable
 
 ### Forbidden PR state
+
 Do not open or merge a PR that has:
+
 - no task packet for non-trivial work
 - no named generator / critic for medium- or high-risk work
 - missing required evidence for guarded changes
@@ -201,11 +227,13 @@ Do not open or merge a PR that has:
 ## 9. Review policy
 
 ### Default model
+
 - generator produces code and artifacts
 - critic reviews the diff and artifacts
 - auditor checks evidence and release discipline when required
 
 ### Hard rules
+
 - no same-profile self-approval
 - no “looks good” free-form approval for guarded changes
 - every critic or auditor must return one of:
@@ -214,10 +242,12 @@ Do not open or merge a PR that has:
   - block
 
 ### Default pairing
+
 - Claude: default generator for governance-heavy, semantics-heavy, and UX-heavy work
 - Codex: default critic for implementation review
 
 ### Inverse pairing
+
 Use Codex as generator and Claude as critic for contained refactors and mechanical code changes.
 
 ---
@@ -225,6 +255,7 @@ Use Codex as generator and Claude as critic for contained refactors and mechanic
 ## 10. CI policy
 
 At minimum, CI must fail when:
+
 - guarded change has no `docs/tasks/FE-xxx/meta.yaml`
 - high-risk task has no critic artifact
 - required auditor artifact is missing
@@ -233,6 +264,7 @@ At minimum, CI must fail when:
 - required fixtures are missing for contract or KPI changes
 
 ### Recommended first checks
+
 - task metadata existence
 - critic artifact existence
 - doc delta existence
@@ -243,7 +275,9 @@ At minimum, CI must fail when:
 ## 11. Merge gate
 
 ### Hard stop conditions
+
 Block merge when any of the following are true:
+
 - missing feature packet
 - missing required critic report
 - missing required auditor report
@@ -253,9 +287,11 @@ Block merge when any of the following are true:
 - Ben merge decision not recorded where required
 
 ### Waiver rule
+
 Waivers must be written and retained under `docs/releases/waivers/`.
 
 ### Must never waive
+
 - missing evidence for workflow-sensitive change
 - missing evidence for security-sensitive change
 - missing evidence for KPI correctness on shipped KPI behavior
@@ -266,6 +302,7 @@ Waivers must be written and retained under `docs/releases/waivers/`.
 ## 12. Release gate
 
 ### Required release artifacts
+
 - evidence pack
 - release record
 - rollback plan
@@ -273,6 +310,7 @@ Waivers must be written and retained under `docs/releases/waivers/`.
 - Ben approval
 
 ### Hard rule
+
 No production-capable release without explicit evidence and explicit approval.
 
 ---
@@ -280,17 +318,21 @@ No production-capable release without explicit evidence and explicit approval.
 ## 13. Documentation policy
 
 ### Hard rules
+
 - guarded changes require a doc delta
 - canon-impact changes require either canon update or explicit `no-canon-change.md`
 - canon updates must be targeted, not broad speculative rewrites
 
 ### Documentation-maintenance lane
+
 The doc-maintenance lane may:
+
 - propose canon updates
 - draft canon updates
 - open follow-up doc PRs
 
 It may not:
+
 - change canon scope on its own
 - merge its own changes
 
@@ -299,12 +341,14 @@ It may not:
 ## 14. Starting-point rule for tools
 
 For non-trivial frontend work, tools start from:
+
 1. `docs/canon/frontend-spec.md`
 2. relevant division notes
 3. task packet
 4. diff
 
 ### Hard rule
+
 Do not start real work from a blank tool session with no assigned agent hat and no task packet.
 
 ---
@@ -312,6 +356,7 @@ Do not start real work from a blank tool session with no assigned agent hat and 
 ## 15. Minimum repo starter set
 
 Create these first:
+
 - `.actionpm/agents/governance.md`
 - `.actionpm/agents/ux-workflow.md`
 - `.actionpm/agents/client-shell.md`
@@ -331,6 +376,7 @@ Create these first:
 ## 16. Source basis
 
 This file is downstream of:
+
 - `2026-04-03 - Front End Execution Plan - Draft 1.md`
 - `2026-04-03 - DIV 00 - Program and Governance - V6.md`
 - `2026-04-03 - DIV 01 - Product Requirements - V6.md`

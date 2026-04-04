@@ -10,14 +10,17 @@ if (!fs.existsSync(tasksDir)) {
 }
 
 const required = ['meta.yaml', 'feature-packet.md', 'review-matrix.md', 'doc-delta.md'];
-const taskDirs = fs.readdirSync(tasksDir, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name);
+const taskDirs = fs
+  .readdirSync(tasksDir, { withFileTypes: true })
+  .filter((d) => d.isDirectory())
+  .map((d) => d.name);
 const requiredMetaFields = [
   'task_id:',
   'title:',
   'risk:',
   'change_types:',
   'affected_divisions:',
-  'generator:'
+  'generator:',
 ];
 let failed = false;
 

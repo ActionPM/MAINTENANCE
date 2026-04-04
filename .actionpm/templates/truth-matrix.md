@@ -13,5 +13,5 @@
 ## Truth Matrix
 
 | Claim | Source of Truth | Verification Method | Status |
-| --- | --- | --- | --- |
-| | | | |
+| ----- | --------------- | ------------------- | ------ |
+|       |                 |                     |        |

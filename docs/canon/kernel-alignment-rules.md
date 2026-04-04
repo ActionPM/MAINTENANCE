@@ -1,4 +1,3 @@
-
 # ActionPM Kernel Alignment Rules for Frontend
 
 ## 1. Purpose
@@ -20,6 +19,7 @@ That means the frontend may shape presentation, but it may not replace or reinte
 ## 3. Authoritative upstream artifacts
 
 Treat the following as authoritative for frontend alignment:
+
 1. kernel-controlled workflow and action rules
 2. shared schemas and validators
 3. governed taxonomy and crosswalks
@@ -30,6 +30,7 @@ Treat the following as authoritative for frontend alignment:
 8. canonical division notes
 
 ### Hard rule
+
 The frontend must import, derive from, or explicitly trace to these sources. It must not maintain shadow truth for governed domains.
 
 ---
@@ -37,6 +38,7 @@ The frontend must import, derive from, or explicitly trace to these sources. It 
 ## 4. What must always flow downstream
 
 The following always flow from kernel / canon into the UI:
+
 - workflow states
 - allowed actions
 - taxonomy values for governed fields
@@ -55,6 +57,7 @@ The following always flow from kernel / canon into the UI:
 ## 5. What may remain frontend-local
 
 The following may remain frontend-local when they do not change meaning:
+
 - layout
 - route naming
 - interaction choreography
@@ -65,7 +68,9 @@ The following may remain frontend-local when they do not change meaning:
 - theme implementation details
 
 ### Hard rule
+
 Frontend-local decisions stop being local the moment they change:
+
 - workflow meaning
 - KPI meaning
 - contract semantics
@@ -78,7 +83,9 @@ Frontend-local decisions stop being local the moment they change:
 ## 6. No-shadow-model rule
 
 ### Hard rules
+
 Do not create frontend-only shadow models for:
+
 - workflow states
 - KPI names or KPI logic
 - taxonomy values for governed fields
@@ -87,6 +94,7 @@ Do not create frontend-only shadow models for:
 - freshness states when those states come from contract or canon
 
 ### Allowed exception
+
 A frontend-local display map is allowed only if it is a thin rendering layer over canonical values and does not create new behavior or new meaning.
 
 ## 6A. No shadow taxonomy
@@ -100,13 +108,16 @@ The frontend must not define a shadow taxonomy, duplicate taxonomy enum set, or 
 ## 7. Taxonomy alignment rules
 
 ### Hard rules
+
 - Use shared taxonomy values or generated client-safe derivatives.
 - Do not rename governed taxonomy categories locally without explicit canon approval.
 - Do not merge or split governed taxonomy branches in UI-only code.
 - When a taxonomy-linked UI surface changes, run Semantics + Governance review.
 
 ### Required artifact when taxonomy-linked behavior changes
+
 At minimum, add one of:
+
 - task-level terminology note
 - updated contract note
 - updated canon note
@@ -116,12 +127,14 @@ At minimum, add one of:
 ## 8. Contract alignment rules
 
 ### Hard rules
+
 - The frontend consumes normalized internal ActionPM contracts.
 - Hand-written duplicate interfaces for guarded objects are not allowed when shared types or validators exist.
 - Contract fixtures are required for guarded frontend adapters.
 - Contract changes must preserve freshness/source-health truth fields when they are required for truthful display.
 
 ### Required artifact for contract changes
+
 - `contract-note.md`
 - updated contract fixture or adapter fixture
 - critic review from Semantics / Contract
@@ -137,7 +150,9 @@ The frontend must not define shadow contracts for guarded domain objects when sh
 ## 9. Workflow boundary alignment rules
 
 ### Hard rules
+
 The frontend may expose only the committed phase-one workflow slice:
+
 - generate draft PO
 - review draft
 - edit draft
@@ -146,7 +161,9 @@ The frontend may expose only the committed phase-one workflow slice:
 - record or display handoff state
 
 ### Forbidden implications
+
 The frontend must not imply:
+
 - official PO issuance
 - approval inside ActionPM
 - downstream procurement completion
@@ -155,6 +172,7 @@ The frontend must not imply:
 - maintenance completion verification
 
 ### Required artifact for workflow changes
+
 - workflow-facing feature packet
 - security review
 - quality scenario update
@@ -165,6 +183,7 @@ The frontend must not imply:
 ## 10. KPI semantic alignment rules
 
 ### Hard rules
+
 - KPI behavior is configuration-driven.
 - KPI surfaces must be traceable to underlying record sets.
 - Every shipped KPI definition must have explicit inclusion, exclusion, and drilldown rules.
@@ -173,6 +192,7 @@ The frontend must not imply:
 - Aggregate card logic must not hide materially aged or important underlying records.
 
 ### Required artifact for KPI changes
+
 - `kpi-definition-pack.md`
 - drilldown truth table
 - updated scenario coverage
@@ -186,6 +206,7 @@ Every KPI, count, flag, or aggregate presented as operational truth must support
 ## 11. Security and session alignment rules
 
 ### Hard rules
+
 - Authentication and authorization are server-authoritative.
 - UI visibility is not the source of enforcement.
 - Session expiry must block privileged actions.
@@ -193,6 +214,7 @@ Every KPI, count, flag, or aggregate presented as operational truth must support
 - Scope changes or revocation must not leave unsafe local context active.
 
 ### Required artifact for security-visible changes
+
 - `security-review.md`
 - updated access-state matrix if relevant
 - quality scenario update when behavior is high-risk
@@ -202,7 +224,9 @@ Every KPI, count, flag, or aggregate presented as operational truth must support
 ## 12. Degraded-state truth alignment rules
 
 ### Hard rules
+
 The frontend must make the following explicit when relevant:
+
 - stale data
 - partial data
 - source failure
@@ -212,11 +236,13 @@ The frontend must make the following explicit when relevant:
 - unconfirmed handoff
 
 ### Forbidden behavior
+
 - showing stale state as current without a warning
 - collapsing partial data into apparent completeness
 - implying successful handoff when handoff is only pending or unconfirmed
 
 ### Required artifact for degraded-state behavior changes
+
 - `truth-matrix.md`
 - updated scenario coverage
 
@@ -225,6 +251,7 @@ The frontend must make the following explicit when relevant:
 ## 13. Trigger matrix for kernel-alignment review
 
 Kernel-alignment review is mandatory for:
+
 - shared schema changes
 - contract changes
 - taxonomy-linked UI changes
@@ -239,6 +266,7 @@ Kernel-alignment review is mandatory for:
 ## 13A. Release-sensitive alignment triggers
 
 Kernel-alignment review is mandatory for **release-sensitive** changes, including:
+
 - workflow state changes
 - KPI definition changes
 - drilldown behavior changes
@@ -253,6 +281,7 @@ Kernel-alignment review is mandatory for **release-sensitive** changes, includin
 The **doc gate** applies to guarded changes.
 
 Guarded changes require either:
+
 - canonical doc update, or
 - explicit `no-canon-change.md` rationale
 
@@ -261,6 +290,7 @@ Guarded changes require either:
 ## 14. Drift detection model
 
 ### Required checks
+
 1. **Path-based classification**
    - if guarded paths change, mark the task as kernel-alignment-required
 
@@ -288,6 +318,7 @@ Guarded changes require either:
 ## 14A. Drift detection
 
 **Drift detection** must include:
+
 - path-based PR classification
 - no-shadow-model lint
 - contract fixture checks
@@ -300,6 +331,7 @@ Guarded changes require either:
 ## 15. Merge blockers
 
 Block merge when any of the following are true:
+
 - a guarded change lacks a task packet
 - contract change lacks contract artifact
 - KPI change lacks KPI artifact
@@ -314,6 +346,7 @@ Block merge when any of the following are true:
 ## 16. Minimum file set for enforcement
 
 At minimum, keep these current:
+
 - `docs/canon/frontend-spec.md`
 - `docs/canon/repo-policy.md`
 - `.actionpm/templates/task-meta.yaml`
@@ -328,6 +361,7 @@ At minimum, keep these current:
 ## 17. Source basis
 
 This file is downstream of:
+
 - `2026-04-03 - DIV 00 - Program and Governance - V6.md`
 - `2026-04-03 - DIV 01 - Product Requirements - V6.md`
 - `2026-04-03 - DIV 03 - Client Applications - V5.md`

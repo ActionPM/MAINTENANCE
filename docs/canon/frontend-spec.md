@@ -1,4 +1,3 @@
-
 # ActionPM Frontend Spec
 
 ## 1. Purpose
@@ -8,6 +7,7 @@ This file is the **front-end-specific contract** for ActionPM.
 It is the **first file every front-end agent reads** before consulting deeper division notes.
 
 Use it to answer:
+
 - what the frontend is
 - what the frontend is not
 - what it must always stay aligned to
@@ -22,6 +22,7 @@ This file is intentionally shorter than the division notes.
 ## 2. Product identity
 
 ### Hard rules
+
 - ActionPM is a **governed operational control layer** for residential property management.
 - The frontend is **not** a generic dashboard.
 - The frontend is **not** a chatbot.
@@ -31,7 +32,9 @@ This file is intentionally shorter than the division notes.
 - The frontend exists to expose governed state, governed workflow boundaries, and governed drilldown.
 
 ### Practical interpretation
+
 The frontend should feel like an **operational command surface**:
+
 - map-centered
 - high-density where appropriate
 - live or frequently refreshed
@@ -52,14 +55,18 @@ The frontend is downstream of the maintenance kernel. The kernel is the control 
 ## 3. Phase-one scope
 
 ### Hard rules
+
 Phase one is:
+
 - internal-only
 - property-manager-first
 - browser-based
 - maintenance-centered
 
 ### Phase-one committed workflow scope
+
 The frontend may support only:
+
 - contextual draft PO generation
 - draft review
 - draft edit
@@ -78,7 +85,9 @@ Phase one supports contextual **draft Purchase Order** generation, review, edit,
 All Purchase Order artifacts produced in phase one are **draft Purchase Orders**. Final official Purchase Orders remain outside ActionPM.
 
 ### Forbidden phase-one implications
+
 The frontend must not imply that phase one includes:
+
 - official PO issuance
 - approval workflow inside ActionPM
 - quote approval
@@ -93,6 +102,7 @@ The frontend must not imply that phase one includes:
 ## 4. Authority model
 
 ### Hard rules
+
 - The kernel decides what actions are allowed.
 - The UI does not invent workflow authority.
 - The UI does not infer official completion from local interaction alone.
@@ -100,7 +110,9 @@ The frontend must not imply that phase one includes:
 - The UI does not infer security authority from visible controls alone.
 
 ### Required frontend behavior
+
 The frontend must always distinguish:
+
 - proposed vs confirmed
 - draft vs official
 - current vs stale
@@ -113,6 +125,7 @@ The frontend must always distinguish:
 ## 5. Authoritative upstream sources
 
 The frontend is downstream of these sources of truth:
+
 1. maintenance kernel workflow and state rules
 2. shared schemas and validators
 3. governed taxonomy and terminology
@@ -123,6 +136,7 @@ The frontend is downstream of these sources of truth:
 8. canonical division notes
 
 ### Hard rule
+
 If an upstream authoritative source changes, the frontend must adapt downstream. The frontend may not preserve an older local interpretation as a shadow truth.
 
 ## 5A. Taxonomy authority rule
@@ -136,6 +150,7 @@ The taxonomy is authoritative. The frontend must not create a shadow taxonomy.
 ## 6. KPI and drilldown rules
 
 ### Hard rules
+
 - KPI behavior is configuration-driven over structured service-request / inquiry data.
 - KPI cards are not a fixed hard-coded product list.
 - Every meaningful number must be drillable to underlying records.
@@ -144,6 +159,7 @@ The taxonomy is authoritative. The frontend must not create a shadow taxonomy.
 - The frontend must not hide materially aged underlying records behind aggregate color logic.
 
 ### Required frontend behavior
+
 - show scope-aware KPI values
 - show time-window-aware KPI values
 - support drilldown to record lists
@@ -151,11 +167,13 @@ The taxonomy is authoritative. The frontend must not create a shadow taxonomy.
 - degrade truthfully when freshness or completeness is insufficient
 
 ### Canonical user-facing label
+
 Use `service request` as the default canonical label unless canon explicitly changes it.
 
 ## 6A. KPI truth rules
 
 The **KPI truth rules** are non-negotiable:
+
 - KPIs are configuration-driven over structured service-request / inquiry data.
 - Every meaningful number must be drillable to underlying records.
 - Reopened requests are treated as though they were never closed.
@@ -166,13 +184,16 @@ The **KPI truth rules** are non-negotiable:
 ## 7. Taxonomy and terminology rules
 
 ### Hard rules
+
 - The taxonomy is authoritative.
 - The frontend may not create local substitute category systems for governed fields.
 - The frontend may not replace client `propertyCode` with a local alias in governed workflow artifacts.
 - Protected user-facing terms must remain stable unless canon changes them intentionally.
 
 ### Protected terms
+
 At minimum, treat these as protected:
+
 - service request
 - draft
 - exported
@@ -187,12 +208,14 @@ At minimum, treat these as protected:
 ## 8. Contract and live-update rules
 
 ### Hard rules
+
 - The frontend consumes **normalized internal ActionPM contracts**, not raw source-system payloads.
 - Contract responses must carry enough freshness and source-health context for truthful display.
 - SSE is the preferred current phase-one browser default for one-way live delivery unless a later approved architecture note changes that choice for a concrete reason.
 - The frontend must expose reconnect or refetch behavior where needed.
 
 ### Required frontend behavior
+
 - no raw ERP payload rendering logic in UI components
 - no silent fallback from failed live updates to “looks current” UI
 - no hidden retry loops that create false freshness assumptions
@@ -202,6 +225,7 @@ At minimum, treat these as protected:
 ## 9. Security-visible behavior rules
 
 ### Hard rules
+
 - Phase-one access is internal-only.
 - SSO-backed authentication with MFA is the default direction.
 - Session authority is server-authoritative.
@@ -210,6 +234,7 @@ At minimum, treat these as protected:
 - Step-up reauthentication is required for export/download, handoff, and access changes.
 
 ### Required frontend behavior
+
 - expired session must block privileged actions
 - permission changes must clear unsafe local context where needed
 - hidden controls alone are not sufficient; the UI must still handle denied responses correctly
@@ -220,7 +245,9 @@ At minimum, treat these as protected:
 ## 10. Degraded-state truth rules
 
 ### Hard rules
+
 The frontend must never hide:
+
 - stale data
 - partial data
 - disconnected live state
@@ -228,6 +255,7 @@ The frontend must never hide:
 - unconfirmed export or handoff state
 
 ### Required frontend behavior
+
 - degraded state remains visible and understandable
 - warnings must be specific enough to be operationally useful
 - a failed or unconfirmed action must not be presented as complete
@@ -244,6 +272,7 @@ This is the **truthful degraded-state** rule for the ActionPM frontend.
 ## 11. Frontend-local freedom
 
 The following may remain frontend-local as long as meaning does not change:
+
 - layout composition
 - responsive adaptation
 - spacing and visual hierarchy
@@ -254,7 +283,9 @@ The following may remain frontend-local as long as meaning does not change:
 - visual design implementation using approved frontend foundations
 
 ### Current implementation baseline
+
 Current frontend implementation direction is:
+
 - browser-based
 - React-based
 - Next.js
@@ -267,6 +298,7 @@ This implementation baseline is not itself the product contract. The product con
 ## 12. Forbidden frontend moves
 
 The frontend must not:
+
 - duplicate the taxonomy in shadow enums for governed fields
 - hard-code KPI semantics that belong in shared configuration or canon
 - infer workflow rights from client-only state
@@ -281,6 +313,7 @@ The frontend must not:
 ## 13. Release-sensitive change classes
 
 The following **release-sensitive change classes** are release-sensitive by default:
+
 - workflow or draft-PO behavior
 - export/download behavior
 - contract changes
@@ -298,11 +331,13 @@ The following **release-sensitive change classes** are release-sensitive by defa
 ## 14. Required starting files for agents
 
 Every front-end task should start from:
+
 1. this file
 2. relevant division notes
 3. task packet
 
 ### Default related canon
+
 - `docs/canon/kernel-alignment-rules.md`
 - `docs/canon/repo-policy.md`
 - `2026-04-03 - DIV 00 - Program and Governance - V6.md`
@@ -322,6 +357,7 @@ Every front-end task should start from:
 ## 15. Maintenance rule
 
 When this file changes, confirm whether one or more of the following also need updates:
+
 - `kernel-alignment-rules.md`
 - `repo-policy.md`
 - task templates
