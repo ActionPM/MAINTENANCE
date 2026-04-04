@@ -1,0 +1,19 @@
+task_id: FE-001
+title: Establish ActionPM frontend operating model scaffolding
+risk: medium
+change_types:
+  - governance
+  - documentation
+  - workflow
+affected_divisions:
+  - DIV 02
+  - DIV 03
+  - DIV 12
+generator: Codex
+critic: Claude
+auditor:
+release_sensitive: false
+canonical_artifacts:
+  - docs/canon/frontend-spec.md
+  - docs/canon/kernel-alignment-rules.md
+  - docs/canon/repo-policy.md

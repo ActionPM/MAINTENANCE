@@ -10,7 +10,12 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "clean": "pnpm -r clean"
+    "clean": "pnpm -r clean",
+    "task:new": "node scripts/task-new.mjs",
+    "task:check": "node scripts/task-check.mjs",
+    "docs:check": "node scripts/docs-check.mjs",
+    "canon:check": "node scripts/canon-check.mjs",
+    "guard:frontend": "npm run task:check && npm run docs:check && npm run canon:check"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
